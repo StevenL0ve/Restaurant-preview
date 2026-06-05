@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useStore } from "../state/store";
+import { useStore, triggerDownload } from "../state/store";
 import { analyzeTone, toneLabel } from "../lib/tone";
 import { time, fullDate } from "../lib/format";
+import { messagesCSV } from "../lib/csv";
 
 export function Messages() {
   const { state, sendMessage, markAllRead, saveDraft } = useStore();
@@ -59,12 +60,25 @@ export function Messages() {
             clean record if you ever need one.
           </p>
         </div>
-        <div className="search-mini">
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Search this thread…"
-          />
+        <div className="head-actions">
+          <div className="search-mini">
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Search this thread…"
+            />
+          </div>
+          <button
+            className="btn"
+            onClick={() =>
+              triggerDownload(
+                new Blob([messagesCSV(state)], { type: "text/csv" }),
+                "coparently-messages.csv",
+              )
+            }
+          >
+            ⤓ Export record
+          </button>
         </div>
       </div>
 

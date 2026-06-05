@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useStore, expenseBalance } from "../state/store";
+import { useStore, expenseBalance, triggerDownload } from "../state/store";
 import { money, shortDate } from "../lib/format";
+import { expensesCSV } from "../lib/csv";
 import type { Expense, ExpenseStatus } from "../types";
 
 const STATUS_LABEL: Record<ExpenseStatus, string> = {
@@ -26,9 +27,22 @@ export function Expenses() {
             paid back — with a running balance you can both trust.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm((s) => !s)}>
-          + Add expense
-        </button>
+        <div className="head-actions">
+          <button
+            className="btn"
+            onClick={() =>
+              triggerDownload(
+                new Blob([expensesCSV(state)], { type: "text/csv" }),
+                "coparently-expenses.csv",
+              )
+            }
+          >
+            ⤓ Export CSV
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowForm((s) => !s)}>
+            + Add expense
+          </button>
+        </div>
       </div>
 
       <div className="balance-banner">
