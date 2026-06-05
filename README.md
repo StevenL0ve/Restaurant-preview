@@ -26,8 +26,12 @@ project reads those reviews and fixes the specific things people complain about.
 | **"Wish it synced with my phone's calendar."** | One-tap **`.ics` export** that imports into Apple/Google/Outlook calendars. |
 | **"Search hardly works."** | One global search across **messages, calendar, expenses, journal, and the Info Bank**, ranked by recency. |
 | **"Can't delete my own account — needs co-parent approval."** | **One-click self-service delete.** No approval, no support call. |
-| **"They won't give me my data / won't delete it."** | **Export everything to JSON** anytime — your records, your attorney's records. |
+| **"They won't give me my data / won't delete it."** | **Export everything to JSON**, plus **court-ready CSV** of messages and expenses, anytime. |
 | ToneMeter (calmer-wording AI) is a **paid** add-on. | Built-in **tone check is free** and runs **on-device** — it flags heated messages *before* they send and suggests calmer wording. |
+
+A persistent **Notifications Center** (top-bar bell) is derived directly from app
+state — so unlike OFW, there's no separate delivery step that can silently fail.
+The whole UI also has a polished **light/dark mode** with system-preference detection.
 
 ## Features
 
@@ -37,6 +41,9 @@ project reads those reviews and fixes the specific things people complain about.
 - **Expenses** — log a cost, split it any ratio, attach a receipt, request reimbursement, and track a **running balance** both parents can trust.
 - **Journal** — private, timestamped, mood-tagged log; nothing is shared unless you export it.
 - **Info Bank** — each child's medical, school, and sizing details in one shared place.
+- **Notifications** — always-visible bell feed of unread messages, pending requests, and unsettled expenses; click to jump to the item.
+- **Records export** — one-click CSV of the message log and expenses, RFC-4180 safe and Excel-ready.
+- **Light/dark mode** — system-preference aware, persisted per device.
 - **Settings** — transparent pricing, full data export, and one-click account deletion.
 
 ## The on-device tone checker

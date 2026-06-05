@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { search } from "../lib/search";
 import { NotificationsBell } from "./NotificationsBell";
+import { ThemeToggle } from "./ThemeToggle";
 
 const typeIcon: Record<string, string> = {
   message: "💬", event: "📅", expense: "💵", journal: "📔", info: "🗂️",
@@ -64,6 +65,7 @@ export function TopBar() {
       </div>
 
       <div className="topbar-right">
+        <ThemeToggle />
         <NotificationsBell />
         <div className="who">
           <Avatar id={state.coParentId} />
