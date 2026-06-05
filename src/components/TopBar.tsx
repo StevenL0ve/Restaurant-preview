@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { search } from "../lib/search";
+import { NotificationsBell } from "./NotificationsBell";
 
 const typeIcon: Record<string, string> = {
   message: "💬", event: "📅", expense: "💵", journal: "📔", info: "🗂️",
@@ -63,6 +64,7 @@ export function TopBar() {
       </div>
 
       <div className="topbar-right">
+        <NotificationsBell />
         <div className="who">
           <Avatar id={state.coParentId} />
           <div className="who-text">
