@@ -73,10 +73,26 @@ src/
 
 ```bash
 npm install
-npm run dev      # local dev server
-npm run build    # type-check + production build
-npm run test     # unit tests (tone engine) + render smoke tests
+npm run dev       # local dev server
+npm run build     # type-check + production build (PWA: manifest + service worker)
+npm run test      # unit tests + render smoke tests
+npm run icons     # regenerate app icons (zero-dependency PNG generator)
+npm run cap:sync  # build + sync the native iOS/Android projects
 ```
+
+## Shipping to the App Store & Google Play
+
+CoParent is an **installable PWA** (offline service worker, web manifest, app
+icons) and is wrapped for the stores with **Capacitor** — `capacitor.config.ts`
+turns the `dist` build into real native iOS/Android projects. The full runbook,
+privacy policy, and store-listing copy live in [`docs/`](docs/):
+
+- [`docs/PUBLISHING.md`](docs/PUBLISHING.md) — end-to-end submission steps
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) — required privacy policy
+- [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) — names, descriptions, keywords
+
+The final submission (Apple Developer / Play Console accounts, code signing on a
+Mac/Android Studio, store review) requires those accounts and toolchains.
 
 ## Notes & honest limitations
 

@@ -14,3 +14,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </HashRouter>
   </React.StrictMode>,
 );
+
+// Register the service worker for offline/installable PWA behavior.
+// Skipped under Capacitor's native shell, which serves its own bundle.
+if ("serviceWorker" in navigator && !/(android|ios);capacitor/i.test(navigator.userAgent)) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* offline support is a progressive enhancement; ignore failures */
+    });
+  });
+}
