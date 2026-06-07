@@ -31,7 +31,8 @@ project reads those reviews and fixes the specific things people complain about.
 
 A persistent **Notifications Center** (top-bar bell) is derived directly from app
 state — so unlike OFW, there's no separate delivery step that can silently fail.
-The whole UI also has a polished **light/dark mode** with system-preference detection.
+The whole UI also has a polished **light/dark mode** with system-preference
+detection and a **responsive mobile layout** with a native-style bottom tab bar.
 
 ## Features
 

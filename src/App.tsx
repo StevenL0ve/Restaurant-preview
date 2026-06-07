@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
+import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
 import { Dashboard } from "./pages/Dashboard";
 import { Messages } from "./pages/Messages";
@@ -30,6 +31,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }

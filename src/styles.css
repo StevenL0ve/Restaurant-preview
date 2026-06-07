@@ -395,14 +395,50 @@ a { color: inherit; }
 .confirm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; }
 
 /* ---------- Responsive ---------- */
+/* ---------- Mobile bottom navigation ---------- */
+.bottom-nav { display: none; }
+.sheet-scrim {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.35); z-index: 45;
+}
+.more-sheet {
+  position: fixed; left: 12px; right: 12px; bottom: 74px; z-index: 50;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.sheet-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  text-decoration: none; color: var(--ink); font-weight: 500; font-size: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.sheet-item:last-child { border-bottom: none; }
+.sheet-item.active { color: var(--teal); background: var(--teal-50); }
+.sheet-icon { font-size: 18px; }
+
 @media (max-width: 880px) {
-  .sidebar { width: 68px; padding: 14px 8px; }
-  .brand div, .brand-tag, .nav-label, .sidebar-footer { display: none; }
-  .nav-item { justify-content: center; }
-  .nav-badge { position: absolute; }
+  .sidebar { display: none; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .dash-cols, .cal-wrap, .info-grid, .form-grid { grid-template-columns: 1fr; }
   .page, .topbar { padding-left: 18px; padding-right: 18px; }
+  .content { padding-bottom: 76px; }
+
+  .bottom-nav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 46;
+    background: var(--card); border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; padding: 6px 2px; text-decoration: none;
+    color: var(--muted); font-size: 11px; font-weight: 600;
+  }
+  .tab.active { color: var(--teal); }
+  .tab-icon { position: relative; font-size: 20px; line-height: 1; }
+  .tab-label { font-size: 10.5px; }
+  .tab-badge {
+    position: absolute; top: -5px; right: -10px; background: var(--red); color: #fff;
+    font-size: 9.5px; font-weight: 700; min-width: 15px; height: 15px; padding: 0 4px;
+    border-radius: 8px; display: grid; place-items: center; border: 1.5px solid var(--card);
+  }
 }
 
 /* ---------- Dark mode ---------- */
