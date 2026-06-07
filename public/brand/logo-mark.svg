@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gBlue" x1="90" y1="120" x2="256" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="gPurple" x1="422" y1="120" x2="256" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="gCoral" x1="256" y1="240" x2="256" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#f43f5e"/>
+    </linearGradient>
+    <clipPath id="clipL"><rect x="0" y="0" width="256" height="512"/></clipPath>
+    <clipPath id="clipR"><rect x="256" y="0" width="256" height="512"/></clipPath>
+  </defs>
+  
+  
+  <!-- heart body, two-tone -->
+  <path d="M256.0,202.0C232.0,168.0 198.0,152.0 152.0,152.0C96.0,152.0 86.0,214.0 96.0,254.0C110.0,312.0 178.0,372.0 256.0,432.0C334.0,372.0 402.0,312.0 416.0,254.0C426.0,214.0 416.0,152.0 360.0,152.0C314.0,152.0 280.0,168.0 256.0,202.0Z M256.0,236.4C241.6,216.0 221.2,206.4 193.6,206.4C160.0,206.4 154.0,243.6 160.0,267.6C168.4,302.4 209.2,338.4 256.0,374.4C302.8,338.4 343.6,302.4 352.0,267.6C358.0,243.6 352.0,206.4 318.4,206.4C290.8,206.4 270.4,216.0 256.0,236.4Z" fill="url(#gBlue)" fill-rule="evenodd" clip-path="url(#clipL)"/>
+  <path d="M256.0,202.0C232.0,168.0 198.0,152.0 152.0,152.0C96.0,152.0 86.0,214.0 96.0,254.0C110.0,312.0 178.0,372.0 256.0,432.0C334.0,372.0 402.0,312.0 416.0,254.0C426.0,214.0 416.0,152.0 360.0,152.0C314.0,152.0 280.0,168.0 256.0,202.0Z M256.0,236.4C241.6,216.0 221.2,206.4 193.6,206.4C160.0,206.4 154.0,243.6 160.0,267.6C168.4,302.4 209.2,338.4 256.0,374.4C302.8,338.4 343.6,302.4 352.0,267.6C358.0,243.6 352.0,206.4 318.4,206.4C290.8,206.4 270.4,216.0 256.0,236.4Z" fill="url(#gPurple)" fill-rule="evenodd" clip-path="url(#clipR)"/>
+  <!-- parent heads -->
+  <circle cx="150" cy="120" r="42" fill="url(#gBlue)"/>
+  <circle cx="362" cy="120" r="42" fill="url(#gPurple)"/>
+  <!-- child: small heart, raised arms, head, trunk -->
+  <path d="M256,273.4 C250.8,260.4 230,252.6 230,240.9 C230,225.3 246.9,224 256,238.3 C265.1,224 282,225.3 282,240.9 C282,252.6 261.2,260.4 256,273.4Z" fill="url(#gCoral)"/>
+  <g stroke="url(#gCoral)" stroke-width="22" stroke-linecap="round" fill="none">
+    <path d="M256,340 L210,300"/>
+    <path d="M256,340 L302,300"/>
+    <path d="M256,338 L256,372"/>
+  </g>
+  <circle cx="256" cy="312" r="26" fill="url(#gCoral)"/>
+  
+</svg>

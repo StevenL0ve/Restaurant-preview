@@ -76,7 +76,7 @@ npm install
 npm run dev       # local dev server
 npm run build     # type-check + production build (PWA: manifest + service worker)
 npm run test      # unit tests + render smoke tests
-npm run icons     # regenerate app icons (zero-dependency PNG generator)
+npm run icons     # regenerate app icons + splash from the SVG brand mark
 npm run cap:sync  # build + sync the native iOS/Android projects
 ```
 

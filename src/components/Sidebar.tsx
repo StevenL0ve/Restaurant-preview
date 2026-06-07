@@ -27,7 +27,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <span className="brand-mark">◐</span>
+        <img className="brand-mark" src="/brand/logo-mark.svg" alt="CoParent logo" width={38} height={38} />
         <div>
           <div className="brand-name">CoParent</div>
           <div className="brand-tag">Calm, organized co-parenting</div>
