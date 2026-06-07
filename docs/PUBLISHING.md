@@ -7,6 +7,9 @@ Everything else is already wired up in this repo.
 CoParent ships as a web app wrapped with **Capacitor**, which produces real
 native iOS and Android projects from the `dist` web build.
 
+> **Just want a beta on your phone first?** See [`docs/TESTFLIGHT.md`](TESTFLIGHT.md)
+> for the fastest path to TestFlight (iOS) and Play internal testing (Android).
+
 ---
 
 ## 0. One-time prerequisites **[you]**

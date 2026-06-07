@@ -11,3 +11,13 @@ yarn-error.log*
 
 # TS build info
 *.tsbuildinfo
+
+# Native build / signing artifacts (never commit secrets)
+build/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/*.log
+*.p8
+*.mobileprovision
+*.p12
+ios/App/Pods/
