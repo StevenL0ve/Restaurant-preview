@@ -156,7 +156,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const blob = new Blob([JSON.stringify(state, null, 2)], {
           type: "application/json",
         });
-        triggerDownload(blob, "coparently-export.json");
+        triggerDownload(blob, "coparent-export.json");
       },
 
       resetDemo: () => setState(buildSeed()),

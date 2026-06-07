@@ -46,7 +46,7 @@ export function messagesPrintHTML(s: AppState): string {
 
   return `<!doctype html>
 <html><head><meta charset="utf-8" />
-<title>CoParently — Message Record</title>
+<title>CoParent — Message Record</title>
 <style>
   body { font-family: Georgia, "Times New Roman", serif; color: #111; margin: 40px; }
   h1 { font-size: 20px; margin: 0 0 2px; }
@@ -65,11 +65,11 @@ export function messagesPrintHTML(s: AppState): string {
   @media print { body { margin: 0.5in; } }
 </style></head>
 <body>
-  <h1>CoParently — Message Record</h1>
+  <h1>CoParent — Message Record</h1>
   <div class="meta">Parties: ${escapeHTML(me)} &amp; ${escapeHTML(co)}</div>
   <div class="meta">Generated: ${escapeHTML(generated)} · ${s.messages.length} messages</div>
   <div class="cert">
-    This record was generated from CoParently. Messages are stored with the
+    This record was generated from CoParent. Messages are stored with the
     timestamp recorded at the time they were sent and cannot be edited or
     deleted after sending. Tone labels reflect an automated, on-device analysis
     captured at send time and are informational only.

@@ -3,7 +3,7 @@ import { relativeTime } from "./format";
 
 // Failed/missing notifications are OurFamilyWizard's single most serious
 // complaint — reviewers describe missed messages escalating to lawyers and
-// police. CoParently surfaces everything that needs attention in one reliable,
+// police. CoParent surfaces everything that needs attention in one reliable,
 // always-visible feed derived directly from state (nothing to "fail to send").
 
 export interface Notification {

@@ -22,7 +22,7 @@ describe("app smoke test", () => {
 
   it("renders the dashboard with seeded data", () => {
     const html = renderAt("/");
-    expect(html).toContain("CoParently");
+    expect(html).toContain("CoParent");
     expect(html).toContain("Up next");
   });
 

@@ -1,4 +1,4 @@
-// Core domain types for CoParently.
+// Core domain types for CoParent.
 // Everything is plain data so it can be serialized to localStorage and exported
 // as JSON at any time (one of the things OurFamilyWizard users say they can't do).
 

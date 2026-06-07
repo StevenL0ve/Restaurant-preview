@@ -33,7 +33,7 @@ export function Expenses() {
             onClick={() =>
               triggerDownload(
                 new Blob([expensesCSV(state)], { type: "text/csv" }),
-                "coparently-expenses.csv",
+                "coparent-expenses.csv",
               )
             }
           >

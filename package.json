@@ -1,9 +1,9 @@
 {
-  "name": "coparently",
+  "name": "coparent",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "CoParently — a modern, fast, free co-parenting app. A better OurFamilyWizard.",
+  "description": "CoParent — a modern, fast, free co-parenting app. A better OurFamilyWizard.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

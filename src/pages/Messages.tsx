@@ -74,7 +74,7 @@ export function Messages() {
             onClick={() =>
               triggerDownload(
                 new Blob([messagesCSV(state)], { type: "text/csv" }),
-                "coparently-messages.csv",
+                "coparent-messages.csv",
               )
             }
           >

@@ -29,7 +29,7 @@ export function Sidebar() {
       <div className="brand">
         <span className="brand-mark">◐</span>
         <div>
-          <div className="brand-name">CoParently</div>
+          <div className="brand-name">CoParent</div>
           <div className="brand-tag">Calm, organized co-parenting</div>
         </div>
       </div>

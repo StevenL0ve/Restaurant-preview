@@ -1,4 +1,4 @@
-# CoParently
+# CoParent
 
 A modern, fast, **free** co-parenting app — built as a better answer to
 [OurFamilyWizard](https://apps.apple.com/us/app/ourfamilywizard-co-parent-app/id497405393).
@@ -14,9 +14,9 @@ project reads those reviews and fixes the specific things people complain about.
 
 ---
 
-## What reviewers hate about OurFamilyWizard — and what CoParently does instead
+## What reviewers hate about OurFamilyWizard — and what CoParent does instead
 
-| Real complaint about OFW | CoParently's fix |
+| Real complaint about OFW | CoParent's fix |
 | --- | --- |
 | **"$100+/yr per parent for a 3rd-rate text service."** Auto-renews; charged after they stop using it. | **Free.** No subscription, no per-parent fee, no renewal trap. (`Settings`) |
 | **"Clunky, outdated, cumbersome interface."** | Clean, fast single-page UI; color-coded calendar; keyboard-friendly composer. |

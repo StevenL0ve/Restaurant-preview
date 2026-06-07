@@ -25,13 +25,13 @@ export function Settings() {
       <section className="card settings-card">
         <h2>Pricing</h2>
         <p className="muted">
-          CoParently is <strong>free</strong>. No per-parent subscription, no
+          CoParent is <strong>free</strong>. No per-parent subscription, no
           annual renewal traps, no charges after you stop using it. We never
           require your co-parent's permission for you to leave.
         </p>
         <div className="price-row">
           <div className="price-col">
-            <span className="price-name">CoParently</span>
+            <span className="price-name">CoParent</span>
             <span className="price-value pos">$0</span>
             <span className="muted small">forever</span>
           </div>

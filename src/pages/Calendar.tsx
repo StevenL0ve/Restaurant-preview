@@ -51,7 +51,7 @@ export function Calendar() {
     const blob = new Blob([buildICS(state.events, state.people)], {
       type: "text/calendar",
     });
-    triggerDownload(blob, "coparently-calendar.ics");
+    triggerDownload(blob, "coparent-calendar.ics");
   }
 
   const monthLabel = cursor.toLocaleDateString("en-US", {

@@ -28,7 +28,7 @@ export function buildICS(events: CalEvent[], people: Person[]): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//CoParently//EN",
+    "PRODID:-//CoParent//EN",
     "CALSCALE:GREGORIAN",
   ];
   for (const e of events) {
