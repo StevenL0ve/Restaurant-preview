@@ -42,7 +42,7 @@ The whole UI also has a polished **light/dark mode** with system-preference dete
 - **Journal** — private, timestamped, mood-tagged log; nothing is shared unless you export it.
 - **Info Bank** — each child's medical, school, and sizing details in one shared place.
 - **Notifications** — always-visible bell feed of unread messages, pending requests, and unsettled expenses; click to jump to the item.
-- **Records export** — one-click CSV of the message log and expenses, RFC-4180 safe and Excel-ready.
+- **Records export** — one-click CSV of the message log and expenses (RFC-4180 safe, Excel-ready), plus a **printable / Save-as-PDF message record** with timestamps and a certification header for court.
 - **Light/dark mode** — system-preference aware, persisted per device.
 - **Settings** — transparent pricing, full data export, and one-click account deletion.
 

@@ -3,6 +3,7 @@ import { useStore, triggerDownload } from "../state/store";
 import { analyzeTone, toneLabel } from "../lib/tone";
 import { time, fullDate } from "../lib/format";
 import { messagesCSV } from "../lib/csv";
+import { printMessageLog } from "../lib/printable";
 
 export function Messages() {
   const { state, sendMessage, markAllRead, saveDraft } = useStore();
@@ -78,6 +79,16 @@ export function Messages() {
             }
           >
             ⤓ Export record
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              if (!printMessageLog(state)) {
+                alert("Please allow pop-ups to print the message record.");
+              }
+            }}
+          >
+            🖨 Print log
           </button>
         </div>
       </div>
