@@ -46,6 +46,7 @@ interface Store {
   deleteEvent: (id: string) => void;
   // expenses
   addExpense: (e: Omit<Expense, "id">) => void;
+  addExpenses: (es: Omit<Expense, "id">[]) => void;
   setExpenseStatus: (id: string, status: Expense["status"]) => void;
   // journal
   addJournal: (e: Omit<JournalEntry, "id">) => void;
@@ -132,6 +133,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         update((s) => ({
           ...s,
           expenses: [{ ...e, id: uid("x") }, ...s.expenses],
+        })),
+
+      addExpenses: (es) =>
+        update((s) => ({
+          ...s,
+          expenses: [...es.map((e) => ({ ...e, id: uid("x") })), ...s.expenses],
         })),
 
       setExpenseStatus: (id, status) =>

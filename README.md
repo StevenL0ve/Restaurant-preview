@@ -39,7 +39,7 @@ detection and a **responsive mobile layout** with a native-style bottom tab bar.
 - **Dashboard** — at-a-glance unread count, pending schedule requests, running expense balance, what's next on the calendar.
 - **Messages** — immutable, timestamped record (a clean log if it's ever needed in court); free on-device **tone check** with calmer-wording suggestions; auto-saved drafts; per-thread search; read receipts.
 - **Calendar** — month view, color-coded categories, parenting-time blocks, **swap/change requests** with accept/decline, `.ics` export to your phone, and **one-click custody-rotation templates** (week-on/week-off, 2-2-3, 2-2-5-5, weekday/weekend).
-- **Expenses** — log a cost, split it any ratio, attach a receipt, request reimbursement, and track a **running balance** both parents can trust.
+- **Expenses** — log a cost, split it any ratio, attach a receipt, request reimbursement, set it to **repeat monthly** (childcare, tuition), and track a **running balance** both parents can trust.
 - **Journal** — private, timestamped, mood-tagged log; nothing is shared unless you export it.
 - **Info Bank** — each child's medical, school, and sizing details in one shared place.
 - **Notifications** — always-visible bell feed of unread messages, pending requests, and unsettled expenses; click to jump to the item.

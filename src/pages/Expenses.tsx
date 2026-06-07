@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore, expenseBalance, triggerDownload } from "../state/store";
 import { money, shortDate } from "../lib/format";
 import { expensesCSV } from "../lib/csv";
+import { expandRecurringExpense } from "../lib/recurring";
 import type { Expense, ExpenseStatus } from "../types";
 
 const STATUS_LABEL: Record<ExpenseStatus, string> = {
@@ -12,7 +13,7 @@ const STATUS_LABEL: Record<ExpenseStatus, string> = {
 };
 
 export function Expenses() {
-  const { state, addExpense, setExpenseStatus } = useStore();
+  const { state, addExpenses, setExpenseStatus } = useStore();
   const [showForm, setShowForm] = useState(false);
   const balance = expenseBalance(state);
   const nameOf = (id: string) => state.people.find((p) => p.id === id)?.name ?? "";
@@ -63,8 +64,8 @@ export function Expenses() {
           coId={state.coParentId}
           nameOf={nameOf}
           onCancel={() => setShowForm(false)}
-          onSave={(e) => {
-            addExpense(e);
+          onSave={(es) => {
+            addExpenses(es);
             setShowForm(false);
           }}
         />
@@ -139,7 +140,7 @@ function ExpenseForm({
   meId: string;
   coId: string;
   nameOf: (id: string) => string;
-  onSave: (e: Omit<Expense, "id">) => void;
+  onSave: (es: Omit<Expense, "id">[]) => void;
   onCancel: () => void;
 }) {
   const [description, setDescription] = useState("");
@@ -148,11 +149,12 @@ function ExpenseForm({
   const [splitPct, setSplitPct] = useState(50);
   const [category, setCategory] = useState("Activities");
   const [receiptName, setReceiptName] = useState("");
+  const [repeatMonths, setRepeatMonths] = useState(1);
 
   function submit() {
     const amt = parseFloat(amount);
     if (!description.trim() || !amt || amt <= 0) return;
-    onSave({
+    const base: Omit<Expense, "id"> = {
       description: description.trim(),
       amount: amt,
       paidById,
@@ -161,7 +163,8 @@ function ExpenseForm({
       category,
       receiptName: receiptName || undefined,
       status: paidById === meId ? "reimbursement-requested" : "open",
-    });
+    };
+    onSave(expandRecurringExpense(base, repeatMonths));
   }
 
   return (
@@ -194,6 +197,15 @@ function ExpenseForm({
           <span>Other parent pays: {splitPct}%</span>
           <input type="range" min="0" max="100" step="5" value={splitPct} onChange={(e) => setSplitPct(Number(e.target.value))} />
         </label>
+        <label className="field">
+          <span>Repeat monthly</span>
+          <select value={repeatMonths} onChange={(e) => setRepeatMonths(Number(e.target.value))}>
+            <option value={1}>One-time</option>
+            {[2, 3, 6, 12].map((n) => (
+              <option key={n} value={n}>{n} months</option>
+            ))}
+          </select>
+        </label>
         <label className="field field-wide">
           <span>Receipt (optional)</span>
           <input
@@ -203,7 +215,9 @@ function ExpenseForm({
         </label>
       </div>
       <div className="form-actions">
-        <button className="btn btn-primary" onClick={submit}>Save expense</button>
+        <button className="btn btn-primary" onClick={submit}>
+          {repeatMonths > 1 ? `Save ${repeatMonths} monthly expenses` : "Save expense"}
+        </button>
         <button className="btn" onClick={onCancel}>Cancel</button>
       </div>
     </div>
