@@ -41,6 +41,7 @@ interface Store {
   clearDraft: () => void;
   // calendar
   addEvent: (e: Omit<CalEvent, "id">) => void;
+  addEvents: (es: Omit<CalEvent, "id">[]) => void;
   respondToRequest: (id: string, accept: boolean) => void;
   deleteEvent: (id: string) => void;
   // expenses
@@ -107,6 +108,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addEvent: (e) =>
         update((s) => ({ ...s, events: [...s.events, { ...e, id: uid("e") }] })),
+
+      addEvents: (es) =>
+        update((s) => ({
+          ...s,
+          events: [...s.events, ...es.map((e) => ({ ...e, id: uid("e") }))],
+        })),
 
       respondToRequest: (id, accept) =>
         update((s) => ({

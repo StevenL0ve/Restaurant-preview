@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore, triggerDownload } from "../state/store";
 import { buildICS } from "../lib/ics";
 import { fullDate, time, isoDateInput } from "../lib/format";
+import { generateRotation, ROTATION_LABELS, type RotationPattern } from "../lib/rotation";
 import type { CalEvent, EventCategory } from "../types";
 
 const CATS: { value: EventCategory; label: string }[] = [
@@ -25,10 +26,11 @@ function startOfMonthGrid(d: Date): Date[] {
 }
 
 export function Calendar() {
-  const { state, addEvent, respondToRequest, deleteEvent } = useStore();
+  const { state, addEvent, addEvents, respondToRequest, deleteEvent } = useStore();
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<string>(isoDateInput(new Date().toISOString()));
   const [showForm, setShowForm] = useState(false);
+  const [showRotation, setShowRotation] = useState(false);
 
   const grid = useMemo(() => startOfMonthGrid(cursor), [cursor]);
 
@@ -69,11 +71,27 @@ export function Calendar() {
         </div>
         <div className="head-actions">
           <button className="btn" onClick={exportICS}>⤓ Sync to my phone (.ics)</button>
+          <button className="btn" onClick={() => setShowRotation((s) => !s)}>
+            🔁 Set up rotation
+          </button>
           <button className="btn btn-primary" onClick={() => setShowForm((s) => !s)}>
             + Add event
           </button>
         </div>
       </div>
+
+      {showRotation && (
+        <RotationForm
+          defaultDate={selected}
+          me={state.people.find((p) => p.id === state.meId)!}
+          coParent={state.people.find((p) => p.id === state.coParentId)!}
+          onCancel={() => setShowRotation(false)}
+          onGenerate={(events) => {
+            addEvents(events);
+            setShowRotation(false);
+          }}
+        />
+      )}
 
       {showForm && (
         <EventForm
@@ -243,6 +261,74 @@ function EventForm({
       </div>
       <div className="form-actions">
         <button className="btn btn-primary" onClick={submit}>Save event</button>
+        <button className="btn" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function RotationForm({
+  defaultDate,
+  me,
+  coParent,
+  onGenerate,
+  onCancel,
+}: {
+  defaultDate: string;
+  me: { id: string; name: string };
+  coParent: { id: string; name: string };
+  onGenerate: (events: Omit<CalEvent, "id">[]) => void;
+  onCancel: () => void;
+}) {
+  const [pattern, setPattern] = useState<RotationPattern>("alternating-weeks");
+  const [startDate, setStartDate] = useState(defaultDate);
+  const [weeks, setWeeks] = useState(8);
+  const [startWith, setStartWith] = useState<"me" | "co">("me");
+
+  const preview = generateRotation({
+    pattern, startDate, weeks,
+    aId: me.id, bId: coParent.id, aName: me.name, bName: coParent.name,
+    startWithA: startWith === "me",
+  });
+
+  return (
+    <div className="card form-card">
+      <h2 style={{ fontSize: 16, marginBottom: 4 }}>Set up a custody rotation</h2>
+      <p className="muted small" style={{ margin: "0 0 14px" }}>
+        Pick a pattern and we'll fill in the parenting-time blocks for you. You can edit or remove any of them afterward.
+      </p>
+      <div className="form-grid">
+        <label className="field">
+          <span>Pattern</span>
+          <select value={pattern} onChange={(e) => setPattern(e.target.value as RotationPattern)}>
+            {Object.entries(ROTATION_LABELS).map(([v, label]) => (
+              <option key={v} value={v}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Starts with</span>
+          <select value={startWith} onChange={(e) => setStartWith(e.target.value as "me" | "co")}>
+            <option value="me">{me.name}</option>
+            <option value="co">{coParent.name}</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>Start date</span>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </label>
+        <label className="field">
+          <span>Generate for: {weeks} weeks</span>
+          <input type="range" min="2" max="26" step="1" value={weeks} onChange={(e) => setWeeks(Number(e.target.value))} />
+        </label>
+      </div>
+      <p className="muted small" style={{ marginTop: 12 }}>
+        Creates <strong>{preview.length}</strong> parenting-time block{preview.length === 1 ? "" : "s"} over {weeks} weeks.
+      </p>
+      <div className="form-actions">
+        <button className="btn btn-primary" onClick={() => onGenerate(preview)}>
+          Generate {preview.length} blocks
+        </button>
         <button className="btn" onClick={onCancel}>Cancel</button>
       </div>
     </div>
