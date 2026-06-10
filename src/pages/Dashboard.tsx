@@ -6,6 +6,7 @@ import {
   expenseBalance,
 } from "../state/store";
 import { money, relativeTime, fullDate, time } from "../lib/format";
+import { computeInsights } from "../lib/insights";
 
 export function Dashboard() {
   const { state, respondToRequest } = useStore();
@@ -13,6 +14,7 @@ export function Dashboard() {
   const unread = unreadCount(state);
   const requests = pendingRequests(state);
   const balance = expenseBalance(state);
+  const insights = computeInsights(state);
 
   const upcoming = [...state.events]
     .filter((e) => new Date(e.start).getTime() >= Date.now() - 86400000)
@@ -57,6 +59,28 @@ export function Dashboard() {
           <span className="stat-label">Journal entries</span>
         </Link>
       </div>
+
+      <section className="insights">
+        <div className="insights-head">This {insights.monthLabel}</div>
+        <div className="insights-row">
+          <div className="insight">
+            <span className="insight-value">{money(insights.totalSpend)}</span>
+            <span className="insight-label">Shared spend logged</span>
+          </div>
+          <div className="insight">
+            <span className="insight-value">{money(insights.yourOutOfPocket)}</span>
+            <span className="insight-label">You paid out of pocket</span>
+          </div>
+          <div className="insight">
+            <span className="insight-value">{insights.messagesThisWeek}</span>
+            <span className="insight-label">Messages this week</span>
+          </div>
+          <div className="insight">
+            <span className="insight-value">{insights.eventsNext7Days}</span>
+            <span className="insight-label">Events next 7 days</span>
+          </div>
+        </div>
+      </section>
 
       <div className="dash-cols">
         <section className="card">

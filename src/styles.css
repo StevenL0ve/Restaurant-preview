@@ -516,3 +516,15 @@ a { color: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Dashboard insights ---------- */
+.insights {
+  background: linear-gradient(135deg, var(--brand-600), var(--violet));
+  border-radius: var(--radius); padding: 16px 20px; margin-bottom: 18px; color: #fff;
+}
+.insights-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; margin-bottom: 12px; }
+.insights-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.insight { display: flex; flex-direction: column; gap: 2px; }
+.insight-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.insight-label { font-size: 12px; opacity: 0.85; }
+@media (max-width: 880px) { .insights-row { grid-template-columns: repeat(2, 1fr); } }
