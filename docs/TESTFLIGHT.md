@@ -63,10 +63,25 @@ Connect, and it becomes installable on your phone via the TestFlight app.
 7. In App Store Connect → your app → **TestFlight**: add yourself as an internal
    tester. Install the **TestFlight** app on your iPhone and accept the invite.
 
+## Skip the export-compliance prompt on every upload
+
+CoParent only uses standard HTTPS (exempt encryption), so set this once and
+TestFlight stops asking. Run after `npx cap add ios`:
+
+```bash
+PLIST=ios/App/App/Info.plist
+/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+```
+
+Re-run it if you ever regenerate the `ios/` project. (The native folder is
+created on your Mac, so this can't live in the cross-platform repo.)
+
 ## After upload
 
 - First upload requires completing **Export Compliance** (CoParent uses only
   standard encryption / HTTPS → typically "no" to the custom-encryption question).
+  The plist flag above removes this prompt entirely.
 - Internal testers (up to 100, must be in your team) get builds immediately.
 - External testers require a short Beta App Review.
 
