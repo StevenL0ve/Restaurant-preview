@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useStore, unreadCount, pendingRequests } from "../state/store";
+import { APP_VERSION } from "../version";
 
 interface NavItem {
   to: string;
@@ -59,6 +60,7 @@ export function Sidebar() {
           No subscription. Your data stays on your device and you can export or
           delete it anytime.
         </p>
+        <p className="version">CoParent v{APP_VERSION}</p>
       </div>
     </aside>
   );
