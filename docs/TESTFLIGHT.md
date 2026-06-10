@@ -31,7 +31,7 @@ Connect, and it becomes installable on your phone via the TestFlight app.
    npx cap add ios
    npx cap sync ios
    ```
-3. **Create an App Store Connect record** for bundle id `com.coparent.app`
+3. **Create an App Store Connect record** for bundle id `com.stevennelson.coparent`
    (App Store Connect → Apps → +). Name: **CoParent**.
 4. **Create an App Store Connect API key** (Users and Access → Integrations →
    App Store Connect API → +). Download the `.p8`. This lets Fastlane upload
