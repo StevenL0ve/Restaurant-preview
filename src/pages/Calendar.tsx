@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore, triggerDownload } from "../state/store";
 import { buildICS } from "../lib/ics";
-import { fullDate, time, isoDateInput } from "../lib/format";
+import { fullDate, time, isoDateInput, dayKey } from "../lib/format";
 import { generateRotation, ROTATION_LABELS, type RotationPattern } from "../lib/rotation";
 import type { CalEvent, EventCategory } from "../types";
 
@@ -28,7 +28,7 @@ function startOfMonthGrid(d: Date): Date[] {
 export function Calendar() {
   const { state, addEvent, addEvents, respondToRequest, deleteEvent } = useStore();
   const [cursor, setCursor] = useState(new Date());
-  const [selected, setSelected] = useState<string>(isoDateInput(new Date().toISOString()));
+  const [selected, setSelected] = useState<string>(dayKey(new Date()));
   const [showForm, setShowForm] = useState(false);
   const [showRotation, setShowRotation] = useState(false);
 
@@ -58,7 +58,7 @@ export function Calendar() {
     month: "long",
     year: "numeric",
   });
-  const today = isoDateInput(new Date().toISOString());
+  const today = dayKey(new Date());
 
   return (
     <div className="page">
@@ -119,7 +119,7 @@ export function Calendar() {
           </div>
           <div className="cal-grid">
             {grid.map((d) => {
-              const key = isoDateInput(d.toISOString());
+              const key = dayKey(d);
               const evs = eventsByDay.get(key) ?? [];
               const muted = d.getMonth() !== cursor.getMonth();
               return (

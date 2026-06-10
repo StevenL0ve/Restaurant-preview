@@ -71,6 +71,12 @@ export function Expenses() {
         />
       )}
 
+      {state.expenses.length === 0 ? (
+        <div className="card empty-state">
+          <span className="empty-emoji">💵</span>
+          <p>No expenses yet. Add a shared cost and we'll track who owes what.</p>
+        </div>
+      ) : (
       <div className="card">
         <table className="table">
           <thead>
@@ -126,6 +132,7 @@ export function Expenses() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

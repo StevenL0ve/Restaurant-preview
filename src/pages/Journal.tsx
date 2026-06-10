@@ -68,6 +68,12 @@ export function Journal() {
       </div>
 
       <div className="journal-list">
+        {state.journal.length === 0 && (
+          <div className="card empty-state">
+            <span className="empty-emoji">📔</span>
+            <p>No entries yet. Jot down what happened — it stays private to you.</p>
+          </div>
+        )}
         {state.journal.map((j) => (
           <article key={j.id} className="card journal-entry">
             <div className="journal-head">

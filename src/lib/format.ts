@@ -37,6 +37,15 @@ export function relativeTime(iso: string): string {
   return shortDate(iso);
 }
 
+// Format a Date as a LOCAL YYYY-MM-DD key. Using toISOString() here would be a
+// bug: it converts to UTC, so an evening event in the Americas would bucket to
+// the next calendar day. Calendar bucketing and <input type="date"> both need
+// the user's local day.
+export function dayKey(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 export function isoDateInput(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+  return dayKey(new Date(iso));
 }

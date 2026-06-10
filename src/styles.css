@@ -528,3 +528,8 @@ a { color: inherit; }
 .insight-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 .insight-label { font-size: 12px; opacity: 0.85; }
 @media (max-width: 880px) { .insights-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* ---------- Empty states ---------- */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-state .empty-emoji { display: block; font-size: 34px; margin-bottom: 10px; opacity: 0.8; }
+.empty-state p { margin: 0; font-size: 14.5px; max-width: 360px; margin-inline: auto; }
