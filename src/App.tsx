@@ -14,10 +14,11 @@ import { Settings } from "./pages/Settings";
 export default function App() {
   return (
     <div className="app">
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <Sidebar />
       <div className="main">
         <TopBar />
-        <main className="content">
+        <main id="main-content" className="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/messages" element={<Messages />} />

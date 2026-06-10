@@ -108,9 +108,9 @@ export function Calendar() {
       <div className="cal-wrap">
         <div className="cal">
           <div className="cal-nav">
-            <button className="icon-btn" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}>‹</button>
-            <h2>{monthLabel}</h2>
-            <button className="icon-btn" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}>›</button>
+            <button className="icon-btn" aria-label="Previous month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}>‹</button>
+            <h2 aria-live="polite">{monthLabel}</h2>
+            <button className="icon-btn" aria-label="Next month" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}>›</button>
           </div>
           <div className="cal-dow">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
@@ -131,6 +131,8 @@ export function Calendar() {
                     (key === selected ? " selected" : "") +
                     (key === today ? " today" : "")
                   }
+                  aria-label={`${fullDate(key)}${evs.length ? `, ${evs.length} event${evs.length === 1 ? "" : "s"}` : ""}`}
+                  aria-pressed={key === selected}
                   onClick={() => setSelected(key)}
                 >
                   <span className="cal-date">{d.getDate()}</span>

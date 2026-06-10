@@ -489,3 +489,30 @@ a { color: inherit; }
 [data-theme="dark"] .bell-badge { border-color: var(--card); }
 [data-theme="dark"] .table th { color: var(--muted); }
 [data-theme="dark"] .balance-banner { background: linear-gradient(135deg, #4338ca, #6d28d9); }
+
+/* ---------- Accessibility ---------- */
+.skip-link {
+  position: absolute; left: 12px; top: -48px; z-index: 100;
+  background: var(--brand-600); color: #fff; font-weight: 600; font-size: 13.5px;
+  padding: 10px 16px; border-radius: 0 0 10px 10px; text-decoration: none;
+  transition: top 0.15s;
+}
+.skip-link:focus { top: 0; }
+
+/* Clear keyboard-focus indicator everywhere, without flashing mouse users */
+:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px;
+}
+.btn:focus-visible, .icon-btn:focus-visible, .tab:focus-visible,
+.nav-item:focus-visible, .cal-cell:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
