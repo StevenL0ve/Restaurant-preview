@@ -535,3 +535,13 @@ a { color: inherit; }
 .empty-state p { margin: 0; font-size: 14.5px; max-width: 360px; margin-inline: auto; }
 
 .version { font-size: 11px; color: var(--muted); margin: 10px 0 0; opacity: 0.75; }
+
+/* ---------- iOS safe-area (status bar / notch) ---------- */
+/* Push the top bar below the status bar so it doesn't bleed into the clock. */
+.topbar { padding-top: calc(14px + env(safe-area-inset-top)); }
+
+@media (max-width: 880px) {
+  /* Free up the crowded top bar on phones: drop the "co-parenting with" text,
+     keep just the avatar. */
+  .who-text { display: none; }
+}
