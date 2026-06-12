@@ -1,0 +1,6 @@
+# Fastlane app configuration for CoParent.
+# Fill in apple_id and the team IDs from your Apple Developer account before use.
+app_identifier("com.stevennelson.coparent")
+apple_id("YOUR_APPLE_ID_EMAIL")      # the email you log into App Store Connect with
+itc_team_id("YOUR_APP_STORE_CONNECT_TEAM_ID")
+team_id("YOUR_DEVELOPER_TEAM_ID")    # 10-char Apple Developer Team ID

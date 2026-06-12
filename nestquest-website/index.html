@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nest Quest Rentals — Military Housing Near Bases Worldwide</title>
+<meta name="description" content="The free iOS app connecting US military families with trusted housing near bases worldwide.">
+<link rel="canonical" href="https://nestquest-rentals.netlify.app/">
+<meta name="theme-color" content="#0D0D0D">
+
+<!-- Icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<!-- Social sharing -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nest Quest Rentals">
+<meta property="og:title" content="Nest Quest Rentals — Always home. Wherever you roam.">
+<meta property="og:description" content="The free iOS app connecting US military families with trusted housing near bases worldwide.">
+<meta property="og:url" content="https://nestquest-rentals.netlify.app/">
+<meta property="og:image" content="https://nestquest-rentals.netlify.app/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nest Quest Rentals — Always home. Wherever you roam.">
+<meta name="twitter:description" content="The free iOS app connecting US military families with trusted housing near bases worldwide.">
+<meta name="twitter:image" content="https://nestquest-rentals.netlify.app/assets/og-image.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/hero-truck-clean.webp">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "Nest Quest Rentals",
+  "operatingSystem": "iOS",
+  "applicationCategory": "LifestyleApplication",
+  "description": "The free iOS app connecting US military families with trusted housing near bases worldwide.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "installUrl": "https://apps.apple.com/us/app/nest-quest-rentals/id6749613800"
+}
+</script>
+
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --warm-50: #FFFBF5;
+  --warm-100: #FFF3E0;
+  --warm-200: #FFE0B2;
+  --orange-400: #E8923A;
+  --orange-500: #D4791C;
+  --orange-600: #BF6A10;
+  --gold: #C98A2E;
+  --dark-900: #0D0D0D;
+  --dark-800: #1A1A1A;
+  --dark-700: #2A2A2A;
+  --text-dark: #0D0D0D;
+  --text-light: #F5F5F5;
+  --text-muted: #999;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--dark-900);
+  color: var(--text-light);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- NAV --- */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 1.5rem 3rem;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.4s, backdrop-filter 0.4s;
+}
+.nav.scrolled,
+.nav.menu-open {
+  background: rgba(13,13,13,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.nav-logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+.nav-logo img { height: 40px; width: auto; }
+.nav-logo span {
+  font-family: var(--sans); font-weight: 600; font-size: 0.85rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light);
+}
+.nav-links { display: flex; gap: 2.5rem; align-items: center; }
+.nav-links a {
+  font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  text-decoration: none; transition: color 0.3s;
+}
+.nav-links a:hover { color: var(--text-light); }
+.nav-toggle {
+  display: none;
+  background: none; border: 0; cursor: pointer;
+  padding: 0.5rem; margin: -0.5rem;
+  color: var(--text-light);
+}
+.nav-toggle svg { width: 24px; height: 24px; display: block; }
+.nav-toggle .icon-close { display: none; }
+.nav.menu-open .nav-toggle .icon-open { display: none; }
+.nav.menu-open .nav-toggle .icon-close { display: block; }
+
+/* --- HERO --- */
+.hero {
+  position: relative;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center;
+  padding: 8rem 2rem 4rem;
+  background: linear-gradient(170deg, var(--dark-900) 0%, #1a1207 50%, var(--dark-900) 100%);
+  overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(201,138,46,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-block;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(201,138,46,0.3);
+  padding: 0.5rem 1.5rem; border-radius: 100px;
+  margin-bottom: 2.5rem;
+  position: relative; z-index: 2;
+}
+.hero-headline {
+  font-family: var(--serif); font-weight: 900;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: 0.95; letter-spacing: -0.03em;
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  position: relative; z-index: 2;
+}
+
+.hero-headline em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--orange-400), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 400;
+  color: var(--text-muted); max-width: 500px;
+  line-height: 1.6; margin-bottom: 3rem;
+  position: relative; z-index: 2;
+}
+
+/* --- TRUCK IMAGE SECTION --- */
+.hero-truck-wrap {
+  position: relative;
+  width: 100%; max-width: 1000px;
+  margin: 0 auto;
+  z-index: 2;
+}
+.hero-truck-wrap img {
+  width: 100%; height: auto; display: block;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.truck-clean { transition: opacity 0.8s ease; }
+.truck-explode {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: 12px;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+
+/* --- SCROLL INDICATOR --- */
+.scroll-indicator {
+  position: absolute; bottom: 2rem; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  z-index: 2;
+}
+.scroll-indicator span {
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.scroll-line {
+  width: 1px; height: 40px; background: var(--text-muted);
+  position: relative; overflow: hidden;
+}
+.scroll-line::after {
+  content: ''; position: absolute; top: -100%; left: 0;
+  width: 100%; height: 100%;
+  background: var(--gold);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0% { top: -100%; }
+  50% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* --- APP STORE BUTTON --- */
+.app-store-btn {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  background: var(--text-light); color: var(--dark-900);
+  padding: 0.9rem 2rem; border-radius: 12px;
+  text-decoration: none; font-weight: 600; font-size: 0.9rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative; z-index: 2;
+}
+.app-store-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(201,138,46,0.25);
+}
+.app-store-btn svg { width: 22px; height: 22px; }
+
+/* --- SECTION SHARED --- */
+.section { padding: clamp(5rem, 12vw, 10rem) clamp(1.5rem, 5vw, 4rem); }
+.section-dark { background: var(--dark-900); color: var(--text-light); }
+.section-darker { background: var(--dark-800); color: var(--text-light); }
+.section-light { background: var(--warm-50); color: var(--text-dark); }
+.section-warm {
+  background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-400) 50%, var(--gold) 100%);
+  color: var(--text-light);
+}
+.section-inner {
+  max-width: 1200px; margin: 0 auto;
+}
+
+/* --- TYPOGRAPHY --- */
+.section-label {
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 1.5rem;
+}
+
+.section-light .section-label { color: var(--orange-500); }
+.section-title {
+  font-family: var(--serif); font-weight: 800;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1.05; letter-spacing: -0.02em;
+  margin-bottom: 2rem;
+}
+.section-light .section-title { color: var(--text-dark); }
+.section-body {
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.7; color: var(--text-muted);
+  max-width: 600px;
+}
+.section-light .section-body { color: #555; }
+
+/* --- REVEAL ANIMATION --- */
+.reveal {
+  opacity: 0; transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1; transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* --- PROBLEM SECTION --- */
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.problem-stats {
+  display: flex; flex-direction: column; gap: 2.5rem;
+}
+.stat-number {
+  font-family: var(--serif); font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--orange-400), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-desc {
+  font-size: 0.95rem; color: var(--text-muted); margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+/* --- SOLUTION SECTION --- */
+.solution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+.solution-features {
+  display: flex; flex-direction: column; gap: 2rem;
+}
+
+.feature-item {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.feature-item h3 {
+  font-family: var(--serif); font-weight: 700;
+  font-size: 1.4rem; margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+.feature-item p {
+  font-size: 0.95rem; color: #666; line-height: 1.6;
+}
+.solution-phone {
+  display: flex; justify-content: center;
+}
+.solution-phone img {
+  width: 100%; max-width: 320px; height: auto; display: block;
+  border-radius: 36px;
+  border: 10px solid var(--dark-900);
+  box-shadow: 0 30px 60px rgba(13,13,13,0.25);
+}
+
+/* --- LANDLORD SECTION --- */
+.landlord-content {
+  max-width: 700px;
+}
+.landlord-cta {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin-top: 2rem;
+  font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em;
+  color: var(--gold); text-decoration: none;
+  transition: gap 0.3s;
+}
+
+.landlord-cta:hover { gap: 1rem; }
+.landlord-cta svg { width: 18px; height: 18px; transition: transform 0.3s; }
+.landlord-cta:hover svg { transform: translateX(4px); }
+
+/* --- BUSINESS PRICING --- */
+.pricing-card {
+  background: var(--dark-700);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: clamp(2.5rem, 4vw, 3.5rem);
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+}
+.pricing-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--orange-400), var(--gold));
+}
+.pricing-amount {
+  font-family: var(--serif); font-weight: 900;
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  line-height: 1; margin: 1.5rem 0 0.5rem;
+}
+.pricing-amount span {
+  font-family: var(--sans); font-size: 1rem; font-weight: 400;
+  color: var(--text-muted);
+}
+.pricing-desc {
+  font-size: 1rem; color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.pricing-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--orange-400), var(--gold));
+  color: var(--dark-900); font-weight: 600; font-size: 0.9rem;
+  padding: 0.9rem 2.5rem; border-radius: 12px;
+  text-decoration: none; transition: transform 0.3s, box-shadow 0.3s;
+}
+.pricing-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(201,138,46,0.3);
+}
+
+/* --- CTA SECTION --- */
+.cta-section {
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 70vh;
+}
+.cta-headline {
+  font-family: var(--serif); font-weight: 900;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  line-height: 0.95; letter-spacing: -0.03em;
+  margin-bottom: 2rem;
+}
+
+/* --- FOOTER --- */
+.footer {
+  padding: 3rem clamp(1.5rem, 5vw, 4rem);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: var(--dark-900);
+}
+
+.footer-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1.5rem;
+}
+.footer-left { display: flex; align-items: center; gap: 0.75rem; }
+.footer-left img { height: 32px; width: auto; }
+.footer-left span { font-size: 0.8rem; color: var(--text-muted); }
+.footer-right { display: flex; align-items: center; gap: 2rem; }
+.footer-right a {
+  font-size: 0.8rem; color: var(--text-muted);
+  text-decoration: none; transition: color 0.3s;
+}
+.footer-right a:hover { color: var(--text-light); }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .nav { padding: 1rem 1.5rem; }
+  .nav-toggle { display: block; }
+  .nav-links {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column; align-items: flex-start;
+    gap: 0; padding: 0.5rem 0 1rem;
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .nav.menu-open .nav-links { display: flex; }
+  .nav-links a { padding: 0.9rem 1.5rem; width: 100%; }
+  .problem-grid,
+  .solution-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero { padding: 7rem 1.5rem 3rem; }
+  .hero-truck-wrap { max-width: 100%; }
+  .section { padding: clamp(3.5rem, 8vw, 6rem) 1.5rem; }
+}
+
+/* --- REDUCED MOTION --- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .scroll-line::after { animation: none; }
+  .truck-explode { display: none; }
+  .app-store-btn, .pricing-btn { transition: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav" aria-label="Main">
+  <a href="#hero" class="nav-logo">
+    <img src="assets/nqr-logo-160.png" alt="Nest Quest Rentals logo" width="160" height="160">
+    <span>Nest Quest Rentals</span>
+  </a>
+  <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">
+    <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="nav-links" id="navLinks">
+    <a href="#problem">The Problem</a>
+    <a href="#solution">The App</a>
+    <a href="#landlords">Landlords</a>
+    <a href="#business">Business</a>
+    <a href="https://apps.apple.com/us/app/nest-quest-rentals/id6749613800" target="_blank" rel="noopener">Download</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-badge">For Military Families</div>
+  <h1 class="hero-headline">Always home.<br><em>Wherever you roam.</em></h1>
+  <p class="hero-sub">The free iOS app connecting military families with trusted housing near bases worldwide.</p>
+  <a href="https://apps.apple.com/us/app/nest-quest-rentals/id6749613800" class="app-store-btn" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+    Download on the App Store
+  </a>
+  <div class="hero-truck-wrap" style="margin-top: 4rem;">
+    <img src="assets/hero-truck-clean.webp" alt="NQR branded van with bird logo, doors open, boxes neatly packed" class="truck-clean" id="truckClean" width="1600" height="900" fetchpriority="high">
+    <img src="assets/hero-truck-explode.webp" alt="" aria-hidden="true" class="truck-explode" id="truckExplode" width="1600" height="900">
+  </div>
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section class="section section-darker" id="problem">
+  <div class="section-inner">
+    <div class="problem-grid">
+      <div>
+        <div class="section-label reveal">The Problem</div>
+        <h2 class="section-title reveal reveal-delay-1">PCS moves<br>are chaos.</h2>
+        <p class="section-body reveal reveal-delay-2">
+          Every year, hundreds of thousands of military families relocate to a new base. They hunt for housing from thousands of miles away, sorting through scams, outdated listings, and zero transparency. It is stressful, expensive, and broken.
+        </p>
+      </div>
+      <div class="problem-stats">
+        <div class="stat-item reveal">
+          <div class="stat-number">350K+</div>
+          <div class="stat-desc">Military families PCS every year</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-1">
+          <div class="stat-number">67%</div>
+          <div class="stat-desc">Report housing as their top PCS stressor</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-2">
+          <div class="stat-number">$4,200</div>
+          <div class="stat-desc">Average out-of-pocket cost per move</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE SOLUTION -->
+<section class="section section-light" id="solution">
+  <div class="section-inner">
+    <div class="solution-grid">
+      <div>
+        <div class="section-label reveal">The Solution</div>
+        <h2 class="section-title reveal reveal-delay-1">Housing,<br>simplified.</h2>
+        <div class="solution-features">
+          <div class="feature-item reveal reveal-delay-1">
+            <h3>Listings Near Your Base</h3>
+            <p>Browse rentals posted for your next duty station — from Kaiserslautern to Okinawa — with beds, baths, pet policies, and lease terms up front.</p>
+          </div>
+          <div class="feature-item reveal reveal-delay-2">
+            <h3>In-App Messaging</h3>
+            <p>Talk directly to landlords. Ask questions, schedule tours, and lock down your home before you even arrive.</p>
+          </div>
+          <div class="feature-item reveal reveal-delay-3">
+            <h3>Local Services</h3>
+            <p>Find trusted local businesses near base. Movers, cleaners, storage, restaurants, and everything else you need to settle in fast.</p>
+          </div>
+        </div>
+      </div>
+      <div class="solution-phone reveal">
+        <img src="assets/app-home-browse.jpg" alt="Nest Quest Rentals app showing a rental listing near Vogelweh, Kaiserslautern with beds, baths, and pet policy" width="376" height="818" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOR LANDLORDS -->
+<section class="section section-dark" id="landlords">
+  <div class="section-inner">
+    <div class="landlord-content reveal">
+      <div class="section-label">For Landlords</div>
+      <h2 class="section-title">List your property<br>in 60 seconds.</h2>
+      <p class="section-body">
+        Reach military families actively searching near your base. Our NestQuest AI handles the heavy lifting so you can focus on being a great landlord. No fees to list. No middlemen.
+      </p>
+      <div style="margin-top: 2.5rem;">
+        <img src="assets/nqr-ai-logo.webp" alt="NestQuest AI" width="440" height="440" loading="lazy" style="max-width: 220px; height: auto; border-radius: 12px; filter: drop-shadow(0 0 20px rgba(0,180,255,0.3));">
+      </div>
+      <a href="https://preview.ourgymapp.com/property-intake/" class="landlord-cta" target="_blank" rel="noopener">
+        Submit your property
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOR BUSINESSES -->
+<section class="section section-darker" id="business">
+  <div class="section-inner">
+    <div class="section-label reveal">For Local Businesses</div>
+    <h2 class="section-title reveal reveal-delay-1">Get in front of<br>every new family.</h2>
+    <p class="section-body reveal reveal-delay-2" style="margin-bottom: 3rem;">
+      Thousands of military families search for local services when they PCS. Put your business where they are looking.
+    </p>
+    <div class="pricing-card reveal reveal-delay-3">
+      <div class="section-label" style="margin-bottom: 0.5rem;">Business Listing</div>
+      <div class="pricing-amount">$12 <span>/ month</span></div>
+      <p class="pricing-desc">
+        Your business listed in the app, visible to every military family near your base. Featured placement, direct contact, and real visibility.
+      </p>
+      <a href="mailto:support@nestquest.rentals?subject=Business%20Listing%20Inquiry" class="pricing-btn">Get Listed</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section section-warm cta-section">
+  <div class="section-inner" style="text-align: center;">
+    <h2 class="cta-headline reveal">Always home.<br>Wherever you roam.</h2>
+    <a href="https://apps.apple.com/us/app/nest-quest-rentals/id6749613800" class="app-store-btn reveal reveal-delay-1" target="_blank" rel="noopener" style="background: var(--dark-900); color: var(--text-light);">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      Download on the App Store
+    </a>
+    <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.8;" class="reveal reveal-delay-2">Free on the App Store. Built by a veteran.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <img src="assets/nqr-logo-160.png" alt="Nest Quest Rentals logo" width="160" height="160">
+      <span>&copy; 2026 Nest Quest Rentals</span>
+    </div>
+    <div class="footer-right">
+      <a href="mailto:support@nestquest.rentals">support@nestquest.rentals</a>
+      <a href="https://apps.apple.com/us/app/nest-quest-rentals/id6749613800" target="_blank" rel="noopener">App Store</a>
+      <a href="https://nestquest-rentals.netlify.app" target="_blank" rel="noopener">nestquest-rentals.netlify.app</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // --- NAV SCROLL ---
+  var nav = document.getElementById('nav');
+  function handleNavScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 80);
+  }
+  window.addEventListener('scroll', handleNavScroll, { passive: true });
+  handleNavScroll();
+
+  // --- MOBILE MENU ---
+  var navToggle = document.getElementById('navToggle');
+  function closeMenu() {
+    nav.classList.remove('menu-open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    navToggle.setAttribute('aria-label', 'Open menu');
+  }
+  navToggle.addEventListener('click', function() {
+    var open = nav.classList.toggle('menu-open');
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+  document.querySelectorAll('.nav-links a').forEach(function(link) {
+    link.addEventListener('click', closeMenu);
+  });
+
+  // --- TRUCK CROSSFADE ---
+  var truckClean = document.getElementById('truckClean');
+  var truckExplode = document.getElementById('truckExplode');
+  var heroSection = document.getElementById('hero');
+
+  function handleTruckParallax() {
+    if (!heroSection || !truckClean || !truckExplode) return;
+    var rect = heroSection.getBoundingClientRect();
+    var heroH = heroSection.offsetHeight;
+    var scrolled = -rect.top;
+    var progress = Math.max(0, Math.min(1, scrolled / (heroH * 0.6)));
+
+    truckClean.style.opacity = 1 - progress;
+    truckExplode.style.opacity = progress;
+  }
+  if (!reduceMotion) {
+    window.addEventListener('scroll', handleTruckParallax, { passive: true });
+  }
+
+  // --- INTERSECTION OBSERVER FOR REVEALS ---
+  var revealEls = document.querySelectorAll('.reveal');
+  if (reduceMotion) {
+    revealEls.forEach(function(el) { el.classList.add('visible'); });
+  } else {
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -60px 0px'
+    });
+    revealEls.forEach(function(el) { revealObserver.observe(el); });
+  }
+
+  // --- SMOOTH ANCHOR SCROLLING ---
+  document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+    anchor.addEventListener('click', function(e) {
+      var href = this.getAttribute('href');
+      if (href.length < 2) return;
+      var target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
