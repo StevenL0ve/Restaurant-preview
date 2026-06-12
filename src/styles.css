@@ -52,6 +52,7 @@ a { color: inherit; }
 .brand { display: flex; gap: 11px; align-items: center; padding: 6px 8px 18px; }
 .brand-mark {
   width: 38px; height: 38px; flex-shrink: 0; display: block; object-fit: contain;
+  background: #fff; border-radius: 9px;
 }
 .brand-name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
 .brand-tag { font-size: 11.5px; color: var(--muted); }
