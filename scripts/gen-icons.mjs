@@ -47,3 +47,25 @@ await write("logo-mark.png", brandDir, 256, { bg: TRANSPARENT, pad: 0.04 });
 
 // Splash — logo centered on the app background.
 await write("splash-512.png", brandDir, 512, { bg: { r: 246, g: 248, b: 251, alpha: 1 }, pad: 0.28 });
+
+// --- Native icon/splash SOURCES for @capacitor/assets ---------------------
+// `npx capacitor-assets generate` reads these to populate the native iOS/Android
+// icon catalogs and splash screens.
+const assetsDir = new URL("../assets/", import.meta.url);
+mkdirSync(assetsDir, { recursive: true });
+const BRAND_LIGHT = { r: 246, g: 248, b: 251, alpha: 1 };
+const BRAND_DARK = { r: 11, g: 18, b: 32, alpha: 1 };
+
+await write("icon-only.png", assetsDir, 1024, { bg: WHITE, pad: 0.1 });
+await write("icon-foreground.png", assetsDir, 1024, { bg: TRANSPARENT, pad: 0.26 });
+// Android adaptive-icon background is a plain solid fill (no logo).
+writeFileSync(
+  new URL("icon-background.png", assetsDir),
+  await sharp({ create: { width: 1024, height: 1024, channels: 4, background: WHITE } })
+    .flatten({ background: WHITE })
+    .png()
+    .toBuffer(),
+);
+console.log("wrote icon-background.png 1024x1024");
+await write("splash.png", assetsDir, 2732, { bg: BRAND_LIGHT, pad: 0.36 });
+await write("splash-dark.png", assetsDir, 2732, { bg: BRAND_DARK, pad: 0.36 });
