@@ -546,3 +546,28 @@ a { color: inherit; }
      keep just the avatar. */
   .who-text { display: none; }
 }
+
+/* ---------- Expenses: reflow the table into cards on narrow screens ---------- */
+@media (max-width: 720px) {
+  .table thead { display: none; }
+  .table, .table tbody { display: block; width: 100%; }
+  .table tr {
+    display: block; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 6px 12px; margin-bottom: 10px;
+  }
+  .table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--line); text-align: right;
+  }
+  .table td:last-child { border-bottom: none; }
+  .table td.num { text-align: right; }
+  .table td::before {
+    content: attr(data-label); font-weight: 600; color: var(--muted);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; text-align: left;
+  }
+  /* The description cell reads as the card header (no label, full width). */
+  .table td[data-label="Description"] { display: block; text-align: left; }
+  .table td[data-label="Description"]::before { display: none; }
+  .table td.row-actions { justify-content: flex-end; }
+  .table td.row-actions::before { display: none; }
+}

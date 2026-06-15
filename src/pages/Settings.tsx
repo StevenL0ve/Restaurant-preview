@@ -36,7 +36,7 @@ export function Settings() {
             <span className="muted small">forever</span>
           </div>
           <div className="price-col faded">
-            <span className="price-name">OurFamilyWizard</span>
+            <span className="price-name">Other apps</span>
             <span className="price-value">$99+/yr</span>
             <span className="muted small">per parent, auto-renewing</span>
           </div>

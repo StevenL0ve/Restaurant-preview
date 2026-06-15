@@ -94,17 +94,17 @@ export function Expenses() {
               const share = x.amount * x.splitOtherShare;
               return (
                 <tr key={x.id}>
-                  <td>
+                  <td data-label="Description">
                     <div className="cell-title">{x.description}</div>
                     <div className="muted small">
                       {x.category} · {shortDate(x.date)}
                       {x.receiptName && <> · 📎 {x.receiptName}</>}
                     </div>
                   </td>
-                  <td>{x.paidById === state.meId ? "You" : nameOf(x.paidById)}</td>
-                  <td className="num">{money(x.amount)}</td>
-                  <td className="num">{money(share)}</td>
-                  <td>
+                  <td data-label="Paid by">{x.paidById === state.meId ? "You" : nameOf(x.paidById)}</td>
+                  <td data-label="Total" className="num">{money(x.amount)}</td>
+                  <td data-label="Their share" className="num">{money(share)}</td>
+                  <td data-label="Status">
                     <span className={"status status-" + x.status}>
                       {STATUS_LABEL[x.status]}
                     </span>
