@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./state/auth";
+import { Login } from "./pages/Login";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
@@ -12,6 +14,12 @@ import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
 
 export default function App() {
+  const { user, ready } = useAuth();
+
+  // Wait for the session check, then gate the app behind sign-in.
+  if (!ready) return null;
+  if (!user) return <Login />;
+
   return (
     <div className="app">
       <a href="#main-content" className="skip-link">Skip to content</a>

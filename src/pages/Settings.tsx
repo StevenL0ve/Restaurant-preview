@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { useAuth } from "../state/auth";
 
 export function Settings() {
   const { state, exportAll, resetDemo, deleteAccount } = useStore();
+  const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const counts = {
@@ -21,6 +23,36 @@ export function Settings() {
           <p className="muted">Your account, your data, your rules.</p>
         </div>
       </div>
+
+      {user && (
+        <section className="card settings-card">
+          <h2>Account</h2>
+          <div className="account-row">
+            <span className="avatar" style={{ background: "var(--brand)" }}>
+              {user.name.slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <div className="account-name">{user.name}</div>
+              <div className="muted small">{user.email}</div>
+            </div>
+          </div>
+          <label className="toggle-row">
+            <span>
+              Unlock with Face ID
+              {!bioAvailable && <span className="muted small"> · not available on this device</span>}
+            </span>
+            <input
+              type="checkbox"
+              checked={bioEnabled}
+              disabled={!bioAvailable}
+              onChange={(e) => setBioEnabled(e.target.checked)}
+            />
+          </label>
+          <div className="form-actions">
+            <button className="btn" onClick={signOut}>Sign out</button>
+          </div>
+        </section>
+      )}
 
       <section className="card settings-card">
         <h2>Pricing</h2>

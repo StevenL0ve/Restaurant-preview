@@ -571,3 +571,32 @@ a { color: inherit; }
   .table td.row-actions { justify-content: flex-end; }
   .table td.row-actions::before { display: none; }
 }
+
+/* ---------- Auth (login / create account) ---------- */
+.auth {
+  min-height: 100%; display: grid; place-items: center; padding: 24px;
+  padding-top: calc(24px + env(safe-area-inset-top));
+  background: linear-gradient(160deg, var(--brand-50), var(--bg) 60%);
+}
+.auth-card {
+  width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 18px; box-shadow: var(--shadow); padding: 28px 24px; text-align: center;
+}
+.auth-logo { display: block; margin: 0 auto 10px; border-radius: 16px; }
+.auth-title { font-size: 22px; letter-spacing: -0.02em; }
+.auth-sub { color: var(--muted); font-size: 13.5px; margin: 4px 0 18px; }
+.auth-tabs { display: flex; gap: 6px; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+.auth-tab { flex: 1; border: none; background: none; padding: 9px; border-radius: 8px; font-weight: 600; font-size: 13.5px; color: var(--muted); }
+.auth-tab.active { background: var(--card); color: var(--brand); box-shadow: var(--shadow-sm); }
+.auth-form { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.auth-form .field input { width: 100%; }
+.auth-submit { width: 100%; margin-top: 4px; }
+.auth-faceid { width: 100%; margin-top: 10px; }
+.auth-error { background: #fef2f2; color: var(--red); font-size: 13px; padding: 9px 12px; border-radius: 9px; }
+.auth-foot { color: var(--muted); font-size: 11.5px; margin: 16px 0 0; }
+
+/* ---------- Account section ---------- */
+.account-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.account-name { font-weight: 600; font-size: 15px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; border-top: 1px solid var(--line); }
+.toggle-row input { width: 18px; height: 18px; }
