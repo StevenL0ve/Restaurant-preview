@@ -73,6 +73,24 @@ retained growth tilt, financials lean, international exposure.
 - Roth IRA (••••6573) would shelter gains but is NOT agentic-enabled — can't trade it.
 - Wash-sale rules apply to losses only; not relevant to this profit-taking plan.
 
+## Calendar / watch items
+- **Late July – early Aug 2026 — SPCX lockup risk window.** SpaceX's first major
+  lock-up release (~20% of locked shares) triggers off Q2 2026 earnings (late
+  July/early Aug). IPO float was only ~555.6M shares (~4% of ~13.1B total), so this
+  is a large new-supply event into a thin, richly-valued (~$1.77T, ~95x sales;
+  Morningstar fair value ~$780B), unprofitable (2025 GAAP net loss ~$4.94B) stock.
+  Staged releases continue: ~7% tranches Aug–Oct, ~28% after Q3 earnings, remainder
+  Dec 8 2026 (180-day mark); some investors extended into Q2 2027.
+  - **Why it matters:** SPCX is held in the MAIN account (932664626) ON MARGIN. That
+    account is ~78% Musk-correlated (TSLA + SPCX) with ~$3k margin debt and ~1.77x
+    leverage. A lockup-driven drop could pressure margin / risk a margin call.
+  - **Action when reached:** re-check SPCX price + main-account margin/leverage;
+    flag to user; user decides. AI CANNOT trade the main account (not agentic-enabled)
+    — advisory only.
+  - **Reminder mechanism:** the AI cannot self-trigger on a date. User should set a
+    personal calendar reminder ~July 20 2026. This file is the persistent backup that
+    surfaces the item whenever a future session reads it.
+
 ## Hard limits / honesty notes
 - The AI cannot reliably monitor the account continuously. Broker orders + Robinhood
   alerts are the always-on layer; the AI is best-effort when pinged.
