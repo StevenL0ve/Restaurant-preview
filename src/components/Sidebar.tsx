@@ -12,6 +12,7 @@ interface NavItem {
 
 const items: NavItem[] = [
   { to: "/", label: "Home", icon: "🏠", end: true },
+  { to: "/assistant", label: "Ask CoParent", icon: "✨" },
   { to: "/messages", label: "Messages", icon: "💬", badge: "unread" },
   { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
   { to: "/expenses", label: "Expenses", icon: "💵" },

@@ -48,6 +48,10 @@ export function buildSeed(): AppState {
         createdAt: ago(190), readAt: ago(120), tone: "calm", edited: false,
       },
       {
+        id: "m6", fromId: ME, body: "Also — for the vacation next month, I'll book the kids' flights this week. Can you send their passport numbers?",
+        createdAt: ago(80), readAt: null, tone: "calm", edited: false,
+      },
+      {
         id: "m5", fromId: CO, body: "Works for me. I'll approve it when it comes through.",
         createdAt: ago(95), readAt: null, tone: "calm", edited: false,
       },
@@ -127,6 +131,7 @@ export function buildSeed(): AppState {
       { id: "i4", childId: KID2, kind: "medical", label: "Blood type", value: "O+" },
       { id: "i5", childId: KID2, kind: "school", label: "Bus route", value: "Route 7, pickup 7:45am" },
       { id: "i6", childId: KID2, kind: "clothing", label: "Shoe size", value: "Youth 1" },
+      { id: "i7", childId: KID1, kind: "clothing", label: "Shoe size", value: "13 (kids)" },
     ],
   };
 }

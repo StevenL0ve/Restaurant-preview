@@ -10,6 +10,7 @@ import { Calendar } from "./pages/Calendar";
 import { Expenses } from "./pages/Expenses";
 import { Journal } from "./pages/Journal";
 import { InfoBank } from "./pages/InfoBank";
+import { Assistant } from "./pages/Assistant";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
 
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/info" element={<InfoBank />} />
+            <Route path="/assistant" element={<Assistant />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
