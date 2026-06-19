@@ -10,12 +10,13 @@ interface Tab {
   to: string;
   label: string;
   icon: string;
+  img?: string; // optional custom image icon (overrides the emoji)
   end?: boolean;
   badge?: "unread" | "requests";
 }
 
 const primary: Tab[] = [
-  { to: "/", label: "Home", icon: "🏠", end: true },
+  { to: "/", label: "Home", icon: "🏠", img: "/brand/nav-home.png", end: true },
   { to: "/messages", label: "Messages", icon: "💬", badge: "unread" },
   { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
   { to: "/expenses", label: "Expenses", icon: "💵" },
@@ -72,7 +73,11 @@ export function BottomNav() {
               onClick={() => setSheetOpen(false)}
             >
               <span className="tab-icon">
-                {it.icon}
+                {it.img ? (
+                  <img className="tab-img" src={it.img} alt="" aria-hidden width={28} height={28} />
+                ) : (
+                  it.icon
+                )}
                 {count > 0 && <span className="tab-badge">{count}</span>}
               </span>
               <span className="tab-label">{it.label}</span>

@@ -614,3 +614,5 @@ a { color: inherit; }
 .assistant-detail { font-size: 13px; color: var(--muted); margin-top: 6px; font-style: italic; }
 .assistant-input { flex: 1; border: 1px solid var(--line); border-radius: 11px; padding: 11px 13px; font-size: 14px; }
 .assistant-input:focus { outline: none; border-color: var(--brand); }
+
+.tab-img { width: 28px; height: 28px; object-fit: contain; display: block; }
