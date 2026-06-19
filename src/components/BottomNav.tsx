@@ -90,7 +90,9 @@ export function BottomNav() {
           aria-haspopup="menu"
           aria-expanded={sheetOpen}
         >
-          <span className="tab-icon">⋯</span>
+          <span className="tab-icon">
+            <img className="tab-img" src="/brand/nav-more.png" alt="" aria-hidden width={28} height={28} />
+          </span>
           <span className="tab-label">More</span>
         </button>
       </nav>
