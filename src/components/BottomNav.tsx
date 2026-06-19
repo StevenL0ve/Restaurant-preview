@@ -18,7 +18,7 @@ interface Tab {
 const primary: Tab[] = [
   { to: "/", label: "Home", icon: "🏠", img: "/brand/nav-home.png", end: true },
   { to: "/messages", label: "Messages", icon: "💬", img: "/brand/nav-messages.png", badge: "unread" },
-  { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
+  { to: "/calendar", label: "Calendar", icon: "📅", img: "/brand/nav-calendar.png", badge: "requests" },
   { to: "/expenses", label: "Expenses", icon: "💵" },
 ];
 
