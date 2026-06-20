@@ -1,26 +1,320 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#4f46e5" />
-    <meta
-      name="description"
-      content="CoParent — a modern, fast, free co-parenting app for shared custody. Messages, calendar, expenses, and a secure record, all in one place."
-    />
-    <!-- PWA / installable app -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="CoParent" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corktown Wine &amp; Spirits — Ocean Springs, MS</title>
+  <meta name="description" content="A hand-curated neighborhood wine & spirits shop in the heart of downtown Ocean Springs, Mississippi. Boutique wines, craft bourbon, agave, champagne, and weekly tastings — with bottles chosen one at a time by owner Sean Perkins." />
+  <meta name="theme-color" content="#17120d" />
 
-    <title>CoParent — Calm, organized co-parenting</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- Social preview -->
+  <meta property="og:type" content="business.business" />
+  <meta property="og:title" content="Corktown Wine & Spirits — Ocean Springs, MS" />
+  <meta property="og:description" content="A hand-curated neighborhood wine & spirits shop in downtown Ocean Springs. Boutique wine, craft spirits, and weekly tastings." />
+  <meta property="og:locale" content="en_US" />
+
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LiquorStore",
+    "name": "Corktown Wine & Spirits",
+    "image": "assets/img/logo.svg",
+    "founder": "Sean Perkins",
+    "telephone": "+1-228-244-0004",
+    "email": "sean@corktownwine.com",
+    "url": "https://corktownwine.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "401 Porter Ave, Building A, Unit 3",
+      "addressLocality": "Ocean Springs",
+      "addressRegion": "MS",
+      "postalCode": "39564",
+      "addressCountry": "US"
+    },
+    "openingHours": ["Mo-Th 10:00-20:00", "Fr-Sa 10:00-21:00"],
+    "priceRange": "$$"
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ================= NAV ================= -->
+  <nav class="nav" id="nav">
+    <a class="nav__logo" href="#top" aria-label="Corktown Wine & Spirits — home">
+      <svg viewBox="0 0 300 86" role="img" aria-label="Corktown Wine & Spirits">
+        <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M44 14 a26 26 0 1 0 0 44" /><path d="M44 14 v44" /><path d="M30 60 h28" />
+        </g>
+        <text x="74" y="46" font-family="'Cormorant Garamond', Georgia, serif" font-size="40" letter-spacing="2.5" fill="currentColor" font-weight="600">ORKTOWN</text>
+        <text x="76" y="68" font-family="'Jost', Arial, sans-serif" font-size="12.5" letter-spacing="7" fill="currentColor" opacity="0.78">WINE &#183; SPIRITS</text>
+      </svg>
+    </a>
+
+    <ul class="nav__links" id="navLinks">
+      <li><a href="#about">The Shop</a></li>
+      <li><a href="#selection">Selection</a></li>
+      <li><a href="#tastings">Tastings</a></li>
+      <li><a href="#why">Why Corktown</a></li>
+      <li><a href="#visit">Visit</a></li>
+      <li><a class="btn btn--ghost nav__cta" href="#visit">Visit the Shop</a></li>
+    </ul>
+
+    <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero" id="top">
+    <div class="hero__bg" aria-hidden="true"></div>
+    <div class="wrap hero__inner">
+      <p class="eyebrow on-dark reveal">Downtown Ocean Springs &middot; Mississippi Gulf Coast</p>
+      <h1 class="reveal" data-d="1">The corner where <em>good bottles</em> meet good company.</h1>
+      <p class="hero__lead reveal" data-d="2">Corktown is a hand-curated wine &amp; spirits shop on Porter Avenue — boutique labels, small-batch bourbon, and a staff that actually remembers what you liked last time.</p>
+      <div class="hero__actions reveal" data-d="3">
+        <a class="btn btn--solid" href="#selection">Explore the Selection</a>
+        <a class="btn btn--ghost" href="#visit">Plan a Visit</a>
+      </div>
+    </div>
+    <div class="hero__scroll" aria-hidden="true"><span>Scroll</span><i></i></div>
+  </header>
+
+  <!-- ================= ABOUT ================= -->
+  <section class="section section--cream" id="about">
+    <div class="wrap about">
+      <div class="about__media reveal">
+        <img src="https://images.unsplash.com/photo-1566995541428-f2246c17cda1?auto=format&fit=crop&w=900&q=80" alt="Wine bottles lining the wooden shelves of the shop" loading="lazy" />
+        <div class="about__badge">
+          <strong>2025</strong>
+          <span>Newly opened on Porter Ave</span>
+        </div>
+      </div>
+      <div class="about__copy reveal" data-d="1">
+        <p class="eyebrow">The Shop</p>
+        <h2>A neighborhood cellar, not a liquor aisle.</h2>
+        <p>Corktown was built on a simple idea: you shouldn't need a sommelier's vocabulary to find a bottle you'll love. Every label on our shelves earns its place — tasted, vetted, and chosen one at a time, never by a distributor's spreadsheet.</p>
+        <p>Whether you're grabbing a Tuesday-night red, building a cellar, or hunting the perfect gift, we'll point you to something honest and well-made at a fair price — and tell you exactly why it's good.</p>
+        <p class="sig">Sean Perkins
+          <small>Owner &amp; Curator, Corktown Wine &amp; Spirits</small>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SELECTION ================= -->
+  <section class="section section--dark" id="selection">
+    <div class="wrap">
+      <div class="section__head center reveal">
+        <p class="eyebrow on-dark">What's on the Shelf</p>
+        <h2>Chosen by hand. Poured with intent.</h2>
+        <p>A tight, rotating selection — depth over clutter. If it's here, there's a reason.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card reveal">
+          <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 3h8M9 3l1 7a2 2 0 0 0 4 0l1-7M12 13v6M9 21h6"/></svg>
+          <span class="card__num">01</span>
+          <h3>Old &amp; New World Wine</h3>
+          <p>Burgundy and Barolo to coastal whites and natural pét-nats — reds, whites, rosé, and orange across every price point.</p>
+        </article>
+
+        <article class="card reveal" data-d="1">
+          <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 2h10l-1 5H8L7 2zM8 7v8a4 4 0 0 0 8 0V7M12 19v3M9 22h6"/></svg>
+          <span class="card__num">02</span>
+          <h3>Bourbon &amp; Whiskey</h3>
+          <p>Small-batch and single-barrel bourbon, rye, scotch, and the allocated pours worth chasing — curated for sippers and collectors alike.</p>
+        </article>
+
+        <article class="card reveal" data-d="2">
+          <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 22h14M12 22v-6M7 4h10l-1.5 8h-7L7 4zM6 4l-1-2M18 4l1-2"/></svg>
+          <span class="card__num">03</span>
+          <h3>Agave &amp; Craft Spirits</h3>
+          <p>Additive-free tequila, mezcal, gin, rum, and amari — plus the local distillers and oddball finds you won't see at the big-box store.</p>
+        </article>
+
+        <article class="card reveal" data-d="3">
+          <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 2h6l-1 6a2 2 0 0 1-4 0L9 2zM12 14v6M8 22h8M12 8v6M10 5l-2-3M14 5l2-3"/></svg>
+          <span class="card__num">04</span>
+          <h3>Champagne &amp; Sparkling</h3>
+          <p>Grower champagne, crémant, cava, and Franciacorta — always a few cold and ready, because some nights don't need a reason.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TASTINGS ================= -->
+  <section class="section section--dark" id="tastings" style="padding-top:0;">
+    <div class="wrap reveal">
+      <div class="feature">
+        <div class="feature__media" aria-hidden="true"></div>
+        <div class="feature__body">
+          <p class="eyebrow on-dark">Tastings &amp; Events</p>
+          <h2>Friday pours on Porter Ave.</h2>
+          <p style="color:rgba(246,241,231,.8)">Pull up a stool. Every week we open a handful of bottles, walk you through what makes them sing, and send you home with the ones you loved — no pressure, no pretense.</p>
+          <ul class="feature__list">
+            <li><b>Fri</b> Weekly walk-in tasting flight — five pours, rotating theme</li>
+            <li><b>Monthly</b> Winemaker &amp; distiller spotlight nights</li>
+            <li><b>Private</b> Host your party or build a custom case with us</li>
+          </ul>
+          <a class="btn btn--ghost" href="#visit">Ask about this week's flight</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHY ================= -->
+  <section class="section section--cream" id="why">
+    <div class="wrap">
+      <div class="section__head reveal">
+        <p class="eyebrow">Why Corktown</p>
+        <h2>The shop your neighbors send you to.</h2>
+      </div>
+      <div class="values">
+        <div class="value reveal">
+          <svg class="value__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5L12 16l-5 2.7 1-5.5-4-3.9L9.5 8 12 3z"/></svg>
+          <h3>Curated, not stocked</h3>
+          <p>No endless walls of the same six brands. Every bottle is here because someone tasted it and stood behind it.</p>
+        </div>
+        <div class="value reveal" data-d="1">
+          <svg class="value__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2v20M5 7l7-5 7 5M5 7v8a7 7 0 0 0 14 0V7"/></svg>
+          <h3>Honest guidance</h3>
+          <p>Tell us the dish, the budget, or the person — we'll find the match and never upsell you past it.</p>
+        </div>
+        <div class="value reveal" data-d="2">
+          <svg class="value__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 7h13v8H3zM16 10h3l2 3v2h-5M7 19a2 2 0 1 0 .01 0M18 19a2 2 0 1 0 .01 0"/></svg>
+          <h3>Local delivery &amp; gifts</h3>
+          <p>Same-day drop-off around Ocean Springs, gift wrapping, and custom cases ready for pickup.</p>
+        </div>
+        <div class="value reveal" data-d="3">
+          <svg class="value__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 11.5a8.5 8.5 0 1 1-5-7.7M21 4l-9 9-3-3"/></svg>
+          <h3>Right in the heart of town</h3>
+          <p>Walkable from downtown's galleries and restaurants — grab a bottle before dinner, or after the art walk.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VISIT ================= -->
+  <section class="section section--dark" id="visit">
+    <div class="wrap visit">
+      <div class="visit__info reveal">
+        <p class="eyebrow on-dark">Find Us</p>
+        <h2 style="font-size:clamp(2rem,4vw,3rem);margin-bottom:.4rem;">Stop in &amp; say hello.</h2>
+        <p style="color:rgba(246,241,231,.72);max-width:42ch;">You'll find us in Building A on Porter Avenue. Walk in with a question, walk out with the right bottle.</p>
+
+        <ul class="visit__rows">
+          <li>
+            <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div><span class="k">Address</span>
+              <a class="v" href="https://maps.google.com/?q=401+Porter+Ave,+Ocean+Springs,+MS+39564" target="_blank" rel="noopener">401 Porter Ave, Building A, Unit 3<br>Ocean Springs, MS 39564</a>
+            </div>
+          </li>
+          <li>
+            <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+            <div><span class="k">Call or Text</span>
+              <a class="v" href="tel:+12282440004">(228) 244-0004</a> &nbsp;·&nbsp; <a class="v" href="tel:+12283001423">(228) 300-1423</a>
+            </div>
+          </li>
+          <li>
+            <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h16v14H4zM4 6l8 6 8-6"/></svg>
+            <div><span class="k">Email</span>
+              <a class="v" href="mailto:sean@corktownwine.com">sean@corktownwine.com</a>
+            </div>
+          </li>
+          <li>
+            <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <div><span class="k">Hours</span>
+              <dl class="hours">
+                <dt>Mon &ndash; Thu</dt><dd>10am &ndash; 8pm</dd>
+                <dt>Fri &ndash; Sat</dt><dd>10am &ndash; 9pm</dd>
+                <dt>Sunday</dt><dd class="closed">Closed</dd>
+              </dl>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="visit__map reveal" data-d="1">
+        <iframe
+          title="Map to Corktown Wine & Spirits"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps?q=401%20Porter%20Ave%2C%20Ocean%20Springs%2C%20MS%2039564&output=embed">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="cta">
+    <div class="wrap reveal">
+      <h2>Your next favorite bottle is already on our shelf.</h2>
+      <p>Come find it. We'll have something cold and something worth talking about.</p>
+      <div class="cta__actions">
+        <a class="btn btn--solid" href="https://maps.google.com/?q=401+Porter+Ave,+Ocean+Springs,+MS+39564" target="_blank" rel="noopener">Get Directions</a>
+        <a class="btn btn--ghost" href="tel:+12282440004">Call the Shop</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer__top">
+        <div>
+          <div class="footer__logo">
+            <svg viewBox="0 0 300 86" role="img" aria-label="Corktown Wine & Spirits">
+              <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M44 14 a26 26 0 1 0 0 44" /><path d="M44 14 v44" /><path d="M30 60 h28" />
+              </g>
+              <text x="74" y="46" font-family="'Cormorant Garamond', Georgia, serif" font-size="40" letter-spacing="2.5" fill="currentColor" font-weight="600">ORKTOWN</text>
+              <text x="76" y="68" font-family="'Jost', Arial, sans-serif" font-size="12.5" letter-spacing="7" fill="currentColor" opacity="0.78">WINE &#183; SPIRITS</text>
+            </svg>
+          </div>
+          <p>A hand-curated wine &amp; spirits shop in the heart of downtown Ocean Springs, Mississippi.</p>
+        </div>
+
+        <div>
+          <h4>Visit</h4>
+          <ul>
+            <li><a href="#about">The Shop</a></li>
+            <li><a href="#selection">Selection</a></li>
+            <li><a href="#tastings">Tastings</a></li>
+            <li><a href="#visit">Hours &amp; Map</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li><a href="tel:+12282440004">(228) 244-0004</a></li>
+            <li><a href="mailto:sean@corktownwine.com">sean@corktownwine.com</a></li>
+            <li><a href="https://maps.google.com/?q=401+Porter+Ave,+Ocean+Springs,+MS+39564" target="_blank" rel="noopener">401 Porter Ave, Unit 3</a></li>
+            <li>Ocean Springs, MS 39564</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>&copy; <span id="year">2026</span> Corktown Wine &amp; Spirits. Please enjoy responsibly. Must be 21+.</span>
+        <div class="footer__social">
+          <a href="https://www.instagram.com/corktownwineos" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="mailto:sean@corktownwine.com" aria-label="Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM4 6l8 6 8-6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
 </html>
