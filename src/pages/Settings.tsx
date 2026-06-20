@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
+import { useTier, setTier } from "../lib/subscription";
 
 export function Settings() {
   const { state, exportAll, resetDemo, deleteAccount } = useStore();
   const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
+  const tier = useTier();
+  const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const counts = {
@@ -55,24 +59,33 @@ export function Settings() {
       )}
 
       <section className="card settings-card">
-        <h2>Pricing</h2>
-        <p className="muted">
-          CoParent is <strong>free</strong>. No per-parent subscription, no
-          annual renewal traps, no charges after you stop using it. We never
-          require your co-parent's permission for you to leave.
-        </p>
-        <div className="price-row">
-          <div className="price-col">
-            <span className="price-name">CoParent</span>
-            <span className="price-value pos">$0</span>
-            <span className="muted small">forever</span>
-          </div>
-          <div className="price-col faded">
-            <span className="price-name">Other apps</span>
-            <span className="price-value">$99+/yr</span>
-            <span className="muted small">per parent, auto-renewing</span>
-          </div>
-        </div>
+        <h2>Plan</h2>
+        {tier === "pro" ? (
+          <>
+            <p className="muted">
+              You're on <strong>CoParent Pro</strong> — one subscription for the
+              whole family. Manage or cancel anytime in your App Store / Google
+              Play settings.
+            </p>
+            <div className="form-actions">
+              <span className="pill pill-ok">Pro active ⭐️</span>
+              <button className="btn btn-sm" onClick={() => setTier("free")}>Switch to Free (demo)</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="muted">
+              Free to use. Upgrade to <strong>Pro</strong> for unlimited history,
+              court-ready exports, attachments, and the AI assistant — one price
+              per family ($7.99/mo or $59.99/yr), not per parent like the others.
+            </p>
+            <div className="form-actions">
+              <button className="btn btn-primary" onClick={() => navigate("/upgrade")}>
+                Upgrade to Pro
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section className="card settings-card">

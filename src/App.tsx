@@ -11,6 +11,7 @@ import { Expenses } from "./pages/Expenses";
 import { Journal } from "./pages/Journal";
 import { InfoBank } from "./pages/InfoBank";
 import { Packing } from "./pages/Packing";
+import { Paywall } from "./pages/Paywall";
 import { Assistant } from "./pages/Assistant";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/journal" element={<Journal />} />
             <Route path="/info" element={<InfoBank />} />
             <Route path="/packing" element={<Packing />} />
+            <Route path="/upgrade" element={<Paywall />} />
             <Route path="/assistant" element={<Assistant />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
