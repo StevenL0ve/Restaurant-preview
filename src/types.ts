@@ -91,6 +91,15 @@ export interface InfoRecord {
   value: string;
 }
 
+// "Never forget the teddy bear" — a shared checklist of what needs to travel
+// between homes at the next exchange.
+export interface PackingItem {
+  id: ID;
+  label: string;
+  packed: boolean;
+  createdAt: string;
+}
+
 export interface AppState {
   people: Person[];
   messages: Message[];
@@ -99,6 +108,7 @@ export interface AppState {
   expenses: Expense[];
   journal: JournalEntry[];
   info: InfoRecord[];
+  packing: PackingItem[];
   meId: ID;
   coParentId: ID;
 }

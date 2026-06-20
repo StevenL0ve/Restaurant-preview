@@ -25,6 +25,7 @@ const primary: Tab[] = [
 const more = [
   { to: "/assistant", label: "Ask CoParent", icon: "✨" },
   { to: "/journal", label: "Journal", icon: "📔" },
+  { to: "/packing", label: "Packing list", icon: "🧳" },
   { to: "/info", label: "Info Bank", icon: "🗂️" },
   { to: "/search", label: "Search", icon: "🔍" },
   { to: "/settings", label: "Settings", icon: "⚙️" },

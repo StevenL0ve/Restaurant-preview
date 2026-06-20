@@ -21,7 +21,11 @@ const STORAGE_KEY = "coparently.v1";
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as AppState;
+    if (raw) {
+      // Backfill any keys added in newer versions so older saved state can't
+      // crash the app (e.g. the packing list added after launch).
+      return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
+    }
   } catch {
     /* fall through to seed */
   }
@@ -51,6 +55,11 @@ interface Store {
   // journal
   addJournal: (e: Omit<JournalEntry, "id">) => void;
   deleteJournal: (id: string) => void;
+  // packing list
+  addPackingItem: (label: string) => void;
+  togglePacked: (id: string) => void;
+  deletePackingItem: (id: string) => void;
+  clearPacked: () => void;
   // account / data ownership
   exportAll: () => void;
   resetDemo: () => void;
@@ -158,6 +167,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...s,
           journal: s.journal.filter((j) => j.id !== id),
         })),
+
+      addPackingItem: (label) =>
+        update((s) =>
+          label.trim()
+            ? {
+                ...s,
+                packing: [
+                  ...s.packing,
+                  { id: uid("pk"), label: label.trim(), packed: false, createdAt: new Date().toISOString() },
+                ],
+              }
+            : s,
+        ),
+
+      togglePacked: (id) =>
+        update((s) => ({
+          ...s,
+          packing: s.packing.map((p) => (p.id === id ? { ...p, packed: !p.packed } : p)),
+        })),
+
+      deletePackingItem: (id) =>
+        update((s) => ({ ...s, packing: s.packing.filter((p) => p.id !== id) })),
+
+      clearPacked: () =>
+        update((s) => ({ ...s, packing: s.packing.filter((p) => !p.packed) })),
 
       exportAll: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], {

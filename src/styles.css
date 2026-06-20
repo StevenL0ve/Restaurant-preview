@@ -616,3 +616,12 @@ a { color: inherit; }
 .assistant-input:focus { outline: none; border-color: var(--brand); }
 
 .tab-img { width: 28px; height: 28px; object-fit: contain; display: block; }
+
+/* ---------- Packing list ---------- */
+.pack-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pack-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.pack-item:last-child { border-bottom: none; }
+.pack-check { display: flex; align-items: center; gap: 11px; font-size: 14.5px; cursor: pointer; }
+.pack-check input { width: 19px; height: 19px; flex-shrink: 0; }
+.pack-item.done .pack-check span { text-decoration: line-through; color: var(--muted); }
+.pack-foot { margin: 14px 0 0; }

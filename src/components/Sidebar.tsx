@@ -17,6 +17,7 @@ const items: NavItem[] = [
   { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
   { to: "/expenses", label: "Expenses", icon: "💵" },
   { to: "/journal", label: "Journal", icon: "📔" },
+  { to: "/packing", label: "Packing list", icon: "🧳" },
   { to: "/info", label: "Info Bank", icon: "🗂️" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ];

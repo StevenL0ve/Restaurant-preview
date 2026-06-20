@@ -133,5 +133,11 @@ export function buildSeed(): AppState {
       { id: "i6", childId: KID2, kind: "clothing", label: "Shoe size", value: "Youth 1" },
       { id: "i7", childId: KID1, kind: "clothing", label: "Shoe size", value: "13 (kids)" },
     ],
+    packing: [
+      { id: "pk1", label: "Ava's stuffed rabbit", packed: false, createdAt: ago(60 * 5) },
+      { id: "pk2", label: "Leo's rain jacket", packed: false, createdAt: ago(60 * 5) },
+      { id: "pk3", label: "School library books", packed: true, createdAt: ago(60 * 9) },
+      { id: "pk4", label: "Inhaler + spacer", packed: false, createdAt: ago(60 * 4) },
+    ],
   };
 }

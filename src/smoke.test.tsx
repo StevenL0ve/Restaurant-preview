@@ -52,6 +52,8 @@ describe("app smoke test", () => {
     ["/expenses", "Expenses"],
     ["/journal", "Journal"],
     ["/info", "Info Bank"],
+    ["/packing", "Packing list"],
+    ["/assistant", "Ask CoParent"],
     ["/settings", "Delete account"],
   ])("renders %s without crashing", (path, marker) => {
     seedSession();

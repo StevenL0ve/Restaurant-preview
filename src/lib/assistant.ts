@@ -155,6 +155,21 @@ export function answerQuery(state: AppState, raw: string, now = new Date()): Ass
     }
   }
 
+  // 5) Packing list: "what do I need to pack / bring?"
+  if (/\bpack\b|\bpacking\b|\bbring\b|\bforget\b/.test(q)) {
+    const todo = state.packing.filter((p) => !p.packed);
+    if (todo.length) {
+      return {
+        text: `${todo.length} thing${todo.length === 1 ? "" : "s"} still to pack:`,
+        detail: todo.map((p) => p.label).join(", "),
+        route: "/packing",
+      };
+    }
+    if (state.packing.length) {
+      return { text: "Everything on the packing list is packed. ✅", route: "/packing" };
+    }
+  }
+
   // Fallback: global search.
   const hits = search(state, tokens.join(" ") || q);
   if (hits.length) {
