@@ -625,3 +625,11 @@ a { color: inherit; }
 .pack-check input { width: 19px; height: 19px; flex-shrink: 0; }
 .pack-item.done .pack-check span { text-decoration: line-through; color: var(--muted); }
 .pack-foot { margin: 14px 0 0; }
+
+/* ---------- Info Bank editing ---------- */
+.info-value { display: inline-flex; align-items: center; gap: 8px; }
+.info-del { border: none; background: none; color: var(--muted); font-size: 12px; padding: 0 2px; line-height: 1; cursor: pointer; }
+.info-del:hover { color: var(--red); }
+.add-detail { margin-top: 8px; }
+.info-form { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.info-form .form-grid { grid-template-columns: 1fr; gap: 10px; }

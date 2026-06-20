@@ -12,6 +12,7 @@ import type {
   Expense,
   JournalEntry,
   Message,
+  InfoRecord,
 } from "../types";
 import { buildSeed } from "./seed";
 import { analyzeTone } from "../lib/tone";
@@ -55,6 +56,9 @@ interface Store {
   // journal
   addJournal: (e: Omit<JournalEntry, "id">) => void;
   deleteJournal: (id: string) => void;
+  // info bank
+  addInfo: (r: Omit<InfoRecord, "id">) => void;
+  deleteInfo: (id: string) => void;
   // packing list
   addPackingItem: (label: string) => void;
   togglePacked: (id: string) => void;
@@ -167,6 +171,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...s,
           journal: s.journal.filter((j) => j.id !== id),
         })),
+
+      addInfo: (r) =>
+        update((s) => ({ ...s, info: [...s.info, { ...r, id: uid("i") }] })),
+
+      deleteInfo: (id) =>
+        update((s) => ({ ...s, info: s.info.filter((r) => r.id !== id) })),
 
       addPackingItem: (label) =>
         update((s) =>
