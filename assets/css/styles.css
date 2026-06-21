@@ -93,7 +93,7 @@ p { margin: 0 0 1em; }
 .nav__links a { color: var(--cream); font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; position: relative; padding: .2rem 0; opacity: .92; font-weight: 500; }
 .nav__links a:not(.btn)::after { content: ""; position: absolute; left: 0; bottom: -4px; height: 2px; width: 0; background: var(--gold); transition: width .3s var(--ease); }
 .nav__links a:not(.btn):hover::after { width: 100%; }
-.nav__cta { padding: .72rem 1.7rem; }
+.nav__cta { padding: .85rem 2rem; line-height: 1; }
 .nav__toggle { display: none; background: none; border: 0; cursor: pointer; padding: .4rem; flex-direction: column; gap: 5px; }
 .nav__toggle span { width: 26px; height: 2px; background: var(--cream); transition: .3s var(--ease); display: block; }
 
@@ -143,7 +143,7 @@ p { margin: 0 0 1em; }
 
 /* ---------- Sections ---------- */
 section { position: relative; }
-.section { padding: clamp(4.5rem, 9vw, 8rem) 0; }
+.section { padding: clamp(3.4rem, 6vw, 5.5rem) 0; }
 .section--dark { background: var(--ink); color: var(--cream); }
 .section--cream { background: var(--cream); color: var(--ink); }
 .section__head { max-width: 62ch; margin-bottom: 3.2rem; }
@@ -200,11 +200,17 @@ section { position: relative; }
 .gallery__item figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.4rem 1.3rem .9rem; background: linear-gradient(transparent, rgba(15,11,8,.85)); color: var(--cream); font-family: var(--serif); font-size: 1.2rem; font-style: italic; }
 
 /* ---------- Pour reel (cinematic video band) ---------- */
-.reel { position: relative; min-height: 74vh; display: flex; align-items: center; overflow: hidden; background: #0d0a07; }
+.reel { position: relative; min-height: 60vh; display: flex; align-items: center; overflow: hidden; background: #0d0a07; }
 .reel__media { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 .reel__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity .6s var(--ease); }
-.reel::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(90deg, rgba(13,10,7,.85) 0%, rgba(13,10,7,.5) 45%, rgba(13,10,7,.25) 100%); }
-.reel__overlay { position: relative; z-index: 3; width: 100%; padding-block: 4rem; }
+.reel::after {
+  content: ""; position: absolute; inset: 0; z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(13,10,7,.92) 0%, rgba(13,10,7,.6) 55%, rgba(13,10,7,.55) 100%),
+    linear-gradient(180deg, rgba(13,10,7,.35), rgba(13,10,7,.6)),
+    radial-gradient(60% 60% at 80% 50%, rgba(122,34,51,.35), transparent 70%);
+}
+.reel__overlay { position: relative; z-index: 3; width: 100%; padding-block: 3rem; }
 .reel__overlay h2 { font-size: clamp(2.2rem, 6vw, 4.2rem); color: var(--cream); max-width: 16ch; letter-spacing: -.01em; }
 .reel__sub { color: rgba(247,241,230,.82); font-size: 1.1rem; margin-top: 1rem; max-width: 38ch; }
 
@@ -293,9 +299,10 @@ section { position: relative; }
 .visit__card:hover .visit__go .arrow { transform: translateX(4px); }
 .visit__go .arrow { transition: transform .3s var(--bounce); }
 
-/* ---------- Reveal ---------- */
-.reveal { opacity: 0; transform: translateY(30px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
-.reveal.in { opacity: 1; transform: none; }
+/* ---------- Reveal (JS-gated so content is always visible without JS) ---------- */
+.reveal { transition: opacity .8s var(--ease), transform .8s var(--ease); }
+.js .reveal { opacity: 0; transform: translateY(26px); }
+.js .reveal.in { opacity: 1; transform: none; }
 .reveal[data-d="1"]{transition-delay:.08s;} .reveal[data-d="2"]{transition-delay:.16s;} .reveal[data-d="3"]{transition-delay:.24s;}
 
 /* ---------- Responsive ---------- */
