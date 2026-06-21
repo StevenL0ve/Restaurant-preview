@@ -1,0 +1,170 @@
+/* Self-contained styling for the demo remote screen. Rendered full-bleed so it
+   reads as its own app even inside the host shell. */
+.remote-app {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 18px 28px;
+  background: radial-gradient(120% 80% at 50% 0%, #1c2336 0%, #0b0e16 60%);
+  color: #eef2ff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.remote-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.remote-head h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+.remote-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #9aa6c4;
+}
+.remote-sub strong {
+  color: #7cc4ff;
+}
+.remote-device {
+  background: #1a2236;
+  color: #eef2ff;
+  border: 1px solid #2c3852;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.remote-row {
+  display: flex;
+  gap: 10px;
+}
+.remote-row .rk {
+  flex: 1;
+}
+
+.rk {
+  appearance: none;
+  border: 1px solid #2c3852;
+  background: linear-gradient(#202a40, #161d2e);
+  color: #eef2ff;
+  border-radius: 14px;
+  padding: 16px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+.rk:active {
+  transform: translateY(1px) scale(0.98);
+  background: #2a3756;
+}
+.rk.power {
+  color: #ff7a7a;
+  flex: 0 0 64px;
+  font-size: 20px;
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    ".    up    ."
+    "left ok    right"
+    ".    down  .";
+  gap: 10px;
+  max-width: 280px;
+  margin: 4px auto;
+  width: 100%;
+}
+.dpad .up { grid-area: up; }
+.dpad .down { grid-area: down; }
+.dpad .left { grid-area: left; }
+.dpad .right { grid-area: right; }
+.dpad .ok {
+  grid-area: ok;
+  border-radius: 50%;
+  background: linear-gradient(#2b6cff, #1d4fd0);
+  border-color: #3f7bff;
+}
+
+.remote-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.app-chip {
+  appearance: none;
+  border: 1px solid #2c3852;
+  background: #18203200;
+  color: #cfe0ff;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.app-chip:active {
+  background: #243250;
+}
+
+.ai-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+.ai-bar input {
+  flex: 1;
+  background: #11192b;
+  border: 1px solid #2c3852;
+  border-radius: 12px;
+  padding: 13px 14px;
+  color: #eef2ff;
+  font-size: 14px;
+}
+.ai-bar input::placeholder {
+  color: #6c779a;
+}
+.ai-send {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 0 18px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #04122e;
+  background: linear-gradient(#6db6ff, #2b8bff);
+  cursor: pointer;
+}
+.ai-send:disabled {
+  opacity: 0.6;
+}
+
+.remote-log {
+  margin-top: 4px;
+  background: #0a0f1c;
+  border: 1px solid #1d2740;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-height: 96px;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #b9c6e6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.log-empty {
+  margin: 0;
+  color: #5a688c;
+}
+.log-line {
+  white-space: pre-wrap;
+}

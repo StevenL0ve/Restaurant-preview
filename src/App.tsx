@@ -10,6 +10,7 @@ import { Journal } from "./pages/Journal";
 import { InfoBank } from "./pages/InfoBank";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
+import { DemoRemote } from "./remote/ui/DemoRemote";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/info" element={<InfoBank />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/remote" element={<DemoRemote />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
