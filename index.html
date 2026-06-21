@@ -222,6 +222,25 @@
     </div>
   </section>
 
+  <!-- ============ POUR REEL ============ -->
+  <section class="reel" id="reel" aria-label="Wine pouring at the shop">
+    <div class="reel__media" style="background-image:url('https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80');">
+      <!-- Self-hosted footage wins when present; Pexels clip is the fallback; the photo behind shows if neither loads. -->
+      <video class="reel__video" autoplay muted loop playsinline preload="metadata"
+             poster="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80" aria-hidden="true">
+        <source src="assets/video/pour.mp4" type="video/mp4" />
+        <source src="https://videos.pexels.com/video-files/1003933/1003933-hd_1920_1080_25fps.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="reel__overlay">
+      <div class="wrap">
+        <p class="eyebrow on-dark">The Pour</p>
+        <h2 class="reveal">Every bottle has<br>something to say.</h2>
+        <p class="reel__sub reveal" data-d="1">We help you hear it — one honest pour at a time.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ TASTINGS ============ -->
   <section class="section section--dark" id="tastings" style="padding-top:0;">
     <div class="wrap reveal">

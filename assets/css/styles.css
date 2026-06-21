@@ -240,6 +240,15 @@ section { position: relative; }
 .gallery__item:hover img { transform: scale(1.07); }
 .gallery__item figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.4rem 1.3rem .9rem; background: linear-gradient(transparent, rgba(15,11,8,.85)); color: var(--cream); font-family: var(--serif); font-size: 1.2rem; font-style: italic; }
 
+/* ---------- Pour reel (cinematic video band) ---------- */
+.reel { position: relative; min-height: 74vh; display: flex; align-items: center; overflow: hidden; background: #0d0a07; }
+.reel__media { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+.reel__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity .6s var(--ease); }
+.reel::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(90deg, rgba(13,10,7,.85) 0%, rgba(13,10,7,.5) 45%, rgba(13,10,7,.25) 100%); }
+.reel__overlay { position: relative; z-index: 3; width: 100%; padding-block: 4rem; }
+.reel__overlay h2 { font-size: clamp(2.2rem, 6vw, 4.2rem); color: var(--cream); max-width: 16ch; letter-spacing: -.01em; }
+.reel__sub { color: rgba(247,241,230,.82); font-size: 1.1rem; margin-top: 1rem; max-width: 38ch; }
+
 /* ---------- Feature / tasting ---------- */
 .feature { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .feature__media { min-height: 400px; background-image: linear-gradient(120deg, rgba(15,11,8,.2), rgba(122,34,51,.4)), url("https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=1400&q=80"); background-size: cover; background-position: center; }

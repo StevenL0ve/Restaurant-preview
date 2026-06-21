@@ -133,12 +133,15 @@
     }, { passive: false });
   }
 
-  /* Hide hero <video> if it never loads, so the animated poster stays clean */
-  var vid = document.querySelector(".hero__video");
-  if (vid) {
-    vid.addEventListener("error", function () { vid.style.display = "none"; }, true);
-    setTimeout(function () { if (vid.readyState < 2) vid.style.display = "none"; }, 3000);
-  }
+  /* If a background <video> can't load any source, reveal the layer behind it.
+     (Fires only on a real failure — remote clips are allowed to buffer.) */
+  document.querySelectorAll(".hero__video, .reel__video").forEach(function (v) {
+    function fail() { v.style.opacity = "0"; v.style.display = v.classList.contains("hero__video") ? "none" : ""; }
+    v.addEventListener("error", fail, true);
+    /* <source> error bubbles to the element; also catch when the last source fails */
+    var sources = v.querySelectorAll("source");
+    if (sources.length) sources[sources.length - 1].addEventListener("error", fail);
+  });
 
   /* Footer year */
   var y = document.getElementById("year");
