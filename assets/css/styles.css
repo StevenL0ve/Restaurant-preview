@@ -93,7 +93,7 @@ p { margin: 0 0 1em; }
 .nav__links a { color: var(--cream); font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; position: relative; padding: .2rem 0; opacity: .92; font-weight: 500; }
 .nav__links a:not(.btn)::after { content: ""; position: absolute; left: 0; bottom: -4px; height: 2px; width: 0; background: var(--gold); transition: width .3s var(--ease); }
 .nav__links a:not(.btn):hover::after { width: 100%; }
-.nav__cta { padding: .65rem 1.25rem; }
+.nav__cta { padding: .72rem 1.7rem; }
 .nav__toggle { display: none; background: none; border: 0; cursor: pointer; padding: .4rem; flex-direction: column; gap: 5px; }
 .nav__toggle span { width: 26px; height: 2px; background: var(--cream); transition: .3s var(--ease); display: block; }
 
