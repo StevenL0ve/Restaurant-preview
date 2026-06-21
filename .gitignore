@@ -21,3 +21,4 @@ fastlane/*.log
 *.mobileprovision
 *.p12
 ios/App/Pods/
+preview-corktown.html
