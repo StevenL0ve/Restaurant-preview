@@ -142,7 +142,7 @@ export function AddWine() {
 
         <fieldset className="field">
           <span className="field-legend">Style</span>
-          <div className="chip-row">
+          <div className="chip-row wrap">
             {ALL_COLORS.map((c) => (
               <button
                 key={c}

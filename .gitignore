@@ -21,3 +21,7 @@ fastlane/*.log
 *.mobileprovision
 *.p12
 ios/App/Pods/
+
+# Local screenshot scratch
+shots/
+scripts/shots*.mjs
