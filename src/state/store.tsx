@@ -6,25 +6,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type {
-  AppState,
-  CalEvent,
-  Expense,
-  JournalEntry,
-  Message,
-  InfoRecord,
-} from "../types";
+import type { AppState, Outing, Wine } from "../types";
 import { buildSeed } from "./seed";
-import { analyzeTone } from "../lib/tone";
 
-const STORAGE_KEY = "coparently.v1";
+const STORAGE_KEY = "mycellar.v1";
 
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       // Backfill any keys added in newer versions so older saved state can't
-      // crash the app (e.g. the packing list added after launch).
+      // crash the app.
       return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
     }
   } catch {
@@ -39,35 +31,16 @@ function uid(prefix: string): string {
 
 interface Store {
   state: AppState;
-  // messaging
-  sendMessage: (body: string) => void;
-  markAllRead: () => void;
-  saveDraft: (body: string) => void;
-  clearDraft: () => void;
-  // calendar
-  addEvent: (e: Omit<CalEvent, "id">) => void;
-  addEvents: (es: Omit<CalEvent, "id">[]) => void;
-  respondToRequest: (id: string, accept: boolean) => void;
-  deleteEvent: (id: string) => void;
-  // expenses
-  addExpense: (e: Omit<Expense, "id">) => void;
-  addExpenses: (es: Omit<Expense, "id">[]) => void;
-  setExpenseStatus: (id: string, status: Expense["status"]) => void;
-  // journal
-  addJournal: (e: Omit<JournalEntry, "id">) => void;
-  deleteJournal: (id: string) => void;
-  // info bank
-  addInfo: (r: Omit<InfoRecord, "id">) => void;
-  deleteInfo: (id: string) => void;
-  // packing list
-  addPackingItem: (label: string) => void;
-  togglePacked: (id: string) => void;
-  deletePackingItem: (id: string) => void;
-  clearPacked: () => void;
-  // account / data ownership
+  addWine: (w: Omit<Wine, "id" | "createdAt">) => string;
+  updateWine: (id: string, patch: Partial<Wine>) => void;
+  deleteWine: (id: string) => void;
+  // Move a wishlist bottle into the rack ("I bought it").
+  markPurchased: (id: string, price?: number | null) => void;
+  addOuting: (o: Omit<Outing, "id">) => string;
+  deleteOuting: (id: string) => void;
   exportAll: () => void;
   resetDemo: () => void;
-  deleteAccount: () => void;
+  clearAll: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -85,137 +58,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return {
       state,
 
-      sendMessage: (body) =>
-        update((s) => {
-          const tone = analyzeTone(body).level;
-          const msg: Message = {
-            id: uid("m"),
-            fromId: s.meId,
-            body: body.trim(),
-            createdAt: new Date().toISOString(),
-            readAt: null,
-            tone,
-            edited: false,
-          };
-          return { ...s, messages: [...s.messages, msg], draft: null };
-        }),
-
-      markAllRead: () =>
+      addWine: (w) => {
+        const id = uid("w");
         update((s) => ({
           ...s,
-          messages: s.messages.map((m) =>
-            m.fromId !== s.meId && !m.readAt
-              ? { ...m, readAt: new Date().toISOString() }
-              : m,
+          wines: [{ ...w, id, createdAt: new Date().toISOString() }, ...s.wines],
+        }));
+        return id;
+      },
+
+      updateWine: (id, patch) =>
+        update((s) => ({
+          ...s,
+          wines: s.wines.map((w) => (w.id === id ? { ...w, ...patch } : w)),
+        })),
+
+      deleteWine: (id) =>
+        update((s) => ({ ...s, wines: s.wines.filter((w) => w.id !== id) })),
+
+      markPurchased: (id, price) =>
+        update((s) => ({
+          ...s,
+          wines: s.wines.map((w) =>
+            w.id === id
+              ? { ...w, status: "rack", price: price ?? w.price }
+              : w,
           ),
         })),
 
-      saveDraft: (body) =>
-        update((s) => ({
-          ...s,
-          draft: body.trim()
-            ? { to: s.coParentId, body, updatedAt: new Date().toISOString() }
-            : null,
-        })),
+      addOuting: (o) => {
+        const id = uid("o");
+        update((s) => ({ ...s, outings: [{ ...o, id }, ...s.outings] }));
+        return id;
+      },
 
-      clearDraft: () => update((s) => ({ ...s, draft: null })),
-
-      addEvent: (e) =>
-        update((s) => ({ ...s, events: [...s.events, { ...e, id: uid("e") }] })),
-
-      addEvents: (es) =>
-        update((s) => ({
-          ...s,
-          events: [...s.events, ...es.map((e) => ({ ...e, id: uid("e") }))],
-        })),
-
-      respondToRequest: (id, accept) =>
-        update((s) => ({
-          ...s,
-          events: s.events.map((e) =>
-            e.id === id
-              ? { ...e, requestStatus: accept ? "accepted" : "declined" }
-              : e,
-          ),
-        })),
-
-      deleteEvent: (id) =>
-        update((s) => ({ ...s, events: s.events.filter((e) => e.id !== id) })),
-
-      addExpense: (e) =>
-        update((s) => ({
-          ...s,
-          expenses: [{ ...e, id: uid("x") }, ...s.expenses],
-        })),
-
-      addExpenses: (es) =>
-        update((s) => ({
-          ...s,
-          expenses: [...es.map((e) => ({ ...e, id: uid("x") })), ...s.expenses],
-        })),
-
-      setExpenseStatus: (id, status) =>
-        update((s) => ({
-          ...s,
-          expenses: s.expenses.map((x) => (x.id === id ? { ...x, status } : x)),
-        })),
-
-      addJournal: (e) =>
-        update((s) => ({
-          ...s,
-          journal: [{ ...e, id: uid("j") }, ...s.journal],
-        })),
-
-      deleteJournal: (id) =>
-        update((s) => ({
-          ...s,
-          journal: s.journal.filter((j) => j.id !== id),
-        })),
-
-      addInfo: (r) =>
-        update((s) => ({ ...s, info: [...s.info, { ...r, id: uid("i") }] })),
-
-      deleteInfo: (id) =>
-        update((s) => ({ ...s, info: s.info.filter((r) => r.id !== id) })),
-
-      addPackingItem: (label) =>
-        update((s) =>
-          label.trim()
-            ? {
-                ...s,
-                packing: [
-                  ...s.packing,
-                  { id: uid("pk"), label: label.trim(), packed: false, createdAt: new Date().toISOString() },
-                ],
-              }
-            : s,
-        ),
-
-      togglePacked: (id) =>
-        update((s) => ({
-          ...s,
-          packing: s.packing.map((p) => (p.id === id ? { ...p, packed: !p.packed } : p)),
-        })),
-
-      deletePackingItem: (id) =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => p.id !== id) })),
-
-      clearPacked: () =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => !p.packed) })),
+      deleteOuting: (id) =>
+        update((s) => ({ ...s, outings: s.outings.filter((o) => o.id !== id) })),
 
       exportAll: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], {
           type: "application/json",
         });
-        triggerDownload(blob, "coparent-export.json");
+        triggerDownload(blob, "my-cellar-export.json");
       },
 
       resetDemo: () => setState(buildSeed()),
 
-      deleteAccount: () => {
-        localStorage.removeItem(STORAGE_KEY);
-        setState(buildSeed());
-      },
+      clearAll: () => setState({ wines: [], outings: [] }),
     };
   }, [state]);
 
@@ -240,19 +129,14 @@ export function useStore(): Store {
 }
 
 // Derived selectors used across pages.
-export function unreadCount(s: AppState): number {
-  return s.messages.filter((m) => m.fromId !== s.meId && !m.readAt).length;
+export function rackWines(s: AppState): Wine[] {
+  return s.wines.filter((w) => w.status === "rack");
 }
 
-export function pendingRequests(s: AppState): CalEvent[] {
-  return s.events.filter((e) => e.requestStatus === "pending");
+export function wishlistWines(s: AppState): Wine[] {
+  return s.wines.filter((w) => w.status === "wishlist");
 }
 
-// Running balance: positive means the co-parent owes you.
-export function expenseBalance(s: AppState): number {
-  return s.expenses.reduce((bal, x) => {
-    if (x.status === "settled") return bal;
-    const otherOwes = x.amount * x.splitOtherShare;
-    return x.paidById === s.meId ? bal + otherOwes : bal - otherOwes;
-  }, 0);
+export function cellarValue(s: AppState): number {
+  return rackWines(s).reduce((sum, w) => sum + (w.price ?? 0), 0);
 }

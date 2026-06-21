@@ -1,16 +1,14 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from "react";
 
-// Phase-1 authentication: real email/password accounts + session, stored
-// locally and structured so the calls swap cleanly to Supabase in Phase 2
-// (signUp/signIn/signOut become Supabase auth calls; the component tree
-// doesn't change). Passwords are SHA-256 hashed before storage — never kept
-// in plain text — though real security arrives with the hosted backend.
+// Local accounts + session for the preview build. Passwords are SHA-256 hashed
+// before storage — never kept in plain text. The signUp/signIn/signOut shape is
+// deliberately backend-agnostic so it swaps to a hosted auth provider later
+// without touching the component tree.
 
 interface Account {
   name: string;
@@ -23,9 +21,8 @@ export interface SessionUser {
   email: string;
 }
 
-const ACCOUNTS_KEY = "coparent.accounts.v1";
-const SESSION_KEY = "coparent.session.v1";
-const BIO_KEY = "coparent.biometric.v1";
+const ACCOUNTS_KEY = "mycellar.accounts.v1";
+const SESSION_KEY = "mycellar.session.v1";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -43,42 +40,24 @@ function saveAccounts(a: Record<string, Account>) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a));
 }
 
-// Is a platform biometric (Face ID / Touch ID) usable here? On a real device
-// the native build answers via the Capacitor biometric plugin; in the browser
-// we detect a WebAuthn platform authenticator.
-async function biometricAvailable(): Promise<boolean> {
-  try {
-    const w = window as unknown as { PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> } };
-    if (w.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) {
-      return await w.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    }
-  } catch {
-    /* not available */
-  }
-  return false;
-}
-
 interface AuthContext {
   user: SessionUser | null;
   ready: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => void;
-  // biometric
-  bioAvailable: boolean;
-  bioEnabled: boolean;
-  setBioEnabled: (on: boolean) => void;
-  bioUnlock: () => Promise<boolean>;
+  // A no-friction way to explore the app without making an account.
+  continueAsGuest: () => void;
 }
 
 const Ctx = createContext<AuthContext | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Read the saved session synchronously so there's no login flash and SSR
-  // reflects the real state immediately.
+  // Read the saved session synchronously so there's no sign-in flash.
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       const email = localStorage.getItem(SESSION_KEY);
+      if (email === "guest") return { name: "Guest", email: "guest" };
       if (email) {
         const acct = loadAccounts()[email];
         if (acct) return { name: acct.name, email: acct.email };
@@ -88,21 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   });
-  const ready = true;
-  const [bioAvailable, setBioAvailable] = useState(false);
-  const [bioEnabled, setBioEnabledState] = useState(
-    () => localStorage.getItem(BIO_KEY) === "1",
-  );
-
-  useEffect(() => {
-    biometricAvailable().then(setBioAvailable);
-  }, []);
 
   const value: AuthContext = {
     user,
-    ready,
-    bioAvailable,
-    bioEnabled,
+    ready: true,
 
     signUp: async (name, email, password) => {
       const key = email.trim().toLowerCase();
@@ -137,31 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     },
 
-    setBioEnabled: (on) => {
-      localStorage.setItem(BIO_KEY, on ? "1" : "0");
-      setBioEnabledState(on);
-    },
-
-    // Re-affirm the device owner. On native this calls the biometric plugin;
-    // the WebAuthn path covers Face ID/Touch ID in the browser. Falls back to
-    // "true" only when no authenticator exists so the user isn't locked out.
-    bioUnlock: async () => {
-      if (!(await biometricAvailable())) return true;
-      try {
-        const cred = await navigator.credentials.get({
-          publicKey: {
-            challenge: crypto.getRandomValues(new Uint8Array(32)),
-            timeout: 60000,
-            userVerification: "required",
-            rpId: location.hostname,
-            allowCredentials: [],
-          },
-        });
-        return !!cred;
-      } catch {
-        // User cancelled or no enrolled credential — treat as failed unlock.
-        return false;
-      }
+    continueAsGuest: () => {
+      localStorage.setItem(SESSION_KEY, "guest");
+      setUser({ name: "Guest", email: "guest" });
     },
   };
 

@@ -1,114 +1,74 @@
-// Core domain types for CoParent.
-// Everything is plain data so it can be serialized to localStorage and exported
-// as JSON at any time (one of the things OurFamilyWizard users say they can't do).
+// Core domain types for My Cellar.
+// Everything is plain serializable data so the whole collection lives in
+// localStorage today and moves cleanly to a hosted backend later, and so a
+// user can export their cellar as JSON at any time — they own their data.
 
 export type ID = string;
 
-export interface Person {
-  id: ID;
-  name: string;
-  role: "me" | "coparent" | "child" | "professional";
-  color: string;
-  initials: string;
+// The classic wine styles, ordered roughly light → bold, which is also how we
+// lay them out on the cellar shelves.
+export type WineColor =
+  | "sparkling"
+  | "white"
+  | "rosé"
+  | "orange"
+  | "red"
+  | "dessert"
+  | "fortified";
+
+// Where a bottle lives in the user's world:
+//  - "rack": they own it (they bought it) — it sits in the wine rack.
+//  - "wishlist": they want to try it — it rests in the cellar only.
+// Either way the bottle is always visible in the elegant cellar view.
+export type WineStatus = "rack" | "wishlist";
+
+// A coarse taste axis we can compare wines on and learn a palate from.
+export interface TasteProfile {
+  body: number; // 1 (light) – 5 (full)
+  sweetness: number; // 1 (bone dry) – 5 (lusciously sweet)
+  tannin: number; // 1 (silky) – 5 (grippy)
+  acidity: number; // 1 (soft) – 5 (zesty)
 }
 
-export type ToneLevel = "calm" | "tense" | "hostile";
-
-export interface Message {
+export interface Wine {
   id: ID;
-  fromId: ID;
-  body: string;
+  name: string; // e.g. "Barolo Riserva"
+  producer: string; // e.g. "Giacomo Conterno"
+  vintage: number | null; // year, or null for NV
+  varietal: string; // grape(s), e.g. "Nebbiolo"
+  region: string; // e.g. "Piedmont"
+  country: string; // e.g. "Italy"
+  color: WineColor;
+  photo: string | null; // data URL of the bottle photo
+  // Free-form tasting notes the user wrote about the bottle.
+  notes: string;
+  // The heart of the app: what the user *likes* about this wine, captured as
+  // both a short note and quick tags so we can recommend more like it.
+  likes: string;
+  likeTags: string[]; // e.g. ["dark fruit", "smoky", "velvety"]
+  rating: number; // 0 (unrated) – 5 stars
+  price: number | null; // what they paid / it costs
+  taste: TasteProfile;
+  status: WineStatus;
+  pairing: string; // foods it goes with, optional
   createdAt: string; // ISO
-  readAt: string | null;
-  // Tamper-evident record: tone score captured at send time, immutable thereafter.
-  tone: ToneLevel;
-  edited: false; // messages are never editable — this is a legal record
 }
 
-export interface Draft {
-  to: ID;
-  body: string;
-  updatedAt: string;
-}
+export type Venue = "restaurant" | "wine-store" | "winery";
 
-export type EventCategory =
-  | "parenting-time"
-  | "school"
-  | "medical"
-  | "activity"
-  | "holiday"
-  | "other";
-
-export type ChangeRequestStatus = "none" | "pending" | "accepted" | "declined";
-
-export interface CalEvent {
+// A planned outing the user tells the app about so it can recommend bottles to
+// try, based on what's already in their rack and cellar.
+export interface Outing {
   id: ID;
-  title: string;
-  category: EventCategory;
-  start: string; // ISO date or datetime
-  end: string; // ISO
-  allDay: boolean;
-  notes?: string;
-  // Who "has" the child this block (for parenting-time events).
-  withId?: ID;
-  // Trade/change-request workflow.
-  requestStatus: ChangeRequestStatus;
-  requestedById?: ID;
-}
-
-export type ExpenseStatus = "open" | "reimbursement-requested" | "settled" | "disputed";
-
-export interface Expense {
-  id: ID;
-  description: string;
-  amount: number; // total cost
-  paidById: ID;
-  // Share owed by the OTHER parent (e.g. 0.5 for a 50/50 split).
-  splitOtherShare: number;
+  venue: Venue;
+  place: string; // name of the restaurant / store / winery
   date: string; // ISO
-  category: string;
-  receiptName?: string; // demo: filename only
-  status: ExpenseStatus;
-  note?: string;
-}
-
-export interface JournalEntry {
-  id: ID;
-  title: string;
-  body: string;
-  createdAt: string;
-  mood?: "good" | "neutral" | "hard";
-  // Journal entries are private by default — the co-parent cannot see them
-  // unless explicitly exported. (OFW journals confuse users on this point.)
-  shared: boolean;
-}
-
-export interface InfoRecord {
-  id: ID;
-  childId: ID;
-  kind: "medical" | "school" | "contact" | "clothing" | "other";
-  label: string;
-  value: string;
-}
-
-// "Never forget the teddy bear" — a shared checklist of what needs to travel
-// between homes at the next exchange.
-export interface PackingItem {
-  id: ID;
-  label: string;
-  packed: boolean;
-  createdAt: string;
+  // The wines the app suggested for this outing (snapshot at creation).
+  suggestionIds: ID[];
+  notes: string;
 }
 
 export interface AppState {
-  people: Person[];
-  messages: Message[];
-  draft: Draft | null;
-  events: CalEvent[];
-  expenses: Expense[];
-  journal: JournalEntry[];
-  info: InfoRecord[];
-  packing: PackingItem[];
-  meId: ID;
-  coParentId: ID;
+  wines: Wine[];
+  outings: Outing[];
 }

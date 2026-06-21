@@ -1,93 +1,40 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useStore } from "../state/store";
-import { search } from "../lib/search";
-import { NotificationsBell } from "./NotificationsBell";
-import { ThemeToggle } from "./ThemeToggle";
+import { Link, useLocation } from "react-router-dom";
+import { LogoMark } from "./Logo";
+import { useAuth } from "../state/auth";
 
-const typeIcon: Record<string, string> = {
-  message: "💬", event: "📅", expense: "💵", journal: "📔", info: "🗂️",
+const TITLES: Record<string, string> = {
+  "/": "My Cellar",
+  "/rack": "Wine Rack",
+  "/add": "Log a Wine",
+  "/outings": "Outings",
+  "/settings": "Settings",
 };
 
 export function TopBar() {
-  const { state } = useStore();
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-  const hits = search(state, q).slice(0, 6);
-
-  function go(to: string) {
-    setOpen(false);
-    setQ("");
-    navigate(to);
-  }
+  const { pathname } = useLocation();
+  const { user } = useAuth();
+  const title = TITLES[pathname] ?? (pathname.startsWith("/wine/") ? "Bottle" : "My Cellar");
 
   return (
     <header className="topbar">
-      <div className="search">
-        <span className="search-icon" aria-hidden>🔍</span>
-        <input
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Search everything — messages, calendar, expenses…"
-          aria-label="Search"
-        />
-        {q && (
-          <button className="search-clear" onMouseDown={() => setQ("")} aria-label="Clear">
-            ✕
-          </button>
-        )}
-        {open && q.length >= 2 && (
-          <div className="search-results">
-            {hits.length === 0 ? (
-              <div className="search-empty">No matches for “{q}”.</div>
-            ) : (
-              hits.map((h) => (
-                <button key={h.type + h.id} className="search-hit" onMouseDown={() => go(h.to)}>
-                  <span className="hit-icon">{typeIcon[h.type]}</span>
-                  <span className="hit-text">
-                    <span className="hit-title">{h.title}</span>
-                    <span className="hit-snippet">{h.snippet}</span>
-                  </span>
-                </button>
-              ))
-            )}
-            <button className="search-all" onMouseDown={() => go("/search")}>
-              See all results →
-            </button>
-          </div>
-        )}
-      </div>
-
+      <Link to="/" className="brand">
+        <LogoMark size={30} />
+        <span className="brand-name">{title}</span>
+      </Link>
       <div className="topbar-right">
-        <ThemeToggle />
-        <NotificationsBell />
-        <div className="who">
-          <Avatar id={state.coParentId} />
-          <div className="who-text">
-            <span className="who-label">Co-parenting with</span>
-            <span className="who-name">
-              {state.people.find((p) => p.id === state.coParentId)?.name}
-            </span>
-          </div>
-        </div>
+        <Link to="/add" className="btn btn-primary btn-sm">＋ Add wine</Link>
+        {user && <span className="whoami" title={user.email}>{initials(user.name)}</span>}
       </div>
     </header>
   );
 }
 
-function Avatar({ id }: { id: string }) {
-  const { state } = useStore();
-  const p = state.people.find((x) => x.id === id);
-  if (!p) return null;
-  return (
-    <span className="avatar" style={{ background: p.color }} title={p.name}>
-      {p.initials}
-    </span>
-  );
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }

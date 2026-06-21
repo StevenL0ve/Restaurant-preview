@@ -1,9 +1,9 @@
 {
-  "name": "coparent",
+  "name": "my-cellar",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "CoParent — a modern, fast, free co-parenting app. A better OurFamilyWizard.",
+  "description": "My Cellar — photograph a bottle, note what you love, and keep your wines in a beautiful digital cellar with palate-based recommendations.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -11,7 +11,6 @@
     "test": "vitest run",
     "lint": "tsc --noEmit",
     "icons": "node scripts/gen-icons.mjs",
-    "screenshots": "node scripts/screenshots.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:add:ios": "cap add ios",
     "cap:add:android": "cap add android"

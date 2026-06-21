@@ -1,143 +1,135 @@
-import type { AppState } from "../types";
+import type { AppState, Wine } from "../types";
 
-// A demo dataset so the app is useful the moment it opens — no empty screens,
-// no sign-up wall. Dates are generated relative to "now" so the calendar always
-// looks live.
+// A demo cellar so the app is beautiful and useful the moment it opens — no
+// empty shelves. Dates are relative to "now" so the cellar always feels live.
 
-const day = 86400000;
-function at(daysFromNow: number, hour = 9, min = 0): string {
-  const d = new Date();
-  d.setHours(hour, min, 0, 0);
-  return new Date(d.getTime() + daysFromNow * day).toISOString();
-}
-function ago(mins: number): string {
-  return new Date(Date.now() - mins * 60000).toISOString();
+function daysAgo(n: number): string {
+  return new Date(Date.now() - n * 86400000).toISOString();
 }
 
-const ME = "p-me";
-const CO = "p-co";
-const KID1 = "p-ava";
-const KID2 = "p-leo";
+const wines: Wine[] = [
+  {
+    id: "w-barolo",
+    name: "Barolo Riserva",
+    producer: "Giacomo Conterno",
+    vintage: 2016,
+    varietal: "Nebbiolo",
+    region: "Piedmont",
+    country: "Italy",
+    color: "red",
+    photo: null,
+    notes: "Anniversary bottle. Rose petal, tar, dried cherry. Needs decanting.",
+    likes: "That haunting perfume and the way the tannins are firm but polished.",
+    likeTags: ["red fruit", "earthy", "structured"],
+    rating: 5,
+    price: 180,
+    taste: { body: 5, sweetness: 1, tannin: 4, acidity: 5 },
+    status: "rack",
+    pairing: "Braised beef, truffle pasta",
+    createdAt: daysAgo(40),
+  },
+  {
+    id: "w-sancerre",
+    name: "Sancerre 'Les Monts Damnés'",
+    producer: "Henri Bourgeois",
+    vintage: 2022,
+    varietal: "Sauvignon Blanc",
+    region: "Loire",
+    country: "France",
+    color: "white",
+    photo: null,
+    notes: "Flinty, grapefruit, wet stone. So electric on a warm evening.",
+    likes: "Razor-sharp acidity and the mineral finish.",
+    likeTags: ["citrus", "mineral", "crisp"],
+    rating: 5,
+    price: 32,
+    taste: { body: 2, sweetness: 1, tannin: 1, acidity: 5 },
+    status: "rack",
+    pairing: "Goat cheese, oysters",
+    createdAt: daysAgo(22),
+  },
+  {
+    id: "w-rioja",
+    name: "Rioja Reserva",
+    producer: "Muga",
+    vintage: 2018,
+    varietal: "Tempranillo",
+    region: "Rioja",
+    country: "Spain",
+    color: "red",
+    photo: null,
+    notes: "Leather, dried fig, vanilla from American oak. Great value.",
+    likes: "Savory leather note and how smooth it drinks.",
+    likeTags: ["red fruit", "leather", "smoky"],
+    rating: 4,
+    price: 28,
+    taste: { body: 4, sweetness: 1, tannin: 3, acidity: 4 },
+    status: "rack",
+    pairing: "Lamb chops, manchego",
+    createdAt: daysAgo(15),
+  },
+  {
+    id: "w-champagne",
+    name: "Brut Réserve",
+    producer: "Pol Roger",
+    vintage: null,
+    varietal: "Chardonnay / Pinot Noir",
+    region: "Champagne",
+    country: "France",
+    color: "sparkling",
+    photo: null,
+    notes: "Brioche, green apple, fine persistent bead.",
+    likes: "Toasty depth with crisp apple. Celebration in a glass.",
+    likeTags: ["citrus", "brioche", "crisp"],
+    rating: 5,
+    price: 65,
+    taste: { body: 2, sweetness: 2, tannin: 1, acidity: 5 },
+    status: "rack",
+    pairing: "Oysters, fried chicken",
+    createdAt: daysAgo(8),
+  },
+  {
+    id: "w-brunello-wish",
+    name: "Brunello di Montalcino",
+    producer: "Biondi-Santi",
+    vintage: 2017,
+    varietal: "Sangiovese",
+    region: "Tuscany",
+    country: "Italy",
+    color: "red",
+    photo: null,
+    notes: "The benchmark Brunello. Saving up for a special bottle.",
+    likes: "Heard it's all about elegance and dried-cherry depth — my style.",
+    likeTags: ["dark fruit", "earthy", "structured"],
+    rating: 0,
+    price: 250,
+    taste: { body: 5, sweetness: 1, tannin: 4, acidity: 4 },
+    status: "wishlist",
+    pairing: "Bistecca alla fiorentina",
+    createdAt: daysAgo(5),
+  },
+  {
+    id: "w-riesling-wish",
+    name: "Riesling Spätlese",
+    producer: "Joh. Jos. Prüm",
+    vintage: 2021,
+    varietal: "Riesling",
+    region: "Mosel",
+    country: "Germany",
+    color: "white",
+    photo: null,
+    notes: "Want to explore off-dry German Riesling.",
+    likes: "Curious about that sweet/acid tension everyone raves about.",
+    likeTags: ["stone fruit", "floral", "zesty"],
+    rating: 0,
+    price: 40,
+    taste: { body: 2, sweetness: 3, tannin: 1, acidity: 5 },
+    status: "wishlist",
+    pairing: "Thai curry, pork belly",
+    createdAt: daysAgo(2),
+  },
+];
 
 export function buildSeed(): AppState {
-  return {
-    meId: ME,
-    coParentId: CO,
-    people: [
-      { id: ME, name: "You", role: "me", color: "#0f766e", initials: "YO" },
-      { id: CO, name: "Jordan", role: "coparent", color: "#7c3aed", initials: "JD" },
-      { id: KID1, name: "Ava", role: "child", color: "#db2777", initials: "AV" },
-      { id: KID2, name: "Leo", role: "child", color: "#2563eb", initials: "LE" },
-    ],
-    draft: null,
-    messages: [
-      {
-        id: "m1", fromId: CO, body: "Ava has a dentist appointment Thursday at 3:30. Can you take her? I have a work thing I can't move.",
-        createdAt: ago(60 * 26), readAt: ago(60 * 25), tone: "calm", edited: false,
-      },
-      {
-        id: "m2", fromId: ME, body: "Yes, I can take her. I'll pick her up from school. Thanks for the heads up.",
-        createdAt: ago(60 * 25), readAt: ago(60 * 24), tone: "calm", edited: false,
-      },
-      {
-        id: "m3", fromId: CO, body: "Great, thank you. I'll send the insurance card details to the Info Bank.",
-        createdAt: ago(60 * 24), readAt: ago(60 * 23), tone: "calm", edited: false,
-      },
-      {
-        id: "m4", fromId: ME, body: "Sounds good. Also — Leo's soccer registration is due Friday, it's $90. I'll log it in expenses and we can split it.",
-        createdAt: ago(190), readAt: ago(120), tone: "calm", edited: false,
-      },
-      {
-        id: "m6", fromId: ME, body: "Also — for the vacation next month, I'll book the kids' flights this week. Can you send their passport numbers?",
-        createdAt: ago(80), readAt: null, tone: "calm", edited: false,
-      },
-      {
-        id: "m5", fromId: CO, body: "Works for me. I'll approve it when it comes through.",
-        createdAt: ago(95), readAt: null, tone: "calm", edited: false,
-      },
-    ],
-    events: [
-      {
-        id: "e1", title: "Parenting time — with You", category: "parenting-time",
-        start: at(-1, 0), end: at(3, 0), allDay: true, withId: ME,
-        requestStatus: "none",
-      },
-      {
-        id: "e2", title: "Parenting time — with Jordan", category: "parenting-time",
-        start: at(3, 0), end: at(7, 0), allDay: true, withId: CO,
-        requestStatus: "none",
-      },
-      {
-        id: "e3", title: "Ava — Dentist", category: "medical",
-        start: at(2, 15, 30), end: at(2, 16, 30), allDay: false,
-        notes: "Bright Smiles Dental, 1200 Oak St. You are taking her.",
-        requestStatus: "none",
-      },
-      {
-        id: "e4", title: "Leo — Soccer practice", category: "activity",
-        start: at(1, 17, 0), end: at(1, 18, 30), allDay: false,
-        notes: "Riverside fields. Bring cleats + water.", requestStatus: "none",
-      },
-      {
-        id: "e5", title: "School closed — Teacher in-service", category: "school",
-        start: at(5, 0), end: at(5, 0), allDay: true, requestStatus: "none",
-      },
-      {
-        id: "e6", title: "Swap request: I take Sat instead of Sun", category: "parenting-time",
-        start: at(6, 0), end: at(7, 0), allDay: true, withId: ME,
-        requestStatus: "pending", requestedById: CO,
-        notes: "Jordan asked to swap so they can attend a wedding Sunday.",
-      },
-    ],
-    expenses: [
-      {
-        id: "x1", description: "Leo — Soccer registration", amount: 90, paidById: ME,
-        splitOtherShare: 0.5, date: ago(60 * 3), category: "Activities",
-        status: "reimbursement-requested", note: "Spring season. Receipt attached.",
-        receiptName: "soccer-receipt.pdf",
-      },
-      {
-        id: "x2", description: "Ava — Winter coat", amount: 64.5, paidById: CO,
-        splitOtherShare: 0.5, date: ago(60 * 24 * 6), category: "Clothing",
-        status: "settled",
-      },
-      {
-        id: "x3", description: "Pediatrician copay (both kids)", amount: 50, paidById: ME,
-        splitOtherShare: 0.5, date: ago(60 * 24 * 10), category: "Medical",
-        status: "settled", receiptName: "copay.jpg",
-      },
-      {
-        id: "x4", description: "Ava — Field trip fee", amount: 25, paidById: CO,
-        splitOtherShare: 0.5, date: ago(60 * 24 * 2), category: "School",
-        status: "open",
-      },
-    ],
-    journal: [
-      {
-        id: "j1", title: "Exchange went smoothly",
-        body: "Picked up the kids at 6pm at the agreed spot. Both kids in good spirits. Jordan was on time. Ava mentioned she left her math book — texted Jordan and it's being dropped tomorrow.",
-        createdAt: ago(60 * 20), mood: "good", shared: false,
-      },
-      {
-        id: "j2", title: "Leo's reading is improving",
-        body: "Spent 30 min reading together. He's getting more confident with longer words. Want to keep this going on both households' nights.",
-        createdAt: ago(60 * 24 * 3), mood: "good", shared: false,
-      },
-    ],
-    info: [
-      { id: "i1", childId: KID1, kind: "medical", label: "Allergy", value: "Penicillin (mild rash)" },
-      { id: "i2", childId: KID1, kind: "medical", label: "Insurance ID", value: "BCBS — XJ4920185" },
-      { id: "i3", childId: KID1, kind: "school", label: "Teacher", value: "Ms. Rivera, Room 14" },
-      { id: "i4", childId: KID2, kind: "medical", label: "Blood type", value: "O+" },
-      { id: "i5", childId: KID2, kind: "school", label: "Bus route", value: "Route 7, pickup 7:45am" },
-      { id: "i6", childId: KID2, kind: "clothing", label: "Shoe size", value: "Youth 1" },
-      { id: "i7", childId: KID1, kind: "clothing", label: "Shoe size", value: "13 (kids)" },
-    ],
-    packing: [
-      { id: "pk1", label: "Ava's stuffed rabbit", packed: false, createdAt: ago(60 * 5) },
-      { id: "pk2", label: "Leo's rain jacket", packed: false, createdAt: ago(60 * 5) },
-      { id: "pk3", label: "School library books", packed: true, createdAt: ago(60 * 9) },
-      { id: "pk4", label: "Inhaler + spacer", packed: false, createdAt: ago(60 * 4) },
-    ],
-  };
+  return { wines, outings: [] };
 }

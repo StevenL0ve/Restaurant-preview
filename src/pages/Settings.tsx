@@ -1,131 +1,57 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
-import { useTier, setTier } from "../lib/subscription";
+import { buildPalate } from "../lib/taste";
+import { COLOR_META } from "../lib/wine";
 
 export function Settings() {
-  const { state, exportAll, resetDemo, deleteAccount } = useStore();
-  const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
-  const tier = useTier();
-  const navigate = useNavigate();
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const counts = {
-    messages: state.messages.length,
-    events: state.events.length,
-    expenses: state.expenses.length,
-    journal: state.journal.length,
-    info: state.info.length,
-  };
+  const { state, exportAll, resetDemo, clearAll } = useStore();
+  const { user, signOut } = useAuth();
+  const palate = buildPalate(state.wines);
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>Settings</h1>
-          <p className="muted">Your account, your data, your rules.</p>
-        </div>
-      </div>
+    <div className="page settings-page">
+      <section className="card">
+        <h3>Signed in as</h3>
+        <p className="kv"><span>{user?.name}</span><span className="muted">{user?.email}</span></p>
+        <button className="btn" onClick={signOut}>Sign out</button>
+      </section>
 
-      {user && (
-        <section className="card settings-card">
-          <h2>Account</h2>
-          <div className="account-row">
-            <span className="avatar" style={{ background: "var(--brand)" }}>
-              {user.name.slice(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <div className="account-name">{user.name}</div>
-              <div className="muted small">{user.email}</div>
-            </div>
-          </div>
-          <label className="toggle-row">
-            <span>
-              Unlock with Face ID
-              {!bioAvailable && <span className="muted small"> · not available on this device</span>}
-            </span>
-            <input
-              type="checkbox"
-              checked={bioEnabled}
-              disabled={!bioAvailable}
-              onChange={(e) => setBioEnabled(e.target.checked)}
-            />
-          </label>
-          <div className="form-actions">
-            <button className="btn" onClick={signOut}>Sign out</button>
-          </div>
-        </section>
-      )}
-
-      <section className="card settings-card">
-        <h2>Plan</h2>
-        {tier === "pro" ? (
-          <>
-            <p className="muted">
-              You're on <strong>CoParent Pro</strong> — one subscription for the
-              whole family. Manage or cancel anytime in your App Store / Google
-              Play settings.
-            </p>
-            <div className="form-actions">
-              <span className="pill pill-ok">Pro active ⭐️</span>
-              <button className="btn btn-sm" onClick={() => setTier("free")}>Switch to Free (demo)</button>
-            </div>
-          </>
+      <section className="card">
+        <h3>Your palate</h3>
+        {palate.confidence === 0 ? (
+          <p className="muted">Rate a few wines and I'll learn what you like.</p>
         ) : (
           <>
-            <p className="muted">
-              Free to use. Upgrade to <strong>Pro</strong> for unlimited history,
-              court-ready exports, attachments, and the AI assistant — one price
-              per family ($7.99/mo or $59.99/yr), not per parent like the others.
-            </p>
-            <div className="form-actions">
-              <button className="btn btn-primary" onClick={() => navigate("/upgrade")}>
-                Upgrade to Pro
-              </button>
-            </div>
+            <p className="muted">Learned from your rack and ratings.</p>
+            {palate.topColors.length > 0 && (
+              <p className="kv"><span>Favourite styles</span>
+                <span>{palate.topColors.slice(0, 3).map((c) => COLOR_META[c].label).join(", ")}</span>
+              </p>
+            )}
+            {palate.topTags.length > 0 && (
+              <div className="chip-row wrap">
+                {palate.topTags.slice(0, 6).map((t) => (
+                  <span key={t} className="chip sm static">{t}</span>
+                ))}
+              </div>
+            )}
           </>
         )}
       </section>
 
-      <section className="card settings-card">
-        <h2>Your data</h2>
-        <p className="muted">
-          Everything lives on your device. Export a complete copy whenever you
-          want — useful for your records or your attorney.
-        </p>
-        <ul className="data-counts">
-          <li><strong>{counts.messages}</strong> messages</li>
-          <li><strong>{counts.events}</strong> calendar events</li>
-          <li><strong>{counts.expenses}</strong> expenses</li>
-          <li><strong>{counts.journal}</strong> journal entries</li>
-          <li><strong>{counts.info}</strong> info records</li>
-        </ul>
-        <div className="form-actions">
-          <button className="btn btn-primary" onClick={exportAll}>⤓ Export all my data (JSON)</button>
-          <button className="btn" onClick={resetDemo}>Reset demo data</button>
-        </div>
-      </section>
-
-      <section className="card settings-card danger-zone">
-        <h2>Delete account</h2>
-        <p className="muted">
-          One click. No waiting on hold, no co-parent approval required, no
-          "contact support to cancel." Your records are erased from this device
-          immediately.
-        </p>
-        {!confirmDelete ? (
-          <button className="btn btn-danger" onClick={() => setConfirmDelete(true)}>
-            Delete my account
+      <section className="card">
+        <h3>Your data</h3>
+        <p className="muted">Your cellar is yours. Export it as JSON any time.</p>
+        <div className="btn-stack">
+          <button className="btn" onClick={exportAll}>Export my cellar (JSON)</button>
+          <button className="btn" onClick={resetDemo}>Reset to demo cellar</button>
+          <button className="btn btn-ghost" onClick={() => { if (confirm("Empty your entire cellar?")) clearAll(); }}>
+            Clear everything
           </button>
-        ) : (
-          <div className="confirm">
-            <span>This permanently clears your local data. Sure?</span>
-            <button className="btn btn-danger" onClick={deleteAccount}>Yes, delete everything</button>
-            <button className="btn" onClick={() => setConfirmDelete(false)}>Cancel</button>
-          </div>
-        )}
+        </div>
       </section>
+
+      <p className="version">My Cellar — preview build</p>
     </div>
   );
 }

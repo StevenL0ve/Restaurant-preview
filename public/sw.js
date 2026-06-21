@@ -1,7 +1,7 @@
-// CoParent service worker — makes the app installable and usable offline.
+// My Cellar service worker — makes the app installable and usable offline.
 // Strategy: precache the app shell; serve navigations from cache first (so the
 // app opens with no network), and fall back to the network for everything else.
-const CACHE = "coparent-v1";
+const CACHE = "mycellar-v1";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

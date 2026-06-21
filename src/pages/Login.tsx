@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../state/auth";
+import { LogoMark } from "../components/Logo";
 
-// Login + create-account gate. Phase 1 uses local accounts; the same screen
-// will drive Supabase auth in Phase 2 with no UI change.
+// Sign-in / create-account gate. A guest option lets people explore the demo
+// cellar instantly.
 export function Login() {
-  const { signIn, signUp, bioAvailable, bioEnabled, bioUnlock } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { signIn, signUp, continueAsGuest } = useAuth();
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,35 +27,27 @@ export function Login() {
     }
   }
 
-  async function faceId() {
-    setError(null);
-    const ok = await bioUnlock();
-    // With the local backend there's no stored remote session to restore yet;
-    // once Supabase is wired, a successful unlock resumes the saved session.
-    if (!ok) setError("Face ID could not verify you. Use your password.");
-  }
-
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="CoParent" width={64} height={64} />
-        <h1 className="auth-title">CoParent</h1>
-        <p className="auth-sub">Calm, organized co-parenting</p>
+        <LogoMark size={64} />
+        <h1 className="auth-title">My Cellar</h1>
+        <p className="auth-sub">Your wine collection, beautifully kept.</p>
 
         <div className="auth-tabs">
-          <button
-            className={"auth-tab" + (mode === "signin" ? " active" : "")}
-            onClick={() => { setMode("signin"); setError(null); }}
-            type="button"
-          >
-            Sign in
-          </button>
           <button
             className={"auth-tab" + (mode === "signup" ? " active" : "")}
             onClick={() => { setMode("signup"); setError(null); }}
             type="button"
           >
             Create account
+          </button>
+          <button
+            className={"auth-tab" + (mode === "signin" ? " active" : "")}
+            onClick={() => { setMode("signin"); setError(null); }}
+            type="button"
+          >
+            Sign in
           </button>
         </div>
 
@@ -81,15 +74,11 @@ export function Login() {
           </button>
         </form>
 
-        {bioAvailable && bioEnabled && mode === "signin" && (
-          <button className="btn auth-faceid" onClick={faceId} type="button">
-            <span aria-hidden>☺</span> Unlock with Face ID
-          </button>
-        )}
+        <button className="btn auth-guest" onClick={continueAsGuest} type="button">
+          Explore the demo cellar →
+        </button>
 
-        <p className="auth-foot">
-          Your data is private to you and {mode === "signup" ? "your co-parent once you connect" : "your family"}.
-        </p>
+        <p className="auth-foot">Your cellar is private to you. Export it any time.</p>
       </div>
     </div>
   );
