@@ -5,63 +5,42 @@ Wine &amp; Spirits"* — a newly opened, hand-curated wine and spirits shop in
 downtown **Ocean Springs, Mississippi** (401 Porter Ave, Building A, Unit 3,
 opened June 2026).
 
-A fast, fully responsive, **playful + animated** single-page site built as a
-pitch-ready replacement for the current corktownwine.com.
+Fast, fully responsive, playful + animated, and **fully self-contained** — every
+image and the video are served locally, so nothing depends on a third-party
+host. No build step, no dependencies.
 
-> **Preview it:** open `index.html` in any browser — no build step, no
-> dependencies, no server. Plain HTML/CSS/JS.
+> **Preview:** open `index.html` in a browser. (Deploy by uploading the folder
+> to any static host — GitHub Pages, Netlify, Vercel, etc.)
 
 ---
 
-## The animated experience (what was requested)
+## Highlights
 
-This build leans into motion, per the reference direction:
-
-- **🎬 Video hero background.** A full-screen looping `<video>` sits behind the
-  headline. Until the shop's own footage is added it gracefully falls back to an
-  animated "Ken Burns" photo poster — so it always looks alive and never breaks.
-  *(See "Add the hero video" below.)*
-- **✍️ Kinetic / animated text.** The headline rises in line-by-line, and the
-  word **wine → bourbon → agave → champagne → mezcal** cycles in place. A
-  scrolling marquee ribbon runs beneath the hero.
-- **🖱️ Interactive gallery.** A drag-/swipe-/scroll-able horizontal strip of the
-  shop and bottles (click-drag, touch, or trackpad — with scroll-snap).
-- **📜 Scroll animations.** A top scroll-progress bar, reveal-on-scroll for every
-  section, a subtle image parallax, and animated stat counters.
-
-All motion respects `prefers-reduced-motion` for accessibility.
-
-## Why it beats the current page
-
-The current site is a single line of "we're almost finished building the shop"
-text. This gives Corktown a real identity, story, merchandising, and contact
-funnel — and looks like a destination, not a placeholder.
-
-- **On-brand identity** — the wine-glass "C" wordmark recreated as inline SVG, in
-  a warm charcoal + lively gold palette with a wine-berry accent.
-- **Clear merchandising** — Wine, Bourbon/Whiskey, Agave/Craft, Champagne.
-- **Conversion built in** — sticky nav, repeated CTAs, click-to-call/text/email,
-  embedded Google Map, and all four socials (Instagram, Facebook, X, TikTok).
-- **Found on search &amp; social** — SEO + Open Graph + `LiquorStore` schema.org
-  structured data (address, hours, phone, opening date).
+- **Real wine imagery, self-hosted.** The hero, about, and tastings photos are
+  frames pulled from the shop's own pour video; the cinematic **"The Pour"** band
+  plays the full clip. Everything is local — no broken images, ever.
+- **Animated experience** — kinetic headline with a rotating word
+  (wine → bourbon → agave → champagne → mezcal), a scrolling marquee, a top
+  scroll-progress bar, reveal-on-scroll, and animated stat counters. All motion
+  respects `prefers-reduced-motion`.
+- **Real content** — "Unique Wine & Spirits", June 2026 opening, owner Sean
+  Perkins, and links to all four socials (Instagram, Facebook, X, TikTok).
+- **Conversion** — sticky nav, repeated CTAs, click-to-call/text/email, an
+  "Open in Google Maps" location card, and an Instagram follow band.
+- **Found on search** — SEO + Open Graph + `LiquorStore` schema.org data.
+- **Verified** — rendered and checked at desktop (1280px) and mobile (390px)
+  widths before hand-off.
 
 ## Structure
 
 ```
-index.html              # the page
+index.html
 assets/
   css/styles.css        # all styling (design tokens at top)
-  js/main.js            # nav, kinetic text, gallery drag, counters, parallax
-  img/logo.svg          # recreated wordmark (wine-glass "C")
-  img/favicon.svg       # tab icon
-  video/                # drop hero.mp4 here (see its README)
+  js/main.js            # nav, kinetic text, counters, scroll progress, reveal
+  img/  logo.svg, favicon.svg, pour-hero.jpg, pour-about.jpg, pour-tasting.jpg
+  video/pour.mp4        # the cinematic "The Pour" clip
 ```
-
-## Add the hero video
-
-1. Export a short (~8–15s), silent, looping clip of the shop / a pour.
-2. Save it as `assets/video/hero.mp4` (1080p, H.264, ideally < 6 MB).
-3. Done — it's already wired into the hero `<video>` and starts playing.
 
 ## Brand facts wired in
 
@@ -77,17 +56,12 @@ assets/
 
 ## ⚠️ Placeholders to confirm before going live
 
-1. **Hero video** — currently the animated photo fallback; add real footage.
-2. **Hours** — set to Mon–Thu 10–8, Fri–Sat 10–9, Sun closed; confirm actual
+1. **Hours** — set to Mon–Thu 10–8, Fri–Sat 10–9, Sun closed; confirm actual
    hours (update the Visit section *and* the schema.org block).
-3. **Photography** — hero, about, and gallery images are tasteful Unsplash stock.
-   Swap in real shop/product photos (the IG already has great ones).
-4. **Stats &amp; tastings** — "400+ labels", "Friday flights", etc. are suggested;
-   confirm real numbers and program.
-5. **Social links** — Facebook / X / TikTok point to the platform homepages;
-   replace with the shop's actual profile URLs.
-
-## Deploy
-
-Static hosting anywhere — GitHub Pages, Netlify, Vercel, or any web host. Upload
-the folder; no build required.
+2. **Photography** — the page uses frames from the pour video plus that clip. The
+   shop's Instagram has great interior/product shots — drop them into
+   `assets/img/` to add variety.
+3. **Stats &amp; tastings** — "400+ labels", "Friday flights", etc. are
+   suggested; confirm the real numbers and program.
+4. **Social links** — Facebook / X / TikTok point to the shop's TikTok and the
+   platform homepages; replace with the real profile URLs.

@@ -6,11 +6,9 @@
   <title>Corktown Wine &amp; Spirits — Unique Wine &amp; Spirits in Ocean Springs, MS</title>
   <meta name="description" content="Corktown Wine & Spirits — a unique, hand-curated wine & spirits shop now open on Porter Ave in downtown Ocean Springs, Mississippi. Boutique wine, small-batch bourbon, agave, champagne, and weekly tastings, curated by Sean Perkins." />
   <meta name="theme-color" content="#140f0a" />
-
   <meta property="og:type" content="business.business" />
   <meta property="og:title" content="Corktown Wine & Spirits — Ocean Springs, MS" />
   <meta property="og:description" content="Unique wine & spirits, now open on Porter Ave in downtown Ocean Springs. Boutique wine, craft spirits & weekly tastings." />
-  <meta property="og:locale" content="en_US" />
 
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,19 +18,13 @@
 
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
-    "@type": "LiquorStore",
-    "name": "Corktown Wine & Spirits",
-    "slogan": "Unique Wine & Spirits",
-    "founder": "Sean Perkins",
-    "telephone": "+1-228-300-1423",
-    "email": "sean@corktownwine.com",
-    "url": "https://corktownwine.com",
+    "@context": "https://schema.org", "@type": "LiquorStore",
+    "name": "Corktown Wine & Spirits", "slogan": "Unique Wine & Spirits", "founder": "Sean Perkins",
+    "telephone": "+1-228-300-1423", "email": "sean@corktownwine.com", "url": "https://corktownwine.com",
     "openingDate": "2026-06-19",
     "address": { "@type": "PostalAddress", "streetAddress": "401 Porter Ave, Building A, Unit 3", "addressLocality": "Ocean Springs", "addressRegion": "MS", "postalCode": "39564", "addressCountry": "US" },
     "openingHours": ["Mo-Th 10:00-20:00", "Fr-Sa 10:00-21:00"],
-    "sameAs": ["https://www.instagram.com/corktownwineos"],
-    "priceRange": "$$"
+    "sameAs": ["https://www.instagram.com/corktownwineos"], "priceRange": "$$"
   }
   </script>
 </head>
@@ -51,7 +43,6 @@
     <ul class="nav__links" id="navLinks">
       <li><a href="#about">The Shop</a></li>
       <li><a href="#selection">Selection</a></li>
-      <li><a href="#gallery">Gallery</a></li>
       <li><a href="#tastings">Tastings</a></li>
       <li><a href="#visit">Visit</a></li>
       <li><a class="btn btn--ghost nav__cta" href="#visit">Visit the Shop</a></li>
@@ -61,75 +52,19 @@
 
   <!-- ============ HERO ============ -->
   <header class="hero" id="top">
-    <!-- Drop the shop's own footage at assets/video/hero.mp4 — the animated poster shows until then. -->
-    <video class="hero__video" autoplay muted loop playsinline poster="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1920&q=80" aria-hidden="true">
-      <source src="assets/video/hero.mp4" type="video/mp4" />
-    </video>
-    <div class="hero__poster" aria-hidden="true"></div>
+    <div class="hero__bg" style="background-image:url('assets/img/pour-hero.jpg');" aria-hidden="true"></div>
     <div class="hero__grad" aria-hidden="true"></div>
-
     <div class="hero__inner">
-      <div class="hero__copy">
-        <span class="hero__tag"><span class="dot"></span> Now Open · Porter Ave, Ocean Springs</span>
-        <h1>
-          <span class="line"><span>Unique</span></span>
-          <span class="line"><span><em class="rotator" id="rotator">wine</em>,</span></span>
-          <span class="line"><span>worth the trip.</span></span>
-        </h1>
-        <p class="hero__lead">Corktown is a hand-picked wine &amp; spirits shop on Porter Avenue — boutique bottles, small-batch pours, and a neighbor behind the counter who actually remembers what you liked.</p>
-        <div class="hero__actions">
-          <a class="btn btn--solid" href="#selection">Explore the Selection <span class="arrow">→</span></a>
-          <a class="btn btn--ghost" href="#visit">Plan a Visit</a>
-        </div>
-      </div>
-
-      <!-- Animated wine pour -->
-      <div class="pour" aria-hidden="true">
-        <svg viewBox="0 0 300 430" class="pour__svg" role="img" aria-label="A bottle of wine pouring into a glass">
-          <defs>
-            <linearGradient id="wineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#b8344e"/><stop offset="1" stop-color="#5e1626"/>
-            </linearGradient>
-            <linearGradient id="bottleGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stop-color="#0c2a1f"/><stop offset="0.5" stop-color="#16432f"/><stop offset="1" stop-color="#0c2a1f"/>
-            </linearGradient>
-            <clipPath id="bowlClip"><path d="M112 176 C112 214 130 252 150 252 C170 252 188 214 188 176 Z"/></clipPath>
-          </defs>
-
-          <!-- Bottle (tilts to pour) -->
-          <g class="pour__bottle">
-            <g transform="translate(150 96) rotate(-34)">
-              <rect x="-23" y="-176" width="46" height="120" rx="12" fill="url(#bottleGrad)"/>
-              <path d="M-23 -70 C-23 -78 -9 -86 -8 -96 L8 -96 C9 -86 23 -78 23 -70 Z" fill="url(#bottleGrad)"/>
-              <rect x="-9" y="-100" width="18" height="44" rx="3" fill="url(#bottleGrad)"/>
-              <rect x="-10" y="-104" width="20" height="8" rx="2" fill="#0a1f17"/>
-              <rect x="-19" y="-160" width="38" height="58" rx="4" fill="#f3ead6" opacity="0.92"/>
-              <rect x="-19" y="-148" width="38" height="2" fill="#b8344e"/>
-              <rect x="-19" y="-118" width="38" height="2" fill="#b8344e"/>
-              <text x="0" y="-132" text-anchor="middle" font-family="'Fraunces',serif" font-style="italic" font-size="13" fill="#2c2317">Corktown</text>
-              <text x="0" y="-122" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="5.5" letter-spacing="2" fill="#7a2233">OCEAN SPRINGS</text>
-            </g>
-          </g>
-
-          <!-- Pour stream -->
-          <rect class="pour__stream" x="146.5" y="97" width="7" height="80" fill="url(#wineGrad)"/>
-
-          <!-- Wine filling the bowl -->
-          <g clip-path="url(#bowlClip)">
-            <rect class="pour__wine" x="106" y="172" width="88" height="86" fill="url(#wineGrad)"/>
-            <ellipse class="pour__surface" cx="150" cy="174" rx="38" ry="4" fill="#c33a55"/>
-          </g>
-
-          <!-- Glass outline -->
-          <g class="pour__glass" fill="none" stroke="#f3ead6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
-            <path d="M112 176 C112 214 130 252 150 252 C170 252 188 214 188 176 Z"/>
-            <line x1="150" y1="252" x2="150" y2="320"/>
-            <path d="M120 322 Q150 312 180 322"/>
-          </g>
-
-          <!-- Falling droplet accent -->
-          <circle class="pour__drop" cx="150" cy="150" r="3.4" fill="url(#wineGrad)"/>
-        </svg>
+      <span class="hero__tag"><span class="dot"></span> Now Open · Porter Ave, Ocean Springs</span>
+      <h1>
+        <span class="line"><span>Unique</span></span>
+        <span class="line"><span><em class="rotator" id="rotator">wine</em>,</span></span>
+        <span class="line"><span>worth the trip.</span></span>
+      </h1>
+      <p class="hero__lead">A hand-picked wine &amp; spirits shop on Porter Avenue — boutique bottles, small-batch pours, and a neighbor behind the counter who remembers what you liked.</p>
+      <div class="hero__actions">
+        <a class="btn btn--solid" href="#selection">Explore the Selection <span class="arrow">→</span></a>
+        <a class="btn btn--ghost" href="#visit">Plan a Visit</a>
       </div>
     </div>
     <div class="hero__scroll" aria-hidden="true"><span>Scroll</span><i></i></div>
@@ -147,7 +82,7 @@
   <section class="section section--cream" id="about">
     <div class="wrap about">
       <div class="about__media reveal">
-        <div class="frame"><img id="aboutImg" src="https://images.unsplash.com/photo-1566995541428-f2246c17cda1?auto=format&fit=crop&w=900&q=80" alt="Bottles lining the shop's wooden shelves" loading="lazy" /></div>
+        <div class="frame"><img src="assets/img/pour-about.jpg" alt="A bottle of red wine being poured into a glass at Corktown" loading="lazy" /></div>
         <div class="about__badge"><strong>2026</strong><span>Just opened on Porter Ave</span></div>
       </div>
       <div class="about__copy reveal" data-d="1">
@@ -190,7 +125,6 @@
           <p>Grower champagne, crémant, cava, and Franciacorta — always a few cold and ready, because some nights don't need a reason.</p>
         </article>
       </div>
-
       <div class="stats reveal" data-d="1">
         <div class="stat"><b data-count="400" data-suffix="+">0</b><span>Labels &amp; Growing</span></div>
         <div class="stat"><b data-count="100" data-suffix="%">0</b><span>Hand-Picked</span></div>
@@ -200,34 +134,10 @@
     </div>
   </section>
 
-  <!-- ============ GALLERY ============ -->
-  <section class="section section--dark gallery" id="gallery" style="padding-top:0;">
-    <div class="wrap gallery__head reveal">
-      <div>
-        <p class="eyebrow on-dark">Inside the Shop</p>
-        <h2 style="font-size:clamp(2rem,4.4vw,3.2rem);">Take a look around.</h2>
-      </div>
-      <span class="gallery__hint">
-        <svg viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 12H4M4 12l4-4M4 12l4 4M34 12h10M44 12l-4-4M44 12l-4 4"/></svg>
-        Drag to explore
-      </span>
-    </div>
-    <div class="gallery__track" id="galleryTrack">
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=700&q=80" alt="Shelves of curated wine bottles" loading="lazy" /><figcaption>The wall of wine</figcaption></figure>
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=700&q=80" alt="Red wine poured into a glass" loading="lazy" /><figcaption>Friday pours</figcaption></figure>
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=700&q=80" alt="Bottles of spirits on a shelf" loading="lazy" /><figcaption>The spirits shelf</figcaption></figure>
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?auto=format&fit=crop&w=700&q=80" alt="Champagne bottles chilling" loading="lazy" /><figcaption>Always something cold</figcaption></figure>
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=700&q=80" alt="Warm interior of the shop" loading="lazy" /><figcaption>Your corner on Porter</figcaption></figure>
-      <figure class="gallery__item"><img src="https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?auto=format&fit=crop&w=700&q=80" alt="Close-up of wine bottles" loading="lazy" /><figcaption>Hand-picked, every one</figcaption></figure>
-    </div>
-  </section>
-
   <!-- ============ POUR REEL ============ -->
   <section class="reel" id="reel" aria-label="Wine pouring at the shop">
-    <div class="reel__media" style="background-image:url('https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80');">
-      <!-- Self-hosted footage wins when present; Pexels clip is the fallback; the photo behind shows if neither loads. -->
-      <video class="reel__video" autoplay muted loop playsinline preload="metadata"
-             poster="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80" aria-hidden="true">
+    <div class="reel__media" style="background-image:url('assets/img/pour-hero.jpg');">
+      <video class="reel__video" autoplay muted loop playsinline preload="metadata" poster="assets/img/pour-hero.jpg" aria-hidden="true">
         <source src="assets/video/pour.mp4" type="video/mp4" />
       </video>
     </div>
@@ -240,11 +150,26 @@
     </div>
   </section>
 
+  <!-- ============ INSTAGRAM ============ -->
+  <section class="section section--cream igband" id="follow">
+    <div class="wrap igband__inner reveal">
+      <div>
+        <p class="eyebrow">Follow Along</p>
+        <h2>New bottles land every week.</h2>
+        <p class="igband__sub">See what just hit the shelf, this week's tasting flight, and the staff picks — over on Instagram.</p>
+      </div>
+      <a class="btn btn--dark igband__btn" href="https://www.instagram.com/corktownwineos" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        @corktownwineos
+      </a>
+    </div>
+  </section>
+
   <!-- ============ TASTINGS ============ -->
-  <section class="section section--dark" id="tastings" style="padding-top:0;">
+  <section class="section section--dark" id="tastings">
     <div class="wrap reveal">
       <div class="feature">
-        <div class="feature__media" aria-hidden="true"></div>
+        <div class="feature__media" style="background-image:url('assets/img/pour-tasting.jpg');" aria-hidden="true"></div>
         <div class="feature__body">
           <p class="eyebrow on-dark">Tastings &amp; Events</p>
           <h2>Friday pours on Porter Ave.</h2>
@@ -291,9 +216,17 @@
             <div><span class="k">Hours</span><dl class="hours"><dt>Mon &ndash; Thu</dt><dd>10am &ndash; 8pm</dd><dt>Fri &ndash; Sat</dt><dd>10am &ndash; 9pm</dd><dt>Sunday</dt><dd class="closed">Closed</dd></dl></div></li>
         </ul>
       </div>
-      <div class="visit__map reveal" data-d="1">
-        <iframe title="Map to Corktown Wine & Spirits" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=401%20Porter%20Ave%2C%20Ocean%20Springs%2C%20MS%2039564&output=embed"></iframe>
-      </div>
+      <a class="visit__card reveal" data-d="1" href="https://maps.google.com/?q=401+Porter+Ave,+Ocean+Springs,+MS+39564" target="_blank" rel="noopener" aria-label="Open Corktown in Google Maps">
+        <div class="visit__pin">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </div>
+        <div class="visit__cardtext">
+          <span class="k">Corktown Wine &amp; Spirits</span>
+          <strong>401 Porter Ave</strong>
+          <span>Ocean Springs, MS 39564</span>
+        </div>
+        <span class="visit__go">Open in Google Maps <span class="arrow">→</span></span>
+      </a>
     </div>
   </section>
 
@@ -317,7 +250,7 @@
           <div class="footer__logo"><svg viewBox="0 0 300 86" role="img" aria-label="Corktown Wine & Spirits"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M44 14 a26 26 0 1 0 0 44" /><path d="M44 14 v44" /><path d="M30 60 h28" /></g><text x="74" y="46" font-family="'Fraunces', Georgia, serif" font-size="40" letter-spacing="2" fill="currentColor" font-weight="600">ORKTOWN</text><text x="76" y="68" font-family="'Space Grotesk', Arial, sans-serif" font-size="12" letter-spacing="6.5" fill="currentColor" opacity="0.78">WINE &#183; SPIRITS</text></svg></div>
           <p>Unique wine &amp; spirits, hand-picked in the heart of downtown Ocean Springs, Mississippi.</p>
         </div>
-        <div><h4>Visit</h4><ul><li><a href="#about">The Shop</a></li><li><a href="#selection">Selection</a></li><li><a href="#gallery">Gallery</a></li><li><a href="#tastings">Tastings</a></li><li><a href="#visit">Hours &amp; Map</a></li></ul></div>
+        <div><h4>Visit</h4><ul><li><a href="#about">The Shop</a></li><li><a href="#selection">Selection</a></li><li><a href="#tastings">Tastings</a></li><li><a href="#visit">Hours &amp; Directions</a></li></ul></div>
         <div><h4>Contact</h4><ul><li><a href="tel:+12283001423">(228) 300-1423</a></li><li><a href="mailto:sean@corktownwine.com">sean@corktownwine.com</a></li><li><a href="https://maps.google.com/?q=401+Porter+Ave,+Ocean+Springs,+MS+39564" target="_blank" rel="noopener">401 Porter Ave, Unit 3</a></li><li>Ocean Springs, MS 39564</li></ul></div>
       </div>
       <div class="footer__bottom">
