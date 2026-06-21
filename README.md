@@ -1,74 +1,93 @@
 # Corktown Wine &amp; Spirits — Website
 
-A redesigned marketing website for **Corktown Wine &amp; Spirits**, a newly
-opened, hand-curated wine and spirits shop in downtown **Ocean Springs,
-Mississippi** (401 Porter Ave, Building A, Unit 3).
+A redesigned marketing website for **Corktown Wine &amp; Spirits** — *"Unique
+Wine &amp; Spirits"* — a newly opened, hand-curated wine and spirits shop in
+downtown **Ocean Springs, Mississippi** (401 Porter Ave, Building A, Unit 3,
+opened June 2026).
 
-This is a fast, fully responsive, single-page site built as a pitch-ready
-replacement for the current corktownwine.com — designed to look premium on
-the first scroll and convert browsers into walk-ins.
+A fast, fully responsive, **playful + animated** single-page site built as a
+pitch-ready replacement for the current corktownwine.com.
 
 > **Preview it:** open `index.html` in any browser — no build step, no
-> dependencies, no server. Everything is plain HTML/CSS/JS.
+> dependencies, no server. Plain HTML/CSS/JS.
 
 ---
 
-## Why it's better than the current page
+## The animated experience (what was requested)
 
-- **Distinct, on-brand identity.** Carries the business card's black-and-silver
-  wordmark into a warmer charcoal + champagne-gold palette with an elegant serif
-  display face, so the shop reads as boutique rather than big-box.
-- **A real story, not a placeholder.** Owner-led "neighborhood cellar" narrative
-  (Sean Perkins, curator) that gives the shop a personality and a reason to visit.
-- **Clear merchandising.** Selection is broken into the four pillars a shopper
-  actually searches for — Wine, Bourbon/Whiskey, Agave/Craft Spirits, and
-  Champagne/Sparkling.
-- **Conversion built in.** Sticky nav, repeated "Visit / Call / Directions"
-  CTAs, click-to-call phone numbers, click-to-email, and an embedded Google Map.
-- **Found on search & social.** SEO meta tags, Open Graph preview, and
-  `LiquorStore` schema.org structured data (address, hours, phone) so Google can
-  surface the shop in local results.
-- **Tastings section** to drive recurring foot traffic and an events calendar hook.
-- **Accessible & polished:** keyboard-friendly, reduced-motion support, semantic
-  HTML, lazy-loaded imagery, and graceful mobile menu.
+This build leans into motion, per the reference direction:
+
+- **🎬 Video hero background.** A full-screen looping `<video>` sits behind the
+  headline. Until the shop's own footage is added it gracefully falls back to an
+  animated "Ken Burns" photo poster — so it always looks alive and never breaks.
+  *(See "Add the hero video" below.)*
+- **✍️ Kinetic / animated text.** The headline rises in line-by-line, and the
+  word **wine → bourbon → agave → champagne → mezcal** cycles in place. A
+  scrolling marquee ribbon runs beneath the hero.
+- **🖱️ Interactive gallery.** A drag-/swipe-/scroll-able horizontal strip of the
+  shop and bottles (click-drag, touch, or trackpad — with scroll-snap).
+- **📜 Scroll animations.** A top scroll-progress bar, reveal-on-scroll for every
+  section, a subtle image parallax, and animated stat counters.
+
+All motion respects `prefers-reduced-motion` for accessibility.
+
+## Why it beats the current page
+
+The current site is a single line of "we're almost finished building the shop"
+text. This gives Corktown a real identity, story, merchandising, and contact
+funnel — and looks like a destination, not a placeholder.
+
+- **On-brand identity** — the wine-glass "C" wordmark recreated as inline SVG, in
+  a warm charcoal + lively gold palette with a wine-berry accent.
+- **Clear merchandising** — Wine, Bourbon/Whiskey, Agave/Craft, Champagne.
+- **Conversion built in** — sticky nav, repeated CTAs, click-to-call/text/email,
+  embedded Google Map, and all four socials (Instagram, Facebook, X, TikTok).
+- **Found on search &amp; social** — SEO + Open Graph + `LiquorStore` schema.org
+  structured data (address, hours, phone, opening date).
 
 ## Structure
 
 ```
 index.html              # the page
 assets/
-  css/styles.css        # all styling (design tokens at the top)
-  js/main.js            # nav, mobile menu, scroll reveal, footer year
+  css/styles.css        # all styling (design tokens at top)
+  js/main.js            # nav, kinetic text, gallery drag, counters, parallax
   img/logo.svg          # recreated wordmark (wine-glass "C")
-  img/favicon.svg       # browser tab icon
+  img/favicon.svg       # tab icon
+  video/                # drop hero.mp4 here (see its README)
 ```
 
-## Brand facts wired in (from the business card)
+## Add the hero video
+
+1. Export a short (~8–15s), silent, looping clip of the shop / a pour.
+2. Save it as `assets/video/hero.mp4` (1080p, H.264, ideally < 6 MB).
+3. Done — it's already wired into the hero `<video>` and starts playing.
+
+## Brand facts wired in
 
 | | |
 |---|---|
-| Business | Corktown Wine &amp; Spirits |
+| Business | Corktown Wine &amp; Spirits — *Unique Wine &amp; Spirits* |
 | Owner | Sean Perkins |
+| Opened | June 19, 2026 |
 | Address | 401 Porter Ave, Building A, Unit 3, Ocean Springs, MS 39564 |
-| Phone | (228) 244-0004 &nbsp;·&nbsp; (228) 300-1423 |
+| Phone | (228) 300-1423 &nbsp;·&nbsp; (228) 244-0004 |
 | Email | sean@corktownwine.com |
-| Instagram | [@corktownwineos](https://www.instagram.com/corktownwineos) |
+| Social | [Instagram @corktownwineos](https://www.instagram.com/corktownwineos), Facebook, X, TikTok |
 
 ## ⚠️ Placeholders to confirm before going live
 
-These were reasonable assumptions for the demo — swap them for real details:
-
-1. **Hours** (currently Mon–Thu 10–8, Fri–Sat 10–9, Sun closed) — confirm actual
-   hours; update both the Visit section and the schema.org block.
-2. **Photography** — the hero, shelf, and tasting images are tasteful stock
-   placeholders loaded from Unsplash. Replace with real interior/product photos
-   for the final site (drop them in `assets/img/` and update the paths).
-3. **Tastings schedule** — "Friday flights / monthly spotlights" is a suggested
-   program; adjust to whatever Corktown actually runs.
-4. **Selection copy** — confirm the categories and example regions match the
-   real inventory.
+1. **Hero video** — currently the animated photo fallback; add real footage.
+2. **Hours** — set to Mon–Thu 10–8, Fri–Sat 10–9, Sun closed; confirm actual
+   hours (update the Visit section *and* the schema.org block).
+3. **Photography** — hero, about, and gallery images are tasteful Unsplash stock.
+   Swap in real shop/product photos (the IG already has great ones).
+4. **Stats &amp; tastings** — "400+ labels", "Friday flights", etc. are suggested;
+   confirm real numbers and program.
+5. **Social links** — Facebook / X / TikTok point to the platform homepages;
+   replace with the shop's actual profile URLs.
 
 ## Deploy
 
-Static hosting, anywhere: GitHub Pages, Netlify, Vercel, or any web host —
-just upload the folder. No build required.
+Static hosting anywhere — GitHub Pages, Netlify, Vercel, or any web host. Upload
+the folder; no build required.
