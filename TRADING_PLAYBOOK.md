@@ -4,7 +4,7 @@ Standing instructions for the Robinhood **Agentic** account (••••4357) �
 individual cash account. This file is the source of truth so any future session
 picks up where we left off. Memory does not persist on its own; this file does.
 
-_Last updated: 2026-06-15_
+_Last updated: 2026-06-25_
 
 ## How we operate (the principle)
 The broker and Robinhood do the always-on watching; the AI is just the hands when
@@ -23,10 +23,11 @@ Reliable layers:
 |--------|-----------|----------|-------|
 | NVDA   | 0.957716  | $208.83  | AI hardware |
 | PLTR   | 1.108156  | $135.36  | AI software |
-| BTSG   | 2.571218  | $58.34   | healthcare small-cap (illiquid) |
+| ~~BTSG~~ | SOLD      | $58.34   | EXITED 6/25 @ ~$69 target → ~+18% (~+$27 realized). Redeployed to VXUS |
 | VOO    | 0.292487  | $683.79  | broad core (bought 6/9) |
 | XLF    | 3.800843  | $52.62   | financials (bought 6/9) |
-| ISRG   | ~0.242130 | ~$413    | medtech (robotic surgery); user has firsthand product conviction. Bought 6/15, queued for open |
+| ISRG   | 0.241400  | $414.25  | medtech (robotic surgery); user firsthand product conviction. Filled 6/15 |
+| VXUS   | ~1.62 (pending) | ~$85 | international; BTSG redeploy ($138), queued for 6/25 open. ~$38 BTSG remainder to sweep in after T+1 |
 
 ## Sell rules (NO stop-losses — hold through dips, take profit on strength)
 Tax-adjusted targets (~+3% above original to offset short-term tax drag).
@@ -35,15 +36,15 @@ Tax-adjusted targets (~+3% above original to offset short-term tax drag).
 |--------|--------|-------------------|--------------------------|
 | NVDA   | $247   | none — fractional can't rest | sell all 0.957716 sh (market, when alert fires) |
 | PLTR   | $167   | 1 sh resting @ $167 (live)   | sell 0.108156 remainder |
-| BTSG   | $69    | 2 sh resting @ $69 (live)    | sell 0.571218 remainder |
-| ISRG   | $495   | none — fractional can't rest | sell all ~0.242130 sh (market, when alert fires). +20% target. Quality name: treat dips as add opportunities, not stops |
+| ~~BTSG~~ | ~~$69~~ | ✅ DONE 6/25 — 2 sh filled @ $69, 0.571 remainder market-sold | — |
+| ISRG   | $495   | none — fractional can't rest | sell all ~0.241400 sh (market, when alert fires). +20% target. Quality name: treat dips as add opportunities, not stops |
 
 Note: Robinhood rejects limit orders with fractional quantities. Whole shares rest at
 the broker; fractional remainders must be market-sold by the AI when the alert fires.
 BTSG is illiquid — prefer care on fills.
 
 ## Robinhood price alerts (set by user)
-- NVDA $247.00  ·  PLTR $167.00  ·  BTSG $69.00  ·  ISRG $495.00
+- NVDA $247.00  ·  PLTR $167.00  ·  ISRG $495.00   (BTSG $69 ✅ fired & executed 6/25)
 When one fires, user pings the AI with which symbol hit.
 
 ## Pre-approved redeploy (execute on ping — no re-approval needed)
@@ -51,8 +52,8 @@ When one fires, user pings the AI with which symbol hit.
 |--------------|--------------------|-----------|----------------|
 | NVDA $247    | 0.957716 sh        | ~$236     | **VOO** |
 | PLTR $167    | 0.108156 remainder | ~$185 tot | **QQQ** |
-| BTSG $69     | 0.571218 remainder | ~$177 tot | **VXUS** |
-| ISRG $495    | ~0.242130 sh       | ~$120     | **VXUS** (international gap) |
+| ~~BTSG $69~~ | ✅ DONE 6/25        | ~$177     | **VXUS** — $138 deployed, ~$38 remainder to sweep |
+| ISRG $495    | ~0.241400 sh       | ~$120     | **VXUS** (international gap) |
 
 Strategy = de-risk single-name AI/growth after a run-up, but stay growth-exposed
 (QQQ, not pure value). End state target: VOO + QQQ + XLF + VXUS — broad core,
