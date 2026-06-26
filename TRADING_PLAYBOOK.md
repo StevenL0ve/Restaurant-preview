@@ -27,7 +27,7 @@ Reliable layers:
 | VOO    | 0.292487  | $683.79  | broad core (bought 6/9) |
 | XLF    | 3.800843  | $52.62   | financials (bought 6/9) |
 | ISRG   | 0.241400  | $414.25  | medtech (robotic surgery); user firsthand product conviction. Filled 6/15 |
-| VXUS   | ~1.62 (pending) | ~$85 | international; BTSG redeploy ($138), queued for 6/25 open. ~$38 BTSG remainder to sweep in after T+1 |
+| VXUS   | ~2.07     | ~$85.4   | international; full BTSG redeploy complete ($138 on 6/25 + $39 sweep 6/26) |
 
 ## Sell rules (NO stop-losses — hold through dips, take profit on strength)
 Tax-adjusted targets (~+3% above original to offset short-term tax drag).
@@ -52,7 +52,7 @@ When one fires, user pings the AI with which symbol hit.
 |--------------|--------------------|-----------|----------------|
 | NVDA $247    | 0.957716 sh        | ~$236     | **VOO** |
 | PLTR $167    | 0.108156 remainder | ~$185 tot | **QQQ** |
-| ~~BTSG $69~~ | ✅ DONE 6/25        | ~$177     | **VXUS** — $138 deployed, ~$38 remainder to sweep |
+| ~~BTSG $69~~ | ✅ DONE             | ~$177     | **VXUS** — fully deployed ($138 6/25 + $39 6/26) |
 | ISRG $495    | ~0.241400 sh       | ~$120     | **VXUS** (international gap) |
 
 Strategy = de-risk single-name AI/growth after a run-up, but stay growth-exposed
