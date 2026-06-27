@@ -36,6 +36,7 @@ const shots = [
   { name: "04-setup", route: `/cards/${firstId}/setup`, tick: true },
   { name: "05-surgeons", route: "/surgeons" },
   { name: "06-facilities", route: "/facilities" },
+  { name: "07-loaners", route: "/loaners" },
 ];
 
 for (const s of shots) {

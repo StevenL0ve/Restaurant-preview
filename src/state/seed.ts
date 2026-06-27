@@ -1,4 +1,4 @@
-import type { AppState, CardItem, Facility, Location, PrefCard, Surgeon } from "../types";
+import type { AppState, CardItem, Facility, Location, LoanerTray, PrefCard, Surgeon } from "../types";
 
 // A realistic, fully-populated demo library so the app never opens to an empty
 // screen. Cards are authored with plain location *strings* for readability; the
@@ -350,7 +350,69 @@ export function buildSeed(): AppState {
     };
   });
 
-  return { facilities, locations, surgeons, cards, setups: {} };
+  // A few demo loaner trays tied to the seeded ortho cases.
+  const tka = cards.find((c) => c.procedure.startsWith("Total Knee"));
+  const acl = cards.find((c) => c.procedure.startsWith("ACL"));
+  const mercy = facilityByName.get("Mercy General");
+  const day = 86400000;
+  const iso = (ms: number) => new Date(Date.now() + ms).toISOString();
+  let ki = 0;
+  const loaner = (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history">): LoanerTray => ({
+    ...l,
+    id: `loaner-seed-${ki++}`,
+    createdAt: iso(-5 * day),
+    updatedAt: iso(-1 * day),
+    history: [{ status: l.status, at: iso(-1 * day) }],
+  });
+
+  const loaners: LoanerTray[] = [
+    loaner({
+      description: "Stryker Triathlon total knee set (3 trays)",
+      vendor: "Stryker",
+      repName: "Mike R.",
+      repPhone: "+15125550112",
+      quantity: 3,
+      poNumber: "PO-44821",
+      facilityId: mercy?.id,
+      surgeonId: "sg-chen",
+      cardId: tka?.id,
+      procedure: "Total Knee Arthroplasty",
+      caseDate: iso(2 * day),
+      neededBy: iso(1 * day), // must arrive a day ahead to sterilize
+      status: "confirmed",
+      notes: "Confirm cement restrictor sizes are in the set.",
+    }),
+    loaner({
+      description: "Arthrex ACL reconstruction set + implants",
+      vendor: "Arthrex",
+      repName: "Dana P.",
+      repPhone: "+15125550148",
+      quantity: 2,
+      facilityId: mercy?.id,
+      surgeonId: "sg-chen",
+      cardId: acl?.id,
+      procedure: "ACL Reconstruction (arthroscopic)",
+      caseDate: iso(5 * day),
+      neededBy: iso(4 * day),
+      status: "requested",
+    }),
+    loaner({
+      description: "Medtronic spine set — pedicle screws",
+      vendor: "Medtronic",
+      repName: "Chris L.",
+      repPhone: "+15125550199",
+      quantity: 4,
+      poNumber: "PO-44790",
+      facilityId: mercy?.id,
+      surgeonId: "sg-chen",
+      procedure: "Lumbar fusion",
+      caseDate: iso(-2 * day),
+      neededBy: iso(-3 * day),
+      status: "returned",
+    }),
+  ];
+
+  return { facilities, locations, surgeons, cards, loaners, setups: {} };
 }
 
 // Re-export so the store's migration can reuse the section list.

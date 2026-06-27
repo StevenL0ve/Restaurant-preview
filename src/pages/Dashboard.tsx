@@ -1,7 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useStore, surgeonOf, totalItems, setupProgress } from "../state/store";
+import {
+  useStore,
+  surgeonOf,
+  totalItems,
+  setupProgress,
+  loanersSorted,
+  loanerStats,
+  isLoanerOverdue,
+  isLoanerSoon,
+} from "../state/store";
 import { Avatar } from "../components/Avatar";
-import { relativeTime } from "../lib/format";
+import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
   const { state } = useStore();
@@ -15,11 +24,16 @@ export function Dashboard() {
     .map((c) => ({ card: c, ...setupProgress(state, c) }))
     .filter((x) => x.done < x.total);
 
+  const lstats = loanerStats(state);
+  const loanerWatch = loanersSorted(state)
+    .filter((l) => isLoanerOverdue(l) || isLoanerSoon(l))
+    .slice(0, 4);
+
   const stats = [
     { label: "Cards", value: state.cards.length, to: "/cards", emoji: "🗂️" },
     { label: "Surgeons", value: state.surgeons.length, to: "/surgeons", emoji: "🧑‍⚕️" },
+    { label: "Loaners active", value: lstats.active, to: "/loaners", emoji: "🚚" },
     { label: "Favorites", value: favorites.length, to: "/cards", emoji: "★" },
-    { label: "Specialties", value: new Set(state.cards.map((c) => c.specialty)).size, to: "/cards", emoji: "🔬" },
   ];
 
   return (
@@ -54,6 +68,27 @@ export function Dashboard() {
               <span className="resume-go">Resume →</span>
             </Link>
           ))}
+        </div>
+      )}
+
+      {loanerWatch.length > 0 && (
+        <div className="card form-card">
+          <div className="card-head">
+            <h2>🚚 Loaner trays to watch</h2>
+            <Link className="link" to="/loaners">All loaners</Link>
+          </div>
+          {loanerWatch.map((l) => {
+            const overdue = isLoanerOverdue(l);
+            return (
+              <Link key={l.id} to="/loaners" className="resume-row">
+                <span className="resume-title">{l.description}</span>
+                <span className={"small " + (overdue ? "neg" : "muted")}>
+                  {overdue ? "Overdue" : l.caseDate ? `Case ${formatDate(l.caseDate)}` : "Soon"}
+                </span>
+                <span className="resume-go">Open →</span>
+              </Link>
+            );
+          })}
         </div>
       )}
 

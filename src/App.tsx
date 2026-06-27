@@ -12,6 +12,7 @@ import { SetupMode } from "./pages/SetupMode";
 import { SurgeonsPage } from "./pages/SurgeonsPage";
 import { SurgeonDetail } from "./pages/SurgeonDetail";
 import { FacilitiesPage } from "./pages/FacilitiesPage";
+import { LoanersPage } from "./pages/LoanersPage";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
 
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/surgeons" element={<SurgeonsPage />} />
             <Route path="/surgeons/:id" element={<SurgeonDetail />} />
             <Route path="/facilities" element={<FacilitiesPage />} />
+            <Route path="/loaners" element={<LoanersPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

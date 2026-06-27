@@ -64,6 +64,11 @@ hospital admin.
   facility** in one tap (locations remap to the new site automatically).
 - **Bulk import** — facilities can upload preexisting cards from a CSV/Excel
   export (Genesis, SIS / S3, or a spreadsheet) with a downloadable template.
+- **Loaner trays** — request and track vendor loaner sets for a case
+  (Casechek-style): vendor, rep, PO, quantity, **case date + delivery deadline**
+  with overdue/arriving-soon alerts, a status pipeline (requested → confirmed →
+  delivered → sterile/ready → in use → returned) with a timestamped history, and
+  one-tap call/text the rep. Loaners to watch surface on the dashboard.
 - **Optional account + Face ID** — use it anonymously, or add a local account to
   lock the app. Nothing leaves your device.
 - **Offline-first PWA** wrapped for the App Store with **Capacitor**.

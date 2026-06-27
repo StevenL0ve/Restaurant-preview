@@ -12,6 +12,7 @@ const items: NavItem[] = [
   { to: "/", label: "Home", icon: "🏠", end: true },
   { to: "/cards", label: "Cards", icon: "🗂️" },
   { to: "/surgeons", label: "Surgeons", icon: "🧑‍⚕️" },
+  { to: "/loaners", label: "Loaner trays", icon: "🚚" },
   { to: "/facilities", label: "Facilities", icon: "🏥" },
   { to: "/search", label: "Search", icon: "🔍" },
   { to: "/settings", label: "Settings", icon: "⚙️" },

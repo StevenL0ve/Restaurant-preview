@@ -47,6 +47,8 @@ describe("app smoke test", () => {
     ["/cards", "Cards"],
     ["/cards/new", "New card"],
     ["/surgeons", "Surgeons"],
+    ["/loaners", "Loaner trays"],
+    ["/facilities", "Add a facility"],
     ["/search", "Search"],
     ["/settings", "Your data"],
   ])("renders %s without crashing", (path, marker) => {

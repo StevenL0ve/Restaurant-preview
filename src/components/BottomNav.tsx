@@ -14,6 +14,7 @@ interface Tab {
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: "🏠", end: true },
   { to: "/cards", label: "Cards", icon: "🗂️" },
+  { to: "/loaners", label: "Loaners", icon: "🚚" },
   { to: "/surgeons", label: "Surgeons", icon: "🧑‍⚕️" },
   { to: "/search", label: "Search", icon: "🔍" },
   { to: "/settings", label: "Settings", icon: "⚙️" },

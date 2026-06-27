@@ -96,10 +96,49 @@ export interface SetupState {
   startedAt: string;
 }
 
+// ---- Loaner trays ----------------------------------------------------------
+// Vendor loaner sets (ortho/spine implants, specialty trays) borrowed for a
+// specific case. The pain Casechek targets: trays arriving late or with no time
+// to sterilize. So each request tracks a delivery deadline and moves through a
+// clear pipeline with a timestamped history.
+
+export const LOANER_STATUSES = [
+  { key: "requested", label: "Requested", icon: "📝" },
+  { key: "confirmed", label: "Confirmed", icon: "✅" },
+  { key: "delivered", label: "Delivered", icon: "📦" },
+  { key: "ready", label: "Sterile / ready", icon: "♨️" },
+  { key: "in-use", label: "In use", icon: "🔪" },
+  { key: "returned", label: "Returned", icon: "↩️" },
+] as const;
+
+export type LoanerStatus = (typeof LOANER_STATUSES)[number]["key"];
+
+export interface LoanerTray {
+  id: ID;
+  description: string; // "Stryker Triathlon total knee set"
+  vendor?: string; // "Stryker"
+  repName?: string;
+  repPhone?: string;
+  quantity?: number; // # of trays / sets
+  poNumber?: string;
+  facilityId?: ID;
+  surgeonId?: ID;
+  cardId?: ID; // optional link to the preference card it's for
+  procedure?: string;
+  caseDate?: string; // ISO date/datetime of the surgery
+  neededBy?: string; // ISO delivery deadline (leaves time to sterilize)
+  status: LoanerStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  history: { status: LoanerStatus; at: string }[]; // status timeline
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
   surgeons: Surgeon[];
   cards: PrefCard[];
+  loaners: LoanerTray[];
   setups: Record<ID, SetupState>; // cardId -> progress
 }

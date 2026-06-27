@@ -837,3 +837,36 @@ a { color: inherit; }
   .card-grid, .surgeon-grid { grid-template-columns: 1fr; }
   .item-add { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Loaner trays
+   ============================================================ */
+.loaner-list { display: flex; flex-direction: column; gap: 14px; }
+.loaner-card { display: flex; flex-direction: column; gap: 12px; }
+.loaner-card.overdue { border-color: #fecaca; }
+.loaner-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.loaner-desc { font-weight: 700; font-size: 15.5px; letter-spacing: -0.01em; }
+.loaner-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--slate); }
+.loaner-meta .neg { font-weight: 600; }
+.loaner-notes { margin: 0; font-size: 13.5px; color: var(--muted); background: var(--bg); border-radius: 9px; padding: 9px 11px; }
+
+/* Status pipeline */
+.pipeline { display: flex; flex-wrap: wrap; gap: 6px; }
+.pipe-step {
+  display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line);
+  background: var(--card); color: var(--muted); border-radius: 999px; padding: 6px 11px;
+  font-size: 12px; font-weight: 600; transition: background 0.12s, color 0.12s, border 0.12s;
+}
+.pipe-step:hover { background: var(--brand-50); }
+.pipe-step.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+[data-theme="dark"] .pipe-step.active { color: #06231f; }
+.pipe-label { white-space: nowrap; }
+
+.loaner-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.loaner-actions a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+@media (max-width: 560px) {
+  /* On a phone, collapse pipeline labels to just the icons to save width. */
+  .pipe-label { display: none; }
+  .pipe-step { padding: 8px 10px; font-size: 14px; }
+}

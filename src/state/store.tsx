@@ -11,6 +11,8 @@ import type {
   CardItem,
   Facility,
   Location,
+  LoanerStatus,
+  LoanerTray,
   PrefCard,
   SectionKey,
   Surgeon,
@@ -82,7 +84,14 @@ function migrateLegacy(old: any): AppState {
       equipment: fix(c.equipment),
     };
   });
-  return { facilities, locations, surgeons: old.surgeons ?? [], cards, setups: old.setups ?? {} };
+  return {
+    facilities,
+    locations,
+    surgeons: old.surgeons ?? [],
+    cards,
+    loaners: old.loaners ?? [],
+    setups: old.setups ?? {},
+  };
 }
 
 export function uid(prefix: string): string {
@@ -134,6 +143,11 @@ export interface Store {
   // setup / pull-list mode
   toggleSetupItem: (cardId: string, itemId: string) => void;
   resetSetup: (cardId: string) => void;
+  // loaner trays
+  addLoaner: (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history" | "status"> & { status?: LoanerStatus }) => LoanerTray;
+  updateLoaner: (id: string, patch: Partial<LoanerTray>) => void;
+  setLoanerStatus: (id: string, status: LoanerStatus) => void;
+  deleteLoaner: (id: string) => void;
   // sharing — portable card bundles
   exportCardFile: (cardId: string) => void;
   exportFacilityFile: (facilityId: string) => void;
@@ -311,6 +325,42 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...st, setups };
         }),
 
+      addLoaner: (l) => {
+        const now = new Date().toISOString();
+        const status = l.status ?? "requested";
+        const loaner: LoanerTray = {
+          ...l,
+          status,
+          id: uid("loaner"),
+          createdAt: now,
+          updatedAt: now,
+          history: [{ status, at: now }],
+        };
+        update((st) => ({ ...st, loaners: [loaner, ...st.loaners] }));
+        return loaner;
+      },
+
+      updateLoaner: (id, patch) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === id ? { ...l, ...patch, updatedAt: new Date().toISOString() } : l,
+          ),
+        })),
+
+      setLoanerStatus: (id, status) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) => {
+            if (l.id !== id || l.status === status) return l;
+            const at = new Date().toISOString();
+            return { ...l, status, updatedAt: at, history: [...l.history, { status, at }] };
+          }),
+        })),
+
+      deleteLoaner: (id) =>
+        update((st) => ({ ...st, loaners: st.loaners.filter((l) => l.id !== id) })),
+
       exportCardFile: (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
@@ -371,13 +421,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           locations: parsed.locations ?? st.locations,
           surgeons: parsed.surgeons ?? st.surgeons,
           cards: parsed.cards ?? st.cards,
+          loaners: parsed.loaners ?? st.loaners,
           setups: parsed.setups ?? {},
         }));
       },
 
       resetDemo: () => setState(buildSeed()),
 
-      wipeAll: () => setState({ facilities: [], locations: [], surgeons: [], cards: [], setups: {} }),
+      wipeAll: () =>
+        setState({ facilities: [], locations: [], surgeons: [], cards: [], loaners: [], setups: {} }),
     };
   }, [state]);
 
@@ -507,6 +559,48 @@ export function setupProgress(s: AppState, card: PrefCard): { done: number; tota
   const total = totalItems(card);
   const done = s.setups[card.id]?.checked.length ?? 0;
   return { done: Math.min(done, total), total };
+}
+
+// ---- Loaner selectors ------------------------------------------------------
+
+/** Active = not yet returned. */
+export function activeLoaners(s: AppState): LoanerTray[] {
+  return s.loaners.filter((l) => l.status !== "returned");
+}
+
+/** Past its delivery deadline but still not delivered — the thing to chase. */
+export function isLoanerOverdue(l: LoanerTray): boolean {
+  if (!l.neededBy) return false;
+  const pending = l.status === "requested" || l.status === "confirmed";
+  return pending && new Date(l.neededBy).getTime() < Date.now();
+}
+
+/** Case is within `days` and the tray isn't fully ready yet. */
+export function isLoanerSoon(l: LoanerTray, days = 3): boolean {
+  if (!l.caseDate || l.status === "returned") return false;
+  const dt = new Date(l.caseDate).getTime() - Date.now();
+  return dt >= 0 && dt <= days * 86400000;
+}
+
+export function loanerStats(s: AppState): { active: number; overdue: number; soon: number } {
+  const active = activeLoaners(s);
+  return {
+    active: active.length,
+    overdue: active.filter(isLoanerOverdue).length,
+    soon: active.filter((l) => isLoanerSoon(l)).length,
+  };
+}
+
+/** Sorted for the list: overdue first, then soonest case date, undated last. */
+export function loanersSorted(s: AppState): LoanerTray[] {
+  return [...s.loaners].sort((a, b) => {
+    const ao = isLoanerOverdue(a) ? 0 : 1;
+    const bo = isLoanerOverdue(b) ? 0 : 1;
+    if (ao !== bo) return ao - bo;
+    const at = a.caseDate ? new Date(a.caseDate).getTime() : Infinity;
+    const bt = b.caseDate ? new Date(b.caseDate).getTime() : Infinity;
+    return at - bt;
+  });
 }
 
 export interface SetupRow {
