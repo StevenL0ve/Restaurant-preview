@@ -5,7 +5,7 @@ import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 
 export function Settings() {
-  const { state, exportAll, importAll, resetDemo, wipeAll } = useStore();
+  const { state, exportAll, importCards, resetDemo, wipeAll } = useStore();
   const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
@@ -17,12 +17,12 @@ export function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        importAll(String(reader.result));
-        setMsg("Library imported.");
+        const added = importCards(String(reader.result));
+        setMsg(`Imported ${added} ${added === 1 ? "card" : "cards"} into your library.`);
       } catch {
-        setMsg("That file didn’t look like a CaseReady export.");
+        setMsg("That file didn’t look like a CaseReady card file.");
       }
-      setTimeout(() => setMsg(null), 2500);
+      setTimeout(() => setMsg(null), 3000);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -62,8 +62,9 @@ export function Settings() {
       <div className="card settings-card">
         <h2>Your data</h2>
         <p>
-          Your whole library lives on this device. Export it to JSON to back it up or move to a new
-          phone — no support ticket, no waiting on anyone.
+          Your whole library lives on this device. Export it to back it up or move to a new phone, and
+          <strong> import cards a colleague shared</strong> — they merge into your library as your own
+          editable copies (surgeons, facilities, and locations are matched by name, never duplicated).
         </p>
         <ul className="data-counts">
           <li><strong>{state.cards.length}</strong> cards</li>
@@ -71,9 +72,9 @@ export function Settings() {
           <li><strong>{state.locations.length}</strong> locations</li>
         </ul>
         <div className="form-actions">
-          <button className="btn btn-primary" onClick={exportAll}>Export to JSON</button>
-          <button className="btn" onClick={() => fileRef.current?.click()}>Import…</button>
-          <input ref={fileRef} type="file" accept="application/json" hidden onChange={onImportFile} />
+          <button className="btn btn-primary" onClick={exportAll}>Export library</button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>Import cards…</button>
+          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={onImportFile} />
           <button className="btn" onClick={resetDemo}>Reset demo data</button>
         </div>
         {msg && <p className="muted small" style={{ marginTop: 10 }}>{msg}</p>}

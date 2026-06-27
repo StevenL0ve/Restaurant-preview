@@ -8,7 +8,7 @@ import { SECTIONS, type SectionKey } from "../types";
 export function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state, deleteCard, duplicateCard, toggleFavorite } = useStore();
+  const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile } = useStore();
   const [toast, setToast] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -134,7 +134,8 @@ export function CardDetail() {
       })}
 
       <div className="detail-actions">
-        <button className="btn" onClick={onShare}>Share / copy</button>
+        <button className="btn" onClick={onShare}>Share text</button>
+        <button className="btn" onClick={() => exportCardFile(card.id)}>Export file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {confirmDel ? (
           <span className="confirm">

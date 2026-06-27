@@ -17,6 +17,7 @@ import type {
 } from "../types";
 import { SECTIONS, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
+import { asBundle, bundleCards, importBundle } from "../lib/portable";
 
 const STORAGE_KEY = "caseready.v2";
 const LEGACY_KEY = "caseready.v1"; // free-text item.location strings, no facilities
@@ -132,11 +133,19 @@ export interface Store {
   // setup / pull-list mode
   toggleSetupItem: (cardId: string, itemId: string) => void;
   resetSetup: (cardId: string) => void;
+  // sharing — portable card bundles
+  exportCardFile: (cardId: string) => void;
+  exportFacilityFile: (facilityId: string) => void;
+  importCards: (json: string) => number; // merges; returns # cards added; throws if invalid
   // data ownership
   exportAll: () => void;
   importAll: (json: string) => void;
   resetDemo: () => void;
   wipeAll: () => void;
+}
+
+function slugName(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "export";
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -297,6 +306,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           delete setups[cardId];
           return { ...st, setups };
         }),
+
+      exportCardFile: (cardId) => {
+        const card = state.cards.find((c) => c.id === cardId);
+        const bundle = bundleCards(state, [cardId], new Date().toISOString());
+        triggerDownload(
+          new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }),
+          `${slugName(card?.procedure ?? "card")}.caseready.json`,
+        );
+      },
+
+      exportFacilityFile: (facilityId) => {
+        const ids = state.cards.filter((c) => c.facilityId === facilityId).map((c) => c.id);
+        const fac = state.facilities.find((f) => f.id === facilityId);
+        const bundle = bundleCards(state, ids, new Date().toISOString());
+        triggerDownload(
+          new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }),
+          `${slugName(fac?.name ?? "facility")}-cards.caseready.json`,
+        );
+      },
+
+      importCards: (json) => {
+        const bundle = asBundle(JSON.parse(json), new Date().toISOString());
+        if (!bundle || !bundle.cards.length) throw new Error("No cards found in that file.");
+        const { state: next, added } = importBundle(state, bundle);
+        setState(next);
+        return added;
+      },
 
       exportAll: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });

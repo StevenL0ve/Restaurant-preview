@@ -48,7 +48,7 @@ export function FacilitiesPage() {
 }
 
 function FacilityCard({ facility, store }: { facility: Facility; store: Store }) {
-  const { state, updateFacility, deleteFacility, addLocation } = store;
+  const { state, updateFacility, deleteFacility, addLocation, exportFacilityFile } = store;
   const locations = locationsForFacility(state, facility.id);
   const areas = areasForFacility(state, facility.id);
   const cardCount = state.cards.filter((c) => c.facilityId === facility.id).length;
@@ -100,6 +100,11 @@ function FacilityCard({ facility, store }: { facility: Facility; store: Store })
       </div>
 
       <div className="detail-actions" style={{ marginTop: 14 }}>
+        {cardCount > 0 && (
+          <button className="btn btn-sm" onClick={() => exportFacilityFile(facility.id)}>
+            Export {cardCount} cards →
+          </button>
+        )}
         {confirmDel ? (
           <span className="confirm">
             Delete {facility.name}, its {locations.length} locations, and unlink them from {cardCount} cards?
