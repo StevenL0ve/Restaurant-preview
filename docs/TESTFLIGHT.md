@@ -71,17 +71,19 @@ just that one click.
 
 ```bash
 git clone <this repo> && cd Restaurant-preview
-npm ci
-export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
+# Paste your App Store Connect API key details (created above):
 export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
 export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-fastlane beta
+export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
+npm run testflight
 ```
 
-`fastlane beta` builds the web app, generates/refreshes the native iOS project,
-sets the export-compliance flag, bumps the build number, archives with automatic
-signing (`-allowProvisioningUpdates`), and uploads. First run also does
-`npx cap add ios`.
+`npm run testflight` (→ `scripts/testflight.sh`) checks your toolchain, installs
+deps, builds the web app, generates/refreshes the native iOS project, sets the
+export-compliance flag, bumps the build number, archives with automatic signing,
+and uploads — then tells you what to do in App Store Connect. First run also does
+`npx cap add ios`. (Under the hood it calls `fastlane beta`, which you can also
+run directly.)
 
 Prefer the Xcode UI? `npm run build && npx cap add ios && npx cap sync ios && npx
 cap open ios`, then **Product → Archive → Distribute App → TestFlight**.

@@ -14,7 +14,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:add:ios": "cap add ios",
-    "cap:add:android": "cap add android"
+    "cap:add:android": "cap add android",
+    "testflight": "bash scripts/testflight.sh"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
