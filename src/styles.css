@@ -731,6 +731,12 @@ a { color: inherit; }
 .item-list li:last-child { border-bottom: none; }
 .item-name { font-size: 14.5px; font-weight: 500; }
 .item-detail { font-size: 12.5px; color: var(--muted); }
+.item-list li { flex-wrap: wrap; }
+/* "Where to find it" tag — teal so it reads as the actionable, traveler-facing bit. */
+.item-location {
+  font-size: 12px; font-weight: 600; color: var(--brand);
+  background: var(--brand-50); border-radius: 7px; padding: 2px 8px;
+}
 
 /* Item editor (card edit) */
 .edit-item-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; }
@@ -760,11 +766,15 @@ a { color: inherit; }
 .check-list { list-style: none; margin: 0; padding: 0; }
 .check-list li { border-bottom: 1px solid var(--line); }
 .check-list li:last-child { border-bottom: none; }
-.check-row { display: flex; align-items: center; gap: 13px; padding: 13px 2px; cursor: pointer; font-size: 15px; }
-.check-row input { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--brand); }
+.check-row { display: flex; align-items: flex-start; gap: 13px; padding: 13px 2px; cursor: pointer; font-size: 15px; }
+.check-row input { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--brand); margin-top: 1px; }
+.check-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.check-line { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
 .check-name { font-weight: 500; }
+.check-main .item-location { align-self: flex-start; }
 .check-list li.done .check-name { text-decoration: line-through; color: var(--muted); }
 .check-list li.done .item-detail { text-decoration: line-through; }
+.check-list li.done .item-location { opacity: 0.55; }
 .ready-cta { text-align: center; padding: 20px; }
 .ready-cta p { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
 

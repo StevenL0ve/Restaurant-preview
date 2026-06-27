@@ -28,6 +28,13 @@ describe("global search", () => {
     if (card && card.kind === "card") expect(card.snippet?.toLowerCase()).toContain("tourniquet");
   });
 
+  it("finds a card by an item's storage location", () => {
+    const hits = search(state, "cabinet 7");
+    const card = hits.find((h) => h.kind === "card");
+    expect(card).toBeTruthy();
+    if (card && card.kind === "card") expect(card.snippet).toContain("📍");
+  });
+
   it("ranks exact procedure matches above incidental item matches", () => {
     const hits = search(state, "vicryl"); // appears as a suture on several cards
     expect(hits.length).toBeGreaterThan(1);

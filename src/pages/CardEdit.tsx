@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useStore, emptyCard, uid } from "../state/store";
+import { useStore, emptyCard, uid, knownLocations } from "../state/store";
 import { SECTIONS, type CardItem, type PrefCard, type SectionKey } from "../types";
 
 // Create or edit a card. Local draft state; nothing is persisted until "Save".
@@ -21,6 +21,15 @@ export function CardEdit() {
   const [sgSpecialty, setSgSpecialty] = useState("General Surgery");
 
   const set = (patch: Partial<PrefCard>) => setDraft((d) => ({ ...d, ...patch }));
+
+  // Locations already used across the library (plus any added in this draft) so
+  // they can be reused from a dropdown instead of retyped each time.
+  const locationOptions = useMemo(() => {
+    const fromDraft = SECTIONS.flatMap((s) => draft[s.key as SectionKey])
+      .map((it) => it.location)
+      .filter((x): x is string => !!x);
+    return Array.from(new Set([...knownLocations(state), ...fromDraft])).sort();
+  }, [state, draft]);
 
   const canSave = useMemo(
     () => draft.procedure.trim().length > 0 && (newSurgeon ? sgName.trim().length > 0 : !!draft.surgeonId),
@@ -130,6 +139,7 @@ export function CardEdit() {
           label={sec.label}
           icon={sec.icon}
           items={draft[sec.key as SectionKey]}
+          locationOptions={locationOptions}
           onChange={(items) => set({ [sec.key]: items } as Partial<PrefCard>)}
         />
       ))}
@@ -147,21 +157,34 @@ function ItemEditor({
   label,
   icon,
   items,
+  locationOptions,
   onChange,
 }: {
   label: string;
   icon: string;
   items: CardItem[];
+  locationOptions: string[];
   onChange: (items: CardItem[]) => void;
 }) {
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
+  const [location, setLocation] = useState("");
+  const listId = `loc-${label.replace(/\W+/g, "")}`;
 
   function add() {
     if (!name.trim()) return;
-    onChange([...items, { id: uid("it"), name: name.trim(), detail: detail.trim() || undefined }]);
+    onChange([
+      ...items,
+      {
+        id: uid("it"),
+        name: name.trim(),
+        detail: detail.trim() || undefined,
+        location: location.trim() || undefined,
+      },
+    ]);
     setName("");
     setDetail("");
+    setLocation("");
   }
 
   return (
@@ -177,6 +200,7 @@ function ItemEditor({
             <li key={it.id}>
               <span className="item-name">{it.name}</span>
               {it.detail && <span className="item-detail">{it.detail}</span>}
+              {it.location && <span className="item-location">📍 {it.location}</span>}
               <button
                 className="info-del"
                 aria-label={`Remove ${it.name}`}
@@ -189,6 +213,11 @@ function ItemEditor({
         </ul>
       )}
 
+      <datalist id={listId}>
+        {locationOptions.map((loc) => (
+          <option key={loc} value={loc} />
+        ))}
+      </datalist>
       <div className="item-add">
         <input
           placeholder="Add an item…"
@@ -200,6 +229,13 @@ function ItemEditor({
           placeholder="detail / size / qty (optional)"
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+        />
+        <input
+          list={listId}
+          placeholder="📍 where to find it (optional)"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && add()}
         />
         <button className="btn btn-sm" onClick={add} disabled={!name.trim()}>Add</button>

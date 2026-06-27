@@ -23,11 +23,14 @@ export interface Surgeon {
 }
 
 /** A single line on a card: an instrument, suture, supply, med, or piece of
- *  equipment. `detail` carries size / quantity / "for fascia" context. */
+ *  equipment. `detail` carries size / quantity / "for fascia" context;
+ *  `location` is where to find it in this facility ("Sterile store room,
+ *  cabinet 7, shelf 3") — the thing a traveling tech needs most. */
 export interface CardItem {
   id: ID;
   name: string;
   detail?: string;
+  location?: string;
 }
 
 /** The five checklist sections every card shares. Kept as a const tuple so the

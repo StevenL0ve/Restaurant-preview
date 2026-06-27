@@ -27,7 +27,10 @@ export function cardToText(card: PrefCard, surgeon?: Surgeon): string {
     if (!arr.length) continue;
     lines.push("");
     lines.push(`${sec.label.toUpperCase()}`);
-    for (const it of arr) lines.push(`  • ${it.name}${it.detail ? ` — ${it.detail}` : ""}`);
+    for (const it of arr) {
+      lines.push(`  • ${it.name}${it.detail ? ` — ${it.detail}` : ""}`);
+      if (it.location) lines.push(`      📍 ${it.location}`);
+    }
   }
 
   lines.push("");

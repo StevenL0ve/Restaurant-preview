@@ -239,6 +239,15 @@ export function totalItems(card: PrefCard): number {
   return SECTIONS.reduce((sum, sec) => sum + card[sec.key as SectionKey].length, 0);
 }
 
+/** Every distinct item location used across the library, for reuse suggestions. */
+export function knownLocations(s: AppState): string[] {
+  const set = new Set<string>();
+  for (const c of s.cards)
+    for (const sec of SECTIONS)
+      for (const it of c[sec.key as SectionKey]) if (it.location) set.add(it.location);
+  return Array.from(set).sort();
+}
+
 /** How many of a card's items are checked in the live setup. */
 export function setupProgress(s: AppState, card: PrefCard): { done: number; total: number } {
   const total = totalItems(card);

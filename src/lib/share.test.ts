@@ -23,6 +23,10 @@ describe("cardToText", () => {
     expect(text).toMatch(/Vicryl 0 — fascia/);
   });
 
+  it("includes the location for items that have one", () => {
+    expect(text).toContain("📍 Sterile store room, cabinet 7, shelf 3");
+  });
+
   it("works without a surgeon", () => {
     const t = cardToText(card);
     expect(t).toContain("LAPAROSCOPIC CHOLECYSTECTOMY");

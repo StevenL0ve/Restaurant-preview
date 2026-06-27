@@ -120,6 +120,7 @@ export function CardDetail() {
                 <li key={it.id}>
                   <span className="item-name">{it.name}</span>
                   {it.detail && <span className="item-detail">{it.detail}</span>}
+                  {it.location && <span className="item-location">📍 {it.location}</span>}
                 </li>
               ))}
             </ul>

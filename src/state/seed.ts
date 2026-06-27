@@ -7,8 +7,8 @@ import type { AppState, CardItem, PrefCard, Surgeon } from "../types";
 
 let n = 0;
 const id = (p: string) => `${p}-seed-${n++}`;
-const items = (...rows: [string, string?][]): CardItem[] =>
-  rows.map(([name, detail]) => ({ id: id("it"), name, detail }));
+const items = (...rows: [string, string?, string?][]): CardItem[] =>
+  rows.map(([name, detail, location]) => ({ id: id("it"), name, detail, location }));
 
 const surgeons: Surgeon[] = [
   {
@@ -95,23 +95,26 @@ const cards: PrefCard[] = [
     favorite: true,
     daysAgo: 1,
     instruments: items(
-      ["Lap chole tray"],
-      ["Veress needle"],
-      ["5mm + 10mm trocars", "2× 5mm, 2× 10/12mm"],
-      ["Maryland dissector"],
-      ["Laparoscopic hook cautery"],
-      ["Endo clip applier", "medium-large"],
-      ["Specimen retrieval bag"],
+      ["Lap chole tray", undefined, "Sterile core, instrument rack B"],
+      ["Veress needle", undefined, "Lap cart, top drawer"],
+      ["5mm + 10mm trocars", "2× 5mm, 2× 10/12mm", "Lap cart, drawer 2"],
+      ["Maryland dissector", undefined, "Lap cart, drawer 3"],
+      ["Laparoscopic hook cautery", undefined, "Lap cart, drawer 3"],
+      ["Endo clip applier", "medium-large", "Sterile store room, cabinet 7, shelf 3"],
+      ["Specimen retrieval bag", undefined, "Sterile store room, cabinet 7, shelf 3"],
     ),
-    sutures: items(["Vicryl 0", "fascia, ×2"], ["Monocryl 4-0", "skin"]),
+    sutures: items(
+      ["Vicryl 0", "fascia, ×2", "Suture room, bin V-0"],
+      ["Monocryl 4-0", "skin", "Suture room, bin M-4"],
+    ),
     supplies: items(
-      ["Veress / insufflation tubing"],
-      ["10mm 30° scope", "warmed"],
-      ["ESU pencil + cord"],
-      ["Suction-irrigator"],
-      ["Steri-Strips + dressing"],
+      ["Veress / insufflation tubing", undefined, "Lap cart, side bin"],
+      ["10mm 30° scope", "warmed", "Scope storage, cabinet 2"],
+      ["ESU pencil + cord", undefined, "Sterile store room, cabinet 3, shelf 1"],
+      ["Suction-irrigator", undefined, "Sterile store room, cabinet 3, shelf 2"],
+      ["Steri-Strips + dressing", undefined, "Dressing cart, drawer 4"],
     ),
-    medications: items(["Marcaine 0.25%", "local at port sites"], ["Surgicel", "available"]),
+    medications: items(["Marcaine 0.25%", "local at port sites", "Med room, fridge"], ["Surgicel", "available", "Sterile store room, cabinet 5"]),
     equipment: items(
       ["Laparoscopic tower + insufflator", "CO2 full"],
       ["ESU unit", "coag 30 / cut 30"],

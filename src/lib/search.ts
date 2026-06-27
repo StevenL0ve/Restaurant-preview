@@ -46,9 +46,10 @@ export function search(state: AppState, raw: string): SearchHit[] {
     // Search inside every item line; surface the first matching item.
     for (const sec of SECTIONS) {
       for (const it of c[sec.key as SectionKey]) {
-        const sc = Math.max(score(it.name), score(it.detail ?? ""));
+        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(it.location ?? ""));
         if (sc > 0 && sc >= best && !snippet) {
-          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}`;
+          const where = it.location ? ` 📍 ${it.location}` : "";
+          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where}`;
         }
         best = Math.max(best, sc);
       }

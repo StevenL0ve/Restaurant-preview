@@ -73,8 +73,13 @@ export function SetupMode() {
                   <li key={it.id} className={on ? "done" : ""}>
                     <label className="check-row">
                       <input type="checkbox" checked={on} onChange={() => toggleSetupItem(card.id, it.id)} />
-                      <span className="check-name">{it.name}</span>
-                      {it.detail && <span className="item-detail">{it.detail}</span>}
+                      <span className="check-main">
+                        <span className="check-line">
+                          <span className="check-name">{it.name}</span>
+                          {it.detail && <span className="item-detail">{it.detail}</span>}
+                        </span>
+                        {it.location && <span className="item-location">📍 {it.location}</span>}
+                      </span>
                     </label>
                   </li>
                 );
