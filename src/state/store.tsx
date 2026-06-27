@@ -18,6 +18,7 @@ import type {
 import { SECTIONS, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
+import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
 const STORAGE_KEY = "caseready.v2";
 const LEGACY_KEY = "caseready.v1"; // free-text item.location strings, no facilities
@@ -137,6 +138,9 @@ export interface Store {
   exportCardFile: (cardId: string) => void;
   exportFacilityFile: (facilityId: string) => void;
   importCards: (json: string) => number; // merges; returns # cards added; throws if invalid
+  importCsv: (text: string) => number; // bulk import from a spreadsheet; returns # added
+  downloadCsvTemplate: () => void;
+  copyCardToFacility: (cardId: string, facilityId: string) => PrefCard | null;
   // data ownership
   exportAll: () => void;
   importAll: (json: string) => void;
@@ -334,6 +338,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return added;
       },
 
+      importCsv: (text) => {
+        const bundle = csvToBundle(parseCsv(text), new Date().toISOString());
+        const { state: next, added } = importBundle(state, bundle);
+        setState(next);
+        return added;
+      },
+
+      downloadCsvTemplate: () =>
+        triggerDownload(new Blob([CSV_TEMPLATE], { type: "text/csv" }), "caseready-import-template.csv"),
+
+      // Transfer a card to another facility: clone it and remap each item's
+      // location to the target facility's set, matching by name (creating any
+      // that don't exist there yet). The surgeon's setup carries over intact.
+      copyCardToFacility: (cardId, facilityId) => {
+        const src = state.cards.find((c) => c.id === cardId);
+        if (!src) return null;
+        const { card, newLocations } = produceFacilityCopy(state, src, facilityId);
+        setState((st) => ({ ...st, locations: [...st.locations, ...newLocations], cards: [card, ...st.cards] }));
+        return card;
+      },
+
       exportAll: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
         triggerDownload(blob, "caseready-export.json");
@@ -374,6 +399,45 @@ function clearItemLocations(card: PrefCard, locIds: Set<string>) {
 }
 function clearItemLocationsFull(card: PrefCard, locIds: Set<string>): PrefCard {
   return { ...card, ...clearItemLocations(card, locIds) };
+}
+
+// Clone a card into another facility, carrying its item locations over by name
+// (creating any the target facility lacks). Returns the new card plus only the
+// locations that need to be added to state.
+function produceFacilityCopy(
+  state: AppState,
+  src: PrefCard,
+  facilityId: string,
+): { card: PrefCard; newLocations: Location[] } {
+  const newLocations: Location[] = [];
+  const findOrCreate = (srcLocId?: string): string | undefined => {
+    if (!srcLocId) return undefined;
+    const sloc = state.locations.find((l) => l.id === srcLocId);
+    if (!sloc) return undefined;
+    const label = locationLabel(sloc).toLowerCase();
+    const match =
+      state.locations.find((l) => l.facilityId === facilityId && locationLabel(l).toLowerCase() === label) ??
+      newLocations.find((l) => locationLabel(l).toLowerCase() === label);
+    if (match) return match.id;
+    const nl: Location = { id: uid("loc"), facilityId, area: sloc.area, spot: sloc.spot };
+    newLocations.push(nl);
+    return nl.id;
+  };
+  const remap = (arr: CardItem[]) =>
+    arr.map((it) => ({ ...it, id: uid("it"), locationId: findOrCreate(it.locationId) }));
+  const card: PrefCard = {
+    ...src,
+    id: uid("card"),
+    facilityId,
+    favorite: false,
+    updatedAt: new Date().toISOString(),
+    instruments: remap(src.instruments),
+    sutures: remap(src.sutures),
+    supplies: remap(src.supplies),
+    medications: remap(src.medications),
+    equipment: remap(src.equipment),
+  };
+  return { card, newLocations };
 }
 
 export function triggerDownload(blob: Blob, filename: string) {

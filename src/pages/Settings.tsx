@@ -5,9 +5,10 @@ import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 
 export function Settings() {
-  const { state, exportAll, importCards, resetDemo, wipeAll } = useStore();
+  const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll } = useStore();
   const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
+  const csvRef = useRef<HTMLInputElement>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -23,6 +24,24 @@ export function Settings() {
         setMsg("That file didn’t look like a CaseReady card file.");
       }
       setTimeout(() => setMsg(null), 3000);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  function onCsvFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const added = importCsv(String(reader.result));
+        setMsg(`Imported ${added} ${added === 1 ? "card" : "cards"} from the spreadsheet.`);
+      } catch (err) {
+        const m = err && typeof err === "object" && "message" in err ? String((err as { message: string }).message) : "Couldn’t read that CSV.";
+        setMsg(m);
+      }
+      setTimeout(() => setMsg(null), 4000);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -78,6 +97,20 @@ export function Settings() {
           <button className="btn" onClick={resetDemo}>Reset demo data</button>
         </div>
         {msg && <p className="muted small" style={{ marginTop: 10 }}>{msg}</p>}
+      </div>
+
+      <div className="card settings-card">
+        <h2>Bulk import from a spreadsheet</h2>
+        <p>
+          Already have preference cards in Genesis, SIS / S3, or Excel? Export them to CSV and import
+          here — one row per item (Facility, Surgeon, Procedure, Section, Item, Detail, Area, Spot).
+          Surgeons, facilities, and locations are created automatically and matched by name.
+        </p>
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={() => csvRef.current?.click()}>Import CSV…</button>
+          <input ref={csvRef} type="file" accept=".csv,text/csv" hidden onChange={onCsvFile} />
+          <button className="btn" onClick={downloadCsvTemplate}>Download template</button>
+        </div>
       </div>
 
       <div className="card settings-card danger-zone">

@@ -8,7 +8,7 @@ import { SECTIONS, type SectionKey } from "../types";
 export function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile } = useStore();
+  const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile, copyCardToFacility } = useStore();
   const [toast, setToast] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -137,6 +137,25 @@ export function CardDetail() {
         <button className="btn" onClick={onShare}>Share text</button>
         <button className="btn" onClick={() => exportCardFile(card.id)}>Export file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
+        {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (
+          <select
+            className="loc-select"
+            value=""
+            onChange={(e) => {
+              if (!e.target.value) return;
+              const copy = copyCardToFacility(card.id, e.target.value);
+              if (copy) navigate(`/cards/${copy.id}`);
+            }}
+            title="Copy this card to another facility"
+          >
+            <option value="">Copy to facility…</option>
+            {state.facilities
+              .filter((f) => f.id !== card.facilityId)
+              .map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+          </select>
+        )}
         {confirmDel ? (
           <span className="confirm">
             Delete this card?

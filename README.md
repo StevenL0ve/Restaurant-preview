@@ -57,8 +57,13 @@ hospital admin.
   closing") surfaced right where you set up.
 - **Global search** — one box across surgeons, procedures, and every item line,
   ranked by relevance ("knee", "Vicryl", "tourniquet", a surgeon's name).
-- **Share & export** — native share sheet / clipboard for a single card; whole-
-  library JSON export and import in Settings.
+- **Share, archive & transfer** — export a card to a file and send it; the
+  recipient imports it as their own editable copy (a *foundation* to build on),
+  matched into their surgeons/facilities/locations by name. Build a personal
+  archive of cards from many hospitals. Surgeons can **copy a card to another
+  facility** in one tap (locations remap to the new site automatically).
+- **Bulk import** — facilities can upload preexisting cards from a CSV/Excel
+  export (Genesis, SIS / S3, or a spreadsheet) with a downloadable template.
 - **Optional account + Face ID** — use it anonymously, or add a local account to
   lock the app. Nothing leaves your device.
 - **Offline-first PWA** wrapped for the App Store with **Capacitor**.
