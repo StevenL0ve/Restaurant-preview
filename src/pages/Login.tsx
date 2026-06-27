@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../state/auth";
 
-// Login + create-account gate. Phase 1 uses local accounts; the same screen
-// will drive Supabase auth in Phase 2 with no UI change.
+// Optional account gate. A personal tool shouldn't gate you behind anyone's
+// approval — so the most prominent action is "use it now, no account."
 export function Login() {
-  const { signIn, signUp, bioAvailable, bioEnabled, bioUnlock } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { signIn, signUp, continueAsGuest, bioAvailable, bioEnabled, bioUnlock } = useAuth();
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,26 +29,24 @@ export function Login() {
   async function faceId() {
     setError(null);
     const ok = await bioUnlock();
-    // With the local backend there's no stored remote session to restore yet;
-    // once Supabase is wired, a successful unlock resumes the saved session.
     if (!ok) setError("Face ID could not verify you. Use your password.");
   }
 
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="CoParent" width={64} height={64} />
-        <h1 className="auth-title">CoParent</h1>
-        <p className="auth-sub">Calm, organized co-parenting</p>
+        <img className="auth-logo" src="/brand/logo-mark.png" alt="CaseReady" width={64} height={64} />
+        <h1 className="auth-title">CaseReady</h1>
+        <p className="auth-sub">Your surgical preference cards — yours alone</p>
+
+        <button className="btn btn-primary auth-submit" onClick={continueAsGuest} type="button">
+          Use it now — no account
+        </button>
+        <p className="auth-foot" style={{ margin: "10px 0 18px" }}>
+          Everything stays on this device. Add an account anytime to lock it with Face&nbsp;ID.
+        </p>
 
         <div className="auth-tabs">
-          <button
-            className={"auth-tab" + (mode === "signin" ? " active" : "")}
-            onClick={() => { setMode("signin"); setError(null); }}
-            type="button"
-          >
-            Sign in
-          </button>
           <button
             className={"auth-tab" + (mode === "signup" ? " active" : "")}
             onClick={() => { setMode("signup"); setError(null); }}
@@ -56,13 +54,20 @@ export function Login() {
           >
             Create account
           </button>
+          <button
+            className={"auth-tab" + (mode === "signin" ? " active" : "")}
+            onClick={() => { setMode("signin"); setError(null); }}
+            type="button"
+          >
+            Sign in
+          </button>
         </div>
 
         <form className="auth-form" onSubmit={submit}>
           {mode === "signup" && (
             <label className="field">
               <span>Your name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex Rivera" autoComplete="name" />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Lee" autoComplete="name" />
             </label>
           )}
           <label className="field">
@@ -71,12 +76,18 @@ export function Login() {
           </label>
           <label className="field">
             <span>Password</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            />
           </label>
 
           {error && <div className="auth-error">{error}</div>}
 
-          <button className="btn btn-primary auth-submit" disabled={busy}>
+          <button className="btn auth-submit" disabled={busy}>
             {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
           </button>
         </form>
@@ -86,10 +97,6 @@ export function Login() {
             <span aria-hidden>☺</span> Unlock with Face ID
           </button>
         )}
-
-        <p className="auth-foot">
-          Your data is private to you and {mode === "signup" ? "your co-parent once you connect" : "your family"}.
-        </p>
       </div>
     </div>
   );

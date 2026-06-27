@@ -6,25 +6,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type {
-  AppState,
-  CalEvent,
-  Expense,
-  JournalEntry,
-  Message,
-  InfoRecord,
-} from "../types";
+import type { AppState, CardItem, PrefCard, SectionKey, Surgeon } from "../types";
+import { SECTIONS } from "../types";
 import { buildSeed } from "./seed";
-import { analyzeTone } from "../lib/tone";
 
-const STORAGE_KEY = "coparently.v1";
+const STORAGE_KEY = "caseready.v1";
 
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      // Backfill any keys added in newer versions so older saved state can't
-      // crash the app (e.g. the packing list added after launch).
+      // Merge over a fresh seed so keys added in later versions can't crash an
+      // older saved state.
       return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
     }
   } catch {
@@ -33,44 +26,61 @@ function load(): AppState {
   return buildSeed();
 }
 
-function uid(prefix: string): string {
+export function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-interface Store {
+const PALETTE = ["#4338ca", "#0e7490", "#b91c1c", "#15803d", "#b45309", "#7c3aed", "#be185d"];
+
+/** A blank card ready to edit, owned by the given surgeon. */
+export function emptyCard(surgeonId: string, specialty: string): PrefCard {
+  return {
+    id: uid("card"),
+    surgeonId,
+    procedure: "",
+    specialty,
+    position: "",
+    prep: "",
+    draping: "",
+    notes: "",
+    instruments: [],
+    sutures: [],
+    supplies: [],
+    medications: [],
+    equipment: [],
+    favorite: false,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export interface Store {
   state: AppState;
-  // messaging
-  sendMessage: (body: string) => void;
-  markAllRead: () => void;
-  saveDraft: (body: string) => void;
-  clearDraft: () => void;
-  // calendar
-  addEvent: (e: Omit<CalEvent, "id">) => void;
-  addEvents: (es: Omit<CalEvent, "id">[]) => void;
-  respondToRequest: (id: string, accept: boolean) => void;
-  deleteEvent: (id: string) => void;
-  // expenses
-  addExpense: (e: Omit<Expense, "id">) => void;
-  addExpenses: (es: Omit<Expense, "id">[]) => void;
-  setExpenseStatus: (id: string, status: Expense["status"]) => void;
-  // journal
-  addJournal: (e: Omit<JournalEntry, "id">) => void;
-  deleteJournal: (id: string) => void;
-  // info bank
-  addInfo: (r: Omit<InfoRecord, "id">) => void;
-  deleteInfo: (id: string) => void;
-  // packing list
-  addPackingItem: (label: string) => void;
-  togglePacked: (id: string) => void;
-  deletePackingItem: (id: string) => void;
-  clearPacked: () => void;
-  // account / data ownership
+  // surgeons
+  addSurgeon: (s: Omit<Surgeon, "id" | "color" | "initials">) => Surgeon;
+  updateSurgeon: (id: string, patch: Partial<Surgeon>) => void;
+  deleteSurgeon: (id: string) => void;
+  // cards
+  saveCard: (card: PrefCard) => void;
+  deleteCard: (id: string) => void;
+  duplicateCard: (id: string) => PrefCard | null;
+  toggleFavorite: (id: string) => void;
+  // setup / pull-list mode
+  toggleSetupItem: (cardId: string, itemId: string) => void;
+  resetSetup: (cardId: string) => void;
+  // data ownership
   exportAll: () => void;
+  importAll: (json: string) => void;
   resetDemo: () => void;
-  deleteAccount: () => void;
+  wipeAll: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
+
+function initials(name: string): string {
+  const parts = name.replace(/^dr\.?\s*/i, "").trim().split(/\s+/);
+  const letters = (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+  return (letters || name.slice(0, 2)).toUpperCase();
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load);
@@ -85,137 +95,112 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return {
       state,
 
-      sendMessage: (body) =>
-        update((s) => {
-          const tone = analyzeTone(body).level;
-          const msg: Message = {
-            id: uid("m"),
-            fromId: s.meId,
-            body: body.trim(),
-            createdAt: new Date().toISOString(),
-            readAt: null,
-            tone,
-            edited: false,
+      addSurgeon: (s) => {
+        const surgeon: Surgeon = {
+          ...s,
+          id: uid("sg"),
+          color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+          initials: initials(s.name),
+        };
+        update((st) => ({ ...st, surgeons: [...st.surgeons, surgeon] }));
+        return surgeon;
+      },
+
+      updateSurgeon: (id, patch) =>
+        update((st) => ({
+          ...st,
+          surgeons: st.surgeons.map((s) =>
+            s.id === id
+              ? { ...s, ...patch, initials: patch.name ? initials(patch.name) : s.initials }
+              : s,
+          ),
+        })),
+
+      deleteSurgeon: (id) =>
+        update((st) => ({
+          ...st,
+          surgeons: st.surgeons.filter((s) => s.id !== id),
+          cards: st.cards.filter((c) => c.surgeonId !== id),
+        })),
+
+      saveCard: (card) =>
+        update((st) => {
+          const stamped = { ...card, updatedAt: new Date().toISOString() };
+          const exists = st.cards.some((c) => c.id === card.id);
+          return {
+            ...st,
+            cards: exists
+              ? st.cards.map((c) => (c.id === card.id ? stamped : c))
+              : [stamped, ...st.cards],
           };
-          return { ...s, messages: [...s.messages, msg], draft: null };
         }),
 
-      markAllRead: () =>
-        update((s) => ({
-          ...s,
-          messages: s.messages.map((m) =>
-            m.fromId !== s.meId && !m.readAt
-              ? { ...m, readAt: new Date().toISOString() }
-              : m,
-          ),
+      deleteCard: (id) =>
+        update((st) => {
+          const setups = { ...st.setups };
+          delete setups[id];
+          return { ...st, cards: st.cards.filter((c) => c.id !== id), setups };
+        }),
+
+      duplicateCard: (id) => {
+        const src = state.cards.find((c) => c.id === id);
+        if (!src) return null;
+        const reId = (arr: CardItem[]) => arr.map((it) => ({ ...it, id: uid("it") }));
+        const copy: PrefCard = {
+          ...src,
+          id: uid("card"),
+          procedure: `${src.procedure} (copy)`,
+          favorite: false,
+          updatedAt: new Date().toISOString(),
+          instruments: reId(src.instruments),
+          sutures: reId(src.sutures),
+          supplies: reId(src.supplies),
+          medications: reId(src.medications),
+          equipment: reId(src.equipment),
+        };
+        update((st) => ({ ...st, cards: [copy, ...st.cards] }));
+        return copy;
+      },
+
+      toggleFavorite: (id) =>
+        update((st) => ({
+          ...st,
+          cards: st.cards.map((c) => (c.id === id ? { ...c, favorite: !c.favorite } : c)),
         })),
 
-      saveDraft: (body) =>
-        update((s) => ({
-          ...s,
-          draft: body.trim()
-            ? { to: s.coParentId, body, updatedAt: new Date().toISOString() }
-            : null,
-        })),
+      toggleSetupItem: (cardId, itemId) =>
+        update((st) => {
+          const cur = st.setups[cardId] ?? { checked: [], startedAt: new Date().toISOString() };
+          const checked = cur.checked.includes(itemId)
+            ? cur.checked.filter((x) => x !== itemId)
+            : [...cur.checked, itemId];
+          return { ...st, setups: { ...st.setups, [cardId]: { ...cur, checked } } };
+        }),
 
-      clearDraft: () => update((s) => ({ ...s, draft: null })),
-
-      addEvent: (e) =>
-        update((s) => ({ ...s, events: [...s.events, { ...e, id: uid("e") }] })),
-
-      addEvents: (es) =>
-        update((s) => ({
-          ...s,
-          events: [...s.events, ...es.map((e) => ({ ...e, id: uid("e") }))],
-        })),
-
-      respondToRequest: (id, accept) =>
-        update((s) => ({
-          ...s,
-          events: s.events.map((e) =>
-            e.id === id
-              ? { ...e, requestStatus: accept ? "accepted" : "declined" }
-              : e,
-          ),
-        })),
-
-      deleteEvent: (id) =>
-        update((s) => ({ ...s, events: s.events.filter((e) => e.id !== id) })),
-
-      addExpense: (e) =>
-        update((s) => ({
-          ...s,
-          expenses: [{ ...e, id: uid("x") }, ...s.expenses],
-        })),
-
-      addExpenses: (es) =>
-        update((s) => ({
-          ...s,
-          expenses: [...es.map((e) => ({ ...e, id: uid("x") })), ...s.expenses],
-        })),
-
-      setExpenseStatus: (id, status) =>
-        update((s) => ({
-          ...s,
-          expenses: s.expenses.map((x) => (x.id === id ? { ...x, status } : x)),
-        })),
-
-      addJournal: (e) =>
-        update((s) => ({
-          ...s,
-          journal: [{ ...e, id: uid("j") }, ...s.journal],
-        })),
-
-      deleteJournal: (id) =>
-        update((s) => ({
-          ...s,
-          journal: s.journal.filter((j) => j.id !== id),
-        })),
-
-      addInfo: (r) =>
-        update((s) => ({ ...s, info: [...s.info, { ...r, id: uid("i") }] })),
-
-      deleteInfo: (id) =>
-        update((s) => ({ ...s, info: s.info.filter((r) => r.id !== id) })),
-
-      addPackingItem: (label) =>
-        update((s) =>
-          label.trim()
-            ? {
-                ...s,
-                packing: [
-                  ...s.packing,
-                  { id: uid("pk"), label: label.trim(), packed: false, createdAt: new Date().toISOString() },
-                ],
-              }
-            : s,
-        ),
-
-      togglePacked: (id) =>
-        update((s) => ({
-          ...s,
-          packing: s.packing.map((p) => (p.id === id ? { ...p, packed: !p.packed } : p)),
-        })),
-
-      deletePackingItem: (id) =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => p.id !== id) })),
-
-      clearPacked: () =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => !p.packed) })),
+      resetSetup: (cardId) =>
+        update((st) => {
+          const setups = { ...st.setups };
+          delete setups[cardId];
+          return { ...st, setups };
+        }),
 
       exportAll: () => {
-        const blob = new Blob([JSON.stringify(state, null, 2)], {
-          type: "application/json",
-        });
-        triggerDownload(blob, "coparent-export.json");
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+        triggerDownload(blob, "caseready-export.json");
+      },
+
+      importAll: (json) => {
+        const parsed = JSON.parse(json) as Partial<AppState>;
+        update((st) => ({
+          surgeons: parsed.surgeons ?? st.surgeons,
+          cards: parsed.cards ?? st.cards,
+          setups: parsed.setups ?? {},
+        }));
       },
 
       resetDemo: () => setState(buildSeed()),
 
-      deleteAccount: () => {
-        localStorage.removeItem(STORAGE_KEY);
-        setState(buildSeed());
-      },
+      wipeAll: () => setState({ surgeons: [], cards: [], setups: {} }),
     };
   }, [state]);
 
@@ -239,20 +224,25 @@ export function useStore(): Store {
   return ctx;
 }
 
-// Derived selectors used across pages.
-export function unreadCount(s: AppState): number {
-  return s.messages.filter((m) => m.fromId !== s.meId && !m.readAt).length;
+// ---- Derived selectors -----------------------------------------------------
+
+export function surgeonOf(s: AppState, id: string): Surgeon | undefined {
+  return s.surgeons.find((x) => x.id === id);
 }
 
-export function pendingRequests(s: AppState): CalEvent[] {
-  return s.events.filter((e) => e.requestStatus === "pending");
+export function cardsForSurgeon(s: AppState, surgeonId: string): PrefCard[] {
+  return s.cards.filter((c) => c.surgeonId === surgeonId);
 }
 
-// Running balance: positive means the co-parent owes you.
-export function expenseBalance(s: AppState): number {
-  return s.expenses.reduce((bal, x) => {
-    if (x.status === "settled") return bal;
-    const otherOwes = x.amount * x.splitOtherShare;
-    return x.paidById === s.meId ? bal + otherOwes : bal - otherOwes;
-  }, 0);
+/** Total checklist items on a card across all five sections. */
+export function totalItems(card: PrefCard): number {
+  return SECTIONS.reduce((sum, sec) => sum + card[sec.key as SectionKey].length, 0);
+}
+
+/** How many of a card's items are checked in the live setup. */
+export function setupProgress(s: AppState, card: PrefCard): { done: number; total: number } {
+  const total = totalItems(card);
+  const done = s.setups[card.id]?.checked.length ?? 0;
+  // Clamp in case items were deleted after being checked.
+  return { done: Math.min(done, total), total };
 }

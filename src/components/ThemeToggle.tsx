@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
-const KEY = "coparently.theme";
+const KEY = "caseready.theme";
 
 function initialTheme(): Theme {
   const saved = localStorage.getItem(KEY);

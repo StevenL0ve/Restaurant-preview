@@ -1,114 +1,75 @@
-// Core domain types for CoParent.
-// Everything is plain data so it can be serialized to localStorage and exported
-// as JSON at any time (one of the things OurFamilyWizard users say they can't do).
+// Core domain types for CaseReady.
+//
+// CaseReady is a *personal* surgical preference-card library. Everything is
+// plain, serializable data so it lives in localStorage, exports to JSON, and
+// works fully offline — no hospital account, no admin approval, no server.
+// (That last part is the whole point: the App Store reviews of the app this
+// replaces are full of techs furious that they couldn't just use it for
+// themselves.)
 
 export type ID = string;
 
-export interface Person {
+/** A surgeon you scrub or circulate for. */
+export interface Surgeon {
   id: ID;
-  name: string;
-  role: "me" | "coparent" | "child" | "professional";
-  color: string;
+  name: string; // "Dr. Alvarez"
+  specialty: string; // "General Surgery"
+  facility?: string; // "Mercy General" — same surgeon can differ by site
+  gloveSize?: string; // "7.0" — techs need this constantly
+  gloveType?: string; // "Biogel, latex-free"
+  quirks?: string; // music, temperament, "no chatter on closing", room temp…
+  color: string; // avatar color
   initials: string;
 }
 
-export type ToneLevel = "calm" | "tense" | "hostile";
-
-export interface Message {
+/** A single line on a card: an instrument, suture, supply, med, or piece of
+ *  equipment. `detail` carries size / quantity / "for fascia" context. */
+export interface CardItem {
   id: ID;
-  fromId: ID;
-  body: string;
-  createdAt: string; // ISO
-  readAt: string | null;
-  // Tamper-evident record: tone score captured at send time, immutable thereafter.
-  tone: ToneLevel;
-  edited: false; // messages are never editable — this is a legal record
+  name: string;
+  detail?: string;
 }
 
-export interface Draft {
-  to: ID;
-  body: string;
-  updatedAt: string;
+/** The five checklist sections every card shares. Kept as a const tuple so the
+ *  UI, search, and setup mode can iterate them in a stable order. */
+export const SECTIONS = [
+  { key: "instruments", label: "Instruments & trays", icon: "🔧" },
+  { key: "sutures", label: "Sutures", icon: "🧵" },
+  { key: "supplies", label: "Supplies & disposables", icon: "📦" },
+  { key: "medications", label: "Medications & irrigation", icon: "💉" },
+  { key: "equipment", label: "Equipment", icon: "🖥️" },
+] as const;
+
+export type SectionKey = (typeof SECTIONS)[number]["key"];
+
+/** A preference card: one surgeon's setup for one procedure. */
+export interface PrefCard {
+  id: ID;
+  surgeonId: ID;
+  procedure: string; // "Laparoscopic Cholecystectomy"
+  specialty: string;
+  position?: string; // "Supine, both arms tucked"
+  prep?: string; // "ChloraPrep, xiphoid to pubis"
+  draping?: string; // "Laparotomy drape"
+  notes?: string; // case-specific quirks / reminders
+  instruments: CardItem[];
+  sutures: CardItem[];
+  supplies: CardItem[];
+  medications: CardItem[];
+  equipment: CardItem[];
+  favorite: boolean;
+  updatedAt: string; // ISO
 }
 
-export type EventCategory =
-  | "parenting-time"
-  | "school"
-  | "medical"
-  | "activity"
-  | "holiday"
-  | "other";
-
-export type ChangeRequestStatus = "none" | "pending" | "accepted" | "declined";
-
-export interface CalEvent {
-  id: ID;
-  title: string;
-  category: EventCategory;
-  start: string; // ISO date or datetime
-  end: string; // ISO
-  allDay: boolean;
-  notes?: string;
-  // Who "has" the child this block (for parenting-time events).
-  withId?: ID;
-  // Trade/change-request workflow.
-  requestStatus: ChangeRequestStatus;
-  requestedById?: ID;
-}
-
-export type ExpenseStatus = "open" | "reimbursement-requested" | "settled" | "disputed";
-
-export interface Expense {
-  id: ID;
-  description: string;
-  amount: number; // total cost
-  paidById: ID;
-  // Share owed by the OTHER parent (e.g. 0.5 for a 50/50 split).
-  splitOtherShare: number;
-  date: string; // ISO
-  category: string;
-  receiptName?: string; // demo: filename only
-  status: ExpenseStatus;
-  note?: string;
-}
-
-export interface JournalEntry {
-  id: ID;
-  title: string;
-  body: string;
-  createdAt: string;
-  mood?: "good" | "neutral" | "hard";
-  // Journal entries are private by default — the co-parent cannot see them
-  // unless explicitly exported. (OFW journals confuse users on this point.)
-  shared: boolean;
-}
-
-export interface InfoRecord {
-  id: ID;
-  childId: ID;
-  kind: "medical" | "school" | "contact" | "clothing" | "other";
-  label: string;
-  value: string;
-}
-
-// "Never forget the teddy bear" — a shared checklist of what needs to travel
-// between homes at the next exchange.
-export interface PackingItem {
-  id: ID;
-  label: string;
-  packed: boolean;
-  createdAt: string;
+/** Live "pull list" progress while setting up a room. Keyed by card id and kept
+ *  in app state so closing the app mid-setup doesn't lose your checkmarks. */
+export interface SetupState {
+  checked: ID[]; // CardItem ids already gathered
+  startedAt: string;
 }
 
 export interface AppState {
-  people: Person[];
-  messages: Message[];
-  draft: Draft | null;
-  events: CalEvent[];
-  expenses: Expense[];
-  journal: JournalEntry[];
-  info: InfoRecord[];
-  packing: PackingItem[];
-  meId: ID;
-  coParentId: ID;
+  surgeons: Surgeon[];
+  cards: PrefCard[];
+  setups: Record<ID, SetupState>; // cardId -> progress
 }

@@ -1,92 +1,105 @@
-# Getting CoParent into TestFlight
+# Getting CaseReady onto your iPhone via TestFlight
 
 TestFlight is Apple's beta system: you upload a signed build to App Store
-Connect, and it becomes installable on your phone via the TestFlight app.
+Connect and it becomes installable on your phone through the TestFlight app.
 
-> **Why this can't be done from the cloud agent:** iOS apps can only be built
-> and code-signed on **macOS with Xcode**, and the upload must come from your
-> authenticated Apple account. Both steps run on **your Mac**. Everything below
-> is set up in this repo already — you run the commands; paste any error here
-> and I'll debug it with you.
+You have an **Apple Developer Program** membership, which is the one thing that
+can't be automated. Everything else is set up in this repo. There are two
+paths — pick one:
+
+- **Path A — Cloud (no Mac):** a GitHub Actions macOS runner builds and uploads
+  for you. ~15 min of one-time secret setup, then it's one click forever.
+- **Path B — Your Mac:** one `fastlane beta` command.
+
+> **Why I (the cloud agent) can't push the final button:** iOS builds must be
+> code-signed on macOS with *your* Apple credentials. That's the part only you
+> can authorize. Paste any error you hit back to me and I'll debug it with you.
 
 ---
 
-## Prerequisites (on your Mac)
+## First, create the app record (both paths, ~3 min)
 
-- macOS with **Xcode** installed (from the Mac App Store), opened once to accept the license.
-- **CocoaPods** and **Node**: `sudo gem install cocoapods` and Node 18+.
-- Your **Apple Developer Program** membership active (you have this).
-- **Fastlane** (optional but recommended): `brew install fastlane`.
+1. Sign in to [App Store Connect](https://appstoreconnect.apple.com) → **Apps → +
+   New App**.
+2. Platform **iOS**, name **CaseReady** (if taken, try "CaseReady — Prefs"),
+   primary language English, bundle ID **`com.stevennelson.caseready`**
+   (create it under Certificates, IDs & Profiles → Identifiers first if needed),
+   SKU `caseready`.
 
-## Path A — Fastlane (one command after setup) ✅ recommended
+If you'd rather use a different bundle ID, change it in **three** places and tell
+me so I keep them in sync: `capacitor.config.ts`, `fastlane/Appfile`, and the
+App Store Connect identifier.
 
-1. **Clone & install**
-   ```bash
-   git clone <this repo> && cd Restaurant-preview
-   npm install
-   ```
-2. **Generate the native iOS project** (one-time):
-   ```bash
-   npm run build
-   npx cap add ios
-   npx cap sync ios
-   ```
-3. **Create an App Store Connect record** for bundle id `com.stevennelson.coparent`
-   (App Store Connect → Apps → +). Name: **CoParent**.
-4. **Create an App Store Connect API key** (Users and Access → Integrations →
-   App Store Connect API → +). Download the `.p8`. This lets Fastlane upload
-   without interactive 2FA.
-5. **Fill in `fastlane/Appfile`** with your `apple_id` and team IDs, and export
-   the API key env vars (see the key's Issuer ID / Key ID):
-   ```bash
-   export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
-   export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
-   export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   ```
-6. **Ship it:**
-   ```bash
-   fastlane beta
-   ```
-   This builds the app, bumps the build number, and uploads to TestFlight.
-   Processing takes a few minutes, then it appears under TestFlight in App
-   Store Connect.
+## Create an App Store Connect API key (both paths, ~2 min)
 
-## Path B — Xcode UI (no Fastlane)
+App Store Connect → **Users and Access → Integrations → App Store Connect API →
++**. Role: **App Manager**. Download the `.p8` (you only get one chance). Note
+the **Key ID** and the **Issuer ID** shown above the table.
 
-1. `npm run build && npx cap add ios && npx cap sync ios`
-2. `npx cap open ios` (opens Xcode).
-3. Select the **App** target → **Signing & Capabilities** → check *Automatically
-   manage signing* and pick your **Team**.
-4. Set a **version** (e.g. 1.0.0) and **build** number (e.g. 1).
-5. Choose **Any iOS Device** as the destination → **Product → Archive**.
-6. In the Organizer: **Distribute App → TestFlight (Internal Only) → Upload**.
-7. In App Store Connect → your app → **TestFlight**: add yourself as an internal
-   tester. Install the **TestFlight** app on your iPhone and accept the invite.
+---
 
-## Skip the export-compliance prompt on every upload
+## Path A — Cloud build (no Mac)
 
-CoParent only uses standard HTTPS (exempt encryption), so set this once and
-TestFlight stops asking. Run after `npx cap add ios`:
+Set these in the repo: **Settings → Secrets and variables → Actions → New
+repository secret**.
+
+| Secret | Value |
+| --- | --- |
+| `APP_STORE_CONNECT_API_KEY_ID` | the Key ID from the step above |
+| `APP_STORE_CONNECT_API_ISSUER_ID` | the Issuer ID |
+| `APP_STORE_CONNECT_API_KEY_B64` | the `.p8` file, base64-encoded — run `base64 -i AuthKey_XXXX.p8 \| pbcopy` |
+| `MATCH_GIT_URL` | URL of a **private** git repo to hold signing certs (make an empty one) |
+| `MATCH_PASSWORD` | any passphrase you choose (encrypts the certs) |
+| `MATCH_GIT_BASIC_AUTHORIZATION` | `base64 "<github-username>:<personal-access-token>"` so the runner can clone the certs repo |
+
+Then, once, generate the signing certificates into that repo (needs a Mac **or**
+I can guide you through `fastlane match` in a Codespace):
 
 ```bash
-PLIST=ios/App/App/Info.plist
-/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+fastlane match appstore   # creates + stores the distribution cert & profile
 ```
 
-Re-run it if you ever regenerate the `ios/` project. (The native folder is
-created on your Mac, so this can't live in the cross-platform repo.)
+Now go to the repo's **Actions** tab → **iOS · TestFlight** → **Run workflow**.
+It builds on a macOS runner and uploads to TestFlight. Subsequent releases are
+just that one click.
 
-## After upload
+> No certs repo yet? Apple requires a distribution certificate that headless
+> runners can't mint on their own, so the `match` repo is the reliable route.
+> Ping me and I'll walk you through the one-time `match` bootstrap.
 
-- First upload requires completing **Export Compliance** (CoParent uses only
-  standard encryption / HTTPS → typically "no" to the custom-encryption question).
-  The plist flag above removes this prompt entirely.
-- Internal testers (up to 100, must be in your team) get builds immediately.
-- External testers require a short Beta App Review.
+## Path B — Your Mac (one command)
 
-## Android equivalent (for parity)
+```bash
+git clone <this repo> && cd Restaurant-preview
+npm ci
+export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
+export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
+export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+fastlane beta
+```
 
-Google Play's beta is **Internal testing**. Build a signed `.aab` in Android
-Studio (or `fastlane supply`), upload under Testing → Internal testing, and share
-the opt-in link. See `docs/PUBLISHING.md`.
+`fastlane beta` builds the web app, generates/refreshes the native iOS project,
+sets the export-compliance flag, bumps the build number, archives with automatic
+signing (`-allowProvisioningUpdates`), and uploads. First run also does
+`npx cap add ios`.
+
+Prefer the Xcode UI? `npm run build && npx cap add ios && npx cap sync ios && npx
+cap open ios`, then **Product → Archive → Distribute App → TestFlight**.
+
+---
+
+## After the upload
+
+- Processing takes a few minutes, then the build shows under **TestFlight** in
+  App Store Connect.
+- Add yourself as an **internal tester** (up to 100, must be in your team) — they
+  get builds immediately, no review.
+- Install the **TestFlight** app on your iPhone and accept the invite.
+- The export-compliance prompt is pre-answered (the app uses only standard
+  HTTPS), so you won't be asked on every upload.
+
+## Android (for parity later)
+
+Google Play's beta is **Internal testing**: build a signed `.aab`
+(`fastlane supply` or Android Studio), upload under Testing → Internal testing,
+and share the opt-in link. See `docs/PUBLISHING.md`.

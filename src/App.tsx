@@ -5,21 +5,18 @@ import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
 import { Dashboard } from "./pages/Dashboard";
-import { Messages } from "./pages/Messages";
-import { Calendar } from "./pages/Calendar";
-import { Expenses } from "./pages/Expenses";
-import { Journal } from "./pages/Journal";
-import { InfoBank } from "./pages/InfoBank";
-import { Packing } from "./pages/Packing";
-import { Paywall } from "./pages/Paywall";
-import { Assistant } from "./pages/Assistant";
+import { CardsPage } from "./pages/CardsPage";
+import { CardDetail } from "./pages/CardDetail";
+import { CardEdit } from "./pages/CardEdit";
+import { SetupMode } from "./pages/SetupMode";
+import { SurgeonsPage } from "./pages/SurgeonsPage";
+import { SurgeonDetail } from "./pages/SurgeonDetail";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
 
 export default function App() {
   const { user, ready } = useAuth();
 
-  // Wait for the session check, then gate the app behind sign-in.
   if (!ready) return null;
   if (!user) return <Login />;
 
@@ -32,14 +29,13 @@ export default function App() {
         <main id="main-content" className="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/info" element={<InfoBank />} />
-            <Route path="/packing" element={<Packing />} />
-            <Route path="/upgrade" element={<Paywall />} />
-            <Route path="/assistant" element={<Assistant />} />
+            <Route path="/cards" element={<CardsPage />} />
+            <Route path="/cards/new" element={<CardEdit />} />
+            <Route path="/cards/:id" element={<CardDetail />} />
+            <Route path="/cards/:id/edit" element={<CardEdit />} />
+            <Route path="/cards/:id/setup" element={<SetupMode />} />
+            <Route path="/surgeons" element={<SurgeonsPage />} />
+            <Route path="/surgeons/:id" element={<SurgeonDetail />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

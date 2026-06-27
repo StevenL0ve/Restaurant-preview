@@ -1,0 +1,50 @@
+name: iOS · TestFlight
+
+# Builds the iOS app on a macOS runner and uploads it to TestFlight.
+# Trigger it manually from the Actions tab once the repo secrets below are set.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   APP_STORE_CONNECT_API_KEY_ID     – the Key ID of your App Store Connect API key
+#   APP_STORE_CONNECT_API_ISSUER_ID  – the Issuer ID (Users and Access → Integrations)
+#   APP_STORE_CONNECT_API_KEY_B64    – the .p8 key file, base64-encoded
+#   MATCH_GIT_URL                    – git URL of a private repo holding signing certs
+#   MATCH_PASSWORD                   – the passphrase that encrypts that match repo
+#   MATCH_GIT_BASIC_AUTHORIZATION    – base64 "user:token" to clone the match repo
+# See docs/TESTFLIGHT.md for how to create each of these (it's ~15 minutes, once).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: gem install fastlane --no-document
+
+      - name: Decode App Store Connect API key
+        env:
+          KEY_B64: ${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}
+        run: echo "$KEY_B64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
+
+      - name: Build & upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: fastlane ios beta

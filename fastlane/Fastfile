@@ -1,29 +1,62 @@
-# CoParent — Fastlane lanes (run on a Mac with Xcode).
+# CaseReady — Fastlane lanes for shipping to TestFlight.
 #
-# One-time setup is in docs/TESTFLIGHT.md. After that, shipping a beta is:
-#   fastlane beta
+# Runs either on your Mac (Xcode installed) or on a GitHub Actions macOS runner
+# (see .github/workflows/ios-testflight.yml). One-time setup is in
+# docs/TESTFLIGHT.md. After that, shipping a beta is just:  fastlane beta
 #
-# This builds the Capacitor iOS app and uploads it to TestFlight.
+# Authentication uses an App Store Connect API key (no interactive 2FA) when
+# these env vars are set:
+#   APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID,
+#   APP_STORE_CONNECT_API_KEY      (the .p8 contents)  — or _KEY_PATH (a file)
 
 default_platform(:ios)
 
 WORKSPACE = "ios/App/App.xcworkspace"
-SCHEME = "App"
+PROJECT   = "ios/App/App.xcodeproj"
+SCHEME    = "App"
+
+def api_key
+  return nil unless ENV["APP_STORE_CONNECT_API_KEY_ID"]
+  app_store_connect_api_key(
+    key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+    issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+    key_content: ENV["APP_STORE_CONNECT_API_KEY"],     # raw .p8 contents (CI secret)
+    key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"], # or a path to the .p8
+    is_key_content_base64: ENV["APP_STORE_CONNECT_API_KEY_B64"] == "1",
+    in_house: false,
+  )
+end
 
 platform :ios do
-  desc "Build the web app and sync it into the native iOS project"
+  desc "Build the web app and (re)generate the native iOS project"
   lane :sync do
-    sh("cd .. && npm run build && npx cap sync ios")
+    sh("cd .. && npm ci && npm run build")
+    # Create the native project on first run, then sync the web build into it.
+    unless File.directory?("../ios")
+      sh("cd .. && npx cap add ios")
+      sh("cd .. && npx capacitor-assets generate --ios") rescue nil
+    end
+    sh("cd .. && npx cap sync ios")
+
+    # Exempt-encryption flag so TestFlight never shows the export-compliance
+    # prompt (the app only uses standard HTTPS).
+    plist = "../ios/App/App/Info.plist"
+    sh(%(/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "#{plist}"))
   end
 
   desc "Build and upload a new build to TestFlight"
   lane :beta do
     sync
+    key = api_key
 
-    # Bump the build number to the next TestFlight number for this version.
+    # On CI, install distribution certs + profiles from a match repo if set.
+    if ENV["MATCH_GIT_URL"]
+      match(type: "appstore", readonly: true, api_key: key)
+    end
+
     increment_build_number(
-      xcodeproj: "ios/App/App.xcodeproj",
-      build_number: latest_testflight_build_number(initial_build_number: 0) + 1
+      xcodeproj: PROJECT,
+      build_number: latest_testflight_build_number(api_key: key, initial_build_number: 0) + 1,
     )
 
     build_app(
@@ -31,14 +64,14 @@ platform :ios do
       scheme: SCHEME,
       export_method: "app-store",
       output_directory: "build",
-      clean: true
+      clean: true,
+      xcargs: ENV["MATCH_GIT_URL"] ? nil : "-allowProvisioningUpdates",
     )
 
-    # Uses an App Store Connect API key if APP_STORE_CONNECT_API_KEY_PATH is set
-    # (recommended — avoids 2FA prompts). See docs/TESTFLIGHT.md.
     upload_to_testflight(
+      api_key: key,
       skip_waiting_for_build_processing: true,
-      distribute_external: false
+      distribute_external: false,
     )
   end
 end

@@ -1,131 +1,96 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
-import { useTier, setTier } from "../lib/subscription";
+import { APP_VERSION } from "../version";
 
 export function Settings() {
-  const { state, exportAll, resetDemo, deleteAccount } = useStore();
+  const { state, exportAll, importAll, resetDemo, wipeAll } = useStore();
   const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
-  const tier = useTier();
-  const navigate = useNavigate();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [confirmWipe, setConfirmWipe] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  const counts = {
-    messages: state.messages.length,
-    events: state.events.length,
-    expenses: state.expenses.length,
-    journal: state.journal.length,
-    info: state.info.length,
-  };
+  function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        importAll(String(reader.result));
+        setMsg("Library imported.");
+      } catch {
+        setMsg("That file didn’t look like a CaseReady export.");
+      }
+      setTimeout(() => setMsg(null), 2500);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>Settings</h1>
-          <p className="muted">Your account, your data, your rules.</p>
+    <div className="page page-narrow">
+      <div className="page-head"><h1>Settings</h1></div>
+
+      <div className="card settings-card">
+        <h2>Account</h2>
+        {user?.guest ? (
+          <p>You’re using CaseReady <strong>without an account</strong> — everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
+        ) : (
+          <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
+        )}
+        {bioAvailable && !user?.guest && (
+          <div className="toggle-row">
+            <span>Require Face ID to open</span>
+            <input type="checkbox" checked={bioEnabled} onChange={(e) => setBioEnabled(e.target.checked)} />
+          </div>
+        )}
+        <div className="form-actions">
+          <button className="btn" onClick={signOut}>{user?.guest ? "Switch / create account" : "Sign out"}</button>
         </div>
       </div>
 
-      {user && (
-        <section className="card settings-card">
-          <h2>Account</h2>
-          <div className="account-row">
-            <span className="avatar" style={{ background: "var(--brand)" }}>
-              {user.name.slice(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <div className="account-name">{user.name}</div>
-              <div className="muted small">{user.email}</div>
-            </div>
-          </div>
-          <label className="toggle-row">
-            <span>
-              Unlock with Face ID
-              {!bioAvailable && <span className="muted small"> · not available on this device</span>}
-            </span>
-            <input
-              type="checkbox"
-              checked={bioEnabled}
-              disabled={!bioAvailable}
-              onChange={(e) => setBioEnabled(e.target.checked)}
-            />
-          </label>
-          <div className="form-actions">
-            <button className="btn" onClick={signOut}>Sign out</button>
-          </div>
-        </section>
-      )}
-
-      <section className="card settings-card">
-        <h2>Plan</h2>
-        {tier === "pro" ? (
-          <>
-            <p className="muted">
-              You're on <strong>CoParent Pro</strong> — one subscription for the
-              whole family. Manage or cancel anytime in your App Store / Google
-              Play settings.
-            </p>
-            <div className="form-actions">
-              <span className="pill pill-ok">Pro active ⭐️</span>
-              <button className="btn btn-sm" onClick={() => setTier("free")}>Switch to Free (demo)</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="muted">
-              Free to use. Upgrade to <strong>Pro</strong> for unlimited history,
-              court-ready exports, attachments, and the AI assistant — one price
-              per family ($7.99/mo or $59.99/yr), not per parent like the others.
-            </p>
-            <div className="form-actions">
-              <button className="btn btn-primary" onClick={() => navigate("/upgrade")}>
-                Upgrade to Pro
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="card settings-card">
+      <div className="card settings-card">
         <h2>Your data</h2>
-        <p className="muted">
-          Everything lives on your device. Export a complete copy whenever you
-          want — useful for your records or your attorney.
+        <p>
+          Your whole library lives on this device. Export it to JSON to back it up or move to a new
+          phone — no support ticket, no waiting on anyone.
         </p>
         <ul className="data-counts">
-          <li><strong>{counts.messages}</strong> messages</li>
-          <li><strong>{counts.events}</strong> calendar events</li>
-          <li><strong>{counts.expenses}</strong> expenses</li>
-          <li><strong>{counts.journal}</strong> journal entries</li>
-          <li><strong>{counts.info}</strong> info records</li>
+          <li><strong>{state.cards.length}</strong> cards</li>
+          <li><strong>{state.surgeons.length}</strong> surgeons</li>
         </ul>
         <div className="form-actions">
-          <button className="btn btn-primary" onClick={exportAll}>⤓ Export all my data (JSON)</button>
+          <button className="btn btn-primary" onClick={exportAll}>Export to JSON</button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>Import…</button>
+          <input ref={fileRef} type="file" accept="application/json" hidden onChange={onImportFile} />
           <button className="btn" onClick={resetDemo}>Reset demo data</button>
         </div>
-      </section>
+        {msg && <p className="muted small" style={{ marginTop: 10 }}>{msg}</p>}
+      </div>
 
-      <section className="card settings-card danger-zone">
-        <h2>Delete account</h2>
-        <p className="muted">
-          One click. No waiting on hold, no co-parent approval required, no
-          "contact support to cancel." Your records are erased from this device
-          immediately.
-        </p>
-        {!confirmDelete ? (
-          <button className="btn btn-danger" onClick={() => setConfirmDelete(true)}>
-            Delete my account
-          </button>
-        ) : (
+      <div className="card settings-card danger-zone">
+        <h2>Wipe everything</h2>
+        <p>Remove all surgeons and cards from this device. This can’t be undone — export first.</p>
+        {confirmWipe ? (
           <div className="confirm">
-            <span>This permanently clears your local data. Sure?</span>
-            <button className="btn btn-danger" onClick={deleteAccount}>Yes, delete everything</button>
-            <button className="btn" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            Delete all your data?
+            <button className="btn btn-danger btn-sm" onClick={() => { wipeAll(); setConfirmWipe(false); }}>Wipe</button>
+            <button className="btn btn-sm" onClick={() => setConfirmWipe(false)}>Cancel</button>
           </div>
+        ) : (
+          <button className="btn btn-danger" onClick={() => setConfirmWipe(true)}>Wipe all data</button>
         )}
-      </section>
+      </div>
+
+      <div className="card settings-card">
+        <h2>About</h2>
+        <p>
+          CaseReady is a personal surgical preference-card library for scrub techs and circulating
+          nurses — including travelers who move between facilities. It’s the tool the old apps wouldn’t
+          let you use for yourself.
+        </p>
+        <p className="muted small">CaseReady v{APP_VERSION}</p>
+      </div>
     </div>
   );
 }

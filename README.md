@@ -1,63 +1,61 @@
-# CoParent
+# CaseReady
 
-A modern, fast, **free** co-parenting app — built as a better answer to
-[OurFamilyWizard](https://apps.apple.com/us/app/ourfamilywizard-co-parent-app/id497405393).
+A modern, fast surgical **preference-card** app — built as a better answer to
+[PrefCard](https://apps.apple.com/us/app/prefcard/id1152824233).
 
-Separated and divorced parents use apps like these to coordinate custody,
-messages, expenses, and records — often under court order. The category leader,
-OurFamilyWizard, sits at **1.5★ on Sitejabber** and **2.1★ on Google**. This
-project reads those reviews and fixes the specific things people complain about.
+Scrub techs and circulating nurses keep a mental rolodex of how every surgeon
+wants every case set up — positioning, prep, trays, sutures, supplies, the
+quirks. CaseReady puts it in your pocket, and it belongs to **you**, not a
+hospital admin.
 
-> **Try it:** `npm install && npm run dev`. The app opens pre-loaded with a
-> realistic demo family so there are no empty screens. Everything is stored
-> locally in your browser — no account, no sign-up, no server.
+> **The wedge** (straight from PrefCard's App Store reviews): a 1★ reviewer — a
+> surgical travel tech — wanted "a singular place to store and update my own
+> personal preference cards for the surgeons that I work with… I only want this
+> for me! I shouldn't need to get approval from anyone." CaseReady is exactly
+> that tool: personal, offline, no approvals, no empty screens.
 
----
+> **Try it:** `npm install && npm run dev`. It opens pre-loaded with a realistic
+> demo library (4 surgeons, 6 fully-populated cards) so nothing is empty. Tap
+> **Use it now — no account** to go straight in. Everything is stored locally.
 
-## What reviewers hate about OurFamilyWizard — and what CoParent does instead
+<p align="center">
+  <img src="docs/screenshots/01-dashboard.png" width="24%" alt="Dashboard" />
+  <img src="docs/screenshots/02-cards.png" width="24%" alt="Cards library" />
+  <img src="docs/screenshots/03-card-detail.png" width="24%" alt="Card detail" />
+  <img src="docs/screenshots/04-setup.png" width="24%" alt="Setup pull-list" />
+</p>
 
-| Real complaint about OFW | CoParent's fix |
+## What CaseReady does differently
+
+| What techs hate about the old app | CaseReady's answer |
 | --- | --- |
-| **"$100+/yr per parent for a 3rd-rate text service."** Auto-renews; charged after they stop using it. | **Free.** No subscription, no per-parent fee, no renewal trap. (`Settings`) |
-| **"Clunky, outdated, cumbersome interface."** | Clean, fast single-page UI; color-coded calendar; keyboard-friendly composer. |
-| **"Failed message notifications"** — missed messages led to police/lawyer involvement. | Clear **Delivered / Read** receipts on every message and live unread badges. |
-| **"Can't save drafts."** | Drafts **auto-save** as you type and reload when you come back. |
-| **"Calendar/journal/expense sections are woeful, isolated, cumbersome."** | Tightly integrated: dashboard rolls up unread, schedule requests, and the live expense balance. |
-| **"Wish it synced with my phone's calendar."** | One-tap **`.ics` export** that imports into Apple/Google/Outlook calendars. |
-| **"Search hardly works."** | One global search across **messages, calendar, expenses, journal, and the Info Bank**, ranked by recency. |
-| **"Can't delete my own account — needs co-parent approval."** | **One-click self-service delete.** No approval, no support call. |
-| **"They won't give me my data / won't delete it."** | **Export everything to JSON**, plus **court-ready CSV** of messages and expenses, anytime. |
-| ToneMeter (calmer-wording AI) is a **paid** add-on. | Built-in **tone check is free** and runs **on-device** — it flags heated messages *before* they send and suggests calmer wording. |
-
-A persistent **Notifications Center** (top-bar bell) is derived directly from app
-state — so unlike OFW, there's no separate delivery step that can silently fail.
-The whole UI also has a polished **light/dark mode** with system-preference
-detection and a **responsive mobile layout** with a native-style bottom tab bar.
+| **Needs hospital/admin approval to use.** | **Yours alone.** One tap to start — no account, no approval, no facility login. |
+| **Useless if you're a traveler** moving between facilities. | Built for travelers: your library is on your phone and goes everywhere you do. |
+| **"Extremely bad design… a total waste of time."** | Clean, fast, native-feeling UI with light/dark mode and a phone bottom-nav. |
+| Empty and confusing out of the box. | Opens preloaded with realistic example cards across 4 specialties. |
+| Locked-in data. | **Export** your whole library to JSON or **share** any card as plain text. |
+| Useless when the OR Wi-Fi drops. | **Fully offline** (installable PWA + native shell). |
 
 ## Features
 
-- **Ask CoParent** — an **on-device AI assistant** that answers questions over your own data ("are the kids with me Saturday?", "what shoe size does Ava wear?", "did I message about the vacation?") — offline and private. Conversational/Claude-powered answers + Siri are scaffolded for the backend phase.
-- **Accounts** — login / create-account with a **Face ID** unlock affordance (local now; Supabase-backed accounts + sync scaffolded).
-- **Dashboard** — at-a-glance unread count, pending schedule requests, running expense balance, this-month insights, what's next on the calendar.
-- **Messages** — immutable, timestamped record (a clean log if it's ever needed in court); free on-device **tone check** with calmer-wording suggestions; auto-saved drafts; per-thread search; read receipts.
-- **Calendar** — month view, color-coded categories, parenting-time blocks, **swap/change requests** with accept/decline, `.ics` export to your phone, and **one-click custody-rotation templates** (week-on/week-off, 2-2-3, 2-2-5-5, weekday/weekend).
-- **Expenses** — log a cost, split it any ratio, attach a receipt, request reimbursement, set it to **repeat monthly** (childcare, tuition), and track a **running balance** both parents can trust.
-- **Journal** — private, timestamped, mood-tagged log; nothing is shared unless you export it.
-- **Info Bank** — each child's medical, school, and sizing details in one shared place; add/remove entries inline.
-- **Packing list** — shared exchange checklist so the teddy bear (and the inhaler) make it between homes.
-- **Notifications** — always-visible bell feed of unread messages, pending requests, and unsettled expenses; click to jump to the item.
-- **Records export** — one-click CSV of the message log and expenses (RFC-4180 safe, Excel-ready), plus a **printable / Save-as-PDF message record** with timestamps and a certification header for court.
-- **Light/dark mode** — system-preference aware, persisted per device.
-- **Settings** — transparent pricing, full data export, and one-click account deletion.
-
-## The on-device tone checker
-
-`src/lib/tone.ts` scores a draft 0–100 using loaded-language detection, demand
-phrasing, all-caps/"shouting" detection, and softener rewards — then offers a
-conservative rewrite (e.g. `"you need to"` → `"could we"`, de-shouting, trimming
-loaded words). It's deliberately a nudge, not a rewrite of your meaning, and it
-runs entirely in the browser so nothing is sent anywhere. A heated message
-forces one pass through the suggestion before it can send.
+- **Cards library** — every preference card, grouped by surgeon and procedure,
+  filterable by specialty, favorites pinned. Each card carries position, skin
+  prep, draping, notes, and five item sections: instruments & trays, sutures,
+  supplies, medications & irrigation, equipment.
+- **Setup mode** — the differentiator. Turn any card into a live **pull-list**
+  with big tap targets; check items off as you gather them; a progress bar hits
+  **"Case ready"** at 100%. Progress is saved, so locking your phone mid-setup
+  loses nothing.
+- **Surgeons** — a profile per surgeon with **glove size**, glove type, facility,
+  and free-text **quirks** ("tourniquet up before prep," "no chatter on
+  closing") surfaced right where you set up.
+- **Global search** — one box across surgeons, procedures, and every item line,
+  ranked by relevance ("knee", "Vicryl", "tourniquet", a surgeon's name).
+- **Share & export** — native share sheet / clipboard for a single card; whole-
+  library JSON export and import in Settings.
+- **Optional account + Face ID** — use it anonymously, or add a local account to
+  lock the app. Nothing leaves your device.
+- **Offline-first PWA** wrapped for the App Store with **Capacitor**.
 
 ## Tech & structure
 
@@ -66,42 +64,46 @@ Vite + React + TypeScript, no backend. State lives in a small store
 
 ```
 src/
-  lib/        tone (analyzer + tests), ics export, global search, formatters
-  state/      store + seeded demo data
-  pages/      Dashboard, Messages, Calendar, Expenses, Journal, InfoBank, Search, Settings
-  components/ Sidebar, TopBar (global search)
+  lib/        search (+ tests), share/export (+ tests), formatters
+  state/      store, optional auth, seeded demo library
+  pages/      Dashboard, Cards, CardDetail, CardEdit, SetupMode,
+              Surgeons, SurgeonDetail, Search, Settings, Login
+  components/ Sidebar, BottomNav, TopBar, Avatar, ThemeToggle
 ```
 
 ## Commands
 
 ```bash
 npm install
-npm run dev       # local dev server
-npm run build     # type-check + production build (PWA: manifest + service worker)
-npm run test      # unit tests + render smoke tests
-npm run icons     # regenerate app icons + splash from the SVG brand mark
-npm run cap:sync  # build + sync the native iOS/Android projects
+npm run dev        # local dev server
+npm run build      # type-check + production build (PWA: manifest + service worker)
+npm run test       # unit tests + render smoke tests
+npm run icons      # regenerate app icons + splash from the vector brand mark
+npm run cap:sync   # build + sync the native iOS/Android projects
 ```
 
-## Shipping to the App Store & Google Play
+## Shipping to TestFlight & the stores
 
-CoParent is an **installable PWA** (offline service worker, web manifest, app
-icons) and is wrapped for the stores with **Capacitor** — `capacitor.config.ts`
-turns the `dist` build into real native iOS/Android projects. The full runbook,
-privacy policy, and store-listing copy live in [`docs/`](docs/):
+CaseReady is an installable PWA wrapped with **Capacitor**, with a one-click
+**GitHub Actions → TestFlight** pipeline (`.github/workflows/ios-testflight.yml`)
+and Fastlane lanes for a Mac. The runbooks live in [`docs/`](docs/):
 
-- [`docs/PUBLISHING.md`](docs/PUBLISHING.md) — end-to-end submission steps
-- [`docs/PRIVACY.md`](docs/PRIVACY.md) — required privacy policy
-- [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) — names, descriptions, keywords
+- [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) — get it on your iPhone (cloud or Mac)
+- [`docs/PUBLISHING.md`](docs/PUBLISHING.md) — full App Store / Play Store release
+- [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) — names, description, keywords
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) — privacy policy (we collect nothing)
 
-The final submission (Apple Developer / Play Console accounts, code signing on a
-Mac/Android Studio, store review) requires those accounts and toolchains.
+The final upload needs your Apple Developer account and code signing — see
+TESTFLIGHT.md for the exact, minimal steps.
 
 ## Notes & honest limitations
 
-This is a working **single-device demo**. A production release would add a
-real-time backend so both parents sync, server-side push notifications, audit
-trails, and encrypted storage. The architecture (plain serializable state,
-typed domain model) is built to drop a backend in behind. The product
-decisions — pricing, data ownership, tone-by-default, integrated modules — are
-the point, and they directly answer what OurFamilyWizard's reviewers asked for.
+This is a polished **single-device** app: your library lives on your phone and
+is yours to export. A future version could add optional encrypted cloud backup
+and multi-device sync — the state is plain serializable data and the optional
+account is already structured to drop a hosted backend in behind it without UI
+changes. The product decision — your cards are *yours*, no approvals — is the
+point, and it's the direct answer to what the old app's reviewers asked for.
+
+> Do not store patient-identifying information in CaseReady. Preference cards
+> describe surgeon/procedure setup, not patients.

@@ -1,32 +1,50 @@
-// Captures phone-sized screenshots of the running app for store listings.
-// Usage: start `npm run preview` first, then `node scripts/screenshots.mjs`.
-import puppeteer from "puppeteer";
+// Captures phone-sized screenshots of the running app for the README and store
+// listing. Usage: `npm run preview` in one shell, then `node scripts/screenshots.mjs`.
+// Uses Playwright + the pre-installed Chromium (set CHROMIUM_PATH if needed).
+import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE || "http://localhost:4173";
 const outDir = new URL("../docs/screenshots/", import.meta.url);
 mkdirSync(outDir, { recursive: true });
 
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+);
+const ctx = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 2,
+});
+// Enter guest mode before any app code runs so every load skips the account gate.
+await ctx.addInitScript(() => localStorage.setItem("caseready.guest.v1", "1"));
+const page = await ctx.newPage();
+
+async function show(route) {
+  await page.evaluate((r) => { window.location.hash = r; }, route);
+  await page.waitForSelector(".page, .page-narrow", { timeout: 8000 });
+  await page.waitForTimeout(350);
+}
+
+await page.goto(`${BASE}/#/cards`, { waitUntil: "networkidle" });
+await page.waitForSelector(".pref-tile", { timeout: 8000 });
+const firstId = await page.evaluate(() => JSON.parse(localStorage.getItem("caseready.v1")).cards[0].id);
+
 const shots = [
   { name: "01-dashboard", route: "/" },
-  { name: "02-messages", route: "/messages", type: "You ALWAYS drop her off late and never tell me!" },
-  { name: "03-calendar", route: "/calendar" },
-  { name: "04-expenses", route: "/expenses" },
+  { name: "02-cards", route: "/cards" },
+  { name: "03-card-detail", route: `/cards/${firstId}` },
+  { name: "04-setup", route: `/cards/${firstId}/setup`, tick: true },
+  { name: "05-surgeons", route: "/surgeons" },
 ];
 
-const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-const page = await browser.newPage();
-await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });
-
 for (const s of shots) {
-  await page.goto(`${BASE}/#${s.route}`, { waitUntil: "networkidle0" });
-  await page.waitForSelector(".page, .page-tight", { timeout: 5000 });
-  if (s.type) {
-    // Type a tense message so the on-device tone check is visible in the shot.
-    await page.type(".composer-row textarea", s.type, { delay: 8 });
-    await new Promise((r) => setTimeout(r, 400));
+  await show(s.route);
+  if (s.tick) {
+    const boxes = page.locator(".check-row input");
+    const count = Math.min(5, await boxes.count());
+    for (let i = 0; i < count; i++) await boxes.nth(i).check();
+    await page.waitForTimeout(250);
   }
-  await new Promise((r) => setTimeout(r, 350));
   await page.screenshot({ path: new URL(`${s.name}.png`, outDir).pathname });
   console.log("captured", s.name);
 }
