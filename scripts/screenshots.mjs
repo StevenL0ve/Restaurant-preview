@@ -27,7 +27,7 @@ async function show(route) {
 
 await page.goto(`${BASE}/#/cards`, { waitUntil: "networkidle" });
 await page.waitForSelector(".pref-tile", { timeout: 8000 });
-const firstId = await page.evaluate(() => JSON.parse(localStorage.getItem("caseready.v1")).cards[0].id);
+const firstId = await page.evaluate(() => JSON.parse(localStorage.getItem("caseready.v2")).cards[0].id);
 
 const shots = [
   { name: "01-dashboard", route: "/" },
@@ -35,6 +35,7 @@ const shots = [
   { name: "03-card-detail", route: `/cards/${firstId}` },
   { name: "04-setup", route: `/cards/${firstId}/setup`, tick: true },
   { name: "05-surgeons", route: "/surgeons" },
+  { name: "06-facilities", route: "/facilities" },
 ];
 
 for (const s of shots) {

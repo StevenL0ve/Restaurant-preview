@@ -46,10 +46,12 @@ hospital admin.
   with big tap targets; check items off as you gather them; a progress bar hits
   **"Case ready"** at 100%. Progress is saved, so locking your phone mid-setup
   loses nothing.
-- **Item locations** — tag any item with where to find it in *this* facility
-  ("Sterile store room, cabinet 7, shelf 3"). Locations you've used are offered
-  as suggestions for reuse, are searchable, and show right on the pull-list —
-  the thing a traveling tech in an unfamiliar OR needs most.
+- **Per-facility locations** — locations ("Lap cart · drawer 2") are shared,
+  facility-scoped records, not free text. Pick from the facility's set so names
+  stay consistent; **edit a location once and it updates on every card** that
+  references it. Manage each hospital's set on the Facilities screen. Setup mode
+  **auto-groups the pull-list by area**, so you clear one cart/cabinet at a time
+  — what a traveling tech in an unfamiliar OR needs most.
 - **Surgeons** — a profile per surgeon with **glove size**, glove type, facility,
   and free-text **quirks** ("tourniquet up before prep," "no chatter on
   closing") surfaced right where you set up.

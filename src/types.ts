@@ -9,6 +9,30 @@
 
 export type ID = string;
 
+/** A hospital / surgery center. Locations are scoped to a facility, so the same
+ *  surgeon at two sites keeps two independent location sets — exactly what a
+ *  traveling tech needs. */
+export interface Facility {
+  id: ID;
+  name: string; // "Mercy General"
+}
+
+/** A storage location within a facility, split into a coarse `area` (the
+ *  grouping key — "Lap cart", "Sterile store room") and a finer `spot`
+ *  ("drawer 2", "cabinet 7, shelf 3"). Items reference a location by id, so
+ *  editing it here updates every card that points at it. */
+export interface Location {
+  id: ID;
+  facilityId: ID;
+  area: string;
+  spot?: string;
+}
+
+/** Joined display string for a location ("Lap cart, drawer 2"). */
+export function locationLabel(loc: Pick<Location, "area" | "spot">): string {
+  return loc.spot ? `${loc.area}, ${loc.spot}` : loc.area;
+}
+
 /** A surgeon you scrub or circulate for. */
 export interface Surgeon {
   id: ID;
@@ -24,13 +48,13 @@ export interface Surgeon {
 
 /** A single line on a card: an instrument, suture, supply, med, or piece of
  *  equipment. `detail` carries size / quantity / "for fascia" context;
- *  `location` is where to find it in this facility ("Sterile store room,
- *  cabinet 7, shelf 3") — the thing a traveling tech needs most. */
+ *  `locationId` points at a shared Location in the card's facility — so where
+ *  to find it stays consistent and updates everywhere when the location moves. */
 export interface CardItem {
   id: ID;
   name: string;
   detail?: string;
-  location?: string;
+  locationId?: ID;
 }
 
 /** The five checklist sections every card shares. Kept as a const tuple so the
@@ -49,6 +73,7 @@ export type SectionKey = (typeof SECTIONS)[number]["key"];
 export interface PrefCard {
   id: ID;
   surgeonId: ID;
+  facilityId?: ID; // which facility's location set this card draws from
   procedure: string; // "Laparoscopic Cholecystectomy"
   specialty: string;
   position?: string; // "Supine, both arms tucked"
@@ -72,6 +97,8 @@ export interface SetupState {
 }
 
 export interface AppState {
+  facilities: Facility[];
+  locations: Location[];
   surgeons: Surgeon[];
   cards: PrefCard[];
   setups: Record<ID, SetupState>; // cardId -> progress

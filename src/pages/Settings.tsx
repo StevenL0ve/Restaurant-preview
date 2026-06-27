@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
@@ -50,6 +51,15 @@ export function Settings() {
       </div>
 
       <div className="card settings-card">
+        <h2>Facilities & locations</h2>
+        <p>
+          Manage your per-hospital location sets (carts, cabinets, rooms). Edit a location once and it
+          updates on every card that uses it.
+        </p>
+        <Link className="btn" to="/facilities">Manage facilities & locations →</Link>
+      </div>
+
+      <div className="card settings-card">
         <h2>Your data</h2>
         <p>
           Your whole library lives on this device. Export it to JSON to back it up or move to a new
@@ -58,6 +68,7 @@ export function Settings() {
         <ul className="data-counts">
           <li><strong>{state.cards.length}</strong> cards</li>
           <li><strong>{state.surgeons.length}</strong> surgeons</li>
+          <li><strong>{state.locations.length}</strong> locations</li>
         </ul>
         <div className="form-actions">
           <button className="btn btn-primary" onClick={exportAll}>Export to JSON</button>

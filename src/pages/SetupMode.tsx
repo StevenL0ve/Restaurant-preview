@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useStore, surgeonOf, setupProgress } from "../state/store";
-import { SECTIONS, type SectionKey } from "../types";
+import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
+import { SECTIONS, type CardItem, type SectionKey } from "../types";
+
+type GroupMode = "location" | "section";
 
 // Setup mode turns a card into a live pull-list: big tap targets, check items
 // off as you gather them, and a progress bar that hits "Case ready" at 100%.
-// State is persisted, so locking the phone mid-setup keeps your checkmarks.
+// Default view groups by **location area**, so you walk to one cart/cabinet and
+// grab everything there at once. Toggle to "By section" for the classic view.
 export function SetupMode() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { state, toggleSetupItem, resetSetup } = useStore();
+  const [mode, setMode] = useState<GroupMode>("location");
 
   const card = state.cards.find((c) => c.id === id);
   if (!card) {
@@ -27,6 +32,28 @@ export function SetupMode() {
   const { done, total } = setupProgress(state, card);
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   const ready = total > 0 && done === total;
+
+  const Row = ({ it, sub }: { it: CardItem; sub?: string }) => {
+    const on = checked.has(it.id);
+    const where = locationLabelOf(state, it.locationId);
+    return (
+      <li className={on ? "done" : ""}>
+        <label className="check-row">
+          <input type="checkbox" checked={on} onChange={() => toggleSetupItem(card.id, it.id)} />
+          <span className="check-main">
+            <span className="check-line">
+              <span className="check-name">{it.name}</span>
+              {it.detail && <span className="item-detail">{it.detail}</span>}
+            </span>
+            {sub && <span className="row-sub">{sub}</span>}
+            {where && mode === "section" && <span className="item-location">📍 {where}</span>}
+          </span>
+        </label>
+      </li>
+    );
+  };
+
+  const areaGroups = groupByArea(state, card);
 
   return (
     <div className="page page-narrow setup">
@@ -50,6 +77,15 @@ export function SetupMode() {
         <div className="progress-track"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
       </div>
 
+      <div className="seg">
+        <button className={"seg-btn" + (mode === "location" ? " active" : "")} onClick={() => setMode("location")}>
+          📍 By location
+        </button>
+        <button className={"seg-btn" + (mode === "section" ? " active" : "")} onClick={() => setMode("section")}>
+          🗂️ By section
+        </button>
+      </div>
+
       {(card.position || card.prep || sg?.gloveSize) && (
         <div className="card setup-ref">
           {sg?.gloveSize && <div><strong>Gloves</strong> {sg.gloveSize}{sg.gloveType ? ` · ${sg.gloveType}` : ""}</div>}
@@ -58,36 +94,43 @@ export function SetupMode() {
         </div>
       )}
 
-      {SECTIONS.map((sec) => {
-        const arr = card[sec.key as SectionKey];
-        if (!arr.length) return null;
-        return (
-          <div className="card section-card" key={sec.key}>
-            <div className="card-head">
-              <h2><span aria-hidden>{sec.icon}</span> {sec.label}</h2>
-            </div>
-            <ul className="check-list">
-              {arr.map((it) => {
-                const on = checked.has(it.id);
-                return (
-                  <li key={it.id} className={on ? "done" : ""}>
-                    <label className="check-row">
-                      <input type="checkbox" checked={on} onChange={() => toggleSetupItem(card.id, it.id)} />
-                      <span className="check-main">
-                        <span className="check-line">
-                          <span className="check-name">{it.name}</span>
-                          {it.detail && <span className="item-detail">{it.detail}</span>}
-                        </span>
-                        {it.location && <span className="item-location">📍 {it.location}</span>}
-                      </span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
+      {mode === "location"
+        ? areaGroups.map((g) => {
+            const groupDone = g.rows.filter((r) => checked.has(r.item.id)).length;
+            return (
+              <div className="card section-card" key={g.area || "__none"}>
+                <div className="card-head">
+                  <h2>
+                    <span aria-hidden>📍</span> {g.area || "No location set"}
+                  </h2>
+                  <span className="pill">{groupDone}/{g.rows.length}</span>
+                </div>
+                <ul className="check-list">
+                  {g.rows.map((r) => (
+                    <Row
+                      key={r.item.id}
+                      it={r.item}
+                      sub={`${r.sectionIcon} ${r.sectionLabel}${locationLabelOf(state, r.item.locationId) ? ` · ${locationLabelOf(state, r.item.locationId)}` : ""}`}
+                    />
+                  ))}
+                </ul>
+              </div>
+            );
+          })
+        : SECTIONS.map((sec) => {
+            const arr = card[sec.key as SectionKey];
+            if (!arr.length) return null;
+            return (
+              <div className="card section-card" key={sec.key}>
+                <div className="card-head">
+                  <h2><span aria-hidden>{sec.icon}</span> {sec.label}</h2>
+                </div>
+                <ul className="check-list">
+                  {arr.map((it) => <Row key={it.id} it={it} />)}
+                </ul>
+              </div>
+            );
+          })}
 
       {ready && (
         <div className="ready-cta">

@@ -1,5 +1,5 @@
 import type { AppState, PrefCard, SectionKey, Surgeon } from "../types";
-import { SECTIONS } from "../types";
+import { SECTIONS, locationLabel } from "../types";
 
 // One global search across the whole library: surgeons, procedures, and every
 // item on every card. Techs search by all of these — "Dr. Chen", "total knee",
@@ -12,6 +12,9 @@ export type SearchHit =
 export function search(state: AppState, raw: string): SearchHit[] {
   const q = raw.trim().toLowerCase();
   if (!q) return [];
+
+  // Resolve item location ids to display labels once, up front.
+  const locLabel = new Map(state.locations.map((l) => [l.id, locationLabel(l)]));
 
   const hits: { hit: SearchHit; score: number }[] = [];
   const score = (hay: string) => {
@@ -46,10 +49,10 @@ export function search(state: AppState, raw: string): SearchHit[] {
     // Search inside every item line; surface the first matching item.
     for (const sec of SECTIONS) {
       for (const it of c[sec.key as SectionKey]) {
-        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(it.location ?? ""));
+        const where = it.locationId ? locLabel.get(it.locationId) : undefined;
+        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(where ?? ""));
         if (sc > 0 && sc >= best && !snippet) {
-          const where = it.location ? ` 📍 ${it.location}` : "";
-          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where}`;
+          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where ? ` 📍 ${where}` : ""}`;
         }
         best = Math.max(best, sc);
       }

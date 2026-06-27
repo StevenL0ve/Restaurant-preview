@@ -6,24 +6,81 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { AppState, CardItem, PrefCard, SectionKey, Surgeon } from "../types";
-import { SECTIONS } from "../types";
-import { buildSeed } from "./seed";
+import type {
+  AppState,
+  CardItem,
+  Facility,
+  Location,
+  PrefCard,
+  SectionKey,
+  Surgeon,
+} from "../types";
+import { SECTIONS, locationLabel } from "../types";
+import { buildSeed, splitLocation } from "./seed";
 
-const STORAGE_KEY = "caseready.v1";
+const STORAGE_KEY = "caseready.v2";
+const LEGACY_KEY = "caseready.v1"; // free-text item.location strings, no facilities
 
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      // Merge over a fresh seed so keys added in later versions can't crash an
-      // older saved state.
       return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
     }
+    // One-time migration from the pre-facility format.
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy) return migrateLegacy(JSON.parse(legacy));
   } catch {
     /* fall through to seed */
   }
   return buildSeed();
+}
+
+// Old cards stored a plain `location` string per item and surgeons carried a
+// facility name. Promote those into shared per-facility Location entities so the
+// "edit once, updates everywhere" model applies retroactively.
+function migrateLegacy(old: any): AppState {
+  const facilities: Facility[] = [];
+  const facByName = new Map<string, Facility>();
+  for (const s of old.surgeons ?? []) {
+    const name: string | undefined = s.facility?.trim();
+    if (name && !facByName.has(name)) {
+      const f = { id: uid("fac"), name };
+      facilities.push(f);
+      facByName.set(name, f);
+    }
+  }
+  const locations: Location[] = [];
+  const locByKey = new Map<string, Location>();
+  const resolve = (facilityId: string | undefined, raw?: string): string | undefined => {
+    if (!facilityId || !raw?.trim()) return undefined;
+    const { area, spot } = splitLocation(raw);
+    const label = spot ? `${area}, ${spot}` : area;
+    const key = `${facilityId}::${label.toLowerCase()}`;
+    let loc = locByKey.get(key);
+    if (!loc) {
+      loc = { id: uid("loc"), facilityId, area, spot };
+      locations.push(loc);
+      locByKey.set(key, loc);
+    }
+    return loc.id;
+  };
+  const cards: PrefCard[] = (old.cards ?? []).map((c: any) => {
+    const surgeon = (old.surgeons ?? []).find((s: any) => s.id === c.surgeonId);
+    const facilityId = surgeon?.facility ? facByName.get(surgeon.facility)?.id : undefined;
+    const fix = (arr: any[] = []): CardItem[] =>
+      arr.map(({ location, ...it }) => ({ ...it, locationId: resolve(facilityId, location) }));
+    return {
+      ...c,
+      facilityId,
+      instruments: fix(c.instruments),
+      sutures: fix(c.sutures),
+      supplies: fix(c.supplies),
+      medications: fix(c.medications),
+      equipment: fix(c.equipment),
+    };
+  });
+  return { facilities, locations, surgeons: old.surgeons ?? [], cards, setups: old.setups ?? {} };
 }
 
 export function uid(prefix: string): string {
@@ -32,11 +89,12 @@ export function uid(prefix: string): string {
 
 const PALETTE = ["#4338ca", "#0e7490", "#b91c1c", "#15803d", "#b45309", "#7c3aed", "#be185d"];
 
-/** A blank card ready to edit, owned by the given surgeon. */
-export function emptyCard(surgeonId: string, specialty: string): PrefCard {
+/** A blank card ready to edit, owned by the given surgeon + facility. */
+export function emptyCard(surgeonId: string, specialty: string, facilityId?: string): PrefCard {
   return {
     id: uid("card"),
     surgeonId,
+    facilityId,
     procedure: "",
     specialty,
     position: "",
@@ -55,6 +113,13 @@ export function emptyCard(surgeonId: string, specialty: string): PrefCard {
 
 export interface Store {
   state: AppState;
+  // facilities & locations
+  addFacility: (name: string) => Facility;
+  updateFacility: (id: string, name: string) => void;
+  deleteFacility: (id: string) => void;
+  addLocation: (facilityId: string, area: string, spot?: string) => Location;
+  updateLocation: (id: string, patch: Partial<Pick<Location, "area" | "spot">>) => void;
+  deleteLocation: (id: string) => void;
   // surgeons
   addSurgeon: (s: Omit<Surgeon, "id" | "color" | "initials">) => Surgeon;
   updateSurgeon: (id: string, patch: Partial<Surgeon>) => void;
@@ -94,6 +159,55 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     return {
       state,
+
+      addFacility: (name) => {
+        const f: Facility = { id: uid("fac"), name: name.trim() };
+        update((st) => ({ ...st, facilities: [...st.facilities, f] }));
+        return f;
+      },
+
+      updateFacility: (id, name) =>
+        update((st) => ({
+          ...st,
+          facilities: st.facilities.map((f) => (f.id === id ? { ...f, name: name.trim() } : f)),
+        })),
+
+      deleteFacility: (id) =>
+        update((st) => {
+          const locIds = new Set(st.locations.filter((l) => l.facilityId === id).map((l) => l.id));
+          return {
+            ...st,
+            facilities: st.facilities.filter((f) => f.id !== id),
+            locations: st.locations.filter((l) => l.facilityId !== id),
+            cards: st.cards.map((c) =>
+              c.facilityId === id ? { ...c, facilityId: undefined, ...clearItemLocations(c, locIds) } : c,
+            ),
+          };
+        }),
+
+      addLocation: (facilityId, area, spot) => {
+        const loc: Location = { id: uid("loc"), facilityId, area: area.trim(), spot: spot?.trim() || undefined };
+        update((st) => ({ ...st, locations: [...st.locations, loc] }));
+        return loc;
+      },
+
+      // Editing in one place updates every card that references this location.
+      updateLocation: (id, patch) =>
+        update((st) => ({
+          ...st,
+          locations: st.locations.map((l) =>
+            l.id === id
+              ? { ...l, ...patch, spot: (patch.spot ?? l.spot)?.trim() || undefined, area: (patch.area ?? l.area).trim() }
+              : l,
+          ),
+        })),
+
+      deleteLocation: (id) =>
+        update((st) => ({
+          ...st,
+          locations: st.locations.filter((l) => l.id !== id),
+          cards: st.cards.map((c) => clearItemLocationsFull(c, new Set([id]))),
+        })),
 
       addSurgeon: (s) => {
         const surgeon: Surgeon = {
@@ -192,6 +306,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       importAll: (json) => {
         const parsed = JSON.parse(json) as Partial<AppState>;
         update((st) => ({
+          facilities: parsed.facilities ?? st.facilities,
+          locations: parsed.locations ?? st.locations,
           surgeons: parsed.surgeons ?? st.surgeons,
           cards: parsed.cards ?? st.cards,
           setups: parsed.setups ?? {},
@@ -200,11 +316,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       resetDemo: () => setState(buildSeed()),
 
-      wipeAll: () => setState({ surgeons: [], cards: [], setups: {} }),
+      wipeAll: () => setState({ facilities: [], locations: [], surgeons: [], cards: [], setups: {} }),
     };
   }, [state]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
+}
+
+// Null out item locations whose location id is being removed (returns the
+// section arrays to spread onto a card).
+function clearItemLocations(card: PrefCard, locIds: Set<string>) {
+  const fix = (arr: CardItem[]) =>
+    arr.map((it) => (it.locationId && locIds.has(it.locationId) ? { ...it, locationId: undefined } : it));
+  return {
+    instruments: fix(card.instruments),
+    sutures: fix(card.sutures),
+    supplies: fix(card.supplies),
+    medications: fix(card.medications),
+    equipment: fix(card.equipment),
+  };
+}
+function clearItemLocationsFull(card: PrefCard, locIds: Set<string>): PrefCard {
+  return { ...card, ...clearItemLocations(card, locIds) };
 }
 
 export function triggerDownload(blob: Blob, filename: string) {
@@ -234,24 +367,75 @@ export function cardsForSurgeon(s: AppState, surgeonId: string): PrefCard[] {
   return s.cards.filter((c) => c.surgeonId === surgeonId);
 }
 
+export function facilityOf(s: AppState, id?: string): Facility | undefined {
+  return id ? s.facilities.find((f) => f.id === id) : undefined;
+}
+
+export function locationOf(s: AppState, id?: string): Location | undefined {
+  return id ? s.locations.find((l) => l.id === id) : undefined;
+}
+
+/** Display label for an item's location id, or undefined if unset/unknown. */
+export function locationLabelOf(s: AppState, id?: string): string | undefined {
+  const loc = locationOf(s, id);
+  return loc ? locationLabel(loc) : undefined;
+}
+
+export function locationsForFacility(s: AppState, facilityId?: string): Location[] {
+  if (!facilityId) return [];
+  return s.locations
+    .filter((l) => l.facilityId === facilityId)
+    .sort((a, b) => locationLabel(a).localeCompare(locationLabel(b)));
+}
+
+/** Distinct area names within a facility, for the "area" datalist when adding. */
+export function areasForFacility(s: AppState, facilityId?: string): string[] {
+  return Array.from(new Set(locationsForFacility(s, facilityId).map((l) => l.area))).sort();
+}
+
+export function locationsCount(s: AppState, facilityId: string): number {
+  return s.locations.filter((l) => l.facilityId === facilityId).length;
+}
+
 /** Total checklist items on a card across all five sections. */
 export function totalItems(card: PrefCard): number {
   return SECTIONS.reduce((sum, sec) => sum + card[sec.key as SectionKey].length, 0);
-}
-
-/** Every distinct item location used across the library, for reuse suggestions. */
-export function knownLocations(s: AppState): string[] {
-  const set = new Set<string>();
-  for (const c of s.cards)
-    for (const sec of SECTIONS)
-      for (const it of c[sec.key as SectionKey]) if (it.location) set.add(it.location);
-  return Array.from(set).sort();
 }
 
 /** How many of a card's items are checked in the live setup. */
 export function setupProgress(s: AppState, card: PrefCard): { done: number; total: number } {
   const total = totalItems(card);
   const done = s.setups[card.id]?.checked.length ?? 0;
-  // Clamp in case items were deleted after being checked.
   return { done: Math.min(done, total), total };
+}
+
+export interface SetupRow {
+  item: CardItem;
+  sectionLabel: string;
+  sectionIcon: string;
+}
+export interface AreaGroup {
+  area: string; // "Lap cart", or "" for items with no location set
+  rows: SetupRow[];
+}
+
+/** Flatten a card's items across sections and group them by location area, so
+ *  the pull-list lets you grab everything in one spot at once. Areas are
+ *  alphabetical; items with no location land in a trailing "No location" group. */
+export function groupByArea(s: AppState, card: PrefCard): AreaGroup[] {
+  const byArea = new Map<string, SetupRow[]>();
+  for (const sec of SECTIONS) {
+    for (const item of card[sec.key as SectionKey]) {
+      const loc = locationOf(s, item.locationId);
+      const area = loc?.area ?? "";
+      const rows = byArea.get(area) ?? [];
+      rows.push({ item, sectionLabel: sec.label, sectionIcon: sec.icon });
+      byArea.set(area, rows);
+    }
+  }
+  const named = [...byArea.entries()].filter(([a]) => a).sort((a, b) => a[0].localeCompare(b[0]));
+  const unplaced = byArea.get("");
+  const groups: AreaGroup[] = named.map(([area, rows]) => ({ area, rows }));
+  if (unplaced?.length) groups.push({ area: "", rows: unplaced });
+  return groups;
 }

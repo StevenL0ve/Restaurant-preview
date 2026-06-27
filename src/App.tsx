@@ -11,6 +11,7 @@ import { CardEdit } from "./pages/CardEdit";
 import { SetupMode } from "./pages/SetupMode";
 import { SurgeonsPage } from "./pages/SurgeonsPage";
 import { SurgeonDetail } from "./pages/SurgeonDetail";
+import { FacilitiesPage } from "./pages/FacilitiesPage";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
 
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/cards/:id/setup" element={<SetupMode />} />
             <Route path="/surgeons" element={<SurgeonsPage />} />
             <Route path="/surgeons/:id" element={<SurgeonDetail />} />
+            <Route path="/facilities" element={<FacilitiesPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

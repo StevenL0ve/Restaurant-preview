@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useStore, surgeonOf } from "../state/store";
+import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { shareCard } from "../lib/share";
 import { SECTIONS, type SectionKey } from "../types";
@@ -24,9 +24,10 @@ export function CardDetail() {
     );
   }
   const sg = surgeonOf(state, card.surgeonId);
+  const facility = facilityOf(state, card.facilityId);
 
   async function onShare() {
-    const r = await shareCard(card!, sg);
+    const r = await shareCard(card!, sg, (locId) => locationLabelOf(state, locId));
     setToast(r === "copied" ? "Card copied to clipboard" : r === "failed" ? "Couldn’t share" : null);
     if (r) setTimeout(() => setToast(null), 1800);
   }
@@ -63,6 +64,7 @@ export function CardDetail() {
               <Link className="link" to={`/surgeons/${sg.id}`}>{sg.name}</Link>
             ) : "Unassigned"}{" "}
             · {card.specialty}
+            {facility ? ` · ${facility.name}` : ""}
           </p>
         </div>
         <div className="head-actions">
@@ -116,13 +118,16 @@ export function CardDetail() {
               <span className="pill">{arr.length}</span>
             </div>
             <ul className="item-list">
-              {arr.map((it) => (
-                <li key={it.id}>
-                  <span className="item-name">{it.name}</span>
-                  {it.detail && <span className="item-detail">{it.detail}</span>}
-                  {it.location && <span className="item-location">📍 {it.location}</span>}
-                </li>
-              ))}
+              {arr.map((it) => {
+                const where = locationLabelOf(state, it.locationId);
+                return (
+                  <li key={it.id}>
+                    <span className="item-name">{it.name}</span>
+                    {it.detail && <span className="item-detail">{it.detail}</span>}
+                    {where && <span className="item-location">📍 {where}</span>}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
