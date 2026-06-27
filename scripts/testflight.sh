@@ -9,6 +9,7 @@
 #       export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
 #       export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 #       export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
+#       export APPLE_TEAM_ID=XXXXXXXXXX   # your 10-char Developer Team ID (non-interactive signing)
 #
 # Then:  npm run testflight
 set -euo pipefail
@@ -21,6 +22,8 @@ fail() { printf "\n\033[1;31m✗ %s\033[0m\n" "$1"; exit 1; }
 command -v node >/dev/null || fail "Node 18+ not found. Install from https://nodejs.org"
 command -v pod  >/dev/null || fail "CocoaPods not found. Run: sudo gem install cocoapods"
 command -v fastlane >/dev/null || fail "fastlane not found. Run: brew install fastlane"
+
+[ -n "${APPLE_TEAM_ID:-}" ] || printf "\n\033[1;33m! APPLE_TEAM_ID is not set.\033[0m If signing fails the first time, export it\n  (your 10-char Developer Team ID) and re-run — or open ios/App in Xcode once\n  and pick your Team under Signing & Capabilities.\n"
 
 note "Installing dependencies + building the web app…"
 npm ci

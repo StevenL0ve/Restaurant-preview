@@ -75,6 +75,7 @@ git clone <this repo> && cd Restaurant-preview
 export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
 export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
+export APPLE_TEAM_ID=XXXXXXXXXX   # 10-char Developer Team ID → non-interactive signing
 npm run testflight
 ```
 

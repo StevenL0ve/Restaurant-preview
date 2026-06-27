@@ -59,13 +59,20 @@ platform :ios do
       build_number: latest_testflight_build_number(api_key: key, initial_build_number: 0) + 1,
     )
 
+    # Make signing non-interactive: set the team (so Xcode auto-signing doesn't
+    # prompt) and let it create/refresh the provisioning profile via the API key.
+    team = ENV["APPLE_TEAM_ID"]
+    xcargs = []
+    xcargs << "DEVELOPMENT_TEAM=#{team}" if team && !team.empty?
+    xcargs << "-allowProvisioningUpdates" unless ENV["MATCH_GIT_URL"]
+
     build_app(
       workspace: WORKSPACE,
       scheme: SCHEME,
       export_method: "app-store",
       output_directory: "build",
       clean: true,
-      xcargs: ENV["MATCH_GIT_URL"] ? nil : "-allowProvisioningUpdates",
+      xcargs: xcargs.empty? ? nil : xcargs.join(" "),
     )
 
     upload_to_testflight(
