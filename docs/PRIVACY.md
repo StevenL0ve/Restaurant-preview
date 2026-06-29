@@ -1,65 +1,47 @@
-# CoParent — Privacy Policy
+# ORSync — Privacy Policy
 
-_Last updated: 2026-06-07_
+_Last updated: 2026-06-27_
 
-CoParent is built privacy-first. This policy explains what the app does and does
-not do with your information. **Both the Apple App Store and Google Play require
-a publicly hosted privacy policy URL — host this file (or an HTML version) at a
-stable URL and use that link in both store listings.**
+ORSync is a personal tool for organizing surgical preference cards. Privacy is
+the whole point: your cards belong to you, on your device.
 
-## The short version
+## What we collect
 
-- CoParent stores your data **on your device**. In the current build there is no
-  CoParent server, no account, and no analytics or advertising SDKs.
-- We do **not** sell, rent, or share your personal information.
-- You can **export** all of your data at any time, and **delete** all of it from
-  your device with one tap in Settings.
+**Nothing.** ORSync has no analytics, no accounts on our servers, no tracking,
+and no ads. We operate no backend that receives your data.
 
-## What data the app handles
+## Where your data lives
 
-All of the following is created by you and stored locally on your device
-(browser `localStorage` on web; the app's local storage container on iOS/Android):
+Everything you enter — surgeons, procedures, instruments, notes — is stored
+**locally on your device** (in the app's on-device storage). It never leaves your
+phone unless *you* choose to export or share it.
 
-- Messages you write, with their timestamps and on-device tone labels
-- Calendar events and parenting-time schedules
-- Expenses, split ratios, and the names of any receipt files you attach
-- Journal entries
-- Children's info-bank records (e.g., medical, school details) that you enter
+- **Export** produces a JSON file that you save wherever you like.
+- **Share a card** hands plain text to the iOS share sheet (Messages, Notes,
+  email…) only when you tap it, to the destination you pick.
+- An optional **account** (name, email, password) is stored **only on your
+  device**, hashed, to enable a Face ID lock. We never transmit it.
 
-The on-device **tone check** runs entirely on your device. Message text is **not**
-transmitted to any server for analysis.
+## Sensitive data
 
-## What we do not collect
+Do not store protected health information (PHI) or patient identifiers in
+ORSync. Preference cards describe surgeon and procedure setup, not patients.
+Follow your facility's policies regarding any clinical information.
 
-- No account, email, or password is required to use the app.
-- No location tracking.
-- No third-party advertising or analytics SDKs in the current build.
-- No background collection of contacts, photos, or device identifiers.
+## Permissions
 
-## Data sharing
+- **Face ID / Touch ID** (optional) — to lock the app on your device. The result
+  stays on-device; we never receive biometric data.
 
-CoParent does not transmit your data to us or to third parties. Co-parents using
-the app each hold their own local copy; sharing happens only when **you** choose
-to export a file (JSON/CSV/printed record) and send it yourself.
+## Children
 
-## Children's data
+ORSync is a professional tool intended for adults and is not directed to
+children.
 
-Records you enter about your children are stored locally under your control and
-are never transmitted by the app. CoParent is intended for use by parents/guardians,
-not by children.
+## Changes
 
-## Your choices
-
-- **Export:** Settings → "Export all my data" (JSON), or per-section CSV / printable record.
-- **Delete:** Settings → "Delete my account" erases all local data immediately.
-
-## Future changes
-
-If a future version adds an optional sync backend or push notifications, this
-policy will be updated before that feature ships, and any data leaving your
-device will be described here and gated behind your explicit opt-in.
+We'll update this page and the "last updated" date if anything changes.
 
 ## Contact
 
-Provide a support/contact email here before publishing (required by both stores):
-`support@yourdomain.example`
+Questions: open an issue in this repository.

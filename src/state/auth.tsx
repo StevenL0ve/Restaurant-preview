@@ -6,11 +6,14 @@ import {
   type ReactNode,
 } from "react";
 
-// Phase-1 authentication: real email/password accounts + session, stored
-// locally and structured so the calls swap cleanly to Supabase in Phase 2
-// (signUp/signIn/signOut become Supabase auth calls; the component tree
-// doesn't change). Passwords are SHA-256 hashed before storage — never kept
-// in plain text — though real security arrives with the hosted backend.
+// Lightweight, optional accounts. ORSync is a *personal* tool, so the whole
+// point is that you never need anyone's permission to use it — there's a
+// one-tap "use without an account" path that goes straight to your library.
+//
+// An optional local account adds a Face ID lock for the patient-adjacent notes
+// people keep here, and is structured so the calls swap cleanly to a hosted
+// backend later (signUp/signIn become server calls; the tree doesn't change).
+// Passwords are SHA-256 hashed before storage — never kept in plain text.
 
 interface Account {
   name: string;
@@ -21,11 +24,13 @@ interface Account {
 export interface SessionUser {
   name: string;
   email: string;
+  guest?: boolean;
 }
 
-const ACCOUNTS_KEY = "coparent.accounts.v1";
-const SESSION_KEY = "coparent.session.v1";
-const BIO_KEY = "coparent.biometric.v1";
+const ACCOUNTS_KEY = "orsync.accounts.v1";
+const SESSION_KEY = "orsync.session.v1";
+const BIO_KEY = "orsync.biometric.v1";
+const GUEST_KEY = "orsync.guest.v1";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -43,12 +48,11 @@ function saveAccounts(a: Record<string, Account>) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a));
 }
 
-// Is a platform biometric (Face ID / Touch ID) usable here? On a real device
-// the native build answers via the Capacitor biometric plugin; in the browser
-// we detect a WebAuthn platform authenticator.
 async function biometricAvailable(): Promise<boolean> {
   try {
-    const w = window as unknown as { PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> } };
+    const w = window as unknown as {
+      PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> };
+    };
     if (w.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) {
       return await w.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     }
@@ -63,6 +67,7 @@ interface AuthContext {
   ready: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  continueAsGuest: () => void;
   signOut: () => void;
   // biometric
   bioAvailable: boolean;
@@ -74,10 +79,10 @@ interface AuthContext {
 const Ctx = createContext<AuthContext | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Read the saved session synchronously so there's no login flash and SSR
-  // reflects the real state immediately.
+  // Read any saved session synchronously so there's no login flash.
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
+      if (localStorage.getItem(GUEST_KEY) === "1") return { name: "You", email: "", guest: true };
       const email = localStorage.getItem(SESSION_KEY);
       if (email) {
         const acct = loadAccounts()[email];
@@ -90,9 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const ready = true;
   const [bioAvailable, setBioAvailable] = useState(false);
-  const [bioEnabled, setBioEnabledState] = useState(
-    () => localStorage.getItem(BIO_KEY) === "1",
-  );
+  const [bioEnabled, setBioEnabledState] = useState(() => localStorage.getItem(BIO_KEY) === "1");
 
   useEffect(() => {
     biometricAvailable().then(setBioAvailable);
@@ -118,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       };
       saveAccounts(accounts);
+      localStorage.removeItem(GUEST_KEY);
       localStorage.setItem(SESSION_KEY, key);
       setUser({ name: name.trim(), email: key });
     },
@@ -128,12 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!acct || acct.passHash !== (await sha256(password))) {
         throw new Error("Incorrect email or password.");
       }
+      localStorage.removeItem(GUEST_KEY);
       localStorage.setItem(SESSION_KEY, key);
       setUser({ name: acct.name, email: acct.email });
     },
 
+    continueAsGuest: () => {
+      localStorage.setItem(GUEST_KEY, "1");
+      setUser({ name: "You", email: "", guest: true });
+    },
+
     signOut: () => {
       localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(GUEST_KEY);
       setUser(null);
     },
 
@@ -142,9 +153,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setBioEnabledState(on);
     },
 
-    // Re-affirm the device owner. On native this calls the biometric plugin;
-    // the WebAuthn path covers Face ID/Touch ID in the browser. Falls back to
-    // "true" only when no authenticator exists so the user isn't locked out.
     bioUnlock: async () => {
       if (!(await biometricAvailable())) return true;
       try {
@@ -159,7 +167,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return !!cred;
       } catch {
-        // User cancelled or no enrolled credential — treat as failed unlock.
         return false;
       }
     },

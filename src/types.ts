@@ -1,114 +1,144 @@
-// Core domain types for CoParent.
-// Everything is plain data so it can be serialized to localStorage and exported
-// as JSON at any time (one of the things OurFamilyWizard users say they can't do).
+// Core domain types for ORSync.
+//
+// ORSync is a *personal* surgical preference-card library. Everything is
+// plain, serializable data so it lives in localStorage, exports to JSON, and
+// works fully offline — no hospital account, no admin approval, no server.
+// (That last part is the whole point: the App Store reviews of the app this
+// replaces are full of techs furious that they couldn't just use it for
+// themselves.)
 
 export type ID = string;
 
-export interface Person {
+/** A hospital / surgery center. Locations are scoped to a facility, so the same
+ *  surgeon at two sites keeps two independent location sets — exactly what a
+ *  traveling tech needs. */
+export interface Facility {
   id: ID;
-  name: string;
-  role: "me" | "coparent" | "child" | "professional";
-  color: string;
+  name: string; // "Mercy General"
+}
+
+/** A storage location within a facility, split into a coarse `area` (the
+ *  grouping key — "Lap cart", "Sterile store room") and a finer `spot`
+ *  ("drawer 2", "cabinet 7, shelf 3"). Items reference a location by id, so
+ *  editing it here updates every card that points at it. */
+export interface Location {
+  id: ID;
+  facilityId: ID;
+  area: string;
+  spot?: string;
+}
+
+/** Joined display string for a location ("Lap cart, drawer 2"). */
+export function locationLabel(loc: Pick<Location, "area" | "spot">): string {
+  return loc.spot ? `${loc.area}, ${loc.spot}` : loc.area;
+}
+
+/** A surgeon you scrub or circulate for. */
+export interface Surgeon {
+  id: ID;
+  name: string; // "Dr. Alvarez"
+  specialty: string; // "General Surgery"
+  facility?: string; // "Mercy General" — same surgeon can differ by site
+  gloveSize?: string; // "7.0" — techs need this constantly
+  gloveType?: string; // "Biogel, latex-free"
+  quirks?: string; // music, temperament, "no chatter on closing", room temp…
+  color: string; // avatar color
   initials: string;
 }
 
-export type ToneLevel = "calm" | "tense" | "hostile";
-
-export interface Message {
+/** A single line on a card: an instrument, suture, supply, med, or piece of
+ *  equipment. `detail` carries size / quantity / "for fascia" context;
+ *  `locationId` points at a shared Location in the card's facility — so where
+ *  to find it stays consistent and updates everywhere when the location moves. */
+export interface CardItem {
   id: ID;
-  fromId: ID;
-  body: string;
-  createdAt: string; // ISO
-  readAt: string | null;
-  // Tamper-evident record: tone score captured at send time, immutable thereafter.
-  tone: ToneLevel;
-  edited: false; // messages are never editable — this is a legal record
+  name: string;
+  detail?: string;
+  locationId?: ID;
 }
 
-export interface Draft {
-  to: ID;
-  body: string;
-  updatedAt: string;
+/** The five checklist sections every card shares. Kept as a const tuple so the
+ *  UI, search, and setup mode can iterate them in a stable order. */
+export const SECTIONS = [
+  { key: "instruments", label: "Instruments & trays", icon: "🔧" },
+  { key: "sutures", label: "Sutures", icon: "🧵" },
+  { key: "supplies", label: "Supplies & disposables", icon: "📦" },
+  { key: "medications", label: "Medications & irrigation", icon: "💉" },
+  { key: "equipment", label: "Equipment", icon: "🖥️" },
+] as const;
+
+export type SectionKey = (typeof SECTIONS)[number]["key"];
+
+/** A preference card: one surgeon's setup for one procedure. */
+export interface PrefCard {
+  id: ID;
+  surgeonId: ID;
+  facilityId?: ID; // which facility's location set this card draws from
+  procedure: string; // "Laparoscopic Cholecystectomy"
+  specialty: string;
+  position?: string; // "Supine, both arms tucked"
+  prep?: string; // "ChloraPrep, xiphoid to pubis"
+  draping?: string; // "Laparotomy drape"
+  notes?: string; // case-specific quirks / reminders
+  instruments: CardItem[];
+  sutures: CardItem[];
+  supplies: CardItem[];
+  medications: CardItem[];
+  equipment: CardItem[];
+  favorite: boolean;
+  updatedAt: string; // ISO
 }
 
-export type EventCategory =
-  | "parenting-time"
-  | "school"
-  | "medical"
-  | "activity"
-  | "holiday"
-  | "other";
+/** Live "pull list" progress while setting up a room. Keyed by card id and kept
+ *  in app state so closing the app mid-setup doesn't lose your checkmarks. */
+export interface SetupState {
+  checked: ID[]; // CardItem ids already gathered
+  startedAt: string;
+}
 
-export type ChangeRequestStatus = "none" | "pending" | "accepted" | "declined";
+// ---- Loaner trays ----------------------------------------------------------
+// Vendor loaner sets (ortho/spine implants, specialty trays) borrowed for a
+// specific case. The pain Casechek targets: trays arriving late or with no time
+// to sterilize. So each request tracks a delivery deadline and moves through a
+// clear pipeline with a timestamped history.
 
-export interface CalEvent {
+export const LOANER_STATUSES = [
+  { key: "requested", label: "Requested", icon: "📝" },
+  { key: "confirmed", label: "Confirmed", icon: "✅" },
+  { key: "delivered", label: "Delivered", icon: "📦" },
+  { key: "ready", label: "Sterile / ready", icon: "♨️" },
+  { key: "in-use", label: "In use", icon: "🔪" },
+  { key: "returned", label: "Returned", icon: "↩️" },
+] as const;
+
+export type LoanerStatus = (typeof LOANER_STATUSES)[number]["key"];
+
+export interface LoanerTray {
   id: ID;
-  title: string;
-  category: EventCategory;
-  start: string; // ISO date or datetime
-  end: string; // ISO
-  allDay: boolean;
+  description: string; // "Stryker Triathlon total knee set"
+  vendor?: string; // "Stryker"
+  repName?: string;
+  repPhone?: string;
+  quantity?: number; // # of trays / sets
+  poNumber?: string;
+  facilityId?: ID;
+  surgeonId?: ID;
+  cardId?: ID; // optional link to the preference card it's for
+  procedure?: string;
+  caseDate?: string; // ISO date/datetime of the surgery
+  neededBy?: string; // ISO delivery deadline (leaves time to sterilize)
+  status: LoanerStatus;
   notes?: string;
-  // Who "has" the child this block (for parenting-time events).
-  withId?: ID;
-  // Trade/change-request workflow.
-  requestStatus: ChangeRequestStatus;
-  requestedById?: ID;
-}
-
-export type ExpenseStatus = "open" | "reimbursement-requested" | "settled" | "disputed";
-
-export interface Expense {
-  id: ID;
-  description: string;
-  amount: number; // total cost
-  paidById: ID;
-  // Share owed by the OTHER parent (e.g. 0.5 for a 50/50 split).
-  splitOtherShare: number;
-  date: string; // ISO
-  category: string;
-  receiptName?: string; // demo: filename only
-  status: ExpenseStatus;
-  note?: string;
-}
-
-export interface JournalEntry {
-  id: ID;
-  title: string;
-  body: string;
   createdAt: string;
-  mood?: "good" | "neutral" | "hard";
-  // Journal entries are private by default — the co-parent cannot see them
-  // unless explicitly exported. (OFW journals confuse users on this point.)
-  shared: boolean;
-}
-
-export interface InfoRecord {
-  id: ID;
-  childId: ID;
-  kind: "medical" | "school" | "contact" | "clothing" | "other";
-  label: string;
-  value: string;
-}
-
-// "Never forget the teddy bear" — a shared checklist of what needs to travel
-// between homes at the next exchange.
-export interface PackingItem {
-  id: ID;
-  label: string;
-  packed: boolean;
-  createdAt: string;
+  updatedAt: string;
+  history: { status: LoanerStatus; at: string }[]; // status timeline
 }
 
 export interface AppState {
-  people: Person[];
-  messages: Message[];
-  draft: Draft | null;
-  events: CalEvent[];
-  expenses: Expense[];
-  journal: JournalEntry[];
-  info: InfoRecord[];
-  packing: PackingItem[];
-  meId: ID;
-  coParentId: ID;
+  facilities: Facility[];
+  locations: Location[];
+  surgeons: Surgeon[];
+  cards: PrefCard[];
+  loaners: LoanerTray[];
+  setups: Record<ID, SetupState>; // cardId -> progress
 }

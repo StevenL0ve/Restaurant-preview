@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import App from "./App";
 import { StoreProvider } from "./state/store";
 import { AuthProvider } from "./state/auth";
+import { buildSeed } from "./state/seed";
 
 // Runs in the jsdom environment (see vite.config.ts), so window + localStorage
 // exist. renderToStaticMarkup walks the whole tree once, which surfaces any
@@ -20,44 +21,48 @@ function renderAt(path: string): string {
   );
 }
 
-function seedSession() {
-  localStorage.setItem(
-    "coparent.accounts.v1",
-    JSON.stringify({
-      "a@b.com": { name: "Test Parent", email: "a@b.com", passHash: "x", createdAt: new Date().toISOString() },
-    }),
-  );
-  localStorage.setItem("coparent.session.v1", "a@b.com");
+// Skip the account gate by entering guest mode (the "use it now" path).
+function asGuest() {
+  localStorage.setItem("orsync.guest.v1", "1");
 }
 
 describe("app smoke test", () => {
   beforeEach(() => localStorage.clear());
 
-  it("shows the login screen when signed out", () => {
+  it("shows the account screen when not signed in", () => {
     const html = renderAt("/");
-    expect(html).toContain("Create account");
-    expect(html).toContain("Sign in");
+    expect(html).toContain("Use it now");
+    expect(html).toContain("ORSync");
   });
 
-  it("renders the dashboard once signed in", () => {
-    seedSession();
+  it("renders the dashboard in guest mode with seeded cards", () => {
+    asGuest();
     const html = renderAt("/");
-    expect(html).toContain("CoParent");
-    expect(html).toContain("Up next");
+    expect(html).toContain("Ready for your next case");
+    // A seeded favorite card should appear on the dashboard.
+    expect(html).toContain("Laparoscopic Cholecystectomy");
   });
 
   it.each([
-    ["/messages", "Messages"],
-    ["/calendar", "Calendar"],
-    ["/expenses", "Expenses"],
-    ["/journal", "Journal"],
-    ["/info", "Info Bank"],
-    ["/packing", "Packing list"],
-    ["/assistant", "Ask CoParent"],
-    ["/settings", "Delete account"],
+    ["/cards", "Cards"],
+    ["/cards/new", "New card"],
+    ["/surgeons", "Surgeons"],
+    ["/loaners", "Loaner trays"],
+    ["/facilities", "Add a facility"],
+    ["/search", "Search"],
+    ["/settings", "Your data"],
   ])("renders %s without crashing", (path, marker) => {
-    seedSession();
+    asGuest();
     const html = renderAt(path);
     expect(html).toContain(marker);
+  });
+
+  it("renders a seeded card detail and its setup mode", () => {
+    asGuest();
+    const id = buildSeed().cards[0].id;
+    const detail = renderAt(`/cards/${id}`);
+    expect(detail).toContain("Start setup");
+    const setup = renderAt(`/cards/${id}/setup`);
+    expect(setup).toContain("Pull-list setup");
   });
 });

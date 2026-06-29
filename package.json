@@ -1,9 +1,9 @@
 {
-  "name": "coparent",
+  "name": "orsync",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "CoParent — a modern, fast, free co-parenting app. A better OurFamilyWizard.",
+  "description": "ORSync — a personal surgical preference-card library for scrub techs and circulating nurses. A better PrefCard.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,7 +14,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:add:ios": "cap add ios",
-    "cap:add:android": "cap add android"
+    "cap:add:android": "cap add android",
+    "testflight": "bash scripts/testflight.sh"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
@@ -32,7 +33,6 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "jsdom": "^25.0.0",
-    "sharp": "^0.35.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.6",
     "vitest": "^2.1.1"

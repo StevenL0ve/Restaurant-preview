@@ -1,149 +1,146 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   useStore,
-  unreadCount,
-  pendingRequests,
-  expenseBalance,
+  surgeonOf,
+  totalItems,
+  setupProgress,
+  loanersSorted,
+  loanerStats,
+  isLoanerOverdue,
+  isLoanerSoon,
 } from "../state/store";
-import { money, relativeTime, fullDate, time } from "../lib/format";
-import { computeInsights } from "../lib/insights";
+import { Avatar } from "../components/Avatar";
+import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
-  const { state, respondToRequest } = useStore();
-  const me = state.people.find((p) => p.id === state.meId)!;
-  const unread = unreadCount(state);
-  const requests = pendingRequests(state);
-  const balance = expenseBalance(state);
-  const insights = computeInsights(state);
+  const { state } = useStore();
+  const navigate = useNavigate();
 
-  const upcoming = [...state.events]
-    .filter((e) => new Date(e.start).getTime() >= Date.now() - 86400000)
-    .sort((a, b) => +new Date(a.start) - +new Date(b.start))
+  const favorites = state.cards.filter((c) => c.favorite);
+  const recent = [...state.cards].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
+  // Any card with an in-progress (but not complete) setup.
+  const inProgress = state.cards
+    .filter((c) => state.setups[c.id]?.checked.length)
+    .map((c) => ({ card: c, ...setupProgress(state, c) }))
+    .filter((x) => x.done < x.total);
+
+  const lstats = loanerStats(state);
+  const loanerWatch = loanersSorted(state)
+    .filter((l) => isLoanerOverdue(l) || isLoanerSoon(l))
     .slice(0, 4);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const stats = [
+    { label: "Cards", value: state.cards.length, to: "/cards", emoji: "🗂️" },
+    { label: "Surgeons", value: state.surgeons.length, to: "/surgeons", emoji: "🧑‍⚕️" },
+    { label: "Loaners active", value: lstats.active, to: "/loaners", emoji: "🚚" },
+    { label: "Favorites", value: favorites.length, to: "/cards", emoji: "★" },
+  ];
 
   return (
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>{greeting}</h1>
-          <p className="muted">Here's where things stand with {state.people.find((p) => p.id === state.coParentId)?.name}.</p>
+          <h1>Ready for your next case</h1>
+          <p className="muted">Your preference cards, your way — no hospital login, works offline.</p>
+        </div>
+        <div className="head-actions">
+          <button className="btn btn-primary" onClick={() => navigate("/cards/new")}>+ New card</button>
         </div>
       </div>
 
       <div className="stat-grid">
-        <Link to="/messages" className="stat-card">
-          <span className="stat-emoji">💬</span>
-          <span className="stat-value">{unread}</span>
-          <span className="stat-label">Unread messages</span>
-        </Link>
-        <Link to="/calendar" className="stat-card">
-          <span className="stat-emoji">📅</span>
-          <span className="stat-value">{requests.length}</span>
-          <span className="stat-label">Schedule requests</span>
-        </Link>
-        <Link to="/expenses" className="stat-card">
-          <span className="stat-emoji">💵</span>
-          <span className={"stat-value " + (balance >= 0 ? "pos" : "neg")}>
-            {money(Math.abs(balance))}
-          </span>
-          <span className="stat-label">
-            {balance >= 0 ? "Owed to you" : "You owe"}
-          </span>
-        </Link>
-        <Link to="/journal" className="stat-card">
-          <span className="stat-emoji">📔</span>
-          <span className="stat-value">{state.journal.length}</span>
-          <span className="stat-label">Journal entries</span>
-        </Link>
+        {stats.map((s) => (
+          <Link key={s.label} to={s.to} className="stat-card">
+            <span className="stat-emoji" aria-hidden>{s.emoji}</span>
+            <span className="stat-value">{s.value}</span>
+            <span className="stat-label">{s.label}</span>
+          </Link>
+        ))}
       </div>
 
-      <section className="insights">
-        <div className="insights-head">This {insights.monthLabel}</div>
-        <div className="insights-row">
-          <div className="insight">
-            <span className="insight-value">{money(insights.totalSpend)}</span>
-            <span className="insight-label">Shared spend logged</span>
-          </div>
-          <div className="insight">
-            <span className="insight-value">{money(insights.yourOutOfPocket)}</span>
-            <span className="insight-label">You paid out of pocket</span>
-          </div>
-          <div className="insight">
-            <span className="insight-value">{insights.messagesThisWeek}</span>
-            <span className="insight-label">Messages this week</span>
-          </div>
-          <div className="insight">
-            <span className="insight-value">{insights.eventsNext7Days}</span>
-            <span className="insight-label">Events next 7 days</span>
-          </div>
+      {inProgress.length > 0 && (
+        <div className="card form-card">
+          <div className="card-head"><h2>Setup in progress</h2></div>
+          {inProgress.map(({ card, done, total }) => (
+            <Link key={card.id} to={`/cards/${card.id}/setup`} className="resume-row">
+              <span className="resume-title">{card.procedure}</span>
+              <span className="muted small">{done}/{total} pulled</span>
+              <span className="resume-go">Resume →</span>
+            </Link>
+          ))}
         </div>
-      </section>
+      )}
+
+      {loanerWatch.length > 0 && (
+        <div className="card form-card">
+          <div className="card-head">
+            <h2>🚚 Loaner trays to watch</h2>
+            <Link className="link" to="/loaners">All loaners</Link>
+          </div>
+          {loanerWatch.map((l) => {
+            const overdue = isLoanerOverdue(l);
+            return (
+              <Link key={l.id} to="/loaners" className="resume-row">
+                <span className="resume-title">{l.description}</span>
+                <span className={"small " + (overdue ? "neg" : "muted")}>
+                  {overdue ? "Overdue" : l.caseDate ? `Case ${formatDate(l.caseDate)}` : "Soon"}
+                </span>
+                <span className="resume-go">Open →</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="dash-cols">
-        <section className="card">
+        <div className="card">
           <div className="card-head">
-            <h2>Up next</h2>
-            <Link to="/calendar" className="link">Calendar →</Link>
+            <h2>★ Favorites</h2>
+            <Link className="link" to="/cards">All cards</Link>
           </div>
-          {upcoming.length === 0 ? (
-            <p className="muted pad">Nothing scheduled. Enjoy the quiet.</p>
+          {favorites.length === 0 ? (
+            <p className="muted small">Star the cards you reach for most and they’ll show up here.</p>
           ) : (
-            <ul className="timeline">
-              {upcoming.map((e) => (
-                <li key={e.id} className={"timeline-item cat-" + e.category}>
-                  <span className="timeline-dot" />
-                  <div>
-                    <div className="timeline-title">{e.title}</div>
-                    <div className="muted small">
-                      {fullDate(e.start)}
-                      {!e.allDay && ` · ${time(e.start)}`}
-                    </div>
-                  </div>
-                </li>
-              ))}
+            <ul className="dash-list">
+              {favorites.map((c) => {
+                const sg = surgeonOf(state, c.surgeonId);
+                return (
+                  <li key={c.id}>
+                    <Link to={`/cards/${c.id}`} className="dash-item">
+                      {sg && <Avatar surgeon={sg} size={30} />}
+                      <span className="dash-item-text">
+                        <span className="dash-item-title">{c.procedure}</span>
+                        <span className="muted small">{sg?.name} · {totalItems(c)} items</span>
+                      </span>
+                      <span className="dash-go">→</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
-        </section>
+        </div>
 
-        <section className="card">
-          <div className="card-head">
-            <h2>Needs your attention</h2>
-          </div>
-          {requests.length === 0 ? (
-            <p className="muted pad">You're all caught up. 🎉</p>
-          ) : (
-            requests.map((r) => (
-              <div key={r.id} className="request">
-                <div className="request-title">{r.title}</div>
-                {r.notes && <div className="muted small">{r.notes}</div>}
-                <div className="request-actions">
-                  <button className="btn btn-sm btn-primary" onClick={() => respondToRequest(r.id, true)}>
-                    Accept
-                  </button>
-                  <button className="btn btn-sm" onClick={() => respondToRequest(r.id, false)}>
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-
-          <div className="card-head" style={{ marginTop: 18 }}>
-            <h2>Recent message</h2>
-            <Link to="/messages" className="link">Open →</Link>
-          </div>
-          {state.messages.slice(-1).map((m) => (
-            <div key={m.id} className="mini-msg">
-              <p>{m.body}</p>
-              <span className="muted small">
-                {m.fromId === me.id ? "You" : state.people.find((p) => p.id === m.fromId)?.name} · {relativeTime(m.createdAt)}
-              </span>
-            </div>
-          ))}
-        </section>
+        <div className="card">
+          <div className="card-head"><h2>Recently updated</h2></div>
+          <ul className="dash-list">
+            {recent.map((c) => {
+              const sg = surgeonOf(state, c.surgeonId);
+              return (
+                <li key={c.id}>
+                  <Link to={`/cards/${c.id}`} className="dash-item">
+                    {sg && <Avatar surgeon={sg} size={30} />}
+                    <span className="dash-item-text">
+                      <span className="dash-item-title">{c.procedure}</span>
+                      <span className="muted small">{relativeTime(c.updatedAt)}</span>
+                    </span>
+                    <span className="dash-go">→</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

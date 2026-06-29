@@ -1,87 +1,65 @@
-# Publishing CoParent to the App Store & Google Play
+# Publishing ORSync to the App Store & Google Play
 
-This is the end-to-end runbook. Steps marked **[you]** require accounts, a Mac,
-or store dashboards that only you can operate — I can't do those from here.
-Everything else is already wired up in this repo.
+ORSync is a Vite + React web app wrapped natively with **Capacitor**. The web
+build in `dist/` is bundled into native iOS/Android shells. For the **beta**
+(TestFlight) flow, see [`TESTFLIGHT.md`](TESTFLIGHT.md) — that's the fast path to
+trying it on your phone. This doc covers full **store releases**.
 
-CoParent ships as a web app wrapped with **Capacitor**, which produces real
-native iOS and Android projects from the `dist` web build.
+## Prerequisites
 
-> **Just want a beta on your phone first?** See [`docs/TESTFLIGHT.md`](TESTFLIGHT.md)
-> for the fastest path to TestFlight (iOS) and Play internal testing (Android).
+- **Apple:** Apple Developer Program membership; a Mac with Xcode *or* the cloud
+  workflow in `.github/workflows/ios-testflight.yml`.
+- **Google:** Google Play Console account; Android Studio or `fastlane supply`.
+- Node 18+ and `npm ci` for the web build.
 
----
+## Icons & splash
 
-## 0. One-time prerequisites **[you]**
-
-- **Apple:** an [Apple Developer Program](https://developer.apple.com/programs/)
-  membership ($99/yr) and a **Mac with Xcode** (required to build & sign iOS apps).
-- **Google:** a [Google Play Console](https://play.google.com/console/) account
-  ($25 one-time) and **Android Studio** (any OS).
-- **Hosting** for the privacy policy URL (`docs/PRIVACY.md`).
-
-## 1. Build the web bundle  ✅ automated
+Brand art is generated from a single vector definition — no external image file:
 
 ```bash
-npm install
-npm run icons      # regenerate app icons (already committed)
-npm run build      # type-checks + outputs dist/ (PWA: manifest + service worker)
+npm run icons        # writes public/icons/*, public/brand/*, assets/*
 ```
 
-## 2. Create the native projects  (one-time)
+After `npx cap add ios` / `android`, populate the native catalogs:
 
 ```bash
-npm run cap:add:ios       # [you, on a Mac] generates ios/  (runs CocoaPods)
-npm run cap:add:android   # generates android/  (works on any OS)
+npx capacitor-assets generate
 ```
 
-`capacitor.config.ts` is already set: appId `com.stevennelson.coparent`, appName `CoParent`,
-webDir `dist`. After any web change, re-sync:
+## iOS — App Store
+
+1. Ship a build to TestFlight (see `TESTFLIGHT.md`).
+2. In App Store Connect, create the **1.0** version, attach the build, paste the
+   listing copy from [`STORE_LISTING.md`](STORE_LISTING.md), upload screenshots,
+   set the **Medical** category and age rating, and link your published
+   [privacy policy](PRIVACY.md).
+3. Submit for review.
+
+### Screenshots
+Capture on the iOS Simulator (6.7" + 6.1" required). Good frames: Home dashboard,
+a populated card detail, **Setup mode** mid-pull (the differentiator), the
+Surgeons list, and global Search.
+
+## Android — Google Play
 
 ```bash
-npm run cap:sync          # = npm run build && cap sync
+npm run build
+npx cap add android
+npx cap sync android
 ```
 
-> App icons & splash: install `@capacitor/assets` and run
-> `npx capacitor-assets generate` with `public/icons/icon-512.png` (regenerate at
-> 1024px first) to populate every native icon/splash size.
+Build a signed **AAB** in Android Studio (Build → Generate Signed Bundle) or via
+`fastlane supply`. Create the app in Play Console, complete the Data safety form
+(declare: **no data collected/shared** — everything is on-device), add the
+listing copy and screenshots, and roll out to **Internal testing** first, then
+production.
 
-## 3. Android → Google Play
+## Notes & honest limitations
 
-1. `npx cap open android` → opens Android Studio.
-2. **[you]** Set the version, then **Build → Generate Signed Bundle / APK → Android App Bundle (.aab)**. Create/keep an **upload keystore** (back it up — losing it blocks future updates).
-3. **[you]** In Play Console: create the app, complete the **Data safety** form
-   (this app: data stored on-device, not shared — see `docs/PRIVACY.md`), content
-   rating, store listing (`docs/STORE_LISTING.md`), screenshots, privacy URL.
-4. **[you]** Upload the `.aab` to **Internal testing** first, then promote to Production. Google review is typically hours–days.
-
-## 4. iOS → App Store  **[you — requires a Mac]**
-
-1. `npx cap open ios` → opens Xcode.
-2. Set the **Signing Team** (your Apple Developer account); Xcode manages
-   provisioning. Set version & build number.
-3. **Product → Archive**, then **Distribute App → App Store Connect**.
-4. In [App Store Connect](https://appstoreconnect.apple.com/): create the app
-   record (bundle id `com.stevennelson.coparent`), fill the listing (`docs/STORE_LISTING.md`),
-   **App Privacy** answers (data not collected / stored on device — see `docs/PRIVACY.md`),
-   screenshots, and submit for review (typically 1–3 days).
-
-## 5. Pre-submission checklist
-
-- [ ] Real contact email + support URL in store listings and `docs/PRIVACY.md`
-- [ ] Privacy policy hosted at a public URL
-- [ ] Screenshots captured for required device sizes
-- [ ] App icon at 1024×1024 (Apple) and feature graphic 1024×500 (Play)
-- [ ] Version/build numbers bumped
-- [ ] Tested on a real device via `cap run ios` / `cap run android`
-
----
-
-### What's already done in this repo
-Installable PWA (manifest + offline service worker), generated app icons,
-Capacitor config + scripts, privacy policy, and store listing copy.
-
-### What only you can do
-Apple/Google account enrollment, building/signing on the appropriate toolchain,
-filling the store dashboards, and submitting for review. There is no way for me
-to perform account-bound or signing steps from this environment.
+This is a polished **single-device** app: your library lives on your phone and
+is yours to export. A future version could add optional encrypted cloud backup
+and multi-device sync — the state is plain serializable data and the optional
+account is already structured to swap a hosted backend in behind it without UI
+changes. The product decision — that your cards are *yours*, with no approvals —
+is deliberate, and it's the direct answer to what the old app's reviewers asked
+for.

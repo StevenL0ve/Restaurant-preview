@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom";
-import { useStore, unreadCount, pendingRequests } from "../state/store";
 import { APP_VERSION } from "../version";
 
 interface NavItem {
@@ -7,62 +6,50 @@ interface NavItem {
   label: string;
   icon: string;
   end?: boolean;
-  badge?: "unread" | "requests";
 }
 
 const items: NavItem[] = [
   { to: "/", label: "Home", icon: "🏠", end: true },
-  { to: "/assistant", label: "Ask CoParent", icon: "✨" },
-  { to: "/messages", label: "Messages", icon: "💬", badge: "unread" },
-  { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
-  { to: "/expenses", label: "Expenses", icon: "💵" },
-  { to: "/journal", label: "Journal", icon: "📔" },
-  { to: "/packing", label: "Packing list", icon: "🧳" },
-  { to: "/info", label: "Info Bank", icon: "🗂️" },
+  { to: "/cards", label: "Cards", icon: "🗂️" },
+  { to: "/surgeons", label: "Surgeons", icon: "🧑‍⚕️" },
+  { to: "/loaners", label: "Loaner trays", icon: "🚚" },
+  { to: "/facilities", label: "Facilities", icon: "🏥" },
+  { to: "/search", label: "Search", icon: "🔍" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export function Sidebar() {
-  const { state } = useStore();
-  const unread = unreadCount(state);
-  const requests = pendingRequests(state).length;
-
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="CoParent logo" width={38} height={38} />
+        <img className="brand-mark" src="/brand/logo-mark.png" alt="ORSync logo" width={38} height={38} />
         <div>
-          <div className="brand-name">CoParent</div>
-          <div className="brand-tag">Calm, organized co-parenting</div>
+          <div className="brand-name">ORSync</div>
+          <div className="brand-tag">Your preference cards</div>
         </div>
       </div>
 
       <nav className="nav">
-        {items.map((it) => {
-          const count =
-            it.badge === "unread" ? unread : it.badge === "requests" ? requests : 0;
-          return (
-            <NavLink
-              key={it.to}
-              to={it.to}
-              end={it.end ?? false}
-              className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}
-            >
-              <span className="nav-icon" aria-hidden>{it.icon}</span>
-              <span className="nav-label">{it.label}</span>
-              {count > 0 && <span className="nav-badge">{count}</span>}
-            </NavLink>
-          );
-        })}
+        {items.map((it) => (
+          <NavLink
+            key={it.to}
+            to={it.to}
+            end={it.end ?? false}
+            className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}
+          >
+            <span className="nav-icon" aria-hidden>{it.icon}</span>
+            <span className="nav-label">{it.label}</span>
+          </NavLink>
+        ))}
       </nav>
 
       <div className="sidebar-footer">
-        <span className="pill pill-free">100% free</span>
+        <span className="pill pill-free">Yours. Offline.</span>
         <p className="footnote">
-          No subscription. Your data stays on your device and you can export or
-          delete it anytime.
+          Your cards live on this device. No hospital account, no approvals.
+          Export or wipe everything anytime.
         </p>
-        <p className="version">CoParent v{APP_VERSION}</p>
+        <p className="version">ORSync v{APP_VERSION}</p>
       </div>
     </aside>
   );

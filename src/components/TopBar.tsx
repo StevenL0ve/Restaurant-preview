@@ -2,12 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { search } from "../lib/search";
-import { NotificationsBell } from "./NotificationsBell";
 import { ThemeToggle } from "./ThemeToggle";
-
-const typeIcon: Record<string, string> = {
-  message: "💬", event: "📅", expense: "💵", journal: "📔", info: "🗂️",
-};
 
 export function TopBar() {
   const { state } = useStore();
@@ -34,7 +29,7 @@ export function TopBar() {
           }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Search everything — messages, calendar, expenses…"
+          placeholder="Search surgeons, procedures, instruments…"
           aria-label="Search"
         />
         {q && (
@@ -48,11 +43,15 @@ export function TopBar() {
               <div className="search-empty">No matches for “{q}”.</div>
             ) : (
               hits.map((h) => (
-                <button key={h.type + h.id} className="search-hit" onMouseDown={() => go(h.to)}>
-                  <span className="hit-icon">{typeIcon[h.type]}</span>
+                <button
+                  key={h.kind + h.id}
+                  className="search-hit"
+                  onMouseDown={() => go(h.kind === "surgeon" ? `/surgeons/${h.id}` : `/cards/${h.id}`)}
+                >
+                  <span className="hit-icon">{h.kind === "surgeon" ? "🧑‍⚕️" : "🗂️"}</span>
                   <span className="hit-text">
                     <span className="hit-title">{h.title}</span>
-                    <span className="hit-snippet">{h.snippet}</span>
+                    <span className="hit-snippet">{h.snippet ?? h.subtitle}</span>
                   </span>
                 </button>
               ))
@@ -66,28 +65,10 @@ export function TopBar() {
 
       <div className="topbar-right">
         <ThemeToggle />
-        <NotificationsBell />
-        <div className="who">
-          <Avatar id={state.coParentId} />
-          <div className="who-text">
-            <span className="who-label">Co-parenting with</span>
-            <span className="who-name">
-              {state.people.find((p) => p.id === state.coParentId)?.name}
-            </span>
-          </div>
-        </div>
+        <button className="btn btn-primary btn-sm topbar-new" onClick={() => navigate("/cards/new")}>
+          + New card
+        </button>
       </div>
     </header>
-  );
-}
-
-function Avatar({ id }: { id: string }) {
-  const { state } = useStore();
-  const p = state.people.find((x) => x.id === id);
-  if (!p) return null;
-  return (
-    <span className="avatar" style={{ background: p.color }} title={p.name}>
-      {p.initials}
-    </span>
   );
 }

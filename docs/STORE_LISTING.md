@@ -1,62 +1,61 @@
-# CoParent — Store Listing Copy
+# ORSync — Store Listing Copy
 
-Ready-to-paste metadata for the App Store and Google Play. Adjust the contact
-details and URLs before submitting.
+Drop-in copy for App Store Connect. Tweak to taste.
 
-## Names
+## Name
+ORSync
 
-- **App name:** CoParent
-- **Apple subtitle (≤30 chars):** Calm, organized co-parenting
-- **Google Play short description (≤80 chars):** Free co-parenting app: messages, shared custody calendar, and expense splitting.
+## Subtitle (30 chars max)
+Your surgical pref cards
 
-## Full description (Google Play / App Store description)
+## Promotional text (170 chars)
+The preference-card app that's actually yours. Organize every surgeon and
+procedure, then pull the room in a tap-to-check setup list. Works offline. No
+hospital login.
 
-CoParent helps separated and divorced parents coordinate calmly and keep a clear
-record — without the price tag or the clutter.
+## Description
 
-WHY COPARENT
-• Free. No per-parent subscription and no auto-renewing fees.
-• Private. Your data stays on your device. Export it or delete it anytime.
-• Calm by design. A built-in tone check flags heated messages before you send
-  and suggests friendlier wording — at no extra cost.
+Scrub techs and circulating nurses keep a mental rolodex of how every surgeon
+wants every case set up. ORSync puts it in your pocket — and it belongs to
+**you**, not a hospital admin.
 
-MESSAGES
-• Clear delivered/read status so nothing gets missed.
-• Every message is timestamped and can't be edited after sending — a clean record.
-• Drafts auto-save. Search your whole history instantly.
+Built for the people the old apps shut out: the traveler who works a new facility
+every few weeks, the tech who just wants their own cards without asking anyone's
+permission.
 
-SHARED CALENDAR
-• Color-coded parenting-time, school, medical, and activity events.
-• One-tap custody-rotation templates (week-on/week-off, 2-2-3, 2-2-5-5).
-• Request and approve schedule swaps. Export to your phone's calendar.
+**Organize it your way**
+• Cards grouped by surgeon and procedure
+• Every section a tech actually needs: positioning, prep, draping, instruments &
+  trays, sutures, supplies, medications, equipment
+• Glove size and surgeon quirks front and center ("tourniquet up before prep,"
+  "no chatter on closing")
+• Favorite the cards you reach for most
 
-EXPENSES
-• Split any cost at any ratio, attach a receipt, request reimbursement.
-• Set recurring monthly costs once (childcare, tuition).
-• A running balance both parents can trust.
+**Set up the room without missing a thing**
+• Setup mode turns any card into a live pull-list with big tap targets
+• Check items off as you gather them; a progress bar hits "Case ready" at 100%
+• Lock your phone mid-setup — your checkmarks are still there
 
-EVERYTHING IN ONE PLACE
-• Private journal, a shared info bank for each child, and a notifications center.
-• Court-ready exports: full data (JSON), CSV, and a printable message record.
-• Light & dark mode.
+**Yours, everywhere**
+• Works fully offline (because OR Wi-Fi doesn't)
+• One global search across surgeons, procedures, and every item
+• Export your whole library to a file, or share a single card as text
+• Optional Face ID lock
 
-CoParent is a single-device app today; a sync option is on the roadmap and will be
-opt-in. No ads. No tracking.
+No subscription traps. No approvals. No empty screens — it comes preloaded with
+realistic example cards so you can see how it works, then make it your own.
 
-## Keywords (Apple, ≤100 chars, comma-separated)
+## Keywords (100 chars)
+surgical,scrub tech,preference card,OR,operating room,surgery,nurse,circulator,prefcard,instruments
 
-co-parenting,custody,divorce,parenting schedule,child support,coparent,family,expenses,calendar
+## Support URL
+https://github.com/StevenL0ve/Restaurant-preview
 
-## Categorization
+## Privacy Policy URL
+(Publish docs/PRIVACY.md to a public URL and paste it here.)
 
-- **Primary category:** Lifestyle (alt: Productivity)
-- **Content rating:** 4+ / Everyone
-- **Pricing:** Free
+## Category
+Primary: Medical · Secondary: Productivity
 
-## Required assets checklist
-
-- [ ] App icon 1024×1024 (App Store) — derive from `public/icons/icon-512.png` at 1024 (re-run the generator with size 1024).
-- [ ] Feature graphic 1024×500 (Google Play).
-- [ ] Phone screenshots (min 2–3 each store) — capture Dashboard, Messages (tone check), Calendar, Expenses.
-- [ ] Privacy policy URL (host `docs/PRIVACY.md`).
-- [ ] Support URL + contact email.
+## Age rating
+17+ (medical/treatment information), no objectionable content.

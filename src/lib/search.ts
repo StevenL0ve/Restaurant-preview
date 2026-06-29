@@ -1,79 +1,77 @@
-import type { AppState } from "../types";
+import type { AppState, PrefCard, SectionKey, Surgeon } from "../types";
+import { SECTIONS, locationLabel } from "../types";
 
-// One search box that actually searches everything: messages, calendar,
-// expenses, journal, and the info bank. Reviewers say OFW's search "hardly
-// works" — this indexes every record and ranks by recency.
+// One global search across the whole library: surgeons, procedures, and every
+// item on every card. Techs search by all of these — "Dr. Chen", "total knee",
+// "tourniquet", "Vicryl" — so a single ranked index covers them all.
 
-export interface SearchHit {
-  type: "message" | "event" | "expense" | "journal" | "info";
-  id: string;
-  title: string;
-  snippet: string;
-  date: string;
-  to: string; // route path
-}
+export type SearchHit =
+  | { kind: "surgeon"; id: string; title: string; subtitle: string; snippet?: string; surgeon: Surgeon }
+  | { kind: "card"; id: string; title: string; subtitle: string; snippet?: string; card: PrefCard };
 
-function highlightSnippet(text: string, q: string): string {
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  if (i < 0) return text.slice(0, 120);
-  const start = Math.max(0, i - 40);
-  return (start > 0 ? "…" : "") + text.slice(start, i + q.length + 60);
-}
+export function search(state: AppState, raw: string): SearchHit[] {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
 
-export function search(state: AppState, query: string): SearchHit[] {
-  const q = query.trim().toLowerCase();
-  if (q.length < 2) return [];
-  const hits: SearchHit[] = [];
-  const nameOf = (id: string) =>
-    state.people.find((p) => p.id === id)?.name ?? "Unknown";
+  // Resolve item location ids to display labels once, up front.
+  const locLabel = new Map(state.locations.map((l) => [l.id, locationLabel(l)]));
 
-  for (const m of state.messages) {
-    if (m.body.toLowerCase().includes(q)) {
+  const hits: { hit: SearchHit; score: number }[] = [];
+  const score = (hay: string) => {
+    const h = hay.toLowerCase();
+    if (!h.includes(q)) return 0;
+    if (h === q) return 3;
+    if (h.startsWith(q)) return 2;
+    return 1;
+  };
+
+  for (const s of state.surgeons) {
+    const sc = Math.max(score(s.name), score(s.specialty), score(s.facility ?? ""));
+    if (sc > 0) {
       hits.push({
-        type: "message", id: m.id,
-        title: `Message from ${nameOf(m.fromId)}`,
-        snippet: highlightSnippet(m.body, q),
-        date: m.createdAt, to: "/messages",
-      });
-    }
-  }
-  for (const e of state.events) {
-    if (`${e.title} ${e.notes ?? ""}`.toLowerCase().includes(q)) {
-      hits.push({
-        type: "event", id: e.id, title: e.title,
-        snippet: e.notes ?? "Calendar event",
-        date: e.start, to: "/calendar",
-      });
-    }
-  }
-  for (const x of state.expenses) {
-    if (`${x.description} ${x.category} ${x.note ?? ""}`.toLowerCase().includes(q)) {
-      hits.push({
-        type: "expense", id: x.id, title: x.description,
-        snippet: `${x.category} · paid by ${nameOf(x.paidById)}`,
-        date: x.date, to: "/expenses",
-      });
-    }
-  }
-  for (const j of state.journal) {
-    if (`${j.title} ${j.body}`.toLowerCase().includes(q)) {
-      hits.push({
-        type: "journal", id: j.id, title: j.title,
-        snippet: highlightSnippet(j.body, q),
-        date: j.createdAt, to: "/journal",
-      });
-    }
-  }
-  for (const r of state.info) {
-    if (`${r.label} ${r.value}`.toLowerCase().includes(q)) {
-      hits.push({
-        type: "info", id: r.id,
-        title: `${r.label}: ${r.value}`,
-        snippet: `${nameOf(r.childId)} · Info Bank`,
-        date: new Date().toISOString(), to: "/info",
+        score: sc + 1, // surgeons rank slightly above item hits
+        hit: {
+          kind: "surgeon",
+          id: s.id,
+          title: s.name,
+          subtitle: [s.specialty, s.facility].filter(Boolean).join(" · "),
+          surgeon: s,
+        },
       });
     }
   }
 
-  return hits.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+  for (const c of state.cards) {
+    const surgeon = state.surgeons.find((s) => s.id === c.surgeonId);
+    let best = Math.max(score(c.procedure), score(c.specialty));
+    let snippet: string | undefined;
+
+    // Search inside every item line; surface the first matching item.
+    for (const sec of SECTIONS) {
+      for (const it of c[sec.key as SectionKey]) {
+        const where = it.locationId ? locLabel.get(it.locationId) : undefined;
+        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(where ?? ""));
+        if (sc > 0 && sc >= best && !snippet) {
+          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where ? ` 📍 ${where}` : ""}`;
+        }
+        best = Math.max(best, sc);
+      }
+    }
+
+    if (best > 0) {
+      hits.push({
+        score: best,
+        hit: {
+          kind: "card",
+          id: c.id,
+          title: c.procedure,
+          subtitle: surgeon ? surgeon.name : c.specialty,
+          card: c,
+          snippet,
+        },
+      });
+    }
+  }
+
+  return hits.sort((a, b) => b.score - a.score).map((h) => h.hit);
 }
