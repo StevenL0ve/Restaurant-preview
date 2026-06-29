@@ -1,6 +1,6 @@
-# Publishing CaseReady to the App Store & Google Play
+# Publishing ORSync to the App Store & Google Play
 
-CaseReady is a Vite + React web app wrapped natively with **Capacitor**. The web
+ORSync is a Vite + React web app wrapped natively with **Capacitor**. The web
 build in `dist/` is bundled into native iOS/Android shells. For the **beta**
 (TestFlight) flow, see [`TESTFLIGHT.md`](TESTFLIGHT.md) — that's the fast path to
 trying it on your phone. This doc covers full **store releases**.

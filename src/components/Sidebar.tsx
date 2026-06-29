@@ -22,9 +22,9 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="CaseReady logo" width={38} height={38} />
+        <img className="brand-mark" src="/brand/logo-mark.png" alt="ORSync logo" width={38} height={38} />
         <div>
-          <div className="brand-name">CaseReady</div>
+          <div className="brand-name">ORSync</div>
           <div className="brand-tag">Your preference cards</div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function Sidebar() {
           Your cards live on this device. No hospital account, no approvals.
           Export or wipe everything anytime.
         </p>
-        <p className="version">CaseReady v{APP_VERSION}</p>
+        <p className="version">ORSync v{APP_VERSION}</p>
       </div>
     </aside>
   );

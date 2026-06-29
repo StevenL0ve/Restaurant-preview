@@ -1,13 +1,13 @@
-# CaseReady — Privacy Policy
+# ORSync — Privacy Policy
 
 _Last updated: 2026-06-27_
 
-CaseReady is a personal tool for organizing surgical preference cards. Privacy is
+ORSync is a personal tool for organizing surgical preference cards. Privacy is
 the whole point: your cards belong to you, on your device.
 
 ## What we collect
 
-**Nothing.** CaseReady has no analytics, no accounts on our servers, no tracking,
+**Nothing.** ORSync has no analytics, no accounts on our servers, no tracking,
 and no ads. We operate no backend that receives your data.
 
 ## Where your data lives
@@ -25,7 +25,7 @@ phone unless *you* choose to export or share it.
 ## Sensitive data
 
 Do not store protected health information (PHI) or patient identifiers in
-CaseReady. Preference cards describe surgeon and procedure setup, not patients.
+ORSync. Preference cards describe surgeon and procedure setup, not patients.
 Follow your facility's policies regarding any clinical information.
 
 ## Permissions
@@ -35,7 +35,7 @@ Follow your facility's policies regarding any clinical information.
 
 ## Children
 
-CaseReady is a professional tool intended for adults and is not directed to
+ORSync is a professional tool intended for adults and is not directed to
 children.
 
 ## Changes

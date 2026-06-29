@@ -23,7 +23,7 @@ function renderAt(path: string): string {
 
 // Skip the account gate by entering guest mode (the "use it now" path).
 function asGuest() {
-  localStorage.setItem("caseready.guest.v1", "1");
+  localStorage.setItem("orsync.guest.v1", "1");
 }
 
 describe("app smoke test", () => {
@@ -32,7 +32,7 @@ describe("app smoke test", () => {
   it("shows the account screen when not signed in", () => {
     const html = renderAt("/");
     expect(html).toContain("Use it now");
-    expect(html).toContain("CaseReady");
+    expect(html).toContain("ORSync");
   });
 
   it("renders the dashboard in guest mode with seeded cards", () => {

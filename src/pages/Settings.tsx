@@ -21,7 +21,7 @@ export function Settings() {
         const added = importCards(String(reader.result));
         setMsg(`Imported ${added} ${added === 1 ? "card" : "cards"} into your library.`);
       } catch {
-        setMsg("That file didn’t look like a CaseReady card file.");
+        setMsg("That file didn’t look like a ORSync card file.");
       }
       setTimeout(() => setMsg(null), 3000);
     };
@@ -54,7 +54,7 @@ export function Settings() {
       <div className="card settings-card">
         <h2>Account</h2>
         {user?.guest ? (
-          <p>You’re using CaseReady <strong>without an account</strong> — everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
+          <p>You’re using ORSync <strong>without an account</strong> — everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
         ) : (
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
@@ -130,11 +130,11 @@ export function Settings() {
       <div className="card settings-card">
         <h2>About</h2>
         <p>
-          CaseReady is a personal surgical preference-card library for scrub techs and circulating
+          ORSync is a personal surgical preference-card library for scrub techs and circulating
           nurses — including travelers who move between facilities. It’s the tool the old apps wouldn’t
           let you use for yourself.
         </p>
-        <p className="muted small">CaseReady v{APP_VERSION}</p>
+        <p className="muted small">ORSync v{APP_VERSION}</p>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
-const KEY = "caseready.theme";
+const KEY = "orsync.theme";
 
 function initialTheme(): Theme {
   const saved = localStorage.getItem(KEY);

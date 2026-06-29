@@ -1,6 +1,6 @@
-// Core domain types for CaseReady.
+// Core domain types for ORSync.
 //
-// CaseReady is a *personal* surgical preference-card library. Everything is
+// ORSync is a *personal* surgical preference-card library. Everything is
 // plain, serializable data so it lives in localStorage, exports to JSON, and
 // works fully offline — no hospital account, no admin approval, no server.
 // (That last part is the whole point: the App Store reviews of the app this

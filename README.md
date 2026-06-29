@@ -1,17 +1,17 @@
-# CaseReady
+# ORSync
 
 A modern, fast surgical **preference-card** app — built as a better answer to
 [PrefCard](https://apps.apple.com/us/app/prefcard/id1152824233).
 
 Scrub techs and circulating nurses keep a mental rolodex of how every surgeon
 wants every case set up — positioning, prep, trays, sutures, supplies, the
-quirks. CaseReady puts it in your pocket, and it belongs to **you**, not a
+quirks. ORSync puts it in your pocket, and it belongs to **you**, not a
 hospital admin.
 
 > **The wedge** (straight from PrefCard's App Store reviews): a 1★ reviewer — a
 > surgical travel tech — wanted "a singular place to store and update my own
 > personal preference cards for the surgeons that I work with… I only want this
-> for me! I shouldn't need to get approval from anyone." CaseReady is exactly
+> for me! I shouldn't need to get approval from anyone." ORSync is exactly
 > that tool: personal, offline, no approvals, no empty screens.
 
 > **Try it:** `npm install && npm run dev`. It opens pre-loaded with a realistic
@@ -25,9 +25,9 @@ hospital admin.
   <img src="docs/screenshots/04-setup.png" width="24%" alt="Setup pull-list" />
 </p>
 
-## What CaseReady does differently
+## What ORSync does differently
 
-| What techs hate about the old app | CaseReady's answer |
+| What techs hate about the old app | ORSync's answer |
 | --- | --- |
 | **Needs hospital/admin approval to use.** | **Yours alone.** One tap to start — no account, no approval, no facility login. |
 | **Useless if you're a traveler** moving between facilities. | Built for travelers: your library is on your phone and goes everywhere you do. |
@@ -100,7 +100,7 @@ npm run cap:sync   # build + sync the native iOS/Android projects
 
 ## Shipping to TestFlight & the stores
 
-CaseReady is an installable PWA wrapped with **Capacitor**, with a one-click
+ORSync is an installable PWA wrapped with **Capacitor**, with a one-click
 **GitHub Actions → TestFlight** pipeline (`.github/workflows/ios-testflight.yml`)
 and Fastlane lanes for a Mac. The runbooks live in [`docs/`](docs/):
 
@@ -121,5 +121,5 @@ account is already structured to drop a hosted backend in behind it without UI
 changes. The product decision — your cards are *yours*, no approvals — is the
 point, and it's the direct answer to what the old app's reviewers asked for.
 
-> Do not store patient-identifying information in CaseReady. Preference cards
+> Do not store patient-identifying information in ORSync. Preference cards
 > describe surgeon/procedure setup, not patients.

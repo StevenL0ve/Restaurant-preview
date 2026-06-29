@@ -1,4 +1,4 @@
-# Getting CaseReady onto your iPhone via TestFlight
+# Getting ORSync onto your iPhone via TestFlight
 
 TestFlight is Apple's beta system: you upload a signed build to App Store
 Connect and it becomes installable on your phone through the TestFlight app.
@@ -21,10 +21,10 @@ paths — pick one:
 
 1. Sign in to [App Store Connect](https://appstoreconnect.apple.com) → **Apps → +
    New App**.
-2. Platform **iOS**, name **CaseReady** (if taken, try "CaseReady — Prefs"),
-   primary language English, bundle ID **`com.stevennelson.caseready`**
+2. Platform **iOS**, name **ORSync** (if taken, try "ORSync — Prefs"),
+   primary language English, bundle ID **`com.stevennelson.orsync`**
    (create it under Certificates, IDs & Profiles → Identifiers first if needed),
-   SKU `caseready`.
+   SKU `orsync`.
 
 If you'd rather use a different bundle ID, change it in **three** places and tell
 me so I keep them in sync: `capacitor.config.ts`, `fastlane/Appfile`, and the

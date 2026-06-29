@@ -16,7 +16,7 @@ const ctx = await browser.newContext({
   deviceScaleFactor: 2,
 });
 // Enter guest mode before any app code runs so every load skips the account gate.
-await ctx.addInitScript(() => localStorage.setItem("caseready.guest.v1", "1"));
+await ctx.addInitScript(() => localStorage.setItem("orsync.guest.v1", "1"));
 const page = await ctx.newPage();
 
 async function show(route) {
@@ -27,7 +27,7 @@ async function show(route) {
 
 await page.goto(`${BASE}/#/cards`, { waitUntil: "networkidle" });
 await page.waitForSelector(".pref-tile", { timeout: 8000 });
-const firstId = await page.evaluate(() => JSON.parse(localStorage.getItem("caseready.v2")).cards[0].id);
+const firstId = await page.evaluate(() => JSON.parse(localStorage.getItem("orsync.v2")).cards[0].id);
 
 const shots = [
   { name: "01-dashboard", route: "/" },

@@ -39,7 +39,7 @@ export function cardToText(
   }
 
   lines.push("");
-  lines.push("— shared from CaseReady");
+  lines.push("— shared from ORSync");
   return lines.join("\n");
 }
 

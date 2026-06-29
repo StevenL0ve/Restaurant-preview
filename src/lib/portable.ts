@@ -11,7 +11,7 @@ import { locationLabel } from "../types";
 // to the importer's library by name (so they don't duplicate), and everything
 // gets fresh ids so the copy is independent of the original.
 
-export const BUNDLE_KIND = "caseready/card-bundle";
+export const BUNDLE_KIND = "orsync/card-bundle";
 
 export interface CardBundle {
   kind: typeof BUNDLE_KIND;

@@ -1,8 +1,8 @@
-// CaseReady service worker — makes the app installable and usable offline.
+// ORSync service worker — makes the app installable and usable offline.
 // (Surgical setup happens in ORs with flaky Wi-Fi, so offline is the default.)
 // Strategy: precache the app shell; serve navigations from cache first (so the
 // app opens with no network), and fall back to the network for everything else.
-const CACHE = "caseready-v1";
+const CACHE = "orsync-v1";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

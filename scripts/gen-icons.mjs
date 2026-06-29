@@ -1,4 +1,4 @@
-// Generates all CaseReady app icons, the in-app logo mark, and the native
+// Generates all ORSync app icons, the in-app logo mark, and the native
 // icon/splash sources from a single vector definition — no external logo file.
 // Uses @resvg/resvg-js (prebuilt binary, no native toolchain needed).
 // Run: `npm run icons`.
@@ -15,7 +15,7 @@ const TEAL = "#0d9488";
 const TEAL_DARK = "#0f766e";
 const TEAL_LIGHT = "#14b8a6";
 
-// The CaseReady mark, drawn in a 1024 viewBox: a preference "card" with a few
+// The ORSync mark, drawn in a 1024 viewBox: a preference "card" with a few
 // list lines and a bold check badge — "your card, ready". `card`/`line`/`badge`
 // colors are themeable so the same mark works white-on-teal (icon) or
 // teal-on-white (Android adaptive foreground).

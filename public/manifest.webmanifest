@@ -1,6 +1,6 @@
 {
-  "name": "CaseReady — Surgical preference cards",
-  "short_name": "CaseReady",
+  "name": "ORSync — Surgical preference cards",
+  "short_name": "ORSync",
   "description": "A personal surgical preference-card library for scrub techs and circulating nurses: organized by surgeon and procedure, with a tap-to-pull setup checklist. Works offline.",
   "id": "/",
   "start_url": "/",

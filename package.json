@@ -1,9 +1,9 @@
 {
-  "name": "caseready",
+  "name": "orsync",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "CaseReady — a personal surgical preference-card library for scrub techs and circulating nurses. A better PrefCard.",
+  "description": "ORSync — a personal surgical preference-card library for scrub techs and circulating nurses. A better PrefCard.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

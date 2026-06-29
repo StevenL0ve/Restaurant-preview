@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CaseReady → TestFlight in one command. Run on a Mac with Xcode installed.
+# ORSync → TestFlight in one command. Run on a Mac with Xcode installed.
 #
 # Prereqs (one-time):
 #   • Xcode from the App Store, opened once to accept the license

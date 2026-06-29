@@ -1,4 +1,4 @@
-# CaseReady — Fastlane lanes for shipping to TestFlight.
+# ORSync — Fastlane lanes for shipping to TestFlight.
 #
 # Runs either on your Mac (Xcode installed) or on a GitHub Actions macOS runner
 # (see .github/workflows/ios-testflight.yml). One-time setup is in

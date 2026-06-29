@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-// Lightweight, optional accounts. CaseReady is a *personal* tool, so the whole
+// Lightweight, optional accounts. ORSync is a *personal* tool, so the whole
 // point is that you never need anyone's permission to use it — there's a
 // one-tap "use without an account" path that goes straight to your library.
 //
@@ -27,10 +27,10 @@ export interface SessionUser {
   guest?: boolean;
 }
 
-const ACCOUNTS_KEY = "caseready.accounts.v1";
-const SESSION_KEY = "caseready.session.v1";
-const BIO_KEY = "caseready.biometric.v1";
-const GUEST_KEY = "caseready.guest.v1";
+const ACCOUNTS_KEY = "orsync.accounts.v1";
+const SESSION_KEY = "orsync.session.v1";
+const BIO_KEY = "orsync.biometric.v1";
+const GUEST_KEY = "orsync.guest.v1";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));

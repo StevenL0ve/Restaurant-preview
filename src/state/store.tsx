@@ -22,8 +22,8 @@ import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
-const STORAGE_KEY = "caseready.v2";
-const LEGACY_KEY = "caseready.v1"; // free-text item.location strings, no facilities
+const STORAGE_KEY = "orsync.v2";
+const LEGACY_KEY = "orsync.v1"; // free-text item.location strings, no facilities
 
 function load(): AppState {
   try {
@@ -366,7 +366,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
         triggerDownload(
           new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }),
-          `${slugName(card?.procedure ?? "card")}.caseready.json`,
+          `${slugName(card?.procedure ?? "card")}.orsync.json`,
         );
       },
 
@@ -376,7 +376,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const bundle = bundleCards(state, ids, new Date().toISOString());
         triggerDownload(
           new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }),
-          `${slugName(fac?.name ?? "facility")}-cards.caseready.json`,
+          `${slugName(fac?.name ?? "facility")}-cards.orsync.json`,
         );
       },
 
@@ -396,7 +396,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       downloadCsvTemplate: () =>
-        triggerDownload(new Blob([CSV_TEMPLATE], { type: "text/csv" }), "caseready-import-template.csv"),
+        triggerDownload(new Blob([CSV_TEMPLATE], { type: "text/csv" }), "orsync-import-template.csv"),
 
       // Transfer a card to another facility: clone it and remap each item's
       // location to the target facility's set, matching by name (creating any
@@ -411,7 +411,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       exportAll: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-        triggerDownload(blob, "caseready-export.json");
+        triggerDownload(blob, "orsync-export.json");
       },
 
       importAll: (json) => {

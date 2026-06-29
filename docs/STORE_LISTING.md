@@ -1,9 +1,9 @@
-# CaseReady — Store Listing Copy
+# ORSync — Store Listing Copy
 
 Drop-in copy for App Store Connect. Tweak to taste.
 
 ## Name
-CaseReady
+ORSync
 
 ## Subtitle (30 chars max)
 Your surgical pref cards
@@ -16,7 +16,7 @@ hospital login.
 ## Description
 
 Scrub techs and circulating nurses keep a mental rolodex of how every surgeon
-wants every case set up. CaseReady puts it in your pocket — and it belongs to
+wants every case set up. ORSync puts it in your pocket — and it belongs to
 **you**, not a hospital admin.
 
 Built for the people the old apps shut out: the traveler who works a new facility
