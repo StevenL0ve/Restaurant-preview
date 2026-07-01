@@ -39,14 +39,14 @@ export function Dashboard() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
+      <div className="dash-hero">
+        <div className="dash-hero-text">
           <h1>Ready for your next case</h1>
-          <p className="muted">Your preference cards, your way — no hospital login, works offline.</p>
+          <p>Your preference cards, your way — no hospital login, works offline.</p>
         </div>
-        <div className="head-actions">
-          <button className="btn btn-primary" onClick={() => navigate("/cards/new")}>+ New card</button>
-        </div>
+        <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
+          <Icon name="plus" size={17} /> New card
+        </button>
       </div>
 
       <div className="stat-grid">

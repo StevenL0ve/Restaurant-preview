@@ -1007,3 +1007,117 @@ h1, h2, h3 { font-synthesis-weight: none; }
 /* Ensure the redundant top-bar New button stays hidden on phones (must follow
    the .btn display rule above to win by source order). */
 @media (max-width: 880px) { .topbar-new { display: none; } }
+
+/* ============================================================
+   "(Not Boring)" pass — rounded display type, ambient glow,
+   vivid gradients, springy tactile motion. Function first:
+   contrast and readability stay OR-grade.
+   ============================================================ */
+
+/* ---- Rounded display type (SF Rounded on Apple devices) ---- */
+.page-head h1, .stat-value, .progress-count, .auth-title, .brand-name,
+.dash-hero h1, .balance-amount, .price-value {
+  font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.stat-value { font-weight: 800; font-size: 30px; }
+.page-head h1 { font-weight: 800; }
+
+/* ---- Ambient background glow (light + dark) ---- */
+body {
+  background-image:
+    radial-gradient(640px 420px at 88% -6%, color-mix(in srgb, var(--brand) 13%, transparent), transparent 68%),
+    radial-gradient(520px 380px at -8% 34%, rgba(124, 58, 237, 0.07), transparent 70%);
+  background-attachment: fixed;
+}
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(700px 460px at 88% -6%, rgba(45, 212, 191, 0.13), transparent 68%),
+    radial-gradient(560px 420px at -8% 36%, rgba(139, 92, 246, 0.10), transparent 70%);
+}
+
+/* ---- Dashboard hero: vivid gradient, glow, rounded type ---- */
+.dash-hero {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  background:
+    radial-gradient(420px 240px at 88% -20%, rgba(255, 255, 255, 0.28), transparent 62%),
+    radial-gradient(340px 220px at -6% 120%, rgba(19, 78, 74, 0.55), transparent 70%),
+    linear-gradient(126deg, #10b3a3, #0d9488 46%, #0b6e66);
+  border-radius: var(--radius-lg); padding: 26px 24px; margin-bottom: 20px;
+  color: #fff; box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25), 0 22px 44px -14px rgba(13, 148, 136, 0.55);
+}
+.dash-hero h1 { font-size: 27px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+.dash-hero p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.88); max-width: 400px; }
+.dash-hero-btn {
+  flex-shrink: 0; background: #fff; border-color: transparent; color: var(--brand-600);
+  font-weight: 700; padding: 12px 18px; border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(4, 47, 43, 0.3);
+}
+.dash-hero-btn:hover { background: #f0fdfa; }
+[data-theme="dark"] .dash-hero {
+  background:
+    radial-gradient(420px 240px at 88% -20%, rgba(153, 246, 228, 0.16), transparent 62%),
+    radial-gradient(340px 220px at -6% 120%, rgba(2, 34, 31, 0.6), transparent 70%),
+    linear-gradient(126deg, #0f9c8d, #0b7a6f 46%, #085e56);
+}
+@media (max-width: 640px) {
+  .dash-hero { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+  .dash-hero-btn { align-self: stretch; justify-content: center; }
+}
+
+/* ---- Springy, tactile motion ---- */
+.stat-card, .pref-tile, .surgeon-tile, .pref-tile-body.simple, .btn, .chip, .pipe-step, .tab-icon {
+  transition-timing-function: cubic-bezier(0.32, 1.4, 0.55, 1);
+}
+.stat-card:active, .pref-tile:active, .surgeon-tile:active { transform: scale(0.985); }
+.btn:active, .chip:active, .pipe-step:active { transform: scale(0.97); }
+.tab-icon { transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.16s, color 0.16s; }
+.tab:active .tab-icon { transform: scale(0.85); }
+.check-row input { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.check-row input:checked { transform: scale(1.08); }
+.check-name, .item-detail { transition: color 0.2s, text-decoration-color 0.2s; }
+
+/* ---- Progress: glow + celebratory ready state ---- */
+.progress-track { height: 12px; }
+.progress-fill {
+  background: linear-gradient(90deg, #14b8a6, #0d9488);
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.55);
+}
+.progress-card.ready {
+  background: linear-gradient(126deg, #ecfdf5, #d1fae5);
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.12), 0 16px 32px -12px rgba(21, 128, 61, 0.35);
+}
+.progress-card.ready .progress-fill {
+  background: linear-gradient(90deg, #34d399, #10b981);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+}
+[data-theme="dark"] .progress-card.ready { background: linear-gradient(126deg, rgba(16,185,129,0.16), rgba(16,185,129,0.08)); }
+
+/* ---- Auth screen: ambient orbs + rounded wordmark ---- */
+.auth {
+  background:
+    radial-gradient(560px 400px at 82% -6%, color-mix(in srgb, var(--brand) 22%, transparent), transparent 66%),
+    radial-gradient(480px 380px at -6% 88%, rgba(124, 58, 237, 0.12), transparent 70%),
+    var(--bg);
+}
+.auth-card { border-radius: 26px; box-shadow: var(--shadow-lg); }
+.auth-logo { border-radius: 18px; box-shadow: 0 8px 20px -6px rgba(13, 148, 136, 0.45); }
+.auth-title { font-weight: 800; letter-spacing: -0.03em; }
+
+/* ---- Dark mode: deeper, more atmospheric ---- */
+[data-theme="dark"] {
+  --bg: #0a0f1d;
+  --card: #131b2e;
+  --line: #263450;
+}
+[data-theme="dark"] .card, [data-theme="dark"] .stat-card, [data-theme="dark"] .pref-tile,
+[data-theme="dark"] .surgeon-tile { background: linear-gradient(180deg, #16203a, #121a30); }
+[data-theme="dark"] .topbar { background: rgba(12, 17, 32, 0.8); }
+[data-theme="dark"] .sidebar { background: #0e1526; }
+
+/* Hide the hero's duplicate on small screens is unnecessary — hero replaces page-head on Home. */
+
+/* Hero CTA: white pill in light mode; deep navy pill in dark (explicit — this
+   was previously inherited from the generic dark .btn override). */
+[data-theme="dark"] .dash-hero-btn { background: rgba(10, 15, 29, 0.85); color: #fff; }
+[data-theme="dark"] .dash-hero-btn:hover { background: rgba(10, 15, 29, 0.95); }
