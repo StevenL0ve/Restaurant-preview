@@ -8,6 +8,8 @@ account, a key, or the Mac — everything else is already built and on the branc
   rotations + `.ics`, expenses + splits + recurring, journal, **info bank
   (editable)**, notifications, global search, JSON/CSV/print exports
 - **On-device AI assistant** ("Ask CoParent") — schedule, info, events, messages, packing
+- **Family setup wizard** (new accounts + Settings > "Set up my family") — real names instead of demo data
+- **Swap requests**: full round-trip (request, waiting state, cancel, accept/decline)
 - **Packing / exchange checklist** ("never forget the teddy bear")
 - **Login / create-account** gate + Face ID affordance
 - Real **logo**, custom **bottom-nav icons**, indigo branding, dark mode, mobile layout
