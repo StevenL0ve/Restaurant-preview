@@ -10,6 +10,7 @@ import {
   isLoanerSoon,
 } from "../state/store";
 import { Avatar } from "../components/Avatar";
+import { Icon, type IconName } from "../components/Icon";
 import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
@@ -29,11 +30,11 @@ export function Dashboard() {
     .filter((l) => isLoanerOverdue(l) || isLoanerSoon(l))
     .slice(0, 4);
 
-  const stats = [
-    { label: "Cards", value: state.cards.length, to: "/cards", emoji: "🗂️" },
-    { label: "Surgeons", value: state.surgeons.length, to: "/surgeons", emoji: "🧑‍⚕️" },
-    { label: "Loaners active", value: lstats.active, to: "/loaners", emoji: "🚚" },
-    { label: "Favorites", value: favorites.length, to: "/cards", emoji: "★" },
+  const stats: { label: string; value: number; to: string; icon: IconName }[] = [
+    { label: "Cards", value: state.cards.length, to: "/cards", icon: "cards" },
+    { label: "Surgeons", value: state.surgeons.length, to: "/surgeons", icon: "surgeon" },
+    { label: "Loaners active", value: lstats.active, to: "/loaners", icon: "truck" },
+    { label: "Favorites", value: favorites.length, to: "/cards", icon: "star" },
   ];
 
   return (
@@ -51,7 +52,7 @@ export function Dashboard() {
       <div className="stat-grid">
         {stats.map((s) => (
           <Link key={s.label} to={s.to} className="stat-card">
-            <span className="stat-emoji" aria-hidden>{s.emoji}</span>
+            <span className="stat-emoji" aria-hidden><Icon name={s.icon} size={20} /></span>
             <span className="stat-value">{s.value}</span>
             <span className="stat-label">{s.label}</span>
           </Link>

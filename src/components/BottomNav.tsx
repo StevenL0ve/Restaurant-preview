@@ -1,23 +1,23 @@
 import { NavLink } from "react-router-dom";
+import { Icon, type IconName } from "./Icon";
 
 // Mobile-only bottom tab bar — the native pattern people expect from a real
-// phone app, which is what this competes with. Five flat destinations, no
-// "more" sheet needed.
+// phone app, which is what this competes with.
 
 interface Tab {
   to: string;
   label: string;
-  icon: string;
+  icon: IconName;
   end?: boolean;
 }
 
 const tabs: Tab[] = [
-  { to: "/", label: "Home", icon: "🏠", end: true },
-  { to: "/cards", label: "Cards", icon: "🗂️" },
-  { to: "/loaners", label: "Loaners", icon: "🚚" },
-  { to: "/surgeons", label: "Surgeons", icon: "🧑‍⚕️" },
-  { to: "/search", label: "Search", icon: "🔍" },
-  { to: "/settings", label: "Settings", icon: "⚙️" },
+  { to: "/", label: "Home", icon: "home", end: true },
+  { to: "/cards", label: "Cards", icon: "cards" },
+  { to: "/loaners", label: "Loaners", icon: "truck" },
+  { to: "/surgeons", label: "Surgeons", icon: "surgeon" },
+  { to: "/search", label: "Search", icon: "search" },
+  { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
 export function BottomNav() {
@@ -30,7 +30,7 @@ export function BottomNav() {
           end={it.end ?? false}
           className={({ isActive }) => "tab" + (isActive ? " active" : "")}
         >
-          <span className="tab-icon">{it.icon}</span>
+          <span className="tab-icon"><Icon name={it.icon} size={23} /></span>
           <span className="tab-label">{it.label}</span>
         </NavLink>
       ))}

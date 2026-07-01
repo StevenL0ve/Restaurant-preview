@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { search } from "../lib/search";
 import { ThemeToggle } from "./ThemeToggle";
+import { Icon } from "./Icon";
 
 export function TopBar() {
   const { state } = useStore();
@@ -20,7 +21,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="search">
-        <span className="search-icon" aria-hidden>🔍</span>
+        <span className="search-icon" aria-hidden><Icon name="search" size={17} /></span>
         <input
           value={q}
           onChange={(e) => {
@@ -48,7 +49,7 @@ export function TopBar() {
                   className="search-hit"
                   onMouseDown={() => go(h.kind === "surgeon" ? `/surgeons/${h.id}` : `/cards/${h.id}`)}
                 >
-                  <span className="hit-icon">{h.kind === "surgeon" ? "🧑‍⚕️" : "🗂️"}</span>
+                  <span className="hit-icon"><Icon name={h.kind === "surgeon" ? "surgeon" : "cards"} size={18} /></span>
                   <span className="hit-text">
                     <span className="hit-title">{h.title}</span>
                     <span className="hit-snippet">{h.snippet ?? h.subtitle}</span>
@@ -66,7 +67,7 @@ export function TopBar() {
       <div className="topbar-right">
         <ThemeToggle />
         <button className="btn btn-primary btn-sm topbar-new" onClick={() => navigate("/cards/new")}>
-          + New card
+          <Icon name="plus" size={16} /> New card
         </button>
       </div>
     </header>

@@ -1,28 +1,29 @@
 import { NavLink } from "react-router-dom";
 import { APP_VERSION } from "../version";
+import { Icon, type IconName } from "./Icon";
 
 interface NavItem {
   to: string;
   label: string;
-  icon: string;
+  icon: IconName;
   end?: boolean;
 }
 
 const items: NavItem[] = [
-  { to: "/", label: "Home", icon: "🏠", end: true },
-  { to: "/cards", label: "Cards", icon: "🗂️" },
-  { to: "/surgeons", label: "Surgeons", icon: "🧑‍⚕️" },
-  { to: "/loaners", label: "Loaner trays", icon: "🚚" },
-  { to: "/facilities", label: "Facilities", icon: "🏥" },
-  { to: "/search", label: "Search", icon: "🔍" },
-  { to: "/settings", label: "Settings", icon: "⚙️" },
+  { to: "/", label: "Home", icon: "home", end: true },
+  { to: "/cards", label: "Cards", icon: "cards" },
+  { to: "/surgeons", label: "Surgeons", icon: "surgeon" },
+  { to: "/loaners", label: "Loaner trays", icon: "truck" },
+  { to: "/facilities", label: "Facilities", icon: "building" },
+  { to: "/search", label: "Search", icon: "search" },
+  { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
 export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="ORSync logo" width={38} height={38} />
+        <img className="brand-mark" src="/brand/logo-mark.png" alt="ORSync logo" width={36} height={36} />
         <div>
           <div className="brand-name">ORSync</div>
           <div className="brand-tag">Your preference cards</div>
@@ -37,7 +38,7 @@ export function Sidebar() {
             end={it.end ?? false}
             className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}
           >
-            <span className="nav-icon" aria-hidden>{it.icon}</span>
+            <span className="nav-icon" aria-hidden><Icon name={it.icon} size={20} /></span>
             <span className="nav-label">{it.label}</span>
           </NavLink>
         ))}
