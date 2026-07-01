@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit",
     "icons": "node scripts/gen-icons.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "store-shots": "node scripts/store-shots.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:add:ios": "cap add ios",
     "cap:add:android": "cap add android",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@capacitor/android": "^6.2.1",
     "@capacitor/core": "^6.2.1",
+    "@capacitor/haptics": "^6.0.3",
     "@capacitor/ios": "^6.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

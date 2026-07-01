@@ -12,6 +12,7 @@ import {
 import type { Store } from "../state/store";
 import { LOANER_STATUSES, type LoanerStatus, type LoanerTray } from "../types";
 import { formatDate, daysUntil } from "../lib/format";
+import { tapMedium } from "../lib/haptics";
 
 // Loaner-tray request + tracking — the Casechek-style workflow: request vendor
 // sets for a case and track them through delivery, sterilization, and return,
@@ -141,7 +142,10 @@ function LoanerCard({ loaner: l, store, onEdit }: { loaner: LoanerTray; store: S
               key={s.key}
               className={"pipe-step" + (active ? " active" : "")}
               data-status={s.key}
-              onClick={() => setLoanerStatus(l.id, s.key)}
+              onClick={() => {
+                tapMedium();
+                setLoanerStatus(l.id, s.key);
+              }}
               title={`Mark ${s.label}`}
             >
               <span aria-hidden>{s.icon}</span>

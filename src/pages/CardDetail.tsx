@@ -4,6 +4,7 @@ import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store
 import { Avatar } from "../components/Avatar";
 import { shareCard } from "../lib/share";
 import { accentStyle } from "../lib/accent";
+import { tapLight } from "../lib/haptics";
 import { SECTIONS, type SectionKey } from "../types";
 
 export function CardDetail() {
@@ -50,7 +51,7 @@ export function CardDetail() {
         <Link className="link" to="/cards">← Cards</Link>
         <button
           className={"fav big" + (card.favorite ? " on" : "")}
-          onClick={() => toggleFavorite(card.id)}
+          onClick={() => { tapLight(); toggleFavorite(card.id); }}
           aria-label="Favorite"
         >
           {card.favorite ? "★" : "☆"}

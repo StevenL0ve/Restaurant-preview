@@ -6,6 +6,19 @@ import { StoreProvider } from "./state/store";
 import { AuthProvider } from "./state/auth";
 import "./styles.css";
 
+// Apply the theme before first paint — including on the auth screen, which
+// doesn't render the ThemeToggle that used to own this.
+{
+  const saved = localStorage.getItem("orsync.theme");
+  const theme =
+    saved === "dark" || saved === "light"
+      ? saved
+      : window.matchMedia?.("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>

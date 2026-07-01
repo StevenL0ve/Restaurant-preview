@@ -36,9 +36,18 @@ npx capacitor-assets generate
 3. Submit for review.
 
 ### Screenshots
-Capture on the iOS Simulator (6.7" + 6.1" required). Good frames: Home dashboard,
-a populated card detail, **Setup mode** mid-pull (the differentiator), the
-Surgeons list, and global Search.
+**Ready-made marketing frames live in [`docs/store/`](store/)** — five composed
+1290×2796 images (the required 6.7" size) with captions: hero, setup pull-list,
+cards library, loaner tracking, and dark mode. Drag them straight into App Store
+Connect. To regenerate after UI changes:
+
+```bash
+npm run preview          # in one shell
+npm run screenshots      # raw app captures → docs/screenshots/
+npm run store-shots      # composed store frames → docs/store/
+```
+
+(Apple also accepts these for the 6.1" slot, or re-capture on a simulator.)
 
 ## Android — Google Play
 

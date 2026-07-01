@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
 import { accentStyle } from "../lib/accent";
+import { tapLight, successBuzz } from "../lib/haptics";
 import { SECTIONS, type CardItem, type SectionKey } from "../types";
 
 type GroupMode = "location" | "section";
@@ -57,6 +58,7 @@ export function SetupMode() {
     const was = prevReady.current;
     prevReady.current = ready;
     if (ready && !was) {
+      successBuzz();
       setBurst(true);
       const t = setTimeout(() => setBurst(false), 1700);
       return () => clearTimeout(t);
@@ -84,7 +86,14 @@ export function SetupMode() {
     return (
       <li className={on ? "done" : ""}>
         <label className="check-row">
-          <input type="checkbox" checked={on} onChange={() => toggleSetupItem(card.id, it.id)} />
+          <input
+            type="checkbox"
+            checked={on}
+            onChange={() => {
+              tapLight();
+              toggleSetupItem(card.id, it.id);
+            }}
+          />
           <span className="check-main">
             <span className="check-line">
               <span className="check-name">{it.name}</span>

@@ -4,6 +4,7 @@ import { useStore, surgeonOf, totalItems } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { relativeTime } from "../lib/format";
 import { accentStyle } from "../lib/accent";
+import { tapLight } from "../lib/haptics";
 import type { PrefCard } from "../types";
 
 // The library: every preference card, filterable by specialty and searchable,
@@ -77,7 +78,7 @@ export function CardsPage() {
       ) : (
         <div className="card-grid">
           {cards.map((c) => (
-            <CardTile key={c.id} card={c} onFav={() => toggleFavorite(c.id)} />
+            <CardTile key={c.id} card={c} onFav={() => { tapLight(); toggleFavorite(c.id); }} />
           ))}
         </div>
       )}
