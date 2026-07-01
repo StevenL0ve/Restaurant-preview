@@ -1,10 +1,39 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
 import { accentStyle } from "../lib/accent";
 import { SECTIONS, type CardItem, type SectionKey } from "../types";
 
 type GroupMode = "location" | "section";
+
+const CONFETTI_COLORS = ["#0d9488", "#f59e0b", "#e11d48", "#6366f1", "#10b981", "#2dd4bf"];
+
+/** Short celebratory burst rendered when the pull-list hits 100%. */
+function Confetti() {
+  const pieces = Array.from({ length: 22 }, (_, i) => ({
+    left: `${(i * 137.5) % 100}%`, // golden-angle spread, no Math.random needed
+    delay: `${(i % 7) * 0.05}s`,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    drift: `${((i % 5) - 2) * 34}px`,
+    spin: `${(i % 2 ? 1 : -1) * (240 + (i % 4) * 90)}deg`,
+  }));
+  return (
+    <div className="confetti" aria-hidden>
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          style={{
+            left: p.left,
+            animationDelay: p.delay,
+            background: p.color,
+            ["--drift" as string]: p.drift,
+            ["--spin" as string]: p.spin,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // Setup mode turns a card into a live pull-list: big tap targets, check items
 // off as you gather them, and a progress bar that hits "Case ready" at 100%.
@@ -17,6 +46,23 @@ export function SetupMode() {
   const [mode, setMode] = useState<GroupMode>("location");
 
   const card = state.cards.find((c) => c.id === id);
+
+  // Completion state is computed before the not-found return so the
+  // celebration hooks below run unconditionally.
+  const { done, total } = card ? setupProgress(state, card) : { done: 0, total: 0 };
+  const ready = total > 0 && done === total;
+  const [burst, setBurst] = useState(false);
+  const prevReady = useRef(ready);
+  useEffect(() => {
+    const was = prevReady.current;
+    prevReady.current = ready;
+    if (ready && !was) {
+      setBurst(true);
+      const t = setTimeout(() => setBurst(false), 1700);
+      return () => clearTimeout(t);
+    }
+  }, [ready]);
+
   if (!card) {
     return (
       <div className="page">
@@ -30,9 +76,7 @@ export function SetupMode() {
 
   const sg = surgeonOf(state, card.surgeonId);
   const checked = new Set(state.setups[card.id]?.checked ?? []);
-  const { done, total } = setupProgress(state, card);
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  const ready = total > 0 && done === total;
 
   const Row = ({ it, sub }: { it: CardItem; sub?: string }) => {
     const on = checked.has(it.id);
@@ -58,6 +102,7 @@ export function SetupMode() {
 
   return (
     <div className="page page-narrow setup" style={accentStyle(card.specialty)}>
+      {burst && <Confetti />}
       <div className="detail-top">
         <Link className="link" to={`/cards/${card.id}`}>← Done</Link>
         <button className="link" onClick={() => resetSetup(card.id)}>Reset</button>

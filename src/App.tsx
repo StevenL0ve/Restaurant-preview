@@ -4,6 +4,7 @@ import { Login } from "./pages/Login";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
+import { Welcome } from "./components/Welcome";
 import { Dashboard } from "./pages/Dashboard";
 import { CardsPage } from "./pages/CardsPage";
 import { CardDetail } from "./pages/CardDetail";
@@ -25,6 +26,7 @@ export default function App() {
   return (
     <div className="app">
       <a href="#main-content" className="skip-link">Skip to content</a>
+      <Welcome />
       <Sidebar />
       <div className="main">
         <TopBar />

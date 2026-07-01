@@ -15,8 +15,12 @@ const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,
 });
-// Enter guest mode before any app code runs so every load skips the account gate.
-await ctx.addInitScript(() => localStorage.setItem("orsync.guest.v1", "1"));
+// Enter guest mode before any app code runs so every load skips the account
+// gate, and mark the welcome sheet as seen so it doesn't cover the shots.
+await ctx.addInitScript(() => {
+  localStorage.setItem("orsync.guest.v1", "1");
+  localStorage.setItem("orsync.welcomed.v1", "1");
+});
 const page = await ctx.newPage();
 
 async function show(route) {

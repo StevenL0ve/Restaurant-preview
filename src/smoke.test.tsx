@@ -21,9 +21,11 @@ function renderAt(path: string): string {
   );
 }
 
-// Skip the account gate by entering guest mode (the "use it now" path).
+// Skip the account gate by entering guest mode (the "use it now" path) and
+// mark the one-time welcome sheet as seen so page markers aren't obscured.
 function asGuest() {
   localStorage.setItem("orsync.guest.v1", "1");
+  localStorage.setItem("orsync.welcomed.v1", "1");
 }
 
 describe("app smoke test", () => {
@@ -55,6 +57,13 @@ describe("app smoke test", () => {
     asGuest();
     const html = renderAt(path);
     expect(html).toContain(marker);
+  });
+
+  it("shows the one-time welcome sheet only until dismissed", () => {
+    localStorage.setItem("orsync.guest.v1", "1");
+    expect(renderAt("/")).toContain("Welcome to ORSync");
+    localStorage.setItem("orsync.welcomed.v1", "1");
+    expect(renderAt("/")).not.toContain("Welcome to ORSync");
   });
 
   it("renders a seeded card detail and its setup mode", () => {

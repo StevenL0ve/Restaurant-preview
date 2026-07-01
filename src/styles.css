@@ -1181,3 +1181,50 @@ body {
 .pipe-step.active { color: #fff; }
 [data-theme="dark"] .pipe-step.active { color: #fff; }
 .pipe-step.active[data-status] { box-shadow: 0 1px 2px rgba(15,23,42,0.25), 0 6px 14px -6px currentColor; }
+
+/* ============================================================
+   First-run welcome sheet
+   ============================================================ */
+.welcome-scrim {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+}
+.welcome-card {
+  width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 26px; box-shadow: var(--shadow-lg); padding: 30px 26px 24px; text-align: center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .welcome-card { animation: welcome-in .34s cubic-bezier(.34,1.4,.64,1) both; }
+  @keyframes welcome-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+}
+.welcome-logo { border-radius: 18px; box-shadow: 0 10px 24px -8px rgba(13,148,136,.5); margin-bottom: 12px; }
+.welcome-card h1 {
+  font-size: 24px; font-weight: 800; letter-spacing: -0.03em;
+  font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.welcome-sub { color: var(--muted); font-size: 14px; margin: 6px 0 20px; }
+.welcome-points { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.welcome-points li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.5; color: var(--slate); }
+.welcome-points strong { color: var(--ink); }
+.welcome-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
+  background: var(--brand-50); color: var(--brand);
+}
+.welcome-cta { width: 100%; padding: 13px; font-size: 15px; border-radius: 999px; }
+.welcome-note { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 14px 0 0; }
+
+/* ============================================================
+   "Case ready" confetti burst
+   ============================================================ */
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
+.confetti span {
+  position: absolute; top: -14px; width: 9px; height: 14px; border-radius: 2px; opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .confetti span { animation: confetti-fall 1.5s cubic-bezier(.25,.46,.45,.94) forwards; }
+  @keyframes confetti-fall {
+    0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+    100% { opacity: 0; transform: translate3d(var(--drift, 0px), 104vh, 0) rotate(var(--spin, 360deg)); }
+  }
+}
