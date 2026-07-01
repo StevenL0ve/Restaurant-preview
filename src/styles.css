@@ -734,3 +734,21 @@ h1, h2, h3, .stat-value, .insight-value, .balance-amount, .plan-price,
   background: linear-gradient(120deg, #a5b4fc, #c4b5fd);
   -webkit-background-clip: text; background-clip: text;
 }
+
+/* ---------- Dashboard hero glow (slow ambient drift) ---------- */
+.page-dash { position: relative; overflow: hidden; }
+.hero-glow {
+  position: absolute; top: -140px; left: -80px; width: 460px; height: 380px;
+  pointer-events: none; z-index: 0; opacity: 0.55; filter: blur(60px);
+  background:
+    radial-gradient(220px 180px at 30% 35%, rgba(129, 140, 248, 0.55), transparent 70%),
+    radial-gradient(240px 200px at 70% 55%, rgba(196, 181, 253, 0.45), transparent 70%),
+    radial-gradient(180px 160px at 55% 20%, rgba(244, 114, 182, 0.25), transparent 70%);
+  animation: glow-drift 14s ease-in-out infinite alternate;
+}
+.page-dash > *:not(.hero-glow) { position: relative; z-index: 1; }
+@keyframes glow-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(60px, 24px, 0) scale(1.12); }
+}
+[data-theme="dark"] .hero-glow { opacity: 0.3; }

@@ -4,6 +4,7 @@ import { analyzeTone, toneLabel } from "../lib/tone";
 import { time, fullDate } from "../lib/format";
 import { messagesCSV } from "../lib/csv";
 import { printMessageLog } from "../lib/printable";
+import { notifySuccess } from "../lib/haptics";
 
 export function Messages() {
   const { state, sendMessage, markAllRead, saveDraft } = useStore();
@@ -47,6 +48,7 @@ export function Messages() {
       return;
     }
     sendMessage(text);
+    notifySuccess();
     setText("");
     setShowRewrite(false);
   }

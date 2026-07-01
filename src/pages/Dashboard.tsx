@@ -25,7 +25,8 @@ export function Dashboard() {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="page">
+    <div className="page page-dash">
+      <div className="hero-glow" aria-hidden />
       <div className="page-head">
         <div>
           <h1>{greeting}</h1>

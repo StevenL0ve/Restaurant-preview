@@ -3,6 +3,7 @@ import { useStore, triggerDownload } from "../state/store";
 import { buildICS } from "../lib/ics";
 import { fullDate, time, isoDateInput, dayKey } from "../lib/format";
 import { generateRotation, ROTATION_LABELS, type RotationPattern } from "../lib/rotation";
+import { tapMedium } from "../lib/haptics";
 import type { CalEvent, EventCategory } from "../types";
 
 const CATS: { value: EventCategory; label: string }[] = [
@@ -176,8 +177,8 @@ export function Calendar() {
                   <div className="request-inline">
                     <span className="pill pill-warn">Swap request</span>
                     <div className="request-actions">
-                      <button className="btn btn-sm btn-primary" onClick={() => respondToRequest(e.id, true)}>Accept</button>
-                      <button className="btn btn-sm" onClick={() => respondToRequest(e.id, false)}>Decline</button>
+                      <button className="btn btn-sm btn-primary" onClick={() => { tapMedium(); respondToRequest(e.id, true); }}>Accept</button>
+                      <button className="btn btn-sm" onClick={() => { tapMedium(); respondToRequest(e.id, false); }}>Decline</button>
                     </div>
                   </div>
                 ) : null}
