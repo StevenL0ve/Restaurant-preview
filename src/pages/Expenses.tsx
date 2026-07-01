@@ -73,7 +73,7 @@ export function Expenses() {
 
       {state.expenses.length === 0 ? (
         <div className="card empty-state">
-          <span className="empty-emoji">💵</span>
+          <img className="empty-art" src="/brand/nav-expenses.png" alt="" aria-hidden width={72} height={72} />
           <p>No expenses yet. Add a shared cost and we'll track who owes what.</p>
         </div>
       ) : (

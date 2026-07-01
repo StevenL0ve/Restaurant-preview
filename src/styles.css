@@ -752,3 +752,98 @@ h1, h2, h3, .stat-value, .insight-value, .balance-amount, .plan-price,
   to { transform: translate3d(60px, 24px, 0) scale(1.12); }
 }
 [data-theme="dark"] .hero-glow { opacity: 0.3; }
+
+/* ============================================================
+   Cosmetic pass 2 — clay language across every screen
+   ============================================================ */
+
+/* Message bubbles: soft clay, gradient for "mine" */
+.bubble { border-radius: 20px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.07); }
+.bubble-row.mine .bubble {
+  background: linear-gradient(160deg, #818cf8, var(--brand-600));
+  border-bottom-right-radius: 7px;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.bubble-row.theirs .bubble {
+  border-bottom-left-radius: 7px;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme="dark"] .bubble-row.mine .bubble {
+  background: linear-gradient(160deg, #6366f1, #4f46e5); color: #eef2ff;
+}
+[data-theme="dark"] .bubble-row.theirs .bubble {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Day separators as floating pills */
+.day-sep {
+  width: fit-content; margin: 16px auto 10px; padding: 4px 14px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  box-shadow: var(--shadow-sm); color: var(--muted);
+}
+
+/* Calendar cells: rounder, gradient ring on today, pop on selected */
+.cal-cell { border-radius: 14px; transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.12s; }
+.cal-cell:active { transform: scale(0.94); }
+.cal-cell.selected { transform: scale(1.06); box-shadow: 0 6px 14px rgba(79, 70, 229, 0.22); }
+.cal-cell.today .cal-date {
+  background: linear-gradient(160deg, #818cf8, var(--brand-600));
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.4);
+}
+
+/* Sidebar: active item becomes a gradient pill */
+.nav-item { border-radius: 999px; }
+.nav-item.active {
+  background: linear-gradient(120deg, var(--brand-50), rgba(196, 181, 253, 0.35));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 6px rgba(79, 70, 229, 0.12);
+}
+[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(120deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* More-sheet: floating clay panel with roomier items */
+.more-sheet { border-radius: 22px; }
+.sheet-item { font-weight: 600; }
+
+/* Journal mood + suggestion chips: tactile pills */
+.mood, .suggest-chip { transition: transform 0.1s, background 0.12s; }
+.mood:active, .suggest-chip:active { transform: scale(0.95); }
+.mood.active {
+  background: linear-gradient(120deg, var(--brand-50), rgba(196, 181, 253, 0.4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Status + tone chips get a hint of depth */
+.status, .pill, .tone-chip { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+[data-theme="dark"] .status, [data-theme="dark"] .pill, [data-theme="dark"] .tone-chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Composer: floating clay tray */
+.composer { border-top: none; padding-top: 10px; }
+.composer-row textarea, .assistant-input {
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+}
+
+/* Soft thin scrollbars */
+.content::-webkit-scrollbar, .thread::-webkit-scrollbar, .bell-list::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-thumb, .thread::-webkit-scrollbar-thumb, .bell-list::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3); border-radius: 999px;
+}
+
+/* Topbar buttons match the clay set */
+.theme-toggle, .bell { border-radius: 999px; }
+.theme-toggle:active, .bell:active { transform: scale(0.92); }
+
+.empty-art { display: block; margin: 0 auto 12px; width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(15,23,42,0.15)); }
+
+/* Mobile page headers: actions drop below the title as tidy one-line pills */
+@media (max-width: 720px) {
+  .page-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .head-actions { flex-wrap: wrap; }
+  .head-actions .btn { flex: 1 1 auto; white-space: nowrap; text-align: center; }
+  .head-actions .search-mini { flex: 1 1 100%; }
+  .search-mini input { width: 100%; }
+}
