@@ -1,11 +1,17 @@
 import type { Surgeon } from "../types";
 
-/** Colored initials chip for a surgeon. */
+/** Colored initials chip for a surgeon — soft gradient + ring for depth. */
 export function Avatar({ surgeon, size = 36 }: { surgeon: Surgeon; size?: number }) {
   return (
     <span
       className="avatar"
-      style={{ background: surgeon.color, width: size, height: size, fontSize: size * 0.34 }}
+      style={{
+        background: `linear-gradient(135deg, ${surgeon.color}, color-mix(in srgb, ${surgeon.color} 62%, #0b1220))`,
+        boxShadow: `0 2px 8px -2px color-mix(in srgb, ${surgeon.color} 55%, transparent), inset 0 1px 0 rgba(255,255,255,0.25)`,
+        width: size,
+        height: size,
+        fontSize: size * 0.34,
+      }}
       title={surgeon.name}
       aria-hidden
     >

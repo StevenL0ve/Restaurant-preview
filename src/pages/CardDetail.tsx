@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { shareCard } from "../lib/share";
+import { accentStyle } from "../lib/accent";
 import { SECTIONS, type SectionKey } from "../types";
 
 export function CardDetail() {
@@ -44,7 +45,7 @@ export function CardDetail() {
   ];
 
   return (
-    <div className="page">
+    <div className="page card-detail" style={accentStyle(card.specialty)}>
       <div className="detail-top">
         <Link className="link" to="/cards">← Cards</Link>
         <button
@@ -59,12 +60,12 @@ export function CardDetail() {
       <div className="page-head">
         <div>
           <h1>{card.procedure}</h1>
-          <p className="muted">
+          <p className="muted detail-sub">
             {sg ? (
               <Link className="link" to={`/surgeons/${sg.id}`}>{sg.name}</Link>
-            ) : "Unassigned"}{" "}
-            · {card.specialty}
-            {facility ? ` · ${facility.name}` : ""}
+            ) : "Unassigned"}
+            <span className="accent-pill">{card.specialty}</span>
+            {facility ? <span className="detail-facility">{facility.name}</span> : null}
           </p>
         </div>
         <div className="head-actions">

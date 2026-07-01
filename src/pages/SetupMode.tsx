@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
+import { accentStyle } from "../lib/accent";
 import { SECTIONS, type CardItem, type SectionKey } from "../types";
 
 type GroupMode = "location" | "section";
@@ -56,7 +57,7 @@ export function SetupMode() {
   const areaGroups = groupByArea(state, card);
 
   return (
-    <div className="page page-narrow setup">
+    <div className="page page-narrow setup" style={accentStyle(card.specialty)}>
       <div className="detail-top">
         <Link className="link" to={`/cards/${card.id}`}>← Done</Link>
         <button className="link" onClick={() => resetSetup(card.id)}>Reset</button>

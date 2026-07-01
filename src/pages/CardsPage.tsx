@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStore, surgeonOf, totalItems } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { relativeTime } from "../lib/format";
+import { accentStyle } from "../lib/accent";
 import type { PrefCard } from "../types";
 
 // The library: every preference card, filterable by specialty and searchable,
@@ -88,7 +89,7 @@ function CardTile({ card, onFav }: { card: PrefCard; onFav: () => void }) {
   const { state } = useStore();
   const sg = surgeonOf(state, card.surgeonId);
   return (
-    <div className="pref-tile">
+    <div className="pref-tile" style={accentStyle(card.specialty)}>
       <button
         className={"fav" + (card.favorite ? " on" : "")}
         onClick={onFav}

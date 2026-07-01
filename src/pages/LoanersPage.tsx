@@ -140,6 +140,7 @@ function LoanerCard({ loaner: l, store, onEdit }: { loaner: LoanerTray; store: S
             <button
               key={s.key}
               className={"pipe-step" + (active ? " active" : "")}
+              data-status={s.key}
               onClick={() => setLoanerStatus(l.id, s.key)}
               title={`Mark ${s.label}`}
             >
