@@ -26,7 +26,7 @@ function startOfMonthGrid(d: Date): Date[] {
 }
 
 export function Calendar() {
-  const { state, addEvent, addEvents, respondToRequest, deleteEvent } = useStore();
+  const { state, addEvent, addEvents, requestSwap, cancelSwap, respondToRequest, deleteEvent } = useStore();
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<string>(dayKey(new Date()));
   const [showForm, setShowForm] = useState(false);
@@ -163,7 +163,16 @@ export function Calendar() {
                 <div className="event-title">{e.title}</div>
                 {e.notes && <p className="muted small">{e.notes}</p>}
 
-                {e.requestStatus === "pending" && (
+                {e.requestStatus === "pending" && e.requestedById === state.meId ? (
+                  <div className="request-inline">
+                    <span className="pill pill-warn">Swap requested — waiting on {
+                      state.people.find((p) => p.id === state.coParentId)?.name
+                    }</span>
+                    <div className="request-actions">
+                      <button className="btn btn-sm" onClick={() => cancelSwap(e.id)}>Cancel request</button>
+                    </div>
+                  </div>
+                ) : e.requestStatus === "pending" ? (
                   <div className="request-inline">
                     <span className="pill pill-warn">Swap request</span>
                     <div className="request-actions">
@@ -171,9 +180,14 @@ export function Calendar() {
                       <button className="btn btn-sm" onClick={() => respondToRequest(e.id, false)}>Decline</button>
                     </div>
                   </div>
-                )}
+                ) : null}
                 {e.requestStatus === "accepted" && <span className="pill pill-ok">Swap accepted ✓</span>}
                 {e.requestStatus === "declined" && <span className="pill">Swap declined</span>}
+                {e.category === "parenting-time" && e.requestStatus === "none" && (
+                  <button className="btn btn-sm swap-btn" onClick={() => requestSwap(e.id)}>
+                    ⇄ Request swap
+                  </button>
+                )}
 
                 <button className="link danger" onClick={() => deleteEvent(e.id)}>Remove</button>
               </div>

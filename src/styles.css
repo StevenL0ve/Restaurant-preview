@@ -654,3 +654,7 @@ a { color: inherit; }
 .plan-cadence { font-size: 13px; font-weight: 500; color: var(--muted); }
 .paywall-cta { width: 100%; padding: 13px; font-size: 15px; }
 .paywall-fine { text-align: center; margin: 12px 0 0; }
+
+/* ---------- Swap request + setup wizard ---------- */
+.swap-btn { margin-top: 8px; margin-right: 10px; }
+.add-kid { text-align: left; padding: 2px 0; }

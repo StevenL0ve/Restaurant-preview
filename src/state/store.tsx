@@ -14,7 +14,7 @@ import type {
   Message,
   InfoRecord,
 } from "../types";
-import { buildSeed } from "./seed";
+import { buildSeed, buildFamily } from "./seed";
 import { analyzeTone } from "../lib/tone";
 
 const STORAGE_KEY = "coparently.v1";
@@ -47,8 +47,12 @@ interface Store {
   // calendar
   addEvent: (e: Omit<CalEvent, "id">) => void;
   addEvents: (es: Omit<CalEvent, "id">[]) => void;
+  requestSwap: (id: string) => void;
+  cancelSwap: (id: string) => void;
   respondToRequest: (id: string, accept: boolean) => void;
   deleteEvent: (id: string) => void;
+  // family setup
+  initFamily: (myName: string, coParentName: string, kidNames: string[]) => void;
   // expenses
   addExpense: (e: Omit<Expense, "id">) => void;
   addExpenses: (es: Omit<Expense, "id">[]) => void;
@@ -128,6 +132,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...s,
           events: [...s.events, ...es.map((e) => ({ ...e, id: uid("e") }))],
         })),
+
+      requestSwap: (id) =>
+        update((s) => ({
+          ...s,
+          events: s.events.map((e) =>
+            e.id === id
+              ? { ...e, requestStatus: "pending", requestedById: s.meId }
+              : e,
+          ),
+        })),
+
+      cancelSwap: (id) =>
+        update((s) => ({
+          ...s,
+          events: s.events.map((e) =>
+            e.id === id
+              ? { ...e, requestStatus: "none", requestedById: undefined }
+              : e,
+          ),
+        })),
+
+      initFamily: (myName, coParentName, kidNames) =>
+        setState(buildFamily(myName, coParentName, kidNames)),
 
       respondToRequest: (id, accept) =>
         update((s) => ({
@@ -244,8 +271,11 @@ export function unreadCount(s: AppState): number {
   return s.messages.filter((m) => m.fromId !== s.meId && !m.readAt).length;
 }
 
+// Requests awaiting YOUR response (requests you made yourself don't count).
 export function pendingRequests(s: AppState): CalEvent[] {
-  return s.events.filter((e) => e.requestStatus === "pending");
+  return s.events.filter(
+    (e) => e.requestStatus === "pending" && e.requestedById !== s.meId,
+  );
 }
 
 // Running balance: positive means the co-parent owes you.

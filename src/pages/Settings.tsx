@@ -53,6 +53,16 @@ export function Settings() {
             />
           </label>
           <div className="form-actions">
+            <button
+              className="btn"
+              onClick={() => {
+                localStorage.setItem("coparent.needsSetup", "1");
+                window.location.assign("#/");
+                window.location.reload();
+              }}
+            >
+              Set up my family
+            </button>
             <button className="btn" onClick={signOut}>Sign out</button>
           </div>
         </section>

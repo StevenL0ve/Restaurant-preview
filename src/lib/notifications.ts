@@ -36,9 +36,9 @@ export function buildNotifications(s: AppState): Notification[] {
     }
   }
 
-  // 2. Pending schedule/swap requests waiting on me.
+  // 2. Pending schedule/swap requests waiting on me (not ones I made).
   for (const e of s.events) {
-    if (e.requestStatus === "pending") {
+    if (e.requestStatus === "pending" && e.requestedById !== s.meId) {
       out.push({
         id: "n-req-" + e.id,
         kind: "request",

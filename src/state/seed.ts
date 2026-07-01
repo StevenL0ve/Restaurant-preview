@@ -1,4 +1,4 @@
-import type { AppState } from "../types";
+import type { AppState, Person } from "../types";
 
 // A demo dataset so the app is useful the moment it opens — no empty screens,
 // no sign-up wall. Dates are generated relative to "now" so the calendar always
@@ -18,6 +18,44 @@ const ME = "p-me";
 const CO = "p-co";
 const KID1 = "p-ava";
 const KID2 = "p-leo";
+
+// Build a real (empty) family from the setup wizard — the user's own names,
+// no demo records.
+const KID_COLORS = ["#db2777", "#2563eb", "#d97706", "#0891b2", "#65a30d", "#9333ea"];
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? parts[0]?.[1] ?? "")).toUpperCase();
+}
+
+export function buildFamily(myName: string, coParentName: string, kidNames: string[]): AppState {
+  const kids: Person[] = kidNames
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((name, i) => ({
+      id: `p-kid-${i + 1}`,
+      name,
+      role: "child" as const,
+      color: KID_COLORS[i % KID_COLORS.length],
+      initials: initialsOf(name),
+    }));
+  return {
+    meId: ME,
+    coParentId: CO,
+    people: [
+      { id: ME, name: myName.trim() || "You", role: "me", color: "#6366f1", initials: initialsOf(myName || "You") },
+      { id: CO, name: coParentName.trim() || "Co-parent", role: "coparent", color: "#7c3aed", initials: initialsOf(coParentName || "Co") },
+      ...kids,
+    ],
+    draft: null,
+    messages: [],
+    events: [],
+    expenses: [],
+    journal: [],
+    info: [],
+    packing: [],
+  };
+}
 
 export function buildSeed(): AppState {
   return {

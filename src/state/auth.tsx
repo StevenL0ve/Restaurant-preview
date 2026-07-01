@@ -119,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       saveAccounts(accounts);
       localStorage.setItem(SESSION_KEY, key);
+      // Brand-new account → run the family setup wizard once.
+      localStorage.setItem("coparent.needsSetup", "1");
       setUser({ name: name.trim(), email: key });
     },
 

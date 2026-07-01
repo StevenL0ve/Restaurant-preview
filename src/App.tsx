@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./state/auth";
 import { Login } from "./pages/Login";
+import { Welcome } from "./pages/Welcome";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
@@ -18,10 +20,23 @@ import { Settings } from "./pages/Settings";
 
 export default function App() {
   const { user, ready } = useAuth();
+  const [, bump] = useState(0);
 
   // Wait for the session check, then gate the app behind sign-in.
   if (!ready) return null;
   if (!user) return <Login />;
+
+  // Brand-new accounts run the one-time family setup wizard.
+  if (localStorage.getItem("coparent.needsSetup") === "1") {
+    return (
+      <Welcome
+        onDone={() => {
+          localStorage.removeItem("coparent.needsSetup");
+          bump((n) => n + 1);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app">
