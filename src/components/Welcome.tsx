@@ -17,7 +17,7 @@ export function Welcome() {
   return (
     <div className="welcome-scrim" role="dialog" aria-modal="true" aria-label="Welcome to ORSync">
       <div className="welcome-card">
-        <img className="welcome-logo" src="/brand/logo-mark.png" alt="" width={72} height={72} />
+        <img className="welcome-logo" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="" width={72} height={72} />
         <h1>Welcome to ORSync</h1>
         <p className="welcome-sub">Your preference cards. Yours alone.</p>
 

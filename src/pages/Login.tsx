@@ -35,7 +35,7 @@ export function Login() {
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="ORSync" width={64} height={64} />
+        <img className="auth-logo" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="ORSync" width={64} height={64} />
         <h1 className="auth-title">ORSync</h1>
         <p className="auth-sub">Your surgical preference cards — yours alone</p>
 

@@ -14,9 +14,16 @@ hospital admin.
 > for me! I shouldn't need to get approval from anyone." ORSync is exactly
 > that tool: personal, offline, no approvals, no empty screens.
 
-> **Try it:** `npm install && npm run dev`. It opens pre-loaded with a realistic
-> demo library (4 surgeons, 6 fully-populated cards) so nothing is empty. Tap
-> **Use it now — no account** to go straight in. Everything is stored locally.
+> **Try it on your phone right now:**
+> **https://stevenl0ve.github.io/Restaurant-preview/** — open in Safari, tap
+> Share → **Add to Home Screen**, and you get the full app: icon, offline,
+> standalone. (Deployed automatically by `.github/workflows/pages.yml`;
+> TestFlight remains the real distribution path.)
+>
+> **Or locally:** `npm install && npm run dev`. Either way it opens pre-loaded
+> with a realistic demo library (4 surgeons, 6 fully-populated cards) so nothing
+> is empty. Tap **Use it now — no account** to go straight in. Everything is
+> stored locally.
 
 <p align="center">
   <img src="docs/screenshots/01-dashboard.png" width="24%" alt="Dashboard" />

@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="ORSync logo" width={36} height={36} />
+        <img className="brand-mark" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="ORSync logo" width={36} height={36} />
         <div>
           <div className="brand-name">ORSync</div>
           <div className="brand-tag">Your preference cards</div>

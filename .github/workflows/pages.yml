@@ -1,0 +1,52 @@
+name: Deploy · GitHub Pages
+
+# Publishes the PWA build to GitHub Pages so ORSync can be used (and installed
+# via "Add to Home Screen") on a phone without waiting for TestFlight.
+# URL: https://stevenl0ve.github.io/Restaurant-preview/
+
+on:
+  push:
+    branches: ["claude/prefcard-app-rebuild-47hgvc"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

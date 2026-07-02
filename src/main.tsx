@@ -35,7 +35,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // Skipped under Capacitor's native shell, which serves its own bundle.
 if ("serviceWorker" in navigator && !/(android|ios);capacitor/i.test(navigator.userAgent)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
       /* offline support is a progressive enhancement; ignore failures */
     });
   });

@@ -3,7 +3,9 @@
 // Strategy: precache the app shell; serve navigations from cache first (so the
 // app opens with no network), and fall back to the network for everything else.
 const CACHE = "orsync-v1";
-const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png"];
+// Relative to the SW's own location, so the same worker serves a domain root
+// (Capacitor) or a subpath deployment (GitHub Pages).
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,7 +29,7 @@ self.addEventListener("fetch", (event) => {
   // SPA navigations: serve the cached shell so the app works offline.
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/index.html").then((r) => r || caches.match("/"))),
+      fetch(request).catch(() => caches.match("./index.html").then((r) => r || caches.match("./"))),
     );
     return;
   }
