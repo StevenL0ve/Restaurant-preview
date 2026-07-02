@@ -49,5 +49,10 @@ npm run cap:sync   # rebuild + sync the native shells
 
 ## Brand
 
-Styling follows thecommongroundprojects.com — deep greens (`#2f6b3f`), warm
-paper background, rounded, calm. Light & dark themes.
+Real Common Ground assets throughout: the gooey white-on-sage logo
+(`public/brand/logo.jpeg`, sage `#657e69`) drives the app icons, login,
+sidebar, hero, and loyalty card; lifestyle photos live in `public/photos/`.
+The café menu is the real printed drinks menu (Signature / Tea / Coffee /
+Kids + Fur Babies, with syrup & alt-milk add-on notes). Display type is
+Bagel Fat One (Google Fonts) as a stand-in for the hand-lettered brand
+style. Light & dark themes.

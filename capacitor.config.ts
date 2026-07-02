@@ -6,13 +6,13 @@ const config: CapacitorConfig = {
   appId: "com.commongroundprojects.cgp",
   appName: "CGP",
   webDir: "dist",
-  backgroundColor: "#f6f4ec",
+  backgroundColor: "#efecdd",
   ios: {
     contentInset: "always",
-    backgroundColor: "#f6f4ec",
+    backgroundColor: "#efecdd",
   },
   android: {
-    backgroundColor: "#f6f4ec",
+    backgroundColor: "#efecdd",
   },
 };
 

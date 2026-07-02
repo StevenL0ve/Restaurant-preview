@@ -3,47 +3,51 @@
    ======================================================================== */
 
 :root {
-  --brand: #2f6b3f;
-  --brand-600: #285d38;
-  --brand-700: #1f4a2c;
-  --brand-400: #4a8f5b;
-  --brand-300: #7cb389;
-  --brand-100: #e3f0e6;
-  --brand-50: #f0f7f1;
+  /* Sage + cream, sampled from the Common Ground logo (#657e69) and menu. */
+  --sage: #657e69;
+  --brand: #5b7255;
+  --brand-600: #4f644a;
+  --brand-700: #42543e;
+  --brand-400: #7a9070;
+  --brand-300: #a3b598;
+  --brand-100: #e4e9d9;
+  --brand-50: #f0f2e6;
 
-  --ink: #1b2a20;
-  --slate: #46584c;
-  --muted: #67796d;
-  --line: #e6e2d7;
-  --bg: #f6f4ec;
-  --card: #ffffff;
+  --ink: #2c332a;
+  --slate: #4e5a49;
+  --muted: #6f7b68;
+  --line: #ddd8c4;
+  --bg: #efecdd;
+  --card: #fbfaf2;
 
   --gold: #b98432;
   --red: #c0392b;
-  --green: #2f6b3f;
+  --green: #5b7255;
 
   --radius: 16px;
   --radius-sm: 11px;
-  --shadow: 0 1px 2px rgba(28, 42, 32, 0.05), 0 10px 30px rgba(28, 42, 32, 0.07);
-  --shadow-sm: 0 1px 2px rgba(28, 42, 32, 0.07);
+  --shadow: 0 1px 2px rgba(44, 51, 42, 0.05), 0 10px 30px rgba(44, 51, 42, 0.07);
+  --shadow-sm: 0 1px 2px rgba(44, 51, 42, 0.07);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --display: "Bagel Fat One", "Marker Felt", "Comic Sans MS", system-ui, sans-serif;
 }
 
 [data-theme="dark"] {
-  --brand: #4a8f5b;
-  --brand-600: #5aa06b;
-  --brand-700: #6fb37f;
-  --brand-400: #4a8f5b;
-  --brand-300: #3a6f48;
-  --brand-100: #1c2a20;
-  --brand-50: #16211a;
+  --sage: #657e69;
+  --brand: #8ba17f;
+  --brand-600: #99ad8e;
+  --brand-700: #a8ba9e;
+  --brand-400: #7a9070;
+  --brand-300: #55684f;
+  --brand-100: #232b20;
+  --brand-50: #1b2219;
 
-  --ink: #e9efe7;
-  --slate: #b6c4ba;
-  --muted: #8ea094;
-  --line: #26332a;
-  --bg: #0f150e;
-  --card: #18211a;
+  --ink: #e9ecdf;
+  --slate: #b9c2ae;
+  --muted: #8e9a85;
+  --line: #2a3226;
+  --bg: #12160f;
+  --card: #1b2117;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
@@ -104,16 +108,12 @@ input, textarea { font-family: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 12px; padding: 4px 8px 20px; }
 .brand-mark {
-  width: 42px; height: 42px;
-  display: grid; place-items: center;
-  background: var(--brand);
-  color: #fff;
+  width: 44px; height: 44px;
   border-radius: 13px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  font-size: 15px;
+  object-fit: cover;
+  display: block;
 }
-.brand-name { font-weight: 800; font-size: 18px; letter-spacing: -0.2px; }
+.brand-name { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: 0.4px; color: var(--brand-600); }
 .brand-tag { font-size: 11.5px; color: var(--muted); }
 
 .nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
@@ -213,7 +213,21 @@ input, textarea { font-family: inherit; }
 
 .page { display: flex; flex-direction: column; gap: 18px; }
 .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; }
+.page-title { font-family: var(--display); font-weight: 400; font-size: 27px; letter-spacing: 0.4px; color: var(--brand-600); }
+
+/* Full-width brand photo banners (menu, booking). */
+.photo-banner {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  aspect-ratio: 5 / 2;
+}
+.photo-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Café add-ons note (syrups & alt milks straight off the printed menu). */
+.menu-note { background: var(--brand-50); border-color: var(--brand-100); font-size: 13px; line-height: 1.55; color: var(--slate); }
+.menu-note strong { color: var(--brand-600); }
 .page-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
 .section { display: flex; flex-direction: column; gap: 10px; }
 .section-head { display: flex; align-items: center; justify-content: space-between; }
@@ -281,14 +295,18 @@ input, textarea { font-family: inherit; }
 /* ---- Hero (home) -------------------------------------------------------- */
 
 .hero {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-700) 100%);
+  /* The real storefront, under a sage wash so the type stays readable. */
+  background:
+    linear-gradient(150deg, rgba(62, 78, 60, 0.82) 0%, rgba(44, 54, 42, 0.62) 55%, rgba(44, 54, 42, 0.78) 100%),
+    url("/photos/storefront.jpeg") center 62% / cover no-repeat;
   color: #fff;
   border-radius: 22px;
   padding: 30px 26px;
   box-shadow: var(--shadow);
 }
+.hero-logo { width: 84px; height: 84px; border-radius: 20px; display: block; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
 .hero-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
-.hero-title { font-size: 28px; font-weight: 800; letter-spacing: -0.6px; margin: 10px 0 8px; }
+.hero-title { font-family: var(--display); font-weight: 400; font-size: 30px; letter-spacing: 0.5px; margin: 10px 0 8px; }
 .hero-sub { font-size: 14.5px; line-height: 1.55; opacity: 0.92; max-width: 46ch; }
 .hero-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 .hero-actions .btn-primary { background: #fff; color: var(--brand); border-color: #fff; }
@@ -362,15 +380,16 @@ input, textarea { font-family: inherit; }
 /* ---- Rewards / loyalty card --------------------------------------------- */
 
 .loyalty-card {
-  background: linear-gradient(140deg, var(--brand) 0%, var(--brand-700) 100%);
+  /* Matches the printed cup: logo sage (#657e69) with white lettering. */
+  background: linear-gradient(140deg, var(--sage) 0%, #42543e 100%);
   color: #fff;
   border-radius: 20px;
   padding: 22px;
   box-shadow: var(--shadow);
 }
 .loyalty-top { display: flex; align-items: center; justify-content: space-between; }
-.loyalty-brand { font-weight: 800; }
-.loyalty-org { font-weight: 800; opacity: 0.7; letter-spacing: 1px; }
+.loyalty-brand { font-family: var(--display); font-weight: 400; letter-spacing: 0.4px; }
+.loyalty-logo { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
 .loyalty-name { margin-top: 22px; font-size: 18px; font-weight: 700; }
 .loyalty-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 2px; opacity: 0.92; font-size: 14px; margin-top: 2px; }
 .loyalty-strip { display: flex; gap: 2px; margin: 18px 0 14px; height: 40px; align-items: stretch; }
@@ -490,8 +509,8 @@ input, textarea { font-family: inherit; }
 
 .auth { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(160deg, var(--brand-50), var(--bg)); }
 .auth-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 34px 28px; width: min(400px, 100%); box-shadow: var(--shadow); text-align: center; }
-.auth-logo { width: 60px; height: 60px; margin: 0 auto; display: grid; place-items: center; background: var(--brand); color: #fff; border-radius: 18px; font-weight: 800; font-size: 20px; letter-spacing: 1px; }
-.auth-title { font-size: 26px; font-weight: 800; margin-top: 14px; }
+.auth-logo { width: 92px; height: 92px; margin: 0 auto; display: block; border-radius: 24px; object-fit: cover; box-shadow: var(--shadow); }
+.auth-title { font-family: var(--display); font-weight: 400; font-size: 27px; color: var(--brand-600); margin-top: 14px; }
 .auth-sub { color: var(--brand); font-weight: 600; font-size: 13.5px; margin-top: 4px; }
 .auth-lede { color: var(--muted); font-size: 13px; margin-top: 8px; line-height: 1.5; }
 .auth-tabs { display: flex; gap: 4px; background: var(--brand-50); border-radius: 12px; padding: 4px; margin: 22px 0 18px; }

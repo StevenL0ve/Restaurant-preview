@@ -47,8 +47,8 @@ export function Rewards() {
       {/* Digital loyalty card */}
       <div className="loyalty-card">
         <div className="loyalty-top">
-          <span className="loyalty-brand">☕️ Common Grounds Café</span>
-          <span className="loyalty-org">CGP</span>
+          <span className="loyalty-brand">Common Grounds Café</span>
+          <img className="loyalty-logo" src="/brand/logo.jpeg" alt="" aria-hidden />
         </div>
         <div className="loyalty-name">{name}</div>
         <div className="loyalty-id">{id}</div>

@@ -52,6 +52,22 @@ export function Menu() {
         ))}
       </div>
 
+      <div className="photo-banner">
+        <img
+          src={filter === "cafe" ? "/photos/latte.jpeg" : "/photos/food.jpeg"}
+          alt={filter === "cafe" ? "A Common Grounds latte in a printed cup" : "Pancakes and drinks at The Kitchen"}
+        />
+      </div>
+
+      {filter !== "restaurant" && (
+        <div className="card menu-note">
+          <strong>Make it yours</strong> — syrups +$0.75 (madagascar vanilla bean,
+          miso salted caramel, french lavender madeline, persian pistachio, dutch
+          speculaas cookie, blue agave nectar, honey, jaggery) · alt milks +$0.50
+          (oat, coconut, almond).
+        </div>
+      )}
+
       {grouped.map(([key, items]) => {
         const [venue, category] = key.split(":");
         return (
@@ -66,7 +82,7 @@ export function Menu() {
                   <div className="menu-item-body">
                     <div className="menu-item-top">
                       <span className="menu-item-name">{item.name}</span>
-                      <span className="menu-item-price">{money(item.price)}</span>
+                      <span className="menu-item-price">{item.price === 0 ? "Free" : money(item.price)}</span>
                     </div>
                     <p className="menu-item-desc">{item.description}</p>
                     <div className="menu-item-tags">

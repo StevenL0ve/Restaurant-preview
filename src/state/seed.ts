@@ -15,18 +15,32 @@ function at(daysFromNow: number, hour: number, min = 0): string {
 
 // ---- Menus ----
 
-const CAFE: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
-  { category: "Espresso", name: "Cortado", description: "Double shot cut with a splash of steamed milk.", price: 4.25, tags: ["popular"] },
-  { category: "Espresso", name: "Oat Latte", description: "House espresso + creamy oat milk.", price: 5.5, tags: ["vegan", "popular"] },
-  { category: "Espresso", name: "Cappuccino", description: "Equal parts espresso, steamed milk & foam.", price: 4.75, tags: [] },
-  { category: "Espresso", name: "Americano", description: "Espresso over hot water. Clean and bright.", price: 3.75, tags: ["vegan"] },
-  { category: "Espresso", name: "Maple Cold Brew", description: "18-hour cold brew, local maple, oat milk.", price: 5.75, tags: ["seasonal", "vegan"] },
-  { category: "Not Coffee", name: "Matcha Latte", description: "Ceremonial matcha whisked with your milk of choice.", price: 5.5, tags: ["vegan"] },
-  { category: "Not Coffee", name: "Golden Turmeric Tonic", description: "Turmeric, ginger, black pepper & honey.", price: 5.0, tags: ["gf"] },
-  { category: "Not Coffee", name: "Loose-Leaf Tea", description: "Ask about today's rotating selection.", price: 3.5, tags: ["vegan", "gf"] },
-  { category: "Pastries", name: "Sourdough Morning Bun", description: "Laminated, cardamom sugar, orange zest.", price: 4.5, tags: ["popular"] },
-  { category: "Pastries", name: "Almond Croissant", description: "Twice-baked, house frangipane.", price: 4.75, tags: [] },
-  { category: "Pastries", name: "GF Banana Bread", description: "Toasted, cultured butter.", price: 4.0, tags: ["gf"] },
+// The real Common Grounds drinks menu. `noPunch` marks the freebies for the
+// littles & fur babies — everything else stamps the punch card.
+const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean })[] = [
+  { category: "Signature", name: "Ube Latte", description: "Ube, coconut condensed milk, milk of choice.", price: 5.75, tags: ["popular"] },
+  { category: "Signature", name: "CGP Matcha Latte", description: "Ceremonial grade matcha, agave, persian pistachio cold foam, milk of choice.", price: 6.25, tags: ["popular"] },
+  { category: "Signature", name: "Tres Leches Cold Brew", description: "Cold brew, madagascar vanilla bean cold foam, coconut condensed milk, cinnamon dust.", price: 6.75, tags: [] },
+  { category: "Signature", name: "Baklava Latte", description: "Double espresso, algerian baklava syrup, persian pistachio cold foam, milk of choice, crushed rosebuds & pistachio garnish.", price: 7.0, tags: ["popular"] },
+  { category: "Signature", name: "Haldi Doodh", description: "Turmeric, ginger, cinnamon, cardamom, black pepper, milk of choice.", price: 6.25, tags: [] },
+  { category: "Signature", name: "Mississippi Masala Chai Latte", description: "Assam black tea, ginger, cinnamon, cardamom, black pepper, cloves, star anise, milk of choice.", price: 6.0, tags: [] },
+  { category: "Signature", name: "Coco Caramiso", description: "Double espresso, miso salted caramel syrup, milk of choice, cinnamon dust & coconut flake garnish.", price: 6.5, tags: [] },
+  { category: "Tea", name: "Happy Tea", description: "Guayusa green tea, rosehips, hibiscus, jasmine green tea, green rooibos, apple bits, raspberries. Cup 4.00 / pot 6.25.", price: 4.0, tags: ["vegan", "gf"] },
+  { category: "Tea", name: "Shaken Passion Happy Iced Tea", description: "Happy tea, passionfruit syrup, shaken.", price: 5.5, tags: ["vegan", "gf"] },
+  { category: "Tea", name: "Masala Chai", description: "Assam black tea, ginger, cinnamon, cardamom, black pepper, cloves, star anise. Cup 4.00 / pot 6.25.", price: 4.0, tags: ["vegan"] },
+  { category: "Tea", name: "Moroccan Mint Tea", description: "Fair trade certified mint tea. Cup 4.00 / pot 6.25.", price: 4.0, tags: ["vegan", "gf"] },
+  { category: "Tea", name: "Lavender Mint Sweet Tea", description: "French lavender madeline syrup, mint garnish, black tea.", price: 5.5, tags: ["vegan"] },
+  { category: "Coffee", name: "Espresso (single)", description: "Straight shot of the house roast.", price: 2.0, tags: [] },
+  { category: "Coffee", name: "Espresso (double)", description: "Double shot of the house roast.", price: 4.0, tags: [] },
+  { category: "Coffee", name: "Americano 12oz", description: "Espresso over hot water.", price: 4.0, tags: ["vegan"] },
+  { category: "Coffee", name: "Pour Over 12oz", description: "Hand-brewed single origin.", price: 4.5, tags: ["vegan"] },
+  { category: "Coffee", name: "Flat White", description: "Double espresso, velvet-steamed milk.", price: 4.75, tags: [] },
+  { category: "Coffee", name: "Cappuccino", description: "Equal parts espresso, steamed milk & foam.", price: 4.5, tags: [] },
+  { category: "Coffee", name: "Cold Brew", description: "Slow-steeped, served over ice.", price: 5.35, tags: ["vegan"] },
+  { category: "Coffee", name: "Cortado", description: "Double shot cut with a splash of steamed milk.", price: 4.5, tags: ["popular"] },
+  { category: "Coffee", name: "Latte", description: "Double espresso, steamed milk of choice.", price: 5.0, tags: [] },
+  { category: "Kids + Fur Babies", name: "Babycino / Puppuccino", description: "On the house for the littles and the fur babies.", price: 0, tags: [], noPunch: true },
+  { category: "Kids + Fur Babies", name: "Hot Chocolate", description: "Steamed chocolate, milk of choice.", price: 4.0, tags: [], noPunch: true },
 ];
 
 const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
@@ -41,12 +55,11 @@ const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
 ];
 
 function buildMenu(): MenuItem[] {
-  const cafe = CAFE.map((m, i) => ({
+  const cafe = CAFE.map(({ noPunch, ...m }, i) => ({
     ...m,
     id: `mc-${i + 1}`,
     venue: "cafe" as const,
-    // Every café drink earns a punch; pastries don't.
-    earnsPunch: m.category !== "Pastries",
+    earnsPunch: !noPunch,
   }));
   const kitchen = KITCHEN.map((m, i) => ({
     ...m,

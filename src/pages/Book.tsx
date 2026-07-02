@@ -63,6 +63,10 @@ export function Book() {
         </div>
       </div>
 
+      <div className="photo-banner">
+        <img src="/photos/interior.jpeg" alt="The Common Ground community space" />
+      </div>
+
       <div className="segmented">
         {filters.map((f) => (
           <button key={f} className={"seg" + (venue === f ? " active" : "")} onClick={() => setVenue(f)}>
