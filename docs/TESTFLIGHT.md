@@ -1,92 +1,81 @@
-# Getting CoParent into TestFlight
+# Getting CGP onto TestFlight
 
-TestFlight is Apple's beta system: you upload a signed build to App Store
-Connect, and it becomes installable on your phone via the TestFlight app.
+The iOS project is scaffolded and ready in `ios/` (Capacitor shell wrapping the
+web build, app id `com.commongroundprojects.cgp`).
 
-> **Why this can't be done from the cloud agent:** iOS apps can only be built
-> and code-signed on **macOS with Xcode**, and the upload must come from your
-> authenticated Apple account. Both steps run on **your Mac**. Everything below
-> is set up in this repo already — you run the commands; paste any error here
-> and I'll debug it with you.
+## Option A — no Mac needed (GitHub Actions)
 
----
+`.github/workflows/testflight.yml` builds and uploads from a GitHub macOS
+runner with cloud-managed signing. One-time setup:
 
-## Prerequisites (on your Mac)
+1. **App Store Connect API key** — appstoreconnect.apple.com → Users and
+   Access → Integrations → App Store Connect API → Team Keys → **Generate API
+   Key**, role **Admin** (Admin is required for automatic signing). Note the
+   **Key ID** and **Issuer ID**, and download the `AuthKey_XXXX.p8` file
+   (downloadable only once).
+2. **Repo secrets** — GitHub repo → Settings → Secrets and variables →
+   Actions → New repository secret, four of them:
+   | Secret | Value |
+   |---|---|
+   | `ASC_KEY_ID` | the Key ID |
+   | `ASC_ISSUER_ID` | the Issuer ID |
+   | `ASC_KEY_CONTENT` | the `.p8` file base64-encoded (`base64 -i AuthKey_XXXX.p8`) |
+   | `APPLE_TEAM_ID` | your 10-char Team ID (developer.apple.com → Membership) |
+3. **App record** — App Store Connect → My Apps → “+” → New App: iOS, name
+   **CGP**, bundle ID `com.commongroundprojects.cgp`, SKU `cgp-app`. (If the
+   name "CGP" is taken, use "CGP — Common Ground".)
+4. Run the **TestFlight** workflow from the repo's Actions tab (pick the
+   branch). The build lands in TestFlight ~15 minutes after the run finishes.
 
-- macOS with **Xcode** installed (from the Mac App Store), opened once to accept the license.
-- **CocoaPods** and **Node**: `sudo gem install cocoapods` and Node 18+.
-- Your **Apple Developer Program** membership active (you have this).
-- **Fastlane** (optional but recommended): `brew install fastlane`.
+## Option B — on a Mac with Xcode
 
-## Path A — Fastlane (one command after setup) ✅ recommended
+Building locally instead: Apple requires a Mac for this path.
 
-1. **Clone & install**
-   ```bash
-   git clone <this repo> && cd Restaurant-preview
-   npm install
-   ```
-2. **Generate the native iOS project** (one-time):
-   ```bash
-   npm run build
-   npx cap add ios
-   npx cap sync ios
-   ```
-3. **Create an App Store Connect record** for bundle id `com.stevennelson.coparent`
-   (App Store Connect → Apps → +). Name: **CoParent**.
-4. **Create an App Store Connect API key** (Users and Access → Integrations →
-   App Store Connect API → +). Download the `.p8`. This lets Fastlane upload
-   without interactive 2FA.
-5. **Fill in `fastlane/Appfile`** with your `apple_id` and team IDs, and export
-   the API key env vars (see the key's Issuer ID / Key ID):
-   ```bash
-   export APP_STORE_CONNECT_API_KEY_PATH=~/keys/AuthKey_XXXX.p8
-   export APP_STORE_CONNECT_API_KEY_ID=XXXXXXXXXX
-   export APP_STORE_CONNECT_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   ```
-6. **Ship it:**
-   ```bash
-   fastlane beta
-   ```
-   This builds the app, bumps the build number, and uploads to TestFlight.
-   Processing takes a few minutes, then it appears under TestFlight in App
-   Store Connect.
+## What you need (one-time)
 
-## Path B — Xcode UI (no Fastlane)
+1. **Apple Developer Program** — enroll at
+   https://developer.apple.com/programs/enroll ($99/year). Use the Apple ID
+   you'll manage the app with.
+2. **A Mac with Xcode** (free from the Mac App Store), or a cloud build
+   service if you don't have a Mac (Codemagic and Bitrise have free tiers that
+   build Capacitor apps; GitHub Actions macOS runners also work).
+3. **App Store Connect app record** — at https://appstoreconnect.apple.com →
+   My Apps → “+” → New App: platform iOS, name **CGP**, bundle ID
+   `com.commongroundprojects.cgp`, SKU `cgp-app`.
 
-1. `npm run build && npx cap add ios && npx cap sync ios`
-2. `npx cap open ios` (opens Xcode).
-3. Select the **App** target → **Signing & Capabilities** → check *Automatically
-   manage signing* and pick your **Team**.
-4. Set a **version** (e.g. 1.0.0) and **build** number (e.g. 1).
-5. Choose **Any iOS Device** as the destination → **Product → Archive**.
-6. In the Organizer: **Distribute App → TestFlight (Internal Only) → Upload**.
-7. In App Store Connect → your app → **TestFlight**: add yourself as an internal
-   tester. Install the **TestFlight** app on your iPhone and accept the invite.
-
-## Skip the export-compliance prompt on every upload
-
-CoParent only uses standard HTTPS (exempt encryption), so set this once and
-TestFlight stops asking. Run after `npx cap add ios`:
+## Build & upload (on the Mac)
 
 ```bash
-PLIST=ios/App/App/Info.plist
-/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+git clone <this repo> && cd Restaurant-preview
+npm install
+npm run build
+npx cap sync ios
+npx cap open ios          # opens Xcode
 ```
 
-Re-run it if you ever regenerate the `ios/` project. (The native folder is
-created on your Mac, so this can't live in the cross-platform repo.)
+In Xcode:
+1. Select the **App** target → *Signing & Capabilities* → check
+   **Automatically manage signing** and pick your team.
+2. Product → **Archive**.
+3. In the Organizer window: **Distribute App → App Store Connect → Upload**.
+4. In App Store Connect → TestFlight, the build appears in ~15 minutes.
+   Add yourself as an internal tester and install via the TestFlight app.
 
-## After upload
+## Or let fastlane do it
 
-- First upload requires completing **Export Compliance** (CoParent uses only
-  standard encryption / HTTPS → typically "no" to the custom-encryption question).
-  The plist flag above removes this prompt entirely.
-- Internal testers (up to 100, must be in your team) get builds immediately.
-- External testers require a short Beta App Review.
+`fastlane/` is already configured. Fill in `fastlane/Appfile` with your Apple
+ID and team IDs, then on the Mac:
 
-## Android equivalent (for parity)
+```bash
+brew install fastlane
+fastlane beta   # builds, bumps the build number, uploads to TestFlight
+```
 
-Google Play's beta is **Internal testing**. Build a signed `.aab` in Android
-Studio (or `fastlane supply`), upload under Testing → Internal testing, and share
-the opt-in link. See `docs/PUBLISHING.md`.
+## Ongoing costs cheat-sheet
+
+| Thing | Cost |
+|---|---|
+| Apple Developer Program (TestFlight + App Store) | $99/yr |
+| Google Play developer account (Android later) | $25 once |
+| Stripe (in-app payments) | no monthly fee; 2.9% + 30¢ per online charge |
+| Supabase (accounts, punches, orders, gift cards) | free tier to start; ~$25/mo when busy |

@@ -1,107 +1,77 @@
-# CoParent
+# CGP — The Common Ground Projects
 
-A modern, fast, **free** co-parenting app — built as a better answer to
-[OurFamilyWizard](https://apps.apple.com/us/app/ourfamilywizard-co-parent-app/id497405393).
+One app for everything under the Common Ground roof:
 
-Separated and divorced parents use apps like these to coordinate custody,
-messages, expenses, and records — often under court order. The category leader,
-OurFamilyWizard, sits at **1.5★ on Sitejabber** and **2.1★ on Google**. This
-project reads those reviews and fixes the specific things people complain about.
+- 🍽️ **By the Fig & the Olive** (restaurant) — Mediterranean lunch: mezze, flatbreads, shawarma & kabobs
+- ☕️ **Common Grounds Café** — order coffee, earn a **punch card** stamp on
+  every drink (10 punches = a free drink), and add the card to
+  **Apple Wallet / Google Wallet**
+- 🧘 **The Studio** (yoga) — see the class schedule and book a spot
+- 🌿 **The Zen Den** (wellness spa) — book saunas, soaks, facials & contrast therapy
+- 💆 **Massage** — book therapeutic and relaxation sessions
 
-> **Try it:** `npm install && npm run dev`. The app opens pre-loaded with a
-> realistic demo family so there are no empty screens. Everything is stored
-> locally in your browser — no account, no sign-up, no server.
+Plus **digital waivers**: yoga, Zen Den, and massage each require a one-time
+signed liability waiver, collected in-app before the first booking (or from the
+Waivers screen anytime).
 
----
+## Feature notes
 
-## What reviewers hate about OurFamilyWizard — and what CoParent does instead
+- **Ordering** — a shared cart across café + kitchen, pickup or dine-in,
+  live order history with punch/reward accounting per order.
+- **Punch card** — every café drink earns a punch; a full card converts to a
+  free-drink reward automatically. Rewards are redeemed at checkout and apply
+  to the priciest café drink in the cart (the free drink doesn't earn a punch).
+- **Barista counter stamp** — for till purchases, the customer opens their
+  punch card and taps **Stamp**; the barista confirms the drink count and
+  enters the staff PIN (default `7391`, max 6 stamps per visit) right on the
+  customer's phone. The card's QR code supports register-scanner stamping once
+  the hosted backend lands, where PIN validation also moves server-side.
+- **Wallet passes** — the Rewards screen offers *Add to Apple Wallet* and
+  *Save to Google Wallet*. Signed passes require a pass-signing service
+  (Apple pass certificate / Google Wallet issuer keys live server-side); set
+  `VITE_WALLET_ENDPOINT` to enable one-tap adding. Without it, the app
+  downloads the pass payload instead of faking success.
+- **Booking** — capacity-aware sessions; booking a waiver-required venue for
+  the first time opens the waiver right in the flow.
+- **Accounts & roles** — local email/password accounts with optional Face ID
+  unlock, structured to swap to a hosted backend without UI changes. New
+  sign-ups are members; ownership roles come from a provisioned staff
+  directory. Owners post Community events for their own business; IT support
+  administers everything.
 
-| Real complaint about OFW | CoParent's fix |
-| --- | --- |
-| **"$100+/yr per parent for a 3rd-rate text service."** Auto-renews; charged after they stop using it. | **Free.** No subscription, no per-parent fee, no renewal trap. (`Settings`) |
-| **"Clunky, outdated, cumbersome interface."** | Clean, fast single-page UI; color-coded calendar; keyboard-friendly composer. |
-| **"Failed message notifications"** — missed messages led to police/lawyer involvement. | Clear **Delivered / Read** receipts on every message and live unread badges. |
-| **"Can't save drafts."** | Drafts **auto-save** as you type and reload when you come back. |
-| **"Calendar/journal/expense sections are woeful, isolated, cumbersome."** | Tightly integrated: dashboard rolls up unread, schedule requests, and the live expense balance. |
-| **"Wish it synced with my phone's calendar."** | One-tap **`.ics` export** that imports into Apple/Google/Outlook calendars. |
-| **"Search hardly works."** | One global search across **messages, calendar, expenses, journal, and the Info Bank**, ranked by recency. |
-| **"Can't delete my own account — needs co-parent approval."** | **One-click self-service delete.** No approval, no support call. |
-| **"They won't give me my data / won't delete it."** | **Export everything to JSON**, plus **court-ready CSV** of messages and expenses, anytime. |
-| ToneMeter (calmer-wording AI) is a **paid** add-on. | Built-in **tone check is free** and runs **on-device** — it flags heated messages *before* they send and suggests calmer wording. |
+  | Login | Role | Initial password |
+  |---|---|---|
+  | `bkborngaraised@gmail.com` | IT Support | `CGP-IT-2026!` |
+  | `cafe@thecommongroundprojects.com` | Café Owner | `CGP-Cafe-2026!` |
+  | `figolive@thecommongroundprojects.com` | Fig + Olive Owner | `CGP-FigOlive-2026!` |
+  | `yoga@thecommongroundprojects.com` | Studio Owner | `CGP-Studio-2026!` |
+  | `zenden@thecommongroundprojects.com` | Zen Den Owner | `CGP-ZenDen-2026!` |
+  | `massage@thecommongroundprojects.com` | Massage Owner | `CGP-Massage-2026!` |
 
-A persistent **Notifications Center** (top-bar bell) is derived directly from app
-state — so unlike OFW, there's no separate delivery step that can silently fail.
-The whole UI also has a polished **light/dark mode** with system-preference
-detection and a **responsive mobile layout** with a native-style bottom tab bar.
+  Rotate the initial password on first sign-in (Settings → Change password).
 
-## Features
+## Stack
 
-- **Ask CoParent** — an **on-device AI assistant** that answers questions over your own data ("are the kids with me Saturday?", "what shoe size does Ava wear?", "did I message about the vacation?") — offline and private. Conversational/Claude-powered answers + Siri are scaffolded for the backend phase.
-- **Accounts** — login / create-account with a **Face ID** unlock affordance (local now; Supabase-backed accounts + sync scaffolded).
-- **Dashboard** — at-a-glance unread count, pending schedule requests, running expense balance, this-month insights, what's next on the calendar.
-- **Messages** — immutable, timestamped record (a clean log if it's ever needed in court); free on-device **tone check** with calmer-wording suggestions; auto-saved drafts; per-thread search; read receipts.
-- **Calendar** — month view, color-coded categories, parenting-time blocks, **swap/change requests** with accept/decline, `.ics` export to your phone, and **one-click custody-rotation templates** (week-on/week-off, 2-2-3, 2-2-5-5, weekday/weekend).
-- **Expenses** — log a cost, split it any ratio, attach a receipt, request reimbursement, set it to **repeat monthly** (childcare, tuition), and track a **running balance** both parents can trust.
-- **Journal** — private, timestamped, mood-tagged log; nothing is shared unless you export it.
-- **Info Bank** — each child's medical, school, and sizing details in one shared place; add/remove entries inline.
-- **Packing list** — shared exchange checklist so the teddy bear (and the inhaler) make it between homes.
-- **Notifications** — always-visible bell feed of unread messages, pending requests, and unsettled expenses; click to jump to the item.
-- **Records export** — one-click CSV of the message log and expenses (RFC-4180 safe, Excel-ready), plus a **printable / Save-as-PDF message record** with timestamps and a certification header for court.
-- **Light/dark mode** — system-preference aware, persisted per device.
-- **Settings** — transparent pricing, full data export, and one-click account deletion.
+React 18 + TypeScript + Vite. State in React context, persisted to
+`localStorage`. Installable PWA (service worker + manifest) and Capacitor
+config for native iOS/Android shells.
 
-## The on-device tone checker
-
-`src/lib/tone.ts` scores a draft 0–100 using loaded-language detection, demand
-phrasing, all-caps/"shouting" detection, and softener rewards — then offers a
-conservative rewrite (e.g. `"you need to"` → `"could we"`, de-shouting, trimming
-loaded words). It's deliberately a nudge, not a rewrite of your meaning, and it
-runs entirely in the browser so nothing is sent anywhere. A heated message
-forces one pass through the suggestion before it can send.
-
-## Tech & structure
-
-Vite + React + TypeScript, no backend. State lives in a small store
-(`src/state/store.tsx`) persisted to `localStorage`.
-
-```
-src/
-  lib/        tone (analyzer + tests), ics export, global search, formatters
-  state/      store + seeded demo data
-  pages/      Dashboard, Messages, Calendar, Expenses, Journal, InfoBank, Search, Settings
-  components/ Sidebar, TopBar (global search)
-```
-
-## Commands
+## Develop
 
 ```bash
 npm install
-npm run dev       # local dev server
-npm run build     # type-check + production build (PWA: manifest + service worker)
-npm run test      # unit tests + render smoke tests
-npm run icons     # regenerate app icons + splash from the SVG brand mark
-npm run cap:sync  # build + sync the native iOS/Android projects
+npm run dev        # local dev server
+npm test           # vitest unit + smoke tests
+npm run build      # type-check + production build
+npm run cap:sync   # rebuild + sync the native shells
 ```
 
-## Shipping to the App Store & Google Play
+## Brand
 
-CoParent is an **installable PWA** (offline service worker, web manifest, app
-icons) and is wrapped for the stores with **Capacitor** — `capacitor.config.ts`
-turns the `dist` build into real native iOS/Android projects. The full runbook,
-privacy policy, and store-listing copy live in [`docs/`](docs/):
-
-- [`docs/PUBLISHING.md`](docs/PUBLISHING.md) — end-to-end submission steps
-- [`docs/PRIVACY.md`](docs/PRIVACY.md) — required privacy policy
-- [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) — names, descriptions, keywords
-
-The final submission (Apple Developer / Play Console accounts, code signing on a
-Mac/Android Studio, store review) requires those accounts and toolchains.
-
-## Notes & honest limitations
-
-This is a working **single-device demo**. A production release would add a
-real-time backend so both parents sync, server-side push notifications, audit
-trails, and encrypted storage. The architecture (plain serializable state,
-typed domain model) is built to drop a backend in behind. The product
-decisions — pricing, data ownership, tone-by-default, integrated modules — are
-the point, and they directly answer what OurFamilyWizard's reviewers asked for.
+Real Common Ground assets throughout: the gooey white-on-sage logo
+(`public/brand/logo.jpeg`, sage `#657e69`) drives the app icons, login,
+sidebar, hero, and loyalty card; lifestyle photos live in `public/photos/`.
+The café menu is the real printed drinks menu (Signature / Tea / Coffee /
+Kids + Fur Babies, with syrup & alt-milk add-on notes). Display type is
+Bagel Fat One (Google Fonts) as a stand-in for the hand-lettered brand
+style. Light & dark themes.

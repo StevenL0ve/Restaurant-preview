@@ -8,70 +8,82 @@ import {
 } from "react";
 import type {
   AppState,
-  CalEvent,
-  Expense,
-  JournalEntry,
-  Message,
-  InfoRecord,
+  CommunityEvent,
+  MenuItem,
+  Order,
+  OrderMethod,
+  SessionClass,
+  Venue,
+  WaiverVenue,
 } from "../types";
-import { buildSeed, buildFamily } from "./seed";
-import { analyzeTone } from "../lib/tone";
+import { buildSeed } from "./seed";
+import { applyPunches } from "../lib/punch";
+import { orderStatus } from "../lib/orders";
+import { giftApplicable, isValidReload } from "../lib/gift";
+import { parseGiftCode } from "../lib/giftcode";
 
-const STORAGE_KEY = "coparently.v1";
+const STORAGE_KEY = "cgp.v1";
 
 function load(): AppState {
+  const seed = buildSeed();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      // Backfill any keys added in newer versions so older saved state can't
-      // crash the app (e.g. the packing list added after launch).
-      return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
+      const saved = JSON.parse(raw) as Partial<AppState>;
+      // User data persists. The menu always comes fresh from the seed so menu
+      // updates reach returning users; the class schedule persists because
+      // owners manage it in-app. Nested gift fields are backfilled.
+      const gift = { ...seed.gift, ...(saved.gift ?? {}) };
+      return { ...seed, ...saved, menu: seed.menu, gift } as AppState;
     }
   } catch {
     /* fall through to seed */
   }
-  return buildSeed();
+  return seed;
 }
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export interface CheckoutResult {
+  order: Order;
+  punchesEarned: number;
+  newRewards: number; // free drinks unlocked by this order
+}
+
 interface Store {
   state: AppState;
-  // messaging
-  sendMessage: (body: string) => void;
-  markAllRead: () => void;
-  saveDraft: (body: string) => void;
-  clearDraft: () => void;
-  // calendar
-  addEvent: (e: Omit<CalEvent, "id">) => void;
-  addEvents: (es: Omit<CalEvent, "id">[]) => void;
-  requestSwap: (id: string) => void;
-  cancelSwap: (id: string) => void;
-  respondToRequest: (id: string, accept: boolean) => void;
-  deleteEvent: (id: string) => void;
-  // family setup
-  initFamily: (myName: string, coParentName: string, kidNames: string[]) => void;
-  // expenses
-  addExpense: (e: Omit<Expense, "id">) => void;
-  addExpenses: (es: Omit<Expense, "id">[]) => void;
-  setExpenseStatus: (id: string, status: Expense["status"]) => void;
-  // journal
-  addJournal: (e: Omit<JournalEntry, "id">) => void;
-  deleteJournal: (id: string) => void;
-  // info bank
-  addInfo: (r: Omit<InfoRecord, "id">) => void;
-  deleteInfo: (id: string) => void;
-  // packing list
-  addPackingItem: (label: string) => void;
-  togglePacked: (id: string) => void;
-  deletePackingItem: (id: string) => void;
-  clearPacked: () => void;
-  // account / data ownership
-  exportAll: () => void;
+  // cart & ordering
+  addToCart: (itemId: string, qty?: number) => void;
+  setQty: (itemId: string, qty: number) => void;
+  removeFromCart: (itemId: string) => void;
+  clearCart: () => void;
+  placeOrder: (method: OrderMethod, useReward: boolean, useGift?: boolean) => CheckoutResult | null;
+  // punch card
+  redeemReward: () => void;
+  // Barista counter stamp: N drinks bought at the till, no in-app order.
+  stampPunches: (drinks: number) => { punchesEarned: number; newRewards: number };
+  // community events
+  addEvent: (e: Omit<CommunityEvent, "id">) => void;
+  setEventAlerts: (on: boolean) => void;
+  // gift card
+  reloadGift: (amount: number) => void;
+  redeemGiftCode: (code: string) => { ok: boolean; amount?: number; error?: string };
+  // table reservations (Fig + Olive)
+  reserveTable: (date: string, time: string, partySize: number, name: string) => void;
+  cancelReservation: (id: string) => void;
+  // schedule management (owners / IT)
+  addClass: (cls: Omit<SessionClass, "id" | "booked">) => void;
+  removeClass: (id: string) => void;
+  // bookings
+  bookClass: (classId: string) => void;
+  cancelBooking: (id: string) => void;
+  // waivers
+  signWaiver: (venue: WaiverVenue, name: string) => void;
+  // account / data
   resetDemo: () => void;
-  deleteAccount: () => void;
+  clearData: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -89,175 +101,263 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return {
       state,
 
-      sendMessage: (body) =>
+      addToCart: (itemId, qty = 1) =>
         update((s) => {
-          const tone = analyzeTone(body).level;
-          const msg: Message = {
-            id: uid("m"),
-            fromId: s.meId,
-            body: body.trim(),
-            createdAt: new Date().toISOString(),
-            readAt: null,
-            tone,
-            edited: false,
-          };
-          return { ...s, messages: [...s.messages, msg], draft: null };
+          const existing = s.cart.find((l) => l.itemId === itemId);
+          const cart = existing
+            ? s.cart.map((l) => (l.itemId === itemId ? { ...l, qty: l.qty + qty } : l))
+            : [...s.cart, { itemId, qty }];
+          return { ...s, cart };
         }),
 
-      markAllRead: () =>
+      setQty: (itemId, qty) =>
         update((s) => ({
           ...s,
-          messages: s.messages.map((m) =>
-            m.fromId !== s.meId && !m.readAt
-              ? { ...m, readAt: new Date().toISOString() }
-              : m,
-          ),
+          cart:
+            qty <= 0
+              ? s.cart.filter((l) => l.itemId !== itemId)
+              : s.cart.map((l) => (l.itemId === itemId ? { ...l, qty } : l)),
         })),
 
-      saveDraft: (body) =>
+      removeFromCart: (itemId) =>
+        update((s) => ({ ...s, cart: s.cart.filter((l) => l.itemId !== itemId) })),
+
+      clearCart: () => update((s) => ({ ...s, cart: [] })),
+
+      placeOrder: (method, useReward, useGift = false) => {
+        let result: CheckoutResult | null = null;
+        update((s) => {
+          if (s.cart.length === 0) return s;
+          const lines = s.cart
+            .map((l) => {
+              const item = s.menu.find((m) => m.id === l.itemId);
+              return item ? { item, qty: l.qty } : null;
+            })
+            .filter((x): x is { item: MenuItem; qty: number } => x !== null);
+          if (lines.length === 0) return s;
+
+          const subtotal = lines.reduce((sum, { item, qty }) => sum + item.price * qty, 0);
+
+          // Redeeming a reward makes the single most expensive eligible café
+          // drink free. It only applies if the user has a reward AND the cart
+          // contains a punch-earning drink.
+          const canRedeem =
+            useReward &&
+            s.punch.rewards > 0 &&
+            lines.some(({ item }) => item.earnsPunch);
+          const freeDrinkPrice = canRedeem
+            ? Math.max(...lines.filter(({ item }) => item.earnsPunch).map(({ item }) => item.price))
+            : 0;
+          const afterReward = Math.max(0, subtotal - freeDrinkPrice);
+
+          // Gift card covers as much of the remaining total as it can.
+          const giftApplied = useGift ? giftApplicable(s.gift.balance, afterReward) : 0;
+          const total = Math.round((afterReward - giftApplied) * 100) / 100;
+
+          // Punches: one per café drink purchased. The free redeemed drink does
+          // not itself earn a punch.
+          const drinks = lines.reduce(
+            (n, { item, qty }) => n + (item.earnsPunch ? qty : 0),
+            0,
+          );
+          const { punch: p, punchesEarned, newRewards } = applyPunches(s.punch, drinks, canRedeem);
+
+          const order: Order = {
+            id: uid("o"),
+            createdAt: new Date().toISOString(),
+            lines: lines.map(({ item, qty }) => ({
+              name: item.name,
+              price: item.price,
+              qty,
+              venue: item.venue,
+            })),
+            subtotal,
+            total,
+            status: "received",
+            method,
+            punchesEarned,
+            usedReward: canRedeem,
+            giftApplied: giftApplied > 0 ? giftApplied : undefined,
+          };
+
+          const gift =
+            giftApplied > 0
+              ? {
+                  ...s.gift,
+                  balance: Math.round((s.gift.balance - giftApplied) * 100) / 100,
+                  history: [
+                    { id: uid("gt"), kind: "spend" as const, amount: giftApplied, at: order.createdAt, note: `Order #${order.id.slice(-4).toUpperCase()}` },
+                    ...s.gift.history,
+                  ],
+                }
+              : s.gift;
+
+          result = { order, punchesEarned, newRewards };
+          return { ...s, cart: [], orders: [order, ...s.orders], punch: p, gift };
+        });
+        return result;
+      },
+
+      redeemGiftCode: (code) => {
+        const amount = parseGiftCode(code);
+        if (amount === null) return { ok: false, error: "That code isn't valid. Check it and try again." };
+        const key = code.trim().toUpperCase();
+        let dup = false;
+        update((s) => {
+          if (s.gift.redeemedCodes.includes(key)) { dup = true; return s; }
+          return {
+            ...s,
+            gift: {
+              ...s.gift,
+              balance: Math.round((s.gift.balance + amount) * 100) / 100,
+              redeemedCodes: [...s.gift.redeemedCodes, key],
+              history: [
+                { id: uid("gt"), kind: "reload" as const, amount, at: new Date().toISOString(), note: "Gift code" },
+                ...s.gift.history,
+              ],
+            },
+          };
+        });
+        if (dup) return { ok: false, error: "That code was already redeemed on this account." };
+        return { ok: true, amount };
+      },
+
+      reserveTable: (date, time, partySize, name) =>
         update((s) => ({
           ...s,
-          draft: body.trim()
-            ? { to: s.coParentId, body, updatedAt: new Date().toISOString() }
-            : null,
+          reservations: [
+            { id: uid("rs"), date, time, partySize, name, createdAt: new Date().toISOString(), status: "confirmed" as const },
+            ...s.reservations,
+          ],
         })),
 
-      clearDraft: () => update((s) => ({ ...s, draft: null })),
+      cancelReservation: (id) =>
+        update((s) => ({
+          ...s,
+          reservations: s.reservations.map((r) => (r.id === id ? { ...r, status: "cancelled" as const } : r)),
+        })),
+
+      addClass: (cls) =>
+        update((s) => ({
+          ...s,
+          classes: [...s.classes, { ...cls, id: uid("cx"), booked: 0 }].sort((a, b) => a.start.localeCompare(b.start)),
+        })),
+
+      removeClass: (id) =>
+        update((s) => ({
+          ...s,
+          classes: s.classes.filter((c) => c.id !== id),
+          // cancel any member bookings for the removed slot
+          bookings: s.bookings.map((b) => (b.classId === id && b.status === "confirmed" ? { ...b, status: "cancelled" as const } : b)),
+        })),
 
       addEvent: (e) =>
-        update((s) => ({ ...s, events: [...s.events, { ...e, id: uid("e") }] })),
-
-      addEvents: (es) =>
         update((s) => ({
           ...s,
-          events: [...s.events, ...es.map((e) => ({ ...e, id: uid("e") }))],
+          events: [...s.events, { ...e, id: uid("ev") }],
         })),
 
-      requestSwap: (id) =>
-        update((s) => ({
-          ...s,
-          events: s.events.map((e) =>
-            e.id === id
-              ? { ...e, requestStatus: "pending", requestedById: s.meId }
-              : e,
-          ),
-        })),
+      setEventAlerts: (on) => update((s) => ({ ...s, eventAlerts: on })),
 
-      cancelSwap: (id) =>
-        update((s) => ({
-          ...s,
-          events: s.events.map((e) =>
-            e.id === id
-              ? { ...e, requestStatus: "none", requestedById: undefined }
-              : e,
-          ),
-        })),
-
-      initFamily: (myName, coParentName, kidNames) =>
-        setState(buildFamily(myName, coParentName, kidNames)),
-
-      respondToRequest: (id, accept) =>
-        update((s) => ({
-          ...s,
-          events: s.events.map((e) =>
-            e.id === id
-              ? { ...e, requestStatus: accept ? "accepted" : "declined" }
-              : e,
-          ),
-        })),
-
-      deleteEvent: (id) =>
-        update((s) => ({ ...s, events: s.events.filter((e) => e.id !== id) })),
-
-      addExpense: (e) =>
-        update((s) => ({
-          ...s,
-          expenses: [{ ...e, id: uid("x") }, ...s.expenses],
-        })),
-
-      addExpenses: (es) =>
-        update((s) => ({
-          ...s,
-          expenses: [...es.map((e) => ({ ...e, id: uid("x") })), ...s.expenses],
-        })),
-
-      setExpenseStatus: (id, status) =>
-        update((s) => ({
-          ...s,
-          expenses: s.expenses.map((x) => (x.id === id ? { ...x, status } : x)),
-        })),
-
-      addJournal: (e) =>
-        update((s) => ({
-          ...s,
-          journal: [{ ...e, id: uid("j") }, ...s.journal],
-        })),
-
-      deleteJournal: (id) =>
-        update((s) => ({
-          ...s,
-          journal: s.journal.filter((j) => j.id !== id),
-        })),
-
-      addInfo: (r) =>
-        update((s) => ({ ...s, info: [...s.info, { ...r, id: uid("i") }] })),
-
-      deleteInfo: (id) =>
-        update((s) => ({ ...s, info: s.info.filter((r) => r.id !== id) })),
-
-      addPackingItem: (label) =>
+      reloadGift: (amount) =>
         update((s) =>
-          label.trim()
+          isValidReload(amount)
             ? {
                 ...s,
-                packing: [
-                  ...s.packing,
-                  { id: uid("pk"), label: label.trim(), packed: false, createdAt: new Date().toISOString() },
-                ],
+                gift: {
+                  ...s.gift,
+                  balance: Math.round((s.gift.balance + amount) * 100) / 100,
+                  history: [
+                    { id: uid("gt"), kind: "reload" as const, amount, at: new Date().toISOString() },
+                    ...s.gift.history,
+                  ],
+                },
               }
             : s,
         ),
 
-      togglePacked: (id) =>
-        update((s) => ({
-          ...s,
-          packing: s.packing.map((p) => (p.id === id ? { ...p, packed: !p.packed } : p)),
-        })),
+      redeemReward: () =>
+        update((s) =>
+          s.punch.rewards > 0
+            ? { ...s, punch: { ...s.punch, rewards: s.punch.rewards - 1, redeemed: s.punch.redeemed + 1 } }
+            : s,
+        ),
 
-      deletePackingItem: (id) =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => p.id !== id) })),
-
-      clearPacked: () =>
-        update((s) => ({ ...s, packing: s.packing.filter((p) => !p.packed) })),
-
-      exportAll: () => {
-        const blob = new Blob([JSON.stringify(state, null, 2)], {
-          type: "application/json",
+      stampPunches: (drinks) => {
+        let out = { punchesEarned: 0, newRewards: 0 };
+        update((s) => {
+          const { punch, punchesEarned, newRewards } = applyPunches(s.punch, drinks, false);
+          out = { punchesEarned, newRewards };
+          return { ...s, punch };
         });
-        triggerDownload(blob, "coparent-export.json");
+        return out;
       },
+
+      bookClass: (classId) =>
+        update((s) => {
+          const cls = s.classes.find((c) => c.id === classId);
+          if (!cls) return s;
+          if (s.bookings.some((b) => b.classId === classId && b.status === "confirmed")) return s;
+          return {
+            ...s,
+            classes: s.classes.map((c) =>
+              c.id === classId ? { ...c, booked: Math.min(c.capacity, c.booked + 1) } : c,
+            ),
+            bookings: [
+              {
+                id: uid("b"),
+                classId,
+                name: cls.name,
+                venue: cls.venue,
+                instructor: cls.instructor,
+                start: cls.start,
+                durationMin: cls.durationMin,
+                createdAt: new Date().toISOString(),
+                status: "confirmed" as const,
+              },
+              ...s.bookings,
+            ],
+          };
+        }),
+
+      cancelBooking: (id) =>
+        update((s) => {
+          const booking = s.bookings.find((b) => b.id === id);
+          return {
+            ...s,
+            bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: "cancelled" as const } : b)),
+            classes: booking
+              ? s.classes.map((c) =>
+                  c.id === booking.classId ? { ...c, booked: Math.max(0, c.booked - 1) } : c,
+                )
+              : s.classes,
+          };
+        }),
+
+      signWaiver: (venue, name) =>
+        update((s) => {
+          const trimmed = name.trim();
+          if (!trimmed) return s;
+          const others = s.waivers.filter((w) => w.venue !== venue);
+          return {
+            ...s,
+            waivers: [
+              ...others,
+              { id: uid("w"), venue, signedName: trimmed, signedAt: new Date().toISOString() },
+            ],
+          };
+        }),
 
       resetDemo: () => setState(buildSeed()),
 
-      deleteAccount: () => {
-        localStorage.removeItem(STORAGE_KEY);
-        setState(buildSeed());
+      clearData: () => {
+        const fresh = buildSeed();
+        setState({ ...fresh, punch: { goal: 10, punches: 0, rewards: 0, lifetimePunches: 0, redeemed: 0 } });
       },
     };
   }, [state]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
-}
-
-export function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
 }
 
 export function useStore(): Store {
@@ -266,23 +366,44 @@ export function useStore(): Store {
   return ctx;
 }
 
-// Derived selectors used across pages.
-export function unreadCount(s: AppState): number {
-  return s.messages.filter((m) => m.fromId !== s.meId && !m.readAt).length;
+// ---- Derived selectors ----
+
+export function cartCount(s: AppState): number {
+  return s.cart.reduce((n, l) => n + l.qty, 0);
 }
 
-// Requests awaiting YOUR response (requests you made yourself don't count).
-export function pendingRequests(s: AppState): CalEvent[] {
-  return s.events.filter(
-    (e) => e.requestStatus === "pending" && e.requestedById !== s.meId,
-  );
-}
-
-// Running balance: positive means the co-parent owes you.
-export function expenseBalance(s: AppState): number {
-  return s.expenses.reduce((bal, x) => {
-    if (x.status === "settled") return bal;
-    const otherOwes = x.amount * x.splitOtherShare;
-    return x.paidById === s.meId ? bal + otherOwes : bal - otherOwes;
+export function cartSubtotal(s: AppState): number {
+  return s.cart.reduce((sum, l) => {
+    const item = s.menu.find((m) => m.id === l.itemId);
+    return item ? sum + item.price * l.qty : sum;
   }, 0);
+}
+
+export function hasWaiver(s: AppState, venue: Venue): boolean {
+  return s.waivers.some((w) => w.venue === venue);
+}
+
+export function upcomingBookings(s: AppState): AppState["bookings"] {
+  const now = Date.now();
+  return s.bookings
+    .filter((b) => b.status === "confirmed" && new Date(b.start).getTime() >= now - 3600_000)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+export function upcomingEvents(s: AppState): CommunityEvent[] {
+  const now = Date.now();
+  return s.events
+    .filter((e) => new Date(e.start).getTime() >= now - 3600_000)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+export function activeOrders(s: AppState): Order[] {
+  return s.orders.filter((o) => orderStatus(o) !== "completed");
+}
+
+// The classes a venue offers, upcoming first.
+export function classesFor(s: AppState, venue: SessionClass["venue"]): SessionClass[] {
+  return s.classes
+    .filter((c) => c.venue === venue)
+    .sort((a, b) => a.start.localeCompare(b.start));
 }

@@ -1,30 +1,44 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
-import { useTier, setTier } from "../lib/subscription";
+import { ROLE_LABEL } from "../lib/roles";
+import { memberId } from "../lib/wallet";
 
 export function Settings() {
-  const { state, exportAll, resetDemo, deleteAccount } = useStore();
-  const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
-  const tier = useTier();
-  const navigate = useNavigate();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { state, resetDemo, clearData } = useStore();
+  const { user, signOut, changePassword, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNext, setPwNext] = useState("");
+  const [pwStatus, setPwStatus] = useState<string | null>(null);
+
+  async function submitPassword() {
+    setPwStatus(null);
+    try {
+      await changePassword(pwCurrent, pwNext);
+      setPwStatus("Password updated.");
+      setPwCurrent("");
+      setPwNext("");
+      setPwOpen(false);
+    } catch (err) {
+      setPwStatus(err instanceof Error ? err.message : "Could not update password.");
+    }
+  }
 
   const counts = {
-    messages: state.messages.length,
-    events: state.events.length,
-    expenses: state.expenses.length,
-    journal: state.journal.length,
-    info: state.info.length,
+    orders: state.orders.length,
+    bookings: state.bookings.filter((b) => b.status === "confirmed").length,
+    waivers: state.waivers.length,
+    punches: state.punch.lifetimePunches,
   };
 
   return (
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Settings</h1>
-          <p className="muted">Your account, your data, your rules.</p>
+          <h1 className="page-title">Settings</h1>
+          <p className="page-sub">Your CGP account &amp; membership.</p>
         </div>
       </div>
 
@@ -32,13 +46,13 @@ export function Settings() {
         <section className="card settings-card">
           <h2>Account</h2>
           <div className="account-row">
-            <span className="avatar" style={{ background: "var(--brand)" }}>
-              {user.name.slice(0, 2).toUpperCase()}
-            </span>
+            <span className="avatar">{user.name.slice(0, 2).toUpperCase()}</span>
             <div>
               <div className="account-name">{user.name}</div>
               <div className="muted small">{user.email}</div>
+              <div className="muted small">Member {memberId(user.email)}</div>
             </div>
+            {user.isAdmin && <span className="pill pill-ok" style={{ marginLeft: "auto" }}>{ROLE_LABEL[user.role]}</span>}
           </div>
           <label className="toggle-row">
             <span>
@@ -53,86 +67,60 @@ export function Settings() {
             />
           </label>
           <div className="form-actions">
-            <button
-              className="btn"
-              onClick={() => {
-                localStorage.setItem("coparent.needsSetup", "1");
-                window.location.assign("#/");
-                window.location.reload();
-              }}
-            >
-              Set up my family
+            <button className="btn" onClick={() => { setPwOpen((o) => !o); setPwStatus(null); }}>
+              Change password
             </button>
             <button className="btn" onClick={signOut}>Sign out</button>
           </div>
+          {pwOpen && (
+            <div className="auth-form">
+              <label className="field">
+                <span>Current password</span>
+                <input type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} autoComplete="current-password" />
+              </label>
+              <label className="field">
+                <span>New password</span>
+                <input type="password" value={pwNext} onChange={(e) => setPwNext(e.target.value)} autoComplete="new-password" />
+              </label>
+              <button className="btn btn-primary" disabled={!pwCurrent || pwNext.length < 6} onClick={submitPassword}>
+                Update password
+              </button>
+            </div>
+          )}
+          {pwStatus && <p className="wallet-status">{pwStatus}</p>}
         </section>
       )}
 
       <section className="card settings-card">
-        <h2>Plan</h2>
-        {tier === "pro" ? (
-          <>
-            <p className="muted">
-              You're on <strong>CoParent Pro</strong> — one subscription for the
-              whole family. Manage or cancel anytime in your App Store / Google
-              Play settings.
-            </p>
-            <div className="form-actions">
-              <span className="pill pill-ok">Pro active ⭐️</span>
-              <button className="btn btn-sm" onClick={() => setTier("free")}>Switch to Free (demo)</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="muted">
-              Free to use. Upgrade to <strong>Pro</strong> for unlimited history,
-              court-ready exports, attachments, and the AI assistant — one price
-              per family ($7.99/mo or $59.99/yr), not per parent like the others.
-            </p>
-            <div className="form-actions">
-              <button className="btn btn-primary" onClick={() => navigate("/upgrade")}>
-                Upgrade to Pro
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="card settings-card">
-        <h2>Your data</h2>
-        <p className="muted">
-          Everything lives on your device. Export a complete copy whenever you
-          want — useful for your records or your attorney.
-        </p>
+        <h2>Your activity</h2>
         <ul className="data-counts">
-          <li><strong>{counts.messages}</strong> messages</li>
-          <li><strong>{counts.events}</strong> calendar events</li>
-          <li><strong>{counts.expenses}</strong> expenses</li>
-          <li><strong>{counts.journal}</strong> journal entries</li>
-          <li><strong>{counts.info}</strong> info records</li>
+          <li><strong>{counts.orders}</strong> orders</li>
+          <li><strong>{counts.bookings}</strong> upcoming bookings</li>
+          <li><strong>{counts.waivers}</strong> waivers signed</li>
+          <li><strong>{counts.punches}</strong> lifetime punches</li>
         </ul>
         <div className="form-actions">
-          <button className="btn btn-primary" onClick={exportAll}>⤓ Export all my data (JSON)</button>
           <button className="btn" onClick={resetDemo}>Reset demo data</button>
         </div>
       </section>
 
       <section className="card settings-card danger-zone">
-        <h2>Delete account</h2>
+        <h2>Clear my data</h2>
         <p className="muted">
-          One click. No waiting on hold, no co-parent approval required, no
-          "contact support to cancel." Your records are erased from this device
-          immediately.
+          Clears your orders, bookings, waivers and punch card from this device.
+          This can't be undone.
         </p>
-        {!confirmDelete ? (
-          <button className="btn btn-danger" onClick={() => setConfirmDelete(true)}>
-            Delete my account
+        {!confirmClear ? (
+          <button className="btn btn-danger" onClick={() => setConfirmClear(true)}>
+            Clear my data
           </button>
         ) : (
           <div className="confirm">
             <span>This permanently clears your local data. Sure?</span>
-            <button className="btn btn-danger" onClick={deleteAccount}>Yes, delete everything</button>
-            <button className="btn" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            <button className="btn btn-danger" onClick={() => { clearData(); setConfirmClear(false); }}>
+              Yes, clear everything
+            </button>
+            <button className="btn" onClick={() => setConfirmClear(false)}>Cancel</button>
           </div>
         )}
       </section>

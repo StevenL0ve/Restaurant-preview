@@ -1,4 +1,4 @@
-# CoParent — Fastlane lanes (run on a Mac with Xcode).
+# CGP — Fastlane lanes (run on a Mac with Xcode).
 #
 # One-time setup is in docs/TESTFLIGHT.md. After that, shipping a beta is:
 #   fastlane beta

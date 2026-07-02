@@ -18,6 +18,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>,
 );
 
+// Hold the brand splash for a beat after mount, then fade it away.
+const splash = document.getElementById("splash");
+if (splash) {
+  setTimeout(() => {
+    splash.classList.add("done");
+    setTimeout(() => splash.remove(), 500);
+  }, 700);
+}
+
 // Register the service worker for offline/installable PWA behavior.
 // Skipped under Capacitor's native shell, which serves its own bundle.
 if ("serviceWorker" in navigator && !/(android|ios);capacitor/i.test(navigator.userAgent)) {
