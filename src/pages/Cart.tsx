@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, cartSubtotal } from "../state/store";
 import type { OrderMethod } from "../types";
+import { giftApplicable } from "../lib/gift";
 import { money } from "../lib/format";
 import { tapLight, notifySuccess } from "../lib/haptics";
 
@@ -10,6 +11,7 @@ export function Cart() {
   const navigate = useNavigate();
   const [method, setMethod] = useState<OrderMethod>("pickup");
   const [useReward, setUseReward] = useState(state.punch.rewards > 0);
+  const [useGift, setUseGift] = useState(false);
 
   const lines = state.cart
     .map((l) => {
@@ -24,10 +26,12 @@ export function Cart() {
   const freeDrink = canRedeem
     ? Math.max(...lines.filter(({ item }) => item.earnsPunch).map(({ item }) => item.price))
     : 0;
-  const total = Math.max(0, subtotal - freeDrink);
+  const afterReward = Math.max(0, subtotal - freeDrink);
+  const giftApplied = useGift ? giftApplicable(state.gift.balance, afterReward) : 0;
+  const total = Math.round((afterReward - giftApplied) * 100) / 100;
 
   function checkout() {
-    const res = placeOrder(method, useReward);
+    const res = placeOrder(method, useReward, useGift);
     if (res) {
       notifySuccess();
       navigate("/orders", { state: { justOrdered: res.order.id } });
@@ -96,10 +100,23 @@ export function Cart() {
         </label>
       )}
 
+      {state.gift.balance > 0 && (
+        <label className="card reward-toggle">
+          <input type="checkbox" checked={useGift} onChange={(e) => setUseGift(e.target.checked)} />
+          <span>
+            <span className="row-title">🎁 Pay with gift card</span>
+            <span className="row-sub">{money(state.gift.balance)} available — covers what it can, the rest is due at pickup.</span>
+          </span>
+        </label>
+      )}
+
       <div className="card totals">
         <div className="totals-row"><span>Subtotal</span><span>{money(subtotal)}</span></div>
         {canRedeem && (
           <div className="totals-row totals-discount"><span>Free drink reward</span><span>−{money(freeDrink)}</span></div>
+        )}
+        {giftApplied > 0 && (
+          <div className="totals-row totals-discount"><span>Gift card</span><span>−{money(giftApplied)}</span></div>
         )}
         <div className="totals-row totals-total"><span>Total</span><span>{money(total)}</span></div>
       </div>

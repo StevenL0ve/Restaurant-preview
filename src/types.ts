@@ -54,6 +54,7 @@ export interface Order {
   method: OrderMethod;
   punchesEarned: number;
   usedReward: boolean; // a free drink was redeemed on this order
+  giftApplied?: number; // paid from the gift card balance
 }
 
 // ---- Coffee-shop punch card ----
@@ -110,6 +111,35 @@ export interface Waiver {
   signedAt: string; // ISO
 }
 
+// ---- Community events ----
+// What's happening across the venues. Posters are image paths (seeded events)
+// or data URLs (user-uploaded posters).
+
+export interface CommunityEvent {
+  id: ID;
+  title: string;
+  venue: Venue;
+  start: string; // ISO
+  description: string;
+  image?: string;
+}
+
+// ---- Reloadable gift card ----
+
+export interface GiftTxn {
+  id: ID;
+  kind: "reload" | "spend";
+  amount: number;
+  at: string; // ISO
+  note?: string;
+}
+
+export interface GiftCard {
+  number: string;
+  balance: number;
+  history: GiftTxn[];
+}
+
 export interface AppState {
   menu: MenuItem[];
   classes: SessionClass[];
@@ -118,4 +148,7 @@ export interface AppState {
   bookings: Booking[];
   punch: PunchCard;
   waivers: Waiver[];
+  events: CommunityEvent[];
+  gift: GiftCard;
+  eventAlerts: boolean;
 }

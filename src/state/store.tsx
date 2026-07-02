@@ -8,6 +8,7 @@ import {
 } from "react";
 import type {
   AppState,
+  CommunityEvent,
   MenuItem,
   Order,
   OrderMethod,
@@ -18,6 +19,7 @@ import type {
 import { buildSeed } from "./seed";
 import { applyPunches } from "../lib/punch";
 import { orderStatus } from "../lib/orders";
+import { giftApplicable, isValidReload } from "../lib/gift";
 
 const STORAGE_KEY = "cgp.v1";
 
@@ -55,9 +57,14 @@ interface Store {
   setQty: (itemId: string, qty: number) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
-  placeOrder: (method: OrderMethod, useReward: boolean) => CheckoutResult | null;
+  placeOrder: (method: OrderMethod, useReward: boolean, useGift?: boolean) => CheckoutResult | null;
   // punch card
   redeemReward: () => void;
+  // community events
+  addEvent: (e: Omit<CommunityEvent, "id">) => void;
+  setEventAlerts: (on: boolean) => void;
+  // gift card
+  reloadGift: (amount: number) => void;
   // bookings
   bookClass: (classId: string) => void;
   cancelBooking: (id: string) => void;
@@ -106,7 +113,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       clearCart: () => update((s) => ({ ...s, cart: [] })),
 
-      placeOrder: (method, useReward) => {
+      placeOrder: (method, useReward, useGift = false) => {
         let result: CheckoutResult | null = null;
         update((s) => {
           if (s.cart.length === 0) return s;
@@ -130,7 +137,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const freeDrinkPrice = canRedeem
             ? Math.max(...lines.filter(({ item }) => item.earnsPunch).map(({ item }) => item.price))
             : 0;
-          const total = Math.max(0, subtotal - freeDrinkPrice);
+          const afterReward = Math.max(0, subtotal - freeDrinkPrice);
+
+          // Gift card covers as much of the remaining total as it can.
+          const giftApplied = useGift ? giftApplicable(s.gift.balance, afterReward) : 0;
+          const total = Math.round((afterReward - giftApplied) * 100) / 100;
 
           // Punches: one per café drink purchased. The free redeemed drink does
           // not itself earn a punch.
@@ -155,13 +166,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             method,
             punchesEarned,
             usedReward: canRedeem,
+            giftApplied: giftApplied > 0 ? giftApplied : undefined,
           };
 
+          const gift =
+            giftApplied > 0
+              ? {
+                  ...s.gift,
+                  balance: Math.round((s.gift.balance - giftApplied) * 100) / 100,
+                  history: [
+                    { id: uid("gt"), kind: "spend" as const, amount: giftApplied, at: order.createdAt, note: `Order #${order.id.slice(-4).toUpperCase()}` },
+                    ...s.gift.history,
+                  ],
+                }
+              : s.gift;
+
           result = { order, punchesEarned, newRewards };
-          return { ...s, cart: [], orders: [order, ...s.orders], punch: p };
+          return { ...s, cart: [], orders: [order, ...s.orders], punch: p, gift };
         });
         return result;
       },
+
+      addEvent: (e) =>
+        update((s) => ({
+          ...s,
+          events: [...s.events, { ...e, id: uid("ev") }],
+        })),
+
+      setEventAlerts: (on) => update((s) => ({ ...s, eventAlerts: on })),
+
+      reloadGift: (amount) =>
+        update((s) =>
+          isValidReload(amount)
+            ? {
+                ...s,
+                gift: {
+                  ...s.gift,
+                  balance: Math.round((s.gift.balance + amount) * 100) / 100,
+                  history: [
+                    { id: uid("gt"), kind: "reload" as const, amount, at: new Date().toISOString() },
+                    ...s.gift.history,
+                  ],
+                },
+              }
+            : s,
+        ),
 
       redeemReward: () =>
         update((s) =>
@@ -264,6 +313,13 @@ export function upcomingBookings(s: AppState): AppState["bookings"] {
   const now = Date.now();
   return s.bookings
     .filter((b) => b.status === "confirmed" && new Date(b.start).getTime() >= now - 3600_000)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+export function upcomingEvents(s: AppState): CommunityEvent[] {
+  const now = Date.now();
+  return s.events
+    .filter((e) => new Date(e.start).getTime() >= now - 3600_000)
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 

@@ -11,6 +11,8 @@ import { Rewards } from "./pages/Rewards";
 import { Book } from "./pages/Book";
 import { Bookings } from "./pages/Bookings";
 import { Waivers } from "./pages/Waivers";
+import { Community } from "./pages/Community";
+import { GiftCard } from "./pages/GiftCard";
 import { Orders } from "./pages/Orders";
 import { Settings } from "./pages/Settings";
 
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/book" element={<Book />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/waivers" element={<Waivers />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/gift" element={<GiftCard />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

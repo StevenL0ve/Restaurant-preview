@@ -1,4 +1,4 @@
-import type { AppState, MenuItem, SessionClass } from "../types";
+import type { AppState, CommunityEvent, MenuItem, SessionClass } from "../types";
 
 // Demo dataset so the app is alive the moment it opens — real menus, a live
 // class schedule, and a punch card that's part-way to a free drink. Class times
@@ -116,6 +116,40 @@ function buildClasses(): SessionClass[] {
   return [...y, ...z, ...m].sort((a, b) => a.start.localeCompare(b.start));
 }
 
+// ---- Community events ----
+
+const EVENTS: Omit<CommunityEvent, "id">[] = [
+  {
+    title: "Birthday Bash",
+    venue: "cafe",
+    start: at(4, 10),
+    description: "DJ set, live art, baby rave, new merch, cake, drink specials & a birthday raffle. Everyone's invited.",
+    image: "/photos/event-birthday.jpeg",
+  },
+  {
+    title: "Full Moon Flow",
+    venue: "yoga",
+    start: at(6, 19, 30),
+    description: "Candle-lit all-levels flow under the full moon. Mats provided; happy tea after.",
+  },
+  {
+    title: "Sound Bath Sunday",
+    venue: "zenden",
+    start: at(9, 17),
+    description: "A restorative hour of singing bowls and gongs in the Zen Den. Arrive early to sauna first.",
+  },
+  {
+    title: "Mezze Night: Chef's Table",
+    venue: "restaurant",
+    start: at(12, 18),
+    description: "By the Fig & the Olive after dark — a family-style mezze spread from all four chefs.",
+  },
+];
+
+function buildEvents(): CommunityEvent[] {
+  return EVENTS.map((e, i) => ({ ...e, id: `ev-${i + 1}` }));
+}
+
 export function buildSeed(): AppState {
   return {
     menu: buildMenu(),
@@ -125,5 +159,8 @@ export function buildSeed(): AppState {
     bookings: [],
     punch: { goal: 10, punches: 6, rewards: 0, lifetimePunches: 6, redeemed: 0 },
     waivers: [],
+    events: buildEvents(),
+    gift: { number: "GC-000000", balance: 0, history: [] },
+    eventAlerts: false,
   };
 }

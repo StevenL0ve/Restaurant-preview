@@ -1,4 +1,5 @@
-// Apple Wallet + Google Wallet integration for the café punch card.
+// Apple Wallet + Google Wallet integration for the café punch card and the
+// reloadable CGP gift card.
 //
 // A real Wallet pass must be cryptographically signed with the venue's Apple
 // Pass certificate (for a .pkpass) or a Google service-account key (for the
@@ -70,7 +71,36 @@ export function passPayload(kind: WalletKind, pass: WalletPass) {
       rewards,
       lifetime: `${pass.lifetime} lifetime`,
     },
-    colors: { background: "#2f6b3f", foreground: "#ffffff", label: "#cfe6d3" },
+    colors: { background: "#657e69", foreground: "#ffffff", label: "#e3ece4" },
+  };
+}
+
+// Deterministic gift-card number from the account email, distinct from the
+// loyalty number but just as stable across devices.
+export function giftCardNumber(email: string): string {
+  let h = 216613;
+  for (const ch of `gift:${email.toLowerCase()}`) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0;
+  return `GC-${h.toString(36).toUpperCase().padStart(6, "0").slice(-6)}`;
+}
+
+export interface GiftWalletPass {
+  cardNumber: string;
+  memberName: string;
+  balance: number;
+}
+
+export function giftPassPayload(kind: WalletKind, pass: GiftWalletPass) {
+  return {
+    kind,
+    organizationName: "The Common Ground Projects",
+    description: "Common Ground Gift Card",
+    barcode: { format: "QR", message: pass.cardNumber, altText: pass.cardNumber },
+    fields: {
+      member: pass.memberName,
+      cardNumber: pass.cardNumber,
+      balance: `$${pass.balance.toFixed(2)}`,
+    },
+    colors: { background: "#657e69", foreground: "#ffffff", label: "#e3ece4" },
   };
 }
 
@@ -78,8 +108,20 @@ export function passPayload(kind: WalletKind, pass: WalletPass) {
 // when the pass service is available; otherwise downloads the payload and says
 // so, without pretending the card was added.
 export async function addToWallet(kind: WalletKind, pass: WalletPass): Promise<WalletResult> {
-  const payload = passPayload(kind, pass);
+  return openPass(kind, passPayload(kind, pass), "punch card", "cgp-punchcard");
+}
 
+// Same flow for the gift card pass.
+export async function addGiftToWallet(kind: WalletKind, pass: GiftWalletPass): Promise<WalletResult> {
+  return openPass(kind, giftPassPayload(kind, pass), "gift card", "cgp-giftcard");
+}
+
+async function openPass(
+  kind: WalletKind,
+  payload: unknown,
+  label: string,
+  filePrefix: string,
+): Promise<WalletResult> {
   if (ENDPOINT) {
     try {
       const res = await fetch(`${ENDPOINT}/wallet/${kind}`, {
@@ -103,10 +145,10 @@ export async function addToWallet(kind: WalletKind, pass: WalletPass): Promise<W
 
   // Preview fallback: hand the user their pass payload so nothing is faked.
   const ext = kind === "apple" ? "applewallet.json" : "googlewallet.json";
-  download(`cgp-punchcard.${ext}`, JSON.stringify(payload, null, 2), "application/json");
+  download(`${filePrefix}.${ext}`, JSON.stringify(payload, null, 2), "application/json");
   const wallet = kind === "apple" ? "Apple Wallet" : "Google Wallet";
   return {
     opened: false,
-    message: `Your punch card is ready. One-tap ${wallet} adding turns on once CGP connects its pass service — we downloaded the card in the meantime.`,
+    message: `Your ${label} is ready. One-tap ${wallet} adding turns on once CGP connects its pass service — we downloaded the card in the meantime.`,
   };
 }

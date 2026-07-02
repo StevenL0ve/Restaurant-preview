@@ -69,6 +69,7 @@ export function Orders() {
             <div className="order-foot">
               <div className="order-meta">
                 {o.usedReward && <span className="tag tag-punch">🎟️ Free drink redeemed</span>}
+                {o.giftApplied != null && o.giftApplied > 0 && <span className="tag tag-punch">🎁 Gift card −{money(o.giftApplied)}</span>}
                 {o.punchesEarned > 0 && <span className="tag">+{o.punchesEarned} punch{o.punchesEarned === 1 ? "" : "es"}</span>}
               </div>
               <div className="order-total">{money(o.total)}</div>

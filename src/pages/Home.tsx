@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useStore, upcomingBookings, activeOrders } from "../state/store";
+import { useStore, upcomingBookings, activeOrders, upcomingEvents } from "../state/store";
 import { orderStatus } from "../lib/orders";
 import { VENUES, type Venue } from "../types";
 import { money, fullDate, time } from "../lib/format";
@@ -12,6 +12,7 @@ export function Home() {
   const { punch } = state;
   const upcoming = upcomingBookings(state).slice(0, 3);
   const active = activeOrders(state).slice(0, 2);
+  const events = upcomingEvents(state).slice(0, 2);
   const pct = Math.round((punch.punches / punch.goal) * 100);
 
   return (
@@ -82,6 +83,26 @@ export function Home() {
                 </div>
                 <span className="status status-confirmed">confirmed</span>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {events.length > 0 && (
+        <section className="section">
+          <div className="section-head">
+            <h2 className="section-title">Happening soon</h2>
+            <Link to="/community" className="link">Community</Link>
+          </div>
+          <div className="stack">
+            {events.map((e) => (
+              <Link key={e.id} to="/community" className="card row-card">
+                <div>
+                  <div className="row-title">{VENUES[e.venue].icon} {e.title}</div>
+                  <div className="row-sub">{fullDate(e.start)} · {time(e.start)} · {VENUES[e.venue].name}</div>
+                </div>
+                <span className="pill pill-ok">Event</span>
+              </Link>
             ))}
           </div>
         </section>

@@ -22,6 +22,8 @@ const primary: Tab[] = [
 ];
 
 const more = [
+  { to: "/community", label: "Community", icon: "🎉" },
+  { to: "/gift", label: "Gift Card", icon: "🎁" },
   { to: "/cart", label: "Cart", icon: "🛒", badge: "cart" as const },
   { to: "/orders", label: "My Orders", icon: "🧾" },
   { to: "/bookings", label: "My Bookings", icon: "📅" },
