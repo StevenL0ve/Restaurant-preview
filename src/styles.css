@@ -653,8 +653,8 @@ input, textarea { font-family: inherit; }
   .tab.active { color: #fff; }
   .tab-icon { font-size: 21px; position: relative; line-height: 1; color: rgba(239, 236, 221, 0.75); }
   .tab.active .tab-icon { color: #fff; }
-  .tab-img { width: 26px; height: 26px; display: block; opacity: 0.62; transition: opacity 0.15s ease; }
-  .tab.active .tab-img { opacity: 1; }
+  .tab-img { width: 36px; height: 36px; display: block; opacity: 0.7; transition: opacity 0.15s ease, transform 0.15s ease; }
+  .tab.active .tab-img { opacity: 1; transform: scale(1.08); }
   .tab-badge {
     position: absolute; top: -5px; right: -9px;
     background: var(--gold); color: #fff;

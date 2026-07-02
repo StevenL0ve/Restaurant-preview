@@ -79,7 +79,7 @@ export function BottomNav() {
               }}
             >
               <span className="tab-icon">
-                <img className="tab-img" src={it.img} alt="" aria-hidden width={26} height={26} />
+                <img className="tab-img" src={it.img} alt="" aria-hidden width={36} height={36} />
                 {count > 0 && <span className="tab-badge">{count}</span>}
               </span>
               <span className="tab-label">{it.label}</span>
