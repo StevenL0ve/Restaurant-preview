@@ -1,5 +1,6 @@
 import type { AppState } from "../types";
-import { fullDate, time } from "./format";
+import { fullDate, time, money } from "./format";
+import { computeInsights } from "./insights";
 import { search } from "./search";
 
 // On-device assistant: answers natural-language questions over the user's own
@@ -155,7 +156,34 @@ export function answerQuery(state: AppState, raw: string, now = new Date()): Ass
     }
   }
 
-  // 5) Packing list: "what do I need to pack / bring?"
+  // 5) Money: "who owes who?", "how much did I spend this month?"
+  if (/\bowes?\b|\bbalance\b|\bspend\b|\bspent\b|\breimburs|\bmoney\b/.test(q)) {
+    if (/\bspen[dt]\b/.test(q)) {
+      const ins = computeInsights(state, now);
+      return {
+        text: `This ${ins.monthLabel} you've paid ${money(ins.yourOutOfPocket)} out of pocket, of ${money(ins.totalSpend)} in shared costs logged.`,
+        route: "/expenses",
+      };
+    }
+    const balance = state.expenses.reduce((bal, x) => {
+      if (x.status === "settled") return bal;
+      const otherOwes = x.amount * x.splitOtherShare;
+      return x.paidById === state.meId ? bal + otherOwes : bal - otherOwes;
+    }, 0);
+    const co = nameOf(state.coParentId);
+    return {
+      text:
+        balance > 0
+          ? `${co} owes you ${money(balance)}.`
+          : balance < 0
+            ? `You owe ${co} ${money(Math.abs(balance))}.`
+            : `You and ${co} are settled up — nothing owed either way.`,
+      detail: "Settled items are excluded.",
+      route: "/expenses",
+    };
+  }
+
+  // 6) Packing list: "what do I need to pack / bring?"
   if (/\bpack\b|\bpacking\b|\bbring\b|\bforget\b/.test(q)) {
     const todo = state.packing.filter((p) => !p.packed);
     if (todo.length) {

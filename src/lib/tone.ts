@@ -8,17 +8,25 @@ const HOSTILE = [
   "stupid", "idiot", "liar", "lying", "pathetic", "useless", "hate",
   "shut up", "never", "always", "ridiculous", "selfish", "disgusting",
   "loser", "worthless", "you people", "as usual", "obviously",
+  "your fault", "bad parent", "terrible parent", "terrible mother",
+  "terrible father", "deadbeat", "grow up", "screw you", "sick of",
+  "fed up", "can't stand", "unfit", "manipulative", "narcissist",
+  "my lawyer", "see you in court", "threaten",
 ];
 
 const TENSE = [
   "you need to", "you have to", "why didn't you", "why can't you",
   "again", "supposed to", "forgot", "late", "not my problem",
   "whatever", "fine.", "seriously", "unbelievable", "frankly",
+  "last minute", "typical", "of course you", "do your job",
+  "actually bother", "if you cared", "for once", "how hard is it",
 ];
 
 const SOFTENERS = [
   "please", "thank you", "thanks", "appreciate", "could we",
   "would you mind", "let's", "i understand", "i know", "sorry",
+  "when you get a chance", "no rush", "happy to", "would it be possible",
+  "if that works", "totally fine",
 ];
 
 export interface ToneResult {
@@ -91,6 +99,13 @@ function buildSuggestion(text: string, level: ToneLevel): string {
     [/\bwhatever\b/gi, ""],
     [/\bridiculous\b/gi, "frustrating"],
     [/\bselfish\b/gi, "difficult for me"],
+    [/\byour fault\b/gi, "something we need to sort out together"],
+    [/\bgrow up\b/gi, ""],
+    [/\bsick of\b/gi, "struggling with"],
+    [/\bfed up with\b/gi, "worn down by"],
+    [/\bfor once\b/gi, ""],
+    [/\bif you cared\b/gi, "it would mean a lot if"],
+    [/\bdo your job\b/gi, "help with this"],
   ];
   for (const [re, to] of replacements) out = out.replace(re, to);
 

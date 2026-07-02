@@ -32,4 +32,19 @@ describe("analyzeTone", () => {
   it("returns calm for empty input", () => {
     expect(analyzeTone("   ").level).toBe("calm");
   });
+
+  it("catches blame-oriented co-parenting flashpoints", () => {
+    const r = analyzeTone("This is all your fault. Grow up and do your job for once.");
+    expect(r.level).toBe("hostile");
+    expect(r.suggestion).toBeTruthy();
+    expect(r.suggestion!.toLowerCase()).not.toContain("your fault");
+    expect(r.suggestion!.toLowerCase()).not.toContain("grow up");
+  });
+
+  it("keeps politely-phrased asks calm despite scheduling words", () => {
+    const r = analyzeTone(
+      "No rush — when you get a chance, could we move Thursday pickup to 5? Totally fine if not.",
+    );
+    expect(r.level).toBe("calm");
+  });
 });

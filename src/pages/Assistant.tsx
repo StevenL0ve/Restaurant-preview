@@ -8,18 +8,20 @@ interface Turn {
   a: AssistantAnswer;
 }
 
-const SUGGESTIONS = [
-  "Are the kids with me next Saturday?",
-  "What size shoes does Ava wear?",
-  "When's Leo's soccer practice?",
-  "Did I message about the vacation next month?",
-];
-
 export function Assistant() {
   const { state } = useStore();
   const [q, setQ] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const navigate = useNavigate();
+
+  // Suggestions built from the user's real family, not demo names.
+  const kid = state.people.find((p) => p.role === "child");
+  const suggestions = [
+    "Are the kids with me next Saturday?",
+    kid ? `What size shoes does ${kid.name} wear?` : "What's on the packing list?",
+    "Who owes who money?",
+    "Did I message about the vacation next month?",
+  ];
 
   function ask(question: string) {
     const text = question.trim();
@@ -44,7 +46,7 @@ export function Assistant() {
         {turns.length === 0 && (
           <div className="assistant-suggest">
             <p className="muted small">Try asking:</p>
-            {SUGGESTIONS.map((s) => (
+            {suggestions.map((s) => (
               <button key={s} className="suggest-chip" onClick={() => ask(s)}>
                 {s}
               </button>

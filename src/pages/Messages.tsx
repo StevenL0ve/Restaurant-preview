@@ -96,9 +96,17 @@ export function Messages() {
       </div>
 
       <div className="thread">
-        {filtered.length === 0 && (
+        {state.messages.length === 0 ? (
+          <div className="empty-state">
+            <img className="empty-art" src="/brand/nav-messages.png" alt="" aria-hidden width={72} height={72} />
+            <p>
+              No messages yet. Say hello — every message is timestamped and kept
+              as a clean, unchangeable record.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
           <p className="muted pad">No messages match “{filter}”.</p>
-        )}
+        ) : null}
         {filtered.map((m, i) => {
           const mine = m.fromId === me;
           const showDay =

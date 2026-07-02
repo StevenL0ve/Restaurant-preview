@@ -54,6 +54,20 @@ describe("answerQuery", () => {
     expect(a.text).toMatch(/kids are with/i);
   });
 
+  it("answers the running balance ('who owes who?')", () => {
+    const a = answerQuery(seed, "who owes who money?");
+    // Seed balance: Jordan owes you $32.50 (unsettled items only).
+    expect(a.text).toContain("Jordan owes you");
+    expect(a.text).toContain("$32.50");
+    expect(a.route).toBe("/expenses");
+  });
+
+  it("answers monthly spend questions", () => {
+    const a = answerQuery(seed, "how much did I spend this month?");
+    expect(a.text.toLowerCase()).toContain("out of pocket");
+    expect(a.route).toBe("/expenses");
+  });
+
   it("falls back gracefully on an unknown question", () => {
     const a = answerQuery(seed, "what's the weather like");
     expect(a.text.length).toBeGreaterThan(0);
