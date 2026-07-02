@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, cartCount, cartSubtotal } from "../state/store";
-import type { MenuItem } from "../types";
+import { VENUES, type MenuItem } from "../types";
 import { money } from "../lib/format";
 import { tapLight } from "../lib/haptics";
 
@@ -54,10 +54,20 @@ export function Menu() {
 
       <div className="photo-banner">
         <img
-          src={filter === "cafe" ? "/photos/latte.jpeg" : "/photos/food.jpeg"}
-          alt={filter === "cafe" ? "A Common Grounds latte in a printed cup" : "Brunch at By the Fig & the Olive"}
+          src={filter === "cafe" ? "/photos/latte.jpeg" : filter === "restaurant" ? "/photos/figolive-food.jpeg" : "/photos/food.jpeg"}
+          alt={filter === "cafe" ? "A Common Grounds latte in a printed cup" : "A kabob plate at By the Fig & the Olive"}
         />
       </div>
+
+      {filter === "restaurant" && (
+        <div className="venue-banner card">
+          <img className="venue-logo" src={VENUES.restaurant.logo} alt="Fig + Olive logo" />
+          <div>
+            <div className="row-title">{VENUES.restaurant.name}</div>
+            <div className="row-sub">{VENUES.restaurant.blurb}</div>
+          </div>
+        </div>
+      )}
 
       {filter !== "restaurant" && (
         <div className="card menu-note">

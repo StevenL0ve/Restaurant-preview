@@ -12,7 +12,7 @@ const filters: BookVenue[] = ["yoga", "zenden", "massage"];
 // Each venue's banner is its own space.
 const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
   yoga: { src: "/photos/yoga.jpeg", alt: "A seated class in The Studio" },
-  zenden: { src: "/photos/zenden.jpeg", alt: "The Zen Den sauna" },
+  zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber" },
   massage: { src: "/photos/interior.jpeg", alt: "The Common Ground community space" },
 };
 
@@ -85,7 +85,11 @@ export function Book() {
       </div>
 
       <div className="venue-banner card">
-        <span className="venue-icon" aria-hidden>{VENUES[venue].icon}</span>
+        {VENUES[venue].logo ? (
+          <img className="venue-logo" src={VENUES[venue].logo} alt={`${VENUES[venue].name} logo`} />
+        ) : (
+          <span className="venue-icon" aria-hidden>{VENUES[venue].icon}</span>
+        )}
         <div>
           <div className="row-title">{VENUES[venue].name}</div>
           <div className="row-sub">{VENUES[venue].blurb}</div>
@@ -100,6 +104,7 @@ export function Book() {
           const spots = cls.capacity - cls.booked;
           return (
             <div key={cls.id} className="card class-card">
+              {cls.image && <img className="menu-item-photo" src={cls.image} alt={cls.name} />}
               <div className="class-body">
                 <div className="menu-item-top">
                   <span className="menu-item-name">{cls.name}</span>

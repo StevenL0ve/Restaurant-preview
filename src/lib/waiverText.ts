@@ -12,8 +12,8 @@ export const WAIVER_TEXT: Record<WaiverVenue, string> = {
     "I assume responsibility for my participation and release The Common Ground Projects, " +
     "its instructors, and staff from liability for any injury sustained during class.",
   zenden:
-    "I understand that sauna, hot soak, cold plunge, contrast therapy, and facial " +
-    "treatments at the Zen Den carry inherent risks, including heat and cold exposure. " +
+    "I understand that infrared sauna, red light therapy, hot and cold plunge, and " +
+    "salt chamber sessions at the Zen Den carry inherent risks, including heat and cold exposure. " +
     "I confirm I have no medical condition (including heart conditions or pregnancy) " +
     "that makes these services unsafe without a doctor's approval, and I will exit any " +
     "session if I feel unwell. I release The Common Ground Projects and its staff from " +

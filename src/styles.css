@@ -517,6 +517,7 @@ input, textarea { font-family: inherit; }
 
 .venue-banner { display: flex; align-items: center; gap: 14px; }
 .venue-banner .venue-icon { font-size: 30px; }
+.venue-logo { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
 .venue-banner .pill { margin-left: auto; }
 .class-card { display: flex; align-items: flex-start; gap: 14px; }
 .class-body { flex: 1; min-width: 0; }

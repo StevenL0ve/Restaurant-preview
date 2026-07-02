@@ -7,11 +7,11 @@ export type ID = string;
 // The five services under the Common Ground Projects roof.
 export type Venue = "restaurant" | "cafe" | "yoga" | "zenden" | "massage";
 
-export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string }> = {
-  restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs." },
+export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string; logo?: string }> = {
+  restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs.", logo: "/brand/figolive-logo.jpeg" },
   cafe: { name: "Common Grounds Café", short: "Coffee Shop", icon: "☕️", blurb: "Small-batch coffee & fresh bakes. Earn a punch on every drink." },
   yoga: { name: "The Studio", short: "Yoga Studio", icon: "🧘", blurb: "Vinyasa, restorative & community flows." },
-  zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Saunas, soaks & facials to reset." },
+  zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Nordic cycle spa — infrared sauna, hot & cold plunge, Himalayan salt room.", logo: "/brand/zenden-logo.jpeg" },
   massage: { name: "Massage", short: "Massage", icon: "💆", blurb: "Therapeutic & relaxation bodywork." },
 };
 
@@ -82,6 +82,7 @@ export interface SessionClass {
   price: number;
   level?: string; // yoga level / spa focus
   requiresWaiver: boolean;
+  image?: string; // photo shown on the booking card
 }
 
 export type BookingStatus = "confirmed" | "cancelled";

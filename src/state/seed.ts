@@ -59,6 +59,7 @@ const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
   { category: "Wraps & Sandwiches", name: "Chicken Shawarma Wrap", description: "House-marinated chicken off the spinning skewer, pickles, garlic sauce.", price: 13.0, tags: ["popular"] },
   { category: "Wraps & Sandwiches", name: "Falafel Wrap", description: "Crisp falafel, fresh herbs, tahini & pickles.", price: 12.0, tags: ["vegan"] },
   { category: "Wraps & Sandwiches", name: "Roasted Vegetable Sandwich", description: "Roasted seasonal vegetables with house spreads.", price: 12.0, tags: ["vegan"] },
+  { category: "Plates", name: "Chicken Kabob Plate", description: "Char-grilled chicken kabobs, cilantro chutney, jeera rice, tangy slaw.", price: 16.0, tags: ["popular", "gf"], image: "/photos/figolive-food.jpeg" },
   { category: "Plates", name: "Seekh Kabob Plate", description: "Spiced beef & lamb kabobs, vermicelli rice, pita and tzatziki.", price: 17.0, tags: ["popular"] },
   { category: "Plates", name: "Beef Keema", description: "Slow-simmered spiced ground beef with rice and pita.", price: 16.0, tags: [] },
 ];
@@ -95,11 +96,13 @@ const YOGA: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
   { name: "Slow Flow & Meditation", instructor: "Dev P.", description: "Gentle movement into a guided sit.", start: at(3, 8), durationMin: 75, capacity: 20, booked: 3, price: 20, level: "All levels" },
 ];
 
+// The Zen Den (zendenms.com) — a Nordic cycle spa: infrared sauna with red
+// light, hot & cold plunge, and a Himalayan salt chamber.
 const ZENDEN: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
-  { name: "Infrared Sauna (45 min)", instructor: "Zen Den", description: "Private infrared sauna session. Cool-down lounge access.", start: at(0, 12), durationMin: 45, capacity: 4, booked: 2, price: 35, level: "Sauna" },
-  { name: "Cedar Hot Soak", instructor: "Zen Den", description: "Mineral soak in a private cedar tub.", start: at(1, 15), durationMin: 60, capacity: 3, booked: 1, price: 45, level: "Soak" },
-  { name: "Glow Facial", instructor: "Nadia F.", description: "Custom facial with botanical steam & massage.", start: at(2, 11), durationMin: 60, capacity: 2, booked: 1, price: 95, level: "Facial" },
-  { name: "Contrast Therapy Circuit", instructor: "Zen Den", description: "Guided sauna + cold plunge rounds.", start: at(3, 16), durationMin: 75, capacity: 6, booked: 4, price: 40, level: "Circuit" },
+  { name: "Infrared Sauna + Red Light (45 min)", instructor: "Zen Den", description: "Radiant infrared heat with red light therapy — warms you from the inside out.", start: at(0, 12), durationMin: 45, capacity: 4, booked: 2, price: 35, level: "Sauna", image: "/photos/zenden-red.jpeg" },
+  { name: "Nordic Cycle: Hot & Cold Plunge", instructor: "Zen Den", description: "Guided contrast rounds through the hot and cold plunge tubs. Reset and recharge.", start: at(1, 15), durationMin: 60, capacity: 6, booked: 3, price: 40, level: "Plunge" },
+  { name: "Himalayan Salt Chamber (45 min)", instructor: "Zen Den", description: "Rest in the salt room — stress relief, energy, and easier breathing.", start: at(2, 11), durationMin: 45, capacity: 6, booked: 2, price: 30, level: "Salt room", image: "/photos/zenden-salt2.jpeg" },
+  { name: "Full Zen Circuit (90 min)", instructor: "Zen Den", description: "The complete Nordic cycle: sauna, plunge, and salt chamber, at your pace.", start: at(3, 16), durationMin: 90, capacity: 6, booked: 4, price: 65, level: "Circuit", image: "/photos/zenden.jpeg" },
 ];
 
 const MASSAGE: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
@@ -136,7 +139,8 @@ const EVENTS: Omit<CommunityEvent, "id">[] = [
     title: "Sound Bath Sunday",
     venue: "zenden",
     start: at(9, 17),
-    description: "A restorative hour of singing bowls and gongs in the Zen Den. Arrive early to sauna first.",
+    description: "A restorative hour of singing bowls and gongs in the salt chamber. Arrive early to sauna first.",
+    image: "/photos/zenden-red.jpeg",
   },
   {
     title: "Mezze Night: Chef's Table",
