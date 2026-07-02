@@ -6,11 +6,12 @@ picks up where we left off. Memory does not persist on its own; this file does.
 
 _Last updated: 2026-07-01_
 
-> **2026-07-01 — cash raise for family visit:** user needed ~$500 cash. Sold ALL
-> NVDA, ISRG, VXUS + $45 VOO (queued for 7/2 open, ~$507). All at small losses /
-> flat → ~$27 tax-loss harvested, no gains realized. PLTR kept (rallying, 1 sh
-> locked by $167 GTC order). Remaining book: VOO ~$210 + XLF ~$208 + PLTR ~$138.
-> NVDA $247 and ISRG $495 alerts are now MOOT — user should delete them.
+> **2026-07-01 — cash raise REVERSED:** user queued ~$507 of sells (all NVDA,
+> ISRG, VXUS + $45 VOO) for a cash need, then changed mind same evening — all
+> four cancels accepted by broker before the 7/2 open (user to visually confirm
+> in app). Full 6-position book stands: NVDA, PLTR, VOO, XLF, ISRG, VXUS.
+> Mandate reaffirmed: 10-year horizon, grow the money, no selling for cash.
+> NVDA $247 / PLTR $167 / ISRG $495 alerts REMAIN ACTIVE.
 > Earlier (6/26-6/29): user de-leveraged the MAIN account — sold TSLA/HOOD/AAPL,
 > paid off margin entirely; main account now holds only 1 SPCX share (~$159).
 > SPCX late-July lockup watch still stands.
