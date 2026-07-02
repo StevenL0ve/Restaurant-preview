@@ -537,8 +537,16 @@ input, textarea { font-family: inherit; }
 
 /* ---- Auth --------------------------------------------------------------- */
 
-.auth { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(160deg, var(--brand-50), var(--bg)); }
-.auth-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 34px 28px; width: min(400px, 100%); box-shadow: var(--shadow); text-align: center; }
+.auth {
+  min-height: 100vh;
+  display: grid; place-items: center;
+  padding: 24px;
+  /* The storefront welcomes you in, under a soft sage wash. */
+  background:
+    linear-gradient(165deg, rgba(101, 126, 105, 0.78) 0%, rgba(44, 54, 42, 0.55) 60%, rgba(44, 54, 42, 0.72) 100%),
+    url("/photos/storefront.jpeg") center / cover no-repeat fixed;
+}
+.auth-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 34px 28px; width: min(400px, 100%); box-shadow: 0 18px 50px rgba(20, 28, 20, 0.35); text-align: center; }
 .auth-logo { width: 92px; height: 92px; margin: 0 auto; display: block; border-radius: 24px; object-fit: cover; box-shadow: var(--shadow); }
 .auth-title { font-family: var(--display); font-weight: 400; font-size: 27px; color: var(--brand-600); margin-top: 14px; }
 .auth-sub { color: var(--brand); font-weight: 600; font-size: 13.5px; margin-top: 4px; }
