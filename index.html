@@ -23,8 +23,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&display=swap" rel="stylesheet" />
 
     <title>CGP — The Common Ground Projects</title>
+
+    <!-- Launch splash: brand sage (#657e69, same as the logo background) with
+         the white lettering, painted before any JS loads and faded out by
+         main.tsx once the app has mounted. -->
+    <style>
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        background: #657e69;
+        display: grid; place-items: center;
+        transition: opacity 0.45s ease;
+      }
+      #splash img {
+        width: min(72vw, 360px); display: block;
+        /* The JPEG carries a faint vignette; feather it into the background. */
+        -webkit-mask-image: radial-gradient(closest-side, #000 82%, transparent 100%);
+        mask-image: radial-gradient(closest-side, #000 82%, transparent 100%);
+      }
+      #splash.done { opacity: 0; pointer-events: none; }
+    </style>
   </head>
   <body>
+    <div id="splash" aria-hidden="true">
+      <img src="/brand/logo.jpeg" alt="" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -6,13 +6,14 @@ const config: CapacitorConfig = {
   appId: "com.commongroundprojects.cgp",
   appName: "CGP",
   webDir: "dist",
-  backgroundColor: "#efecdd",
+  // Launch in brand sage (matches the splash + logo background).
+  backgroundColor: "#657e69",
   ios: {
     contentInset: "always",
-    backgroundColor: "#efecdd",
+    backgroundColor: "#657e69",
   },
   android: {
-    backgroundColor: "#efecdd",
+    backgroundColor: "#657e69",
   },
 };
 
