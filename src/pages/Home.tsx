@@ -87,6 +87,21 @@ export function Home() {
       )}
 
       <section className="section">
+        <div className="section-head">
+          <h2 className="section-title">Seasonal specials</h2>
+          <Link to="/menu" className="link">Full menu</Link>
+        </div>
+        <div className="specials-row">
+          {state.menu.filter((m) => m.image).map((m) => (
+            <Link key={m.id} to="/menu" className="special-card" aria-label={`${m.name} — ${money(m.price)}`}>
+              <img src={m.image} alt={m.name} />
+              <span className="special-price">{money(m.price)}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
         <h2 className="section-title">Order &amp; sip</h2>
         <div className="venue-grid">
           {orderVenues.map((v) => (

@@ -21,17 +21,20 @@ import { applyPunches } from "../lib/punch";
 const STORAGE_KEY = "cgp.v1";
 
 function load(): AppState {
+  const seed = buildSeed();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      // Merge over a fresh seed so state saved by an older build (missing keys
-      // added later) can never crash the app.
-      return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
+      const saved = JSON.parse(raw) as Partial<AppState>;
+      // The user's data (cart, orders, bookings, punches, waivers) persists,
+      // but the catalog (menu + class schedule) always comes fresh from the
+      // seed so menu updates reach returning users.
+      return { ...seed, ...saved, menu: seed.menu, classes: seed.classes } as AppState;
     }
   } catch {
     /* fall through to seed */
   }
-  return buildSeed();
+  return seed;
 }
 
 function uid(prefix: string): string {

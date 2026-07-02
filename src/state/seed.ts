@@ -18,6 +18,9 @@ function at(daysFromNow: number, hour: number, min = 0): string {
 // The real Common Grounds drinks menu. `noPunch` marks the freebies for the
 // littles & fur babies — everything else stamps the punch card.
 const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean })[] = [
+  { category: "Specials", name: "Knafehgato", description: "Knafeh-style affogato — vanilla ice cream, crisp kataifi, hot espresso poured tableside.", price: 7.5, tags: ["seasonal", "popular"], image: "/photos/special-knafehgato.jpeg" },
+  { category: "Specials", name: "Fig Vanilla Matcha", description: "Iced ceremonial matcha, fig jam, madagascar vanilla bean, milk of choice.", price: 7.0, tags: ["seasonal"], image: "/photos/special-fig-matcha.jpeg" },
+  { category: "Specials", name: "Jamaica Sumac Soda", description: "Sparkling hibiscus (jamaica) with a bright sumac dust, over ice.", price: 5.5, tags: ["seasonal", "vegan", "gf"], image: "/photos/special-jamaica-soda.jpeg" },
   { category: "Signature", name: "Ube Latte", description: "Ube, coconut condensed milk, milk of choice.", price: 5.75, tags: ["popular"] },
   { category: "Signature", name: "CGP Matcha Latte", description: "Ceremonial grade matcha, agave, persian pistachio cold foam, milk of choice.", price: 6.25, tags: ["popular"] },
   { category: "Signature", name: "Tres Leches Cold Brew", description: "Cold brew, madagascar vanilla bean cold foam, coconut condensed milk, cinnamon dust.", price: 6.75, tags: [] },
@@ -54,16 +57,22 @@ const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
   { category: "Sweets", name: "Olive Oil Cake", description: "Citrus glaze, crème fraîche.", price: 9.0, tags: ["popular"] },
 ];
 
+// Stable, name-derived ids so a saved cart never re-points to a different
+// item when the menu is reordered or extended.
+function slug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 function buildMenu(): MenuItem[] {
-  const cafe = CAFE.map(({ noPunch, ...m }, i) => ({
+  const cafe = CAFE.map(({ noPunch, ...m }) => ({
     ...m,
-    id: `mc-${i + 1}`,
+    id: `mc-${slug(m.name)}`,
     venue: "cafe" as const,
     earnsPunch: !noPunch,
   }));
-  const kitchen = KITCHEN.map((m, i) => ({
+  const kitchen = KITCHEN.map((m) => ({
     ...m,
-    id: `mk-${i + 1}`,
+    id: `mk-${slug(m.name)}`,
     venue: "restaurant" as const,
     earnsPunch: false,
   }));

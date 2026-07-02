@@ -20,12 +20,13 @@ export const VENUES: Record<Venue, { name: string; short: string; icon: string; 
 export interface MenuItem {
   id: ID;
   venue: "restaurant" | "cafe";
-  category: string; // e.g. "Espresso", "Bowls", "Pastries"
+  category: string; // e.g. "Signature", "Bowls", "Specials"
   name: string;
   description: string;
   price: number;
   tags: string[]; // "vegan", "gf", "seasonal", "popular"
   earnsPunch: boolean; // café drinks earn a punch-card stamp
+  image?: string; // promo photo shown on the menu card
 }
 
 export interface CartLine {

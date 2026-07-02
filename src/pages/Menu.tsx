@@ -79,6 +79,7 @@ export function Menu() {
             <div className="stack">
               {items.map((item) => (
                 <div key={item.id} className="card menu-item">
+                  {item.image && <img className="menu-item-photo" src={item.image} alt={item.name} />}
                   <div className="menu-item-body">
                     <div className="menu-item-top">
                       <span className="menu-item-name">{item.name}</span>
