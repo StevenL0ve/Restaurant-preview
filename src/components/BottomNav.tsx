@@ -9,16 +9,16 @@ import { tapLight } from "../lib/haptics";
 interface Tab {
   to: string;
   label: string;
-  icon: string;
+  img: string; // custom white-line icon sitting on the dark green bar
   end?: boolean;
   badge?: "cart" | "rewards";
 }
 
 const primary: Tab[] = [
-  { to: "/", label: "Home", icon: "🏡", end: true },
-  { to: "/menu", label: "Order", icon: "🍽️" },
-  { to: "/book", label: "Book", icon: "🧘" },
-  { to: "/rewards", label: "Punches", icon: "🎟️", badge: "rewards" },
+  { to: "/", label: "Home", img: "/brand/nav-home.png", end: true },
+  { to: "/menu", label: "Order", img: "/brand/nav-order.png" },
+  { to: "/book", label: "Book", img: "/brand/nav-book.png" },
+  { to: "/rewards", label: "Punches", img: "/brand/nav-punch.png", badge: "rewards" },
 ];
 
 const more = [
@@ -79,7 +79,7 @@ export function BottomNav() {
               }}
             >
               <span className="tab-icon">
-                {it.icon}
+                <img className="tab-img" src={it.img} alt="" aria-hidden width={26} height={26} />
                 {count > 0 && <span className="tab-badge">{count}</span>}
               </span>
               <span className="tab-label">{it.label}</span>

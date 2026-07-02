@@ -634,11 +634,12 @@ input, textarea { font-family: inherit; }
   .sidebar { display: none; }
   .content { padding-bottom: 96px; max-width: 640px; }
 
+  /* Deep brand green bar with the custom white-line icons. */
   .bottom-nav {
     display: flex;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--card);
-    border-top: 1px solid var(--line);
+    background: #42543e;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 40;
   }
@@ -646,14 +647,17 @@ input, textarea { font-family: inherit; }
     flex: 1;
     border: none; background: transparent;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
-    color: var(--muted); font-size: 10.5px; font-weight: 600;
+    color: rgba(239, 236, 221, 0.6); font-size: 10.5px; font-weight: 600;
     padding: 4px 0;
   }
-  .tab.active { color: var(--brand); }
-  .tab-icon { font-size: 21px; position: relative; }
+  .tab.active { color: #fff; }
+  .tab-icon { font-size: 21px; position: relative; line-height: 1; color: rgba(239, 236, 221, 0.75); }
+  .tab.active .tab-icon { color: #fff; }
+  .tab-img { width: 26px; height: 26px; display: block; opacity: 0.62; transition: opacity 0.15s ease; }
+  .tab.active .tab-img { opacity: 1; }
   .tab-badge {
     position: absolute; top: -5px; right: -9px;
-    background: var(--brand); color: #fff;
+    background: var(--gold); color: #fff;
     font-size: 10px; font-weight: 700;
     min-width: 16px; height: 16px; border-radius: 8px;
     display: grid; place-items: center; padding: 0 4px;
