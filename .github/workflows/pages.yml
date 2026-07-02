@@ -1,8 +1,12 @@
 name: Deploy · GitHub Pages
 
-# Publishes the PWA build to GitHub Pages so ORSync can be used (and installed
-# via "Add to Home Screen") on a phone without waiting for TestFlight.
+# Publishes the PWA build so ORSync can be used (and installed via "Add to
+# Home Screen") on a phone without waiting for TestFlight.
 # URL: https://stevenl0ve.github.io/Restaurant-preview/
+#
+# Uses the gh-pages-branch flow (not actions/deploy-pages) because the
+# github-pages *environment* is protected to the default branch, which
+# rejects deployments from this feature branch before the job even starts.
 
 on:
   push:
@@ -10,9 +14,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -21,9 +24,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,17 +36,31 @@ jobs:
         run: |
           npm ci
           npm run build
+          # Pages runs Jekyll by default, which drops files/dirs it dislikes.
+          touch dist/.nojekyll
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Publish dist to the gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
 
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Ensure Pages is enabled and serving gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          create=$(curl -s -o /tmp/create.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" \
+            -d '{"source":{"branch":"gh-pages","path":"/"}}')
+          echo "create pages: HTTP $create"
+          if [ "$create" != "201" ]; then
+            update=$(curl -s -o /tmp/update.json -w "%{http_code}" -X PUT \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pages" \
+              -d '{"source":{"branch":"gh-pages","path":"/"}}')
+            echo "update pages source: HTTP $update"
+          fi
+          echo "Site (may take a minute on first deploy):"
+          echo "https://stevenl0ve.github.io/Restaurant-preview/"
