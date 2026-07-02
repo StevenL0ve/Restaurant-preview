@@ -46,7 +46,7 @@ jobs:
 
       - name: Archive (cloud-managed signing)
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
@@ -65,7 +65,7 @@ jobs:
 
       - name: Export & upload to TestFlight
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
