@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useStore, upcomingBookings, activeOrders } from "../state/store";
+import { orderStatus } from "../lib/orders";
 import { VENUES, type Venue } from "../types";
 import { money, fullDate, time } from "../lib/format";
 
@@ -59,7 +60,7 @@ export function Home() {
                   <div className="row-title">Order #{o.id.slice(-4).toUpperCase()}</div>
                   <div className="row-sub">{o.lines.reduce((n, l) => n + l.qty, 0)} items · {money(o.total)}</div>
                 </div>
-                <span className={`status status-${o.status}`}>{o.status}</span>
+                <span className={`status status-${orderStatus(o)}`}>{orderStatus(o)}</span>
               </Link>
             ))}
           </div>

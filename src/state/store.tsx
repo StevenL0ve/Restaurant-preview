@@ -17,6 +17,7 @@ import type {
 } from "../types";
 import { buildSeed } from "./seed";
 import { applyPunches } from "../lib/punch";
+import { orderStatus } from "../lib/orders";
 
 const STORAGE_KEY = "cgp.v1";
 
@@ -267,7 +268,7 @@ export function upcomingBookings(s: AppState): AppState["bookings"] {
 }
 
 export function activeOrders(s: AppState): Order[] {
-  return s.orders.filter((o) => o.status !== "completed");
+  return s.orders.filter((o) => orderStatus(o) !== "completed");
 }
 
 // The classes a venue offers, upcoming first.
