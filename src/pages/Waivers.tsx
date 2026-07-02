@@ -38,6 +38,10 @@ export function Waivers() {
         </div>
       </div>
 
+      <div className="photo-banner">
+        <img src="/photos/yoga-doors.jpeg" alt="The carved doors into The Studio" />
+      </div>
+
       <div className="stack">
         {venues.map((v) => {
           const signed = state.waivers.find((w) => w.venue === v);

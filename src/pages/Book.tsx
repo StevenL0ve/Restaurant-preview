@@ -9,6 +9,13 @@ import { tapLight, notifySuccess } from "../lib/haptics";
 type BookVenue = "yoga" | "zenden" | "massage";
 const filters: BookVenue[] = ["yoga", "zenden", "massage"];
 
+// Each venue's banner is its own space.
+const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
+  yoga: { src: "/photos/yoga.jpeg", alt: "A seated class in The Studio" },
+  zenden: { src: "/photos/zenden.jpeg", alt: "The Zen Den sauna" },
+  massage: { src: "/photos/interior.jpeg", alt: "The Common Ground community space" },
+};
+
 export function Book() {
   const { user } = useAuth();
   const { state, bookClass, signWaiver } = useStore();
@@ -66,7 +73,7 @@ export function Book() {
       </div>
 
       <div className="photo-banner">
-        <img src="/photos/interior.jpeg" alt="The Common Ground community space" />
+        <img src={VENUE_PHOTO[venue].src} alt={VENUE_PHOTO[venue].alt} />
       </div>
 
       <div className="segmented">
