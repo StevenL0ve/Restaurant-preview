@@ -37,6 +37,19 @@ jobs:
       - name: Sync Capacitor iOS shell
         run: npx cap sync ios
 
+      # Apple requires the iOS 26 SDK (Xcode 26+) for App Store uploads; the
+      # runner's default is older, so pick the newest Xcode 26 on the image.
+      - name: Select Xcode 26
+        run: |
+          ls -d /Applications/Xcode*.app
+          XCODE_APP=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_APP" ]; then
+            XCODE_APP=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          fi
+          echo "Using $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+
       - name: Write App Store Connect API key
         env:
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
