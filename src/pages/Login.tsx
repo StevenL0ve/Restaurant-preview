@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../state/auth";
 
-// Login + create-account gate. Phase 1 uses local accounts; the same screen
-// will drive Supabase auth in Phase 2 with no UI change.
+// Login + create-account gate. Local accounts for now; the same screen can
+// drive a hosted auth backend later with no UI change.
 export function Login() {
   const { signIn, signUp, bioAvailable, bioEnabled, bioUnlock } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -29,17 +29,16 @@ export function Login() {
   async function faceId() {
     setError(null);
     const ok = await bioUnlock();
-    // With the local backend there's no stored remote session to restore yet;
-    // once Supabase is wired, a successful unlock resumes the saved session.
     if (!ok) setError("Face ID could not verify you. Use your password.");
   }
 
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="CoParent" width={64} height={64} />
-        <h1 className="auth-title">CoParent</h1>
-        <p className="auth-sub">Calm, organized co-parenting</p>
+        <span className="auth-logo" aria-hidden>CG</span>
+        <h1 className="auth-title">CGP</h1>
+        <p className="auth-sub">The Common Ground Projects</p>
+        <p className="auth-lede">Café, kitchen, yoga studio &amp; the Zen Den — all in one place.</p>
 
         <div className="auth-tabs">
           <button
@@ -88,7 +87,7 @@ export function Login() {
         )}
 
         <p className="auth-foot">
-          Your data is private to you and {mode === "signup" ? "your co-parent once you connect" : "your family"}.
+          Your account keeps your orders, punch card, and bookings in sync.
         </p>
       </div>
     </div>

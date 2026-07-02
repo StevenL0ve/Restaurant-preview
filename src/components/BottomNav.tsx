@@ -1,34 +1,31 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useStore, unreadCount, pendingRequests } from "../state/store";
+import { useStore, cartCount } from "../state/store";
 import { tapLight } from "../lib/haptics";
 
-// Mobile-only bottom tab bar. On phones the icon-rail sidebar feels like a
-// cramped desktop app; a bottom nav is the native pattern people expect from a
-// real phone app — which is what this competes with.
+// Mobile-only bottom tab bar — the native pattern people expect from a phone
+// app. The primary services sit on the bar; everything else lives behind "More".
 
 interface Tab {
   to: string;
   label: string;
   icon: string;
-  img?: string; // optional custom image icon (overrides the emoji)
   end?: boolean;
-  badge?: "unread" | "requests";
+  badge?: "cart" | "rewards";
 }
 
 const primary: Tab[] = [
-  { to: "/", label: "Home", icon: "🏠", img: "/brand/nav-home.png", end: true },
-  { to: "/messages", label: "Messages", icon: "💬", img: "/brand/nav-messages.png", badge: "unread" },
-  { to: "/calendar", label: "Calendar", icon: "📅", img: "/brand/nav-calendar.png", badge: "requests" },
-  { to: "/expenses", label: "Expenses", icon: "💵", img: "/brand/nav-expenses.png" },
+  { to: "/", label: "Home", icon: "🏡", end: true },
+  { to: "/menu", label: "Order", icon: "🍽️" },
+  { to: "/book", label: "Book", icon: "🧘" },
+  { to: "/rewards", label: "Punches", icon: "🎟️", badge: "rewards" },
 ];
 
 const more = [
-  { to: "/assistant", label: "Ask CoParent", icon: "✨" },
-  { to: "/journal", label: "Journal", icon: "📔" },
-  { to: "/packing", label: "Packing list", icon: "🧳" },
-  { to: "/info", label: "Info Bank", icon: "🗂️" },
-  { to: "/search", label: "Search", icon: "🔍" },
+  { to: "/cart", label: "Cart", icon: "🛒", badge: "cart" as const },
+  { to: "/orders", label: "My Orders", icon: "🧾" },
+  { to: "/bookings", label: "My Bookings", icon: "📅" },
+  { to: "/waivers", label: "Waivers", icon: "📝" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ] as const;
 
@@ -36,10 +33,9 @@ export function BottomNav() {
   const { state } = useStore();
   const [sheetOpen, setSheetOpen] = useState(false);
   const location = useLocation();
-  const unread = unreadCount(state);
-  const requests = pendingRequests(state).length;
+  const cart = cartCount(state);
+  const rewards = state.punch.rewards;
 
-  // Close the "More" sheet whenever the route changes.
   useEffect(() => setSheetOpen(false), [location.pathname]);
 
   const moreActive = more.some((m) => m.to === location.pathname);
@@ -49,23 +45,26 @@ export function BottomNav() {
       {sheetOpen && <div className="sheet-scrim" onClick={() => setSheetOpen(false)} />}
       {sheetOpen && (
         <div className="more-sheet" role="menu">
-          {more.map((m) => (
-            <NavLink
-              key={m.to}
-              to={m.to}
-              className={({ isActive }) => "sheet-item" + (isActive ? " active" : "")}
-            >
-              <span className="sheet-icon">{m.icon}</span>
-              {m.label}
-            </NavLink>
-          ))}
+          {more.map((m) => {
+            const c = "badge" in m && m.badge === "cart" ? cart : 0;
+            return (
+              <NavLink
+                key={m.to}
+                to={m.to}
+                className={({ isActive }) => "sheet-item" + (isActive ? " active" : "")}
+              >
+                <span className="sheet-icon">{m.icon}</span>
+                {m.label}
+                {c > 0 && <span className="tab-badge sheet-badge">{c}</span>}
+              </NavLink>
+            );
+          })}
         </div>
       )}
 
       <nav className="bottom-nav">
         {primary.map((it) => {
-          const count =
-            it.badge === "unread" ? unread : it.badge === "requests" ? requests : 0;
+          const count = it.badge === "cart" ? cart : it.badge === "rewards" ? rewards : 0;
           return (
             <NavLink
               key={it.to}
@@ -78,11 +77,7 @@ export function BottomNav() {
               }}
             >
               <span className="tab-icon">
-                {it.img ? (
-                  <img className="tab-img" src={it.img} alt="" aria-hidden width={28} height={28} />
-                ) : (
-                  it.icon
-                )}
+                {it.icon}
                 {count > 0 && <span className="tab-badge">{count}</span>}
               </span>
               <span className="tab-label">{it.label}</span>
@@ -99,7 +94,8 @@ export function BottomNav() {
           aria-expanded={sheetOpen}
         >
           <span className="tab-icon">
-            <img className="tab-img" src="/brand/nav-more.png" alt="" aria-hidden width={28} height={28} />
+            ⋯
+            {cart > 0 && <span className="tab-badge">{cart}</span>}
           </span>
           <span className="tab-label">More</span>
         </button>

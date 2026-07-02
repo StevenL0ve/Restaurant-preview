@@ -1,9 +1,9 @@
 {
-  "name": "coparent",
+  "name": "cgp",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "CoParent — a modern, fast, free co-parenting app. A better OurFamilyWizard.",
+  "description": "CGP — The Common Ground Projects app: café & kitchen ordering, punch-card rewards, waivers, and session booking for the yoga studio, Zen Den & massage.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -29,6 +29,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.2.1",
     "@resvg/resvg-js": "^2.6.2",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

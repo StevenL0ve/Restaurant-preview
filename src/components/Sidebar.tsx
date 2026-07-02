@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useStore, unreadCount, pendingRequests } from "../state/store";
+import { useStore, cartCount } from "../state/store";
 import { APP_VERSION } from "../version";
 
 interface NavItem {
@@ -7,40 +7,39 @@ interface NavItem {
   label: string;
   icon: string;
   end?: boolean;
-  badge?: "unread" | "requests";
+  badge?: "cart" | "rewards";
 }
 
 const items: NavItem[] = [
-  { to: "/", label: "Home", icon: "🏠", end: true },
-  { to: "/assistant", label: "Ask CoParent", icon: "✨" },
-  { to: "/messages", label: "Messages", icon: "💬", badge: "unread" },
-  { to: "/calendar", label: "Calendar", icon: "📅", badge: "requests" },
-  { to: "/expenses", label: "Expenses", icon: "💵" },
-  { to: "/journal", label: "Journal", icon: "📔" },
-  { to: "/packing", label: "Packing list", icon: "🧳" },
-  { to: "/info", label: "Info Bank", icon: "🗂️" },
+  { to: "/", label: "Home", icon: "🏡", end: true },
+  { to: "/menu", label: "Menu & Order", icon: "🍽️" },
+  { to: "/cart", label: "Cart", icon: "🛒", badge: "cart" },
+  { to: "/rewards", label: "Punch Card", icon: "🎟️", badge: "rewards" },
+  { to: "/book", label: "Book a Session", icon: "🧘" },
+  { to: "/bookings", label: "My Bookings", icon: "📅" },
+  { to: "/waivers", label: "Waivers", icon: "📝" },
+  { to: "/orders", label: "My Orders", icon: "🧾" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export function Sidebar() {
   const { state } = useStore();
-  const unread = unreadCount(state);
-  const requests = pendingRequests(state).length;
+  const cart = cartCount(state);
+  const rewards = state.punch.rewards;
 
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="CoParent logo" width={38} height={38} />
+        <span className="brand-mark" aria-hidden>CG</span>
         <div>
-          <div className="brand-name">CoParent</div>
-          <div className="brand-tag">Calm, organized co-parenting</div>
+          <div className="brand-name">CGP</div>
+          <div className="brand-tag">The Common Ground Projects</div>
         </div>
       </div>
 
       <nav className="nav">
         {items.map((it) => {
-          const count =
-            it.badge === "unread" ? unread : it.badge === "requests" ? requests : 0;
+          const count = it.badge === "cart" ? cart : it.badge === "rewards" ? rewards : 0;
           return (
             <NavLink
               key={it.to}
@@ -57,12 +56,12 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <span className="pill pill-free">100% free</span>
+        <span className="pill pill-free">Community owned</span>
         <p className="footnote">
-          No subscription. Your data stays on your device and you can export or
-          delete it anytime.
+          One membership for the café, kitchen, studio &amp; Zen Den. Order, earn
+          punches, and book your next session.
         </p>
-        <p className="version">CoParent v{APP_VERSION}</p>
+        <p className="version">CGP v{APP_VERSION}</p>
       </div>
     </aside>
   );

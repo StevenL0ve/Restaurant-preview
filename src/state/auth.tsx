@@ -23,9 +23,9 @@ export interface SessionUser {
   email: string;
 }
 
-const ACCOUNTS_KEY = "coparent.accounts.v1";
-const SESSION_KEY = "coparent.session.v1";
-const BIO_KEY = "coparent.biometric.v1";
+const ACCOUNTS_KEY = "cgp.accounts.v1";
+const SESSION_KEY = "cgp.session.v1";
+const BIO_KEY = "cgp.biometric.v1";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -119,8 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       saveAccounts(accounts);
       localStorage.setItem(SESSION_KEY, key);
-      // Brand-new account → run the family setup wizard once.
-      localStorage.setItem("coparent.needsSetup", "1");
       setUser({ name: name.trim(), email: key });
     },
 
