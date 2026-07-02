@@ -76,23 +76,22 @@ jobs:
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             MARKETING_VERSION=1.0
 
-      - name: Export & upload to TestFlight
+      - name: Export signed IPA
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          cat > build/ExportOptions.plist <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0"><dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>upload</string>
-            <key>teamID</key><string>$APPLE_TEAM_ID</string>
-            <key>signingStyle</key><string>automatic</string>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-          </dict></plist>
-          PLIST
+          python3 - <<'PY'
+          import plistlib, os
+          with open("build/ExportOptions.plist", "wb") as f:
+              plistlib.dump({
+                  "method": "app-store-connect",
+                  "signingStyle": "automatic",
+                  "teamID": os.environ["APPLE_TEAM_ID"],
+              }, f)
+          PY
+          set +e
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportOptionsPlist build/ExportOptions.plist \
@@ -101,3 +100,34 @@ jobs:
             -authenticationKeyPath "$HOME/asc/AuthKey.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "::group::Xcode distribution logs"
+            for d in $(find /var/folders -type d -name "*.xcdistributionlogs" 2>/dev/null); do
+              for f in "$d"/*.log; do echo "== $f =="; tail -n 150 "$f"; done
+            done
+            echo "::endgroup::"
+            exit $STATUS
+          fi
+          ls -la build/export
+
+      - name: Upload to TestFlight (fastlane pilot)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          key = open(os.path.expanduser("~/asc/AuthKey.p8")).read()
+          with open(os.path.expanduser("~/asc/key.json"), "w") as f:
+              json.dump({"key_id": os.environ["ASC_KEY_ID"],
+                         "issuer_id": os.environ["ASC_ISSUER_ID"],
+                         "key": key, "in_house": False}, f)
+          PY
+          IPA=$(ls build/export/*.ipa | head -1)
+          echo "Uploading $IPA"
+          fastlane pilot upload \
+            --ipa "$IPA" \
+            --api_key_path "$HOME/asc/key.json" \
+            --skip_waiting_for_build_processing true \
+            --skip_submission true
