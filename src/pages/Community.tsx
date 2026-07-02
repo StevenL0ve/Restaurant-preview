@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useAuth } from "../state/auth";
 import { useStore, upcomingEvents } from "../state/store";
 import { VENUES, type Venue } from "../types";
+import { postableVenues } from "../lib/roles";
 import { requestEventAlerts, notify } from "../lib/notify";
 import { fullDate, time } from "../lib/format";
 import { tapLight, notifySuccess } from "../lib/haptics";
-
-const EVENT_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "zenden"];
 
 export function Community() {
   const { user } = useAuth();
@@ -14,10 +13,13 @@ export function Community() {
   const events = upcomingEvents(state);
   const [alertStatus, setAlertStatus] = useState<string | null>(null);
 
+  // Owners post for their own business; IT posts anywhere; members can't.
+  const allowedVenues = postableVenues(user?.role);
+
   // "Post an event" form
   const [formOpen, setFormOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [venue, setVenue] = useState<Venue>("cafe");
+  const [venue, setVenue] = useState<Venue>(allowedVenues[0] ?? "cafe");
   const [when, setWhen] = useState("");
   const [desc, setDesc] = useState("");
   const [poster, setPoster] = useState<string | undefined>();
@@ -123,13 +125,13 @@ export function Community() {
         </div>
       </section>
 
-      {/* Posting is staff-only: the form only exists for admin accounts. */}
-      {!user?.isAdmin && (
+      {/* Posting is owner/IT-only: the form only exists for those roles. */}
+      {allowedVenues.length === 0 && (
         <p className="footnote" style={{ textAlign: "center" }}>
           Events are posted by CGP staff.
         </p>
       )}
-      {user?.isAdmin && (
+      {allowedVenues.length > 0 && (
       <div className="card">
         <button className="btn btn-ghost btn-block" onClick={() => setFormOpen((o) => !o)}>
           {formOpen ? "Close" : "📌 Post an event"}
@@ -143,7 +145,7 @@ export function Community() {
             <label className="field">
               <span>Where</span>
               <select value={venue} onChange={(e) => setVenue(e.target.value as Venue)} className="select">
-                {EVENT_VENUES.map((v) => (
+                {allowedVenues.map((v) => (
                   <option key={v} value={v}>{VENUES[v].name}</option>
                 ))}
               </select>

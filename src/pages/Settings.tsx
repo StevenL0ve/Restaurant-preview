@@ -1,12 +1,30 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
+import { ROLE_LABEL } from "../lib/roles";
 import { memberId } from "../lib/wallet";
 
 export function Settings() {
   const { state, resetDemo, clearData } = useStore();
-  const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
+  const { user, signOut, changePassword, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNext, setPwNext] = useState("");
+  const [pwStatus, setPwStatus] = useState<string | null>(null);
+
+  async function submitPassword() {
+    setPwStatus(null);
+    try {
+      await changePassword(pwCurrent, pwNext);
+      setPwStatus("Password updated.");
+      setPwCurrent("");
+      setPwNext("");
+      setPwOpen(false);
+    } catch (err) {
+      setPwStatus(err instanceof Error ? err.message : "Could not update password.");
+    }
+  }
 
   const counts = {
     orders: state.orders.length,
@@ -34,6 +52,7 @@ export function Settings() {
               <div className="muted small">{user.email}</div>
               <div className="muted small">Member {memberId(user.email)}</div>
             </div>
+            {user.isAdmin && <span className="pill pill-ok" style={{ marginLeft: "auto" }}>{ROLE_LABEL[user.role]}</span>}
           </div>
           <label className="toggle-row">
             <span>
@@ -48,8 +67,27 @@ export function Settings() {
             />
           </label>
           <div className="form-actions">
+            <button className="btn" onClick={() => { setPwOpen((o) => !o); setPwStatus(null); }}>
+              Change password
+            </button>
             <button className="btn" onClick={signOut}>Sign out</button>
           </div>
+          {pwOpen && (
+            <div className="auth-form">
+              <label className="field">
+                <span>Current password</span>
+                <input type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} autoComplete="current-password" />
+              </label>
+              <label className="field">
+                <span>New password</span>
+                <input type="password" value={pwNext} onChange={(e) => setPwNext(e.target.value)} autoComplete="new-password" />
+              </label>
+              <button className="btn btn-primary" disabled={!pwCurrent || pwNext.length < 6} onClick={submitPassword}>
+                Update password
+              </button>
+            </div>
+          )}
+          {pwStatus && <p className="wallet-status">{pwStatus}</p>}
         </section>
       )}
 

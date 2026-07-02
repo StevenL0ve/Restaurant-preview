@@ -1,16 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { isAdminEmail } from "./auth";
+import { STAFF_DIRECTORY } from "./auth";
+import { postableVenues, ROLE_LABEL } from "../lib/roles";
 
-describe("isAdminEmail", () => {
-  it("grants staff on the CGP domain", () => {
-    expect(isAdminEmail("events@thecommongroundprojects.com")).toBe(true);
-    expect(isAdminEmail("OWNER@TheCommonGroundProjects.com")).toBe(true);
+describe("staff directory", () => {
+  it("provisions one login per ownership category plus IT support", () => {
+    const roles = STAFF_DIRECTORY.map((s) => s.role).sort();
+    expect(roles).toEqual(["cafe", "it", "massage", "restaurant", "yoga", "zenden"]);
   });
-  it("grants allowlisted demo admin", () => {
-    expect(isAdminEmail("admin@cgp.test")).toBe(true);
+  it("includes the IT support login", () => {
+    expect(STAFF_DIRECTORY.find((s) => s.role === "it")?.email).toBe("bkborngaraised@gmail.com");
   });
-  it("denies regular members", () => {
-    expect(isAdminEmail("sam@example.com")).toBe(false);
-    expect(isAdminEmail("thecommongroundprojects.com@gmail.com")).toBe(false);
+  it("labels every role", () => {
+    for (const s of STAFF_DIRECTORY) expect(ROLE_LABEL[s.role]).toBeTruthy();
+  });
+});
+
+describe("postableVenues", () => {
+  it("members cannot post anywhere", () => {
+    expect(postableVenues("member")).toEqual([]);
+    expect(postableVenues(undefined)).toEqual([]);
+  });
+  it("owners post only for their own business", () => {
+    expect(postableVenues("cafe")).toEqual(["cafe"]);
+    expect(postableVenues("yoga")).toEqual(["yoga"]);
+  });
+  it("IT posts anywhere", () => {
+    expect(postableVenues("it")).toHaveLength(5);
   });
 });

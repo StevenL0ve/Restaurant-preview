@@ -28,8 +28,22 @@ Waivers screen anytime).
   downloads the pass payload instead of faking success.
 - **Booking** — capacity-aware sessions; booking a waiver-required venue for
   the first time opens the waiver right in the flow.
-- **Accounts** — local email/password accounts with optional Face ID unlock,
-  structured to swap to a hosted backend without UI changes.
+- **Accounts & roles** — local email/password accounts with optional Face ID
+  unlock, structured to swap to a hosted backend without UI changes. New
+  sign-ups are members; ownership roles come from a provisioned staff
+  directory. Owners post Community events for their own business; IT support
+  administers everything.
+
+  | Login | Role | Initial password |
+  |---|---|---|
+  | `bkborngaraised@gmail.com` | IT Support | `CGP-IT-2026!` |
+  | `cafe@thecommongroundprojects.com` | Café Owner | `CGP-Cafe-2026!` |
+  | `figolive@thecommongroundprojects.com` | Fig + Olive Owner | `CGP-FigOlive-2026!` |
+  | `yoga@thecommongroundprojects.com` | Studio Owner | `CGP-Studio-2026!` |
+  | `zenden@thecommongroundprojects.com` | Zen Den Owner | `CGP-ZenDen-2026!` |
+  | `massage@thecommongroundprojects.com` | Massage Owner | `CGP-Massage-2026!` |
+
+  Rotate the initial password on first sign-in (Settings → Change password).
 
 ## Stack
 
