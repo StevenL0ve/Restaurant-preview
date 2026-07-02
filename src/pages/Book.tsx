@@ -56,6 +56,8 @@ export function Book() {
 
   return (
     <div className="page">
+      {/* Storefront photo washing through behind the whole booking screen. */}
+      <div className="page-photo-bg" aria-hidden />
       <div className="page-head">
         <div>
           <h1 className="page-title">Book a Session</h1>

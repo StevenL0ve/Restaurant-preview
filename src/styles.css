@@ -215,6 +215,20 @@ input, textarea { font-family: inherit; }
 .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .page-title { font-family: var(--display); font-weight: 400; font-size: 27px; letter-spacing: 0.4px; color: var(--brand-600); }
 
+/* Fixed full-viewport photo backdrop, washed with cream so cards & text
+   stay readable. Rendered by pages that opt in (booking). */
+.page-photo-bg {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(239, 236, 221, 0.93) 0%, rgba(239, 236, 221, 0.85) 45%, rgba(239, 236, 221, 0.95) 100%),
+    url("/photos/storefront.jpeg") center / cover no-repeat fixed;
+}
+[data-theme="dark"] .page-photo-bg {
+  background:
+    linear-gradient(180deg, rgba(18, 22, 15, 0.93) 0%, rgba(18, 22, 15, 0.87) 45%, rgba(18, 22, 15, 0.95) 100%),
+    url("/photos/storefront.jpeg") center / cover no-repeat fixed;
+}
+
 /* Full-width brand photo banners (menu, booking). */
 .photo-banner {
   border-radius: var(--radius);
