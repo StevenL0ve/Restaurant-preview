@@ -1,9 +1,35 @@
 # Getting CGP onto TestFlight
 
 The iOS project is scaffolded and ready in `ios/` (Capacitor shell wrapping the
-web build, app id `com.commongroundprojects.cgp`). Building and uploading to
-TestFlight has to happen on a Mac with Xcode — Apple does not allow iOS builds
-from Linux/Windows.
+web build, app id `com.commongroundprojects.cgp`).
+
+## Option A — no Mac needed (GitHub Actions)
+
+`.github/workflows/testflight.yml` builds and uploads from a GitHub macOS
+runner with cloud-managed signing. One-time setup:
+
+1. **App Store Connect API key** — appstoreconnect.apple.com → Users and
+   Access → Integrations → App Store Connect API → Team Keys → **Generate API
+   Key**, role **Admin** (Admin is required for automatic signing). Note the
+   **Key ID** and **Issuer ID**, and download the `AuthKey_XXXX.p8` file
+   (downloadable only once).
+2. **Repo secrets** — GitHub repo → Settings → Secrets and variables →
+   Actions → New repository secret, four of them:
+   | Secret | Value |
+   |---|---|
+   | `ASC_KEY_ID` | the Key ID |
+   | `ASC_ISSUER_ID` | the Issuer ID |
+   | `ASC_KEY_CONTENT` | the `.p8` file base64-encoded (`base64 -i AuthKey_XXXX.p8`) |
+   | `APPLE_TEAM_ID` | your 10-char Team ID (developer.apple.com → Membership) |
+3. **App record** — App Store Connect → My Apps → “+” → New App: iOS, name
+   **CGP**, bundle ID `com.commongroundprojects.cgp`, SKU `cgp-app`. (If the
+   name "CGP" is taken, use "CGP — Common Ground".)
+4. Run the **TestFlight** workflow from the repo's Actions tab (pick the
+   branch). The build lands in TestFlight ~15 minutes after the run finishes.
+
+## Option B — on a Mac with Xcode
+
+Building locally instead: Apple requires a Mac for this path.
 
 ## What you need (one-time)
 
