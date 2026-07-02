@@ -546,6 +546,7 @@ input, textarea { font-family: inherit; }
   padding: 14px; margin-bottom: 16px;
   max-height: 220px; overflow-y: auto;
 }
+.stamp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .check { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; margin: 12px 0; }
 .check input { margin-top: 2px; width: 18px; height: 18px; accent-color: var(--brand); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }

@@ -3,14 +3,45 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../state/auth";
 import { useStore } from "../state/store";
 import { addToWallet, memberId, preferredWallet, type WalletKind } from "../lib/wallet";
+import { verifyStampPin, isValidStampCount, MAX_STAMPS_PER_VISIT } from "../lib/stamp";
 import { tapLight, notifySuccess } from "../lib/haptics";
 
 export function Rewards() {
   const { user } = useAuth();
-  const { state } = useStore();
+  const { state, stampPunches } = useStore();
   const { punch } = state;
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState<WalletKind | null>(null);
+
+  // Barista counter stamp
+  const [stampOpen, setStampOpen] = useState(false);
+  const [drinks, setDrinks] = useState(1);
+  const [pin, setPin] = useState("");
+  const [stampError, setStampError] = useState<string | null>(null);
+  const [stamped, setStamped] = useState<string | null>(null);
+
+  function doStamp() {
+    if (!verifyStampPin(pin)) {
+      setStampError("Wrong staff PIN.");
+      return;
+    }
+    if (!isValidStampCount(drinks)) {
+      setStampError(`1–${MAX_STAMPS_PER_VISIT} drinks per visit.`);
+      return;
+    }
+    const res = stampPunches(drinks);
+    notifySuccess();
+    setStampOpen(false);
+    setPin("");
+    setDrinks(1);
+    setStampError(null);
+    setStamped(
+      res.newRewards > 0
+        ? `+${res.punchesEarned} punch${res.punchesEarned === 1 ? "" : "es"} — card complete, free drink unlocked! 🎉`
+        : `+${res.punchesEarned} punch${res.punchesEarned === 1 ? "" : "es"} stamped. ☕️`,
+    );
+    setTimeout(() => setStamped(null), 4000);
+  }
 
   const id = memberId(user?.email ?? "guest@cgp");
   const name = user?.name ?? "CGP Member";
@@ -63,6 +94,19 @@ export function Rewards() {
         </div>
       </div>
 
+      {stamped && <div className="card success-banner">{stamped}</div>}
+
+      {/* Counter purchases: the barista stamps the card right on your phone. */}
+      <div className="card row-card">
+        <div>
+          <div className="row-title">☕️ Ordering at the counter?</div>
+          <div className="row-sub">Show this card — the barista stamps it with the staff PIN.</div>
+        </div>
+        <button className="btn btn-add" onClick={() => { tapLight(); setStampOpen(true); }}>
+          Stamp
+        </button>
+      </div>
+
       {/* Add to Wallet */}
       <div className="wallet-actions">
         <button
@@ -109,6 +153,45 @@ export function Rewards() {
             <div className="row-sub">Order {punch.goal - punch.punches} more drink{punch.goal - punch.punches === 1 ? "" : "s"} to earn a free coffee.</div>
           </div>
           <Link to="/menu" className="btn btn-ghost">Order coffee</Link>
+        </div>
+      )}
+
+      {stampOpen && (
+        <div className="modal-scrim" onClick={() => setStampOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h2 className="modal-title">Barista stamp</h2>
+            <p className="modal-sub">
+              Staff only — hand the phone to your barista. They'll confirm the
+              drinks and stamp with the café PIN.
+            </p>
+            <div className="stamp-row">
+              <span className="row-title">Drinks purchased</span>
+              <div className="stepper">
+                <button onClick={() => setDrinks((d) => Math.max(1, d - 1))} aria-label="Fewer drinks">−</button>
+                <span>{drinks}</span>
+                <button onClick={() => setDrinks((d) => Math.min(MAX_STAMPS_PER_VISIT, d + 1))} aria-label="More drinks">+</button>
+              </div>
+            </div>
+            <label className="field">
+              <span>Staff PIN</span>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => { setPin(e.target.value); setStampError(null); }}
+                placeholder="••••"
+                aria-label="Staff PIN"
+              />
+            </label>
+            {stampError && <div className="auth-error">{stampError}</div>}
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => { setStampOpen(false); setPin(""); setStampError(null); }}>Cancel</button>
+              <button className="btn btn-primary" disabled={!pin} onClick={doStamp}>
+                Stamp {drinks} punch{drinks === 1 ? "" : "es"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

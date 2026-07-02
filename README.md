@@ -21,6 +21,11 @@ Waivers screen anytime).
 - **Punch card** — every café drink earns a punch; a full card converts to a
   free-drink reward automatically. Rewards are redeemed at checkout and apply
   to the priciest café drink in the cart (the free drink doesn't earn a punch).
+- **Barista counter stamp** — for till purchases, the customer opens their
+  punch card and taps **Stamp**; the barista confirms the drink count and
+  enters the staff PIN (default `7391`, max 6 stamps per visit) right on the
+  customer's phone. The card's QR code supports register-scanner stamping once
+  the hosted backend lands, where PIN validation also moves server-side.
 - **Wallet passes** — the Rewards screen offers *Add to Apple Wallet* and
   *Save to Google Wallet*. Signed passes require a pass-signing service
   (Apple pass certificate / Google Wallet issuer keys live server-side); set

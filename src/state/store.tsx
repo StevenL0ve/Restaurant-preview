@@ -60,6 +60,8 @@ interface Store {
   placeOrder: (method: OrderMethod, useReward: boolean, useGift?: boolean) => CheckoutResult | null;
   // punch card
   redeemReward: () => void;
+  // Barista counter stamp: N drinks bought at the till, no in-app order.
+  stampPunches: (drinks: number) => { punchesEarned: number; newRewards: number };
   // community events
   addEvent: (e: Omit<CommunityEvent, "id">) => void;
   setEventAlerts: (on: boolean) => void;
@@ -218,6 +220,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? { ...s, punch: { ...s.punch, rewards: s.punch.rewards - 1, redeemed: s.punch.redeemed + 1 } }
             : s,
         ),
+
+      stampPunches: (drinks) => {
+        let out = { punchesEarned: 0, newRewards: 0 };
+        update((s) => {
+          const { punch, punchesEarned, newRewards } = applyPunches(s.punch, drinks, false);
+          out = { punchesEarned, newRewards };
+          return { ...s, punch };
+        });
+        return out;
+      },
 
       bookClass: (classId) =>
         update((s) => {
