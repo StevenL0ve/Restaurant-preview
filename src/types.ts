@@ -7,12 +7,12 @@ export type ID = string;
 // The five services under the Common Ground Projects roof.
 export type Venue = "restaurant" | "cafe" | "yoga" | "zenden" | "massage";
 
-export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string; logo?: string }> = {
-  restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs.", logo: "/brand/figolive-logo.jpeg" },
-  cafe: { name: "Common Grounds Café", short: "Coffee Shop", icon: "☕️", blurb: "Small-batch coffee & fresh bakes. Earn a punch on every drink." },
-  yoga: { name: "The Studio", short: "Yoga Studio", icon: "🧘", blurb: "Vinyasa, restorative & community flows." },
-  zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Nordic cycle spa — infrared sauna, hot & cold plunge, Himalayan salt room.", logo: "/brand/zenden-logo.jpeg" },
-  massage: { name: "Massage", short: "Massage", icon: "💆", blurb: "Therapeutic & relaxation bodywork." },
+export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string; logo?: string; hours?: string }> = {
+  restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs.", logo: "/brand/figolive-logo.jpeg", hours: "Tue–Sat 11am–3pm" },
+  cafe: { name: "Common Grounds Café", short: "Coffee Shop", icon: "☕️", blurb: "Small-batch coffee & fresh bakes. Earn a punch on every drink.", hours: "Tue–Sun 7am–3pm · Fri & Sat 5–9pm" },
+  yoga: { name: "The Studio", short: "Yoga Studio", icon: "🧘", blurb: "Vinyasa, restorative & community flows.", hours: "See class schedule" },
+  zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Nordic cycle spa — infrared sauna, hot & cold plunge, Himalayan salt room.", logo: "/brand/zenden-logo.jpeg", hours: "By reservation" },
+  massage: { name: "Massage", short: "Massage", icon: "💆", blurb: "Therapeutic & relaxation bodywork.", hours: "By appointment" },
 };
 
 // ---- Menus & ordering (restaurant + café) ----
@@ -139,6 +139,19 @@ export interface GiftCard {
   number: string;
   balance: number;
   history: GiftTxn[];
+  redeemedCodes: string[]; // gift codes already claimed on this account
+}
+
+// ---- Table reservations (By the Fig & the Olive) ----
+
+export interface Reservation {
+  id: ID;
+  date: string; // YYYY-MM-DD
+  time: string; // "12:30"
+  partySize: number;
+  name: string;
+  createdAt: string;
+  status: "confirmed" | "cancelled";
 }
 
 export interface AppState {
@@ -152,4 +165,5 @@ export interface AppState {
   events: CommunityEvent[];
   gift: GiftCard;
   eventAlerts: boolean;
+  reservations: Reservation[];
 }

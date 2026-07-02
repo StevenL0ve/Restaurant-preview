@@ -20,6 +20,7 @@ import { buildSeed } from "./seed";
 import { applyPunches } from "../lib/punch";
 import { orderStatus } from "../lib/orders";
 import { giftApplicable, isValidReload } from "../lib/gift";
+import { parseGiftCode } from "../lib/giftcode";
 
 const STORAGE_KEY = "cgp.v1";
 
@@ -29,10 +30,11 @@ function load(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = JSON.parse(raw) as Partial<AppState>;
-      // The user's data (cart, orders, bookings, punches, waivers) persists,
-      // but the catalog (menu + class schedule) always comes fresh from the
-      // seed so menu updates reach returning users.
-      return { ...seed, ...saved, menu: seed.menu, classes: seed.classes } as AppState;
+      // User data persists. The menu always comes fresh from the seed so menu
+      // updates reach returning users; the class schedule persists because
+      // owners manage it in-app. Nested gift fields are backfilled.
+      const gift = { ...seed.gift, ...(saved.gift ?? {}) };
+      return { ...seed, ...saved, menu: seed.menu, gift } as AppState;
     }
   } catch {
     /* fall through to seed */
@@ -67,6 +69,13 @@ interface Store {
   setEventAlerts: (on: boolean) => void;
   // gift card
   reloadGift: (amount: number) => void;
+  redeemGiftCode: (code: string) => { ok: boolean; amount?: number; error?: string };
+  // table reservations (Fig + Olive)
+  reserveTable: (date: string, time: string, partySize: number, name: string) => void;
+  cancelReservation: (id: string) => void;
+  // schedule management (owners / IT)
+  addClass: (cls: Omit<SessionClass, "id" | "booked">) => void;
+  removeClass: (id: string) => void;
   // bookings
   bookClass: (classId: string) => void;
   cancelBooking: (id: string) => void;
@@ -188,6 +197,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         });
         return result;
       },
+
+      redeemGiftCode: (code) => {
+        const amount = parseGiftCode(code);
+        if (amount === null) return { ok: false, error: "That code isn't valid. Check it and try again." };
+        const key = code.trim().toUpperCase();
+        let dup = false;
+        update((s) => {
+          if (s.gift.redeemedCodes.includes(key)) { dup = true; return s; }
+          return {
+            ...s,
+            gift: {
+              ...s.gift,
+              balance: Math.round((s.gift.balance + amount) * 100) / 100,
+              redeemedCodes: [...s.gift.redeemedCodes, key],
+              history: [
+                { id: uid("gt"), kind: "reload" as const, amount, at: new Date().toISOString(), note: "Gift code" },
+                ...s.gift.history,
+              ],
+            },
+          };
+        });
+        if (dup) return { ok: false, error: "That code was already redeemed on this account." };
+        return { ok: true, amount };
+      },
+
+      reserveTable: (date, time, partySize, name) =>
+        update((s) => ({
+          ...s,
+          reservations: [
+            { id: uid("rs"), date, time, partySize, name, createdAt: new Date().toISOString(), status: "confirmed" as const },
+            ...s.reservations,
+          ],
+        })),
+
+      cancelReservation: (id) =>
+        update((s) => ({
+          ...s,
+          reservations: s.reservations.map((r) => (r.id === id ? { ...r, status: "cancelled" as const } : r)),
+        })),
+
+      addClass: (cls) =>
+        update((s) => ({
+          ...s,
+          classes: [...s.classes, { ...cls, id: uid("cx"), booked: 0 }].sort((a, b) => a.start.localeCompare(b.start)),
+        })),
+
+      removeClass: (id) =>
+        update((s) => ({
+          ...s,
+          classes: s.classes.filter((c) => c.id !== id),
+          // cancel any member bookings for the removed slot
+          bookings: s.bookings.map((b) => (b.classId === id && b.status === "confirmed" ? { ...b, status: "cancelled" as const } : b)),
+        })),
 
       addEvent: (e) =>
         update((s) => ({

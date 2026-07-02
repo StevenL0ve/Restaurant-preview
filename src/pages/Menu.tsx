@@ -64,7 +64,17 @@ export function Menu() {
           <img className="venue-logo" src={VENUES.restaurant.logo} alt="Fig + Olive logo" />
           <div>
             <div className="row-title">{VENUES.restaurant.name}</div>
-            <div className="row-sub">{VENUES.restaurant.blurb}</div>
+            <div className="row-sub">🕐 {VENUES.restaurant.hours}</div>
+          </div>
+          <Link to="/reserve" className="btn btn-add">Reserve</Link>
+        </div>
+      )}
+      {filter === "cafe" && (
+        <div className="venue-banner card">
+          <img className="venue-logo" src="/brand/logo.jpeg" alt="Common Ground logo" />
+          <div>
+            <div className="row-title">{VENUES.cafe.name}</div>
+            <div className="row-sub">🕐 {VENUES.cafe.hours}</div>
           </div>
         </div>
       )}

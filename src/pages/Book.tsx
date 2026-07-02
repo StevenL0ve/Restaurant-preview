@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "../state/auth";
 import { useStore, hasWaiver } from "../state/store";
+import { postableVenues } from "../lib/roles";
 import { VENUES, type SessionClass, type WaiverVenue } from "../types";
 import { WAIVER_TEXT } from "../lib/waiverText";
 import { money, fullDate, time } from "../lib/format";
@@ -18,8 +19,35 @@ const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
 
 export function Book() {
   const { user } = useAuth();
-  const { state, bookClass, signWaiver } = useStore();
+  const { state, bookClass, signWaiver, addClass, removeClass } = useStore();
   const [venue, setVenue] = useState<BookVenue>("yoga");
+  // Owners manage their own venue's schedule; IT manages all of them.
+  const canManage = postableVenues(user?.role).includes(venue);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newWhen, setNewWhen] = useState("");
+  const [newDuration, setNewDuration] = useState("60");
+  const [newCapacity, setNewCapacity] = useState("6");
+  const [newPrice, setNewPrice] = useState("30");
+
+  function submitClass() {
+    if (!newName.trim() || !newWhen) return;
+    addClass({
+      venue,
+      name: newName.trim(),
+      instructor: user?.name ?? VENUES[venue].name,
+      description: "",
+      start: new Date(newWhen).toISOString(),
+      durationMin: Math.max(15, Number(newDuration) || 60),
+      capacity: Math.max(1, Number(newCapacity) || 6),
+      price: Math.max(0, Number(newPrice) || 0),
+      requiresWaiver: true,
+    });
+    setNewName(""); setNewWhen("");
+    setManageOpen(false);
+    setToast("Slot added to the schedule.");
+    setTimeout(() => setToast(null), 3000);
+  }
   // The class the user is trying to book but must sign a waiver for first.
   const [gate, setGate] = useState<SessionClass | null>(null);
   const [sigName, setSigName] = useState(user?.name ?? "");
@@ -97,6 +125,36 @@ export function Book() {
         {hasWaiver(state, venue) && <span className="pill pill-ok">Waiver signed ✓</span>}
       </div>
 
+      <p className="footnote" style={{ margin: "-6px 2px 0" }}>🕐 {VENUES[venue].hours}</p>
+
+      {canManage && (
+        <div className="card">
+          <button className="btn btn-ghost btn-block" onClick={() => setManageOpen((o) => !o)}>
+            {manageOpen ? "Close" : "🗓️ Manage schedule — add a slot"}
+          </button>
+          {manageOpen && (
+            <div className="auth-form" style={{ marginTop: 14 }}>
+              <label className="field">
+                <span>Session name</span>
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Sunset Flow" />
+              </label>
+              <label className="field">
+                <span>When</span>
+                <input type="datetime-local" value={newWhen} onChange={(e) => setNewWhen(e.target.value)} />
+              </label>
+              <div className="stat-row" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <label className="field"><span>Minutes</span><input type="number" min="15" value={newDuration} onChange={(e) => setNewDuration(e.target.value)} /></label>
+                <label className="field"><span>Capacity</span><input type="number" min="1" value={newCapacity} onChange={(e) => setNewCapacity(e.target.value)} /></label>
+                <label className="field"><span>Price $</span><input type="number" min="0" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} /></label>
+              </div>
+              <button className="btn btn-primary" disabled={!newName.trim() || !newWhen} onClick={submitClass}>
+                Add to schedule
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="stack">
         {classes.map((cls) => {
           const isBooked = bookedIds.has(cls.id);
@@ -104,6 +162,14 @@ export function Book() {
           const spots = cls.capacity - cls.booked;
           return (
             <div key={cls.id} className="card class-card">
+              {canManage && (
+                <button
+                  className="slot-remove"
+                  aria-label={`Close ${cls.name}`}
+                  title="Close this slot"
+                  onClick={() => { removeClass(cls.id); tapLight(); }}
+                >✕</button>
+              )}
               {cls.image && <img className="menu-item-photo" src={cls.image} alt={cls.name} />}
               <div className="class-body">
                 <div className="menu-item-top">

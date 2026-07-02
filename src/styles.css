@@ -512,6 +512,18 @@ input, textarea { font-family: inherit; }
 }
 .gift-amount { font-weight: 800; }
 .gift-in { color: var(--brand-600); }
+.gift-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 16px; font-weight: 700; letter-spacing: 1px;
+  background: var(--brand-50); border: 1px dashed var(--brand-300);
+  border-radius: 12px; padding: 14px; text-align: center;
+  margin: 12px 0 10px; user-select: all; word-break: break-all;
+}
+.reserve-form { display: flex; flex-direction: column; gap: 14px; }
+.seatings-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.seat-btn { padding: 12px 6px; font-size: 13.5px; }
+.seat-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+@media (max-width: 420px) { .seatings-grid { grid-template-columns: repeat(3, 1fr); } }
 
 /* ---- Book / classes ----------------------------------------------------- */
 
@@ -519,7 +531,15 @@ input, textarea { font-family: inherit; }
 .venue-banner .venue-icon { font-size: 30px; }
 .venue-logo { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
 .venue-banner .pill { margin-left: auto; }
-.class-card { display: flex; align-items: flex-start; gap: 14px; }
+.class-card { display: flex; align-items: flex-start; gap: 14px; position: relative; }
+.slot-remove {
+  position: absolute; top: 8px; right: 8px;
+  width: 24px; height: 24px;
+  border: none; border-radius: 50%;
+  background: var(--brand-50); color: var(--red);
+  font-size: 12px; font-weight: 700; line-height: 1;
+  display: grid; place-items: center;
+}
 .class-body { flex: 1; min-width: 0; }
 .class-card .pill { align-self: center; flex-shrink: 0; }
 

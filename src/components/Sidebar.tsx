@@ -16,6 +16,7 @@ const items: NavItem[] = [
   { to: "/cart", label: "Cart", icon: "🛒", badge: "cart" },
   { to: "/rewards", label: "Punch Card", icon: "🎟️", badge: "rewards" },
   { to: "/book", label: "Book a Session", icon: "🧘" },
+  { to: "/reserve", label: "Reserve a Table", icon: "🍽️" },
   { to: "/community", label: "Community", icon: "🎉" },
   { to: "/gift", label: "Gift Card", icon: "🎁" },
   { to: "/bookings", label: "My Bookings", icon: "📅" },

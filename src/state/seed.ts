@@ -164,7 +164,8 @@ export function buildSeed(): AppState {
     punch: { goal: 10, punches: 6, rewards: 0, lifetimePunches: 6, redeemed: 0 },
     waivers: [],
     events: buildEvents(),
-    gift: { number: "GC-000000", balance: 0, history: [] },
+    gift: { number: "GC-000000", balance: 0, history: [], redeemedCodes: [] },
     eventAlerts: false,
+    reservations: [],
   };
 }
