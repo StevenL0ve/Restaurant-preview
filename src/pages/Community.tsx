@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "../state/auth";
 import { useStore, upcomingEvents } from "../state/store";
 import { VENUES, type Venue } from "../types";
 import { requestEventAlerts, notify } from "../lib/notify";
@@ -8,6 +9,7 @@ import { tapLight, notifySuccess } from "../lib/haptics";
 const EVENT_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "zenden"];
 
 export function Community() {
+  const { user } = useAuth();
   const { state, addEvent, setEventAlerts } = useStore();
   const events = upcomingEvents(state);
   const [alertStatus, setAlertStatus] = useState<string | null>(null);
@@ -121,7 +123,13 @@ export function Community() {
         </div>
       </section>
 
-      {/* Post an event (staff) */}
+      {/* Posting is staff-only: the form only exists for admin accounts. */}
+      {!user?.isAdmin && (
+        <p className="footnote" style={{ textAlign: "center" }}>
+          Events are posted by CGP staff.
+        </p>
+      )}
+      {user?.isAdmin && (
       <div className="card">
         <button className="btn btn-ghost btn-block" onClick={() => setFormOpen((o) => !o)}>
           {formOpen ? "Close" : "📌 Post an event"}
@@ -159,6 +167,7 @@ export function Community() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

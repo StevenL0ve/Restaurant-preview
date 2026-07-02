@@ -21,6 +21,18 @@ interface Account {
 export interface SessionUser {
   name: string;
   email: string;
+  isAdmin: boolean;
+}
+
+// Staff/admin accounts: anyone on the CGP domain, plus an explicit allowlist.
+// With a hosted backend this becomes a server-checked role claim; the UI gate
+// stays exactly the same.
+const ADMIN_DOMAIN = "@thecommongroundprojects.com";
+const ADMIN_EMAILS = new Set(["admin@cgp.test"]);
+
+export function isAdminEmail(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  return e.endsWith(ADMIN_DOMAIN) || ADMIN_EMAILS.has(e);
 }
 
 const ACCOUNTS_KEY = "cgp.accounts.v1";
@@ -81,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const email = localStorage.getItem(SESSION_KEY);
       if (email) {
         const acct = loadAccounts()[email];
-        if (acct) return { name: acct.name, email: acct.email };
+        if (acct) return { name: acct.name, email: acct.email, isAdmin: isAdminEmail(acct.email) };
       }
     } catch {
       /* no session */
@@ -119,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       saveAccounts(accounts);
       localStorage.setItem(SESSION_KEY, key);
-      setUser({ name: name.trim(), email: key });
+      setUser({ name: name.trim(), email: key, isAdmin: isAdminEmail(key) });
     },
 
     signIn: async (email, password) => {
@@ -129,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Incorrect email or password.");
       }
       localStorage.setItem(SESSION_KEY, key);
-      setUser({ name: acct.name, email: acct.email });
+      setUser({ name: acct.name, email: acct.email, isAdmin: isAdminEmail(acct.email) });
     },
 
     signOut: () => {
