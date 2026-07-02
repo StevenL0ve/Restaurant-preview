@@ -2,7 +2,7 @@
 
 One app for everything under the Common Ground roof:
 
-- 🍽️ **The Kitchen** (restaurant) — browse the menu and order food
+- 🍽️ **By the Fig & the Olive** (restaurant) — Mediterranean lunch: mezze, flatbreads, shawarma & kabobs
 - ☕️ **Common Grounds Café** — order coffee, earn a **punch card** stamp on
   every drink (10 punches = a free drink), and add the card to
   **Apple Wallet / Google Wallet**

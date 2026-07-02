@@ -36,7 +36,7 @@ export function Menu() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Menu &amp; Order</h1>
-          <p className="page-sub">Common Grounds Café + The Kitchen. Pickup or dine-in.</p>
+          <p className="page-sub">Common Grounds Café + By the Fig &amp; the Olive. Pickup or dine-in.</p>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export function Menu() {
             className={"seg" + (filter === f ? " active" : "")}
             onClick={() => setFilter(f)}
           >
-            {f === "all" ? "Everything" : f === "cafe" ? "☕️ Café" : "🍽️ Kitchen"}
+            {f === "all" ? "Everything" : f === "cafe" ? "☕️ Café" : "🍽️ Fig + Olive"}
           </button>
         ))}
       </div>
@@ -55,7 +55,7 @@ export function Menu() {
       <div className="photo-banner">
         <img
           src={filter === "cafe" ? "/photos/latte.jpeg" : "/photos/food.jpeg"}
-          alt={filter === "cafe" ? "A Common Grounds latte in a printed cup" : "Pancakes and drinks at The Kitchen"}
+          alt={filter === "cafe" ? "A Common Grounds latte in a printed cup" : "Brunch at By the Fig & the Olive"}
         />
       </div>
 
@@ -73,7 +73,7 @@ export function Menu() {
         return (
           <section key={key} className="section">
             <h2 className="section-title">
-              <span className="cat-venue">{venue === "cafe" ? "Café" : "Kitchen"}</span>
+              <span className="cat-venue">{venue === "cafe" ? "Café" : "Fig + Olive"}</span>
               {category}
             </h2>
             <div className="stack">

@@ -8,7 +8,7 @@ export type ID = string;
 export type Venue = "restaurant" | "cafe" | "yoga" | "zenden" | "massage";
 
 export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string }> = {
-  restaurant: { name: "The Kitchen", short: "Restaurant", icon: "🍽️", blurb: "Farm-to-table plates made from scratch." },
+  restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs." },
   cafe: { name: "Common Grounds Café", short: "Coffee Shop", icon: "☕️", blurb: "Small-batch coffee & fresh bakes. Earn a punch on every drink." },
   yoga: { name: "The Studio", short: "Yoga Studio", icon: "🧘", blurb: "Vinyasa, restorative & community flows." },
   zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Saunas, soaks & facials to reset." },

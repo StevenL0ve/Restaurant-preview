@@ -46,15 +46,21 @@ const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean
   { category: "Kids + Fur Babies", name: "Hot Chocolate", description: "Steamed chocolate, milk of choice.", price: 4.0, tags: [], noPunch: true },
 ];
 
+// By the Fig & the Olive — the Mediterranean restaurant under the CGP roof
+// (figandtheolive.com). Dishes are the ones regulars rave about; prices are
+// placeholders until the printed menu is provided.
 const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
-  { category: "Bowls", name: "Grounding Grain Bowl", description: "Farro, roasted squash, kale, tahini, seeds.", price: 15.0, tags: ["vegan", "popular"] },
-  { category: "Bowls", name: "Harvest Buddha Bowl", description: "Quinoa, chickpeas, beets, avocado, green goddess.", price: 16.0, tags: ["vegan", "gf"] },
-  { category: "Plates", name: "Wild Mushroom Toast", description: "Sourdough, herbed ricotta, thyme, chili oil.", price: 14.0, tags: ["popular"] },
-  { category: "Plates", name: "Seasonal Frittata", description: "Pasture eggs, greens, side salad.", price: 15.0, tags: ["gf"] },
-  { category: "Plates", name: "Cedar Salmon", description: "Cedar-planked salmon, lentils, salsa verde.", price: 24.0, tags: ["gf"] },
-  { category: "Bites", name: "Marinated Olives", description: "Citrus, rosemary, fennel.", price: 7.0, tags: ["vegan", "gf"] },
-  { category: "Bites", name: "House Hummus", description: "Warm flatbread, dukkah, olive oil.", price: 10.0, tags: ["vegan"] },
-  { category: "Sweets", name: "Olive Oil Cake", description: "Citrus glaze, crème fraîche.", price: 9.0, tags: ["popular"] },
+  { category: "Mezze & Starters", name: "Mezze Platter", description: "Five house dips — roasted & fried eggplant baba ghanoush, two styles of hummus, yogurt sauce — with warm pita.", price: 16.0, tags: ["popular"] },
+  { category: "Mezze & Starters", name: "Stuffed Dates", description: "Sweet dates, stuffed and finished house-style. A cult favorite.", price: 9.0, tags: ["gf", "popular"] },
+  { category: "Mezze & Starters", name: "Samosas", description: "Hand-folded and fried, spiced potato & peas.", price: 7.0, tags: ["vegan"] },
+  { category: "Mezze & Starters", name: "Za'atar Pie", description: "Flaky hand pie brushed with za'atar and olive oil.", price: 6.5, tags: ["vegan"] },
+  { category: "Flatbreads", name: "Goat Cheese & Fig Flatbread", description: "Warm flatbread, whipped goat cheese, figs, honey drizzle.", price: 14.0, tags: ["popular"] },
+  { category: "Flatbreads", name: "BBQ Chicken Flatbread", description: "Sweet-tangy barbecue chicken, jalapeño, red onion & cilantro on a soft pita base.", price: 14.0, tags: [] },
+  { category: "Wraps & Sandwiches", name: "Chicken Shawarma Wrap", description: "House-marinated chicken off the spinning skewer, pickles, garlic sauce.", price: 13.0, tags: ["popular"] },
+  { category: "Wraps & Sandwiches", name: "Falafel Wrap", description: "Crisp falafel, fresh herbs, tahini & pickles.", price: 12.0, tags: ["vegan"] },
+  { category: "Wraps & Sandwiches", name: "Roasted Vegetable Sandwich", description: "Roasted seasonal vegetables with house spreads.", price: 12.0, tags: ["vegan"] },
+  { category: "Plates", name: "Seekh Kabob Plate", description: "Spiced beef & lamb kabobs, vermicelli rice, pita and tzatziki.", price: 17.0, tags: ["popular"] },
+  { category: "Plates", name: "Beef Keema", description: "Slow-simmered spiced ground beef with rice and pita.", price: 16.0, tags: [] },
 ];
 
 // Stable, name-derived ids so a saved cart never re-points to a different
