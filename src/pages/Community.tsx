@@ -82,6 +82,10 @@ export function Community() {
         </div>
       </div>
 
+      <div className="photo-banner">
+        <img src="/photos/cafe-door.jpeg" alt="Walking into Common Ground" />
+      </div>
+
       {/* Notifications */}
       <div className="card">
         <div className="toggle-row">

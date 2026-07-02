@@ -41,7 +41,7 @@ const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean
   { category: "Coffee", name: "Cappuccino", description: "Equal parts espresso, steamed milk & foam.", price: 4.5, tags: [] },
   { category: "Coffee", name: "Cold Brew", description: "Slow-steeped, served over ice.", price: 5.35, tags: ["vegan"] },
   { category: "Coffee", name: "Cortado", description: "Double shot cut with a splash of steamed milk.", price: 4.5, tags: ["popular"] },
-  { category: "Coffee", name: "Latte", description: "Double espresso, steamed milk of choice.", price: 5.0, tags: [] },
+  { category: "Coffee", name: "Latte", description: "Double espresso, steamed milk of choice.", price: 5.0, tags: [], image: "/photos/latte.jpeg" },
   { category: "Kids + Fur Babies", name: "Babycino / Puppuccino", description: "On the house for the littles and the fur babies.", price: 0, tags: [], noPunch: true },
   { category: "Kids + Fur Babies", name: "Hot Chocolate", description: "Steamed chocolate, milk of choice.", price: 4.0, tags: [], noPunch: true },
 ];
@@ -50,7 +50,7 @@ const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean
 // (figandtheolive.com). Dishes are the ones regulars rave about; prices are
 // placeholders until the printed menu is provided.
 const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
-  { category: "Mezze & Starters", name: "Mezze Platter", description: "Five house dips — roasted & fried eggplant baba ghanoush, two styles of hummus, yogurt sauce — with warm pita.", price: 16.0, tags: ["popular"] },
+  { category: "Mezze & Starters", name: "Mezze Platter", description: "Five house dips — roasted & fried eggplant baba ghanoush, two styles of hummus, yogurt sauce — with warm pita.", price: 16.0, tags: ["popular"], image: "/photos/figolive-mezze.jpeg" },
   { category: "Mezze & Starters", name: "Stuffed Dates", description: "Sweet dates, stuffed and finished house-style. A cult favorite.", price: 9.0, tags: ["gf", "popular"] },
   { category: "Mezze & Starters", name: "Samosas", description: "Hand-folded and fried, spiced potato & peas.", price: 7.0, tags: ["vegan"] },
   { category: "Mezze & Starters", name: "Za'atar Pie", description: "Flaky hand pie brushed with za'atar and olive oil.", price: 6.5, tags: ["vegan"] },
@@ -90,7 +90,7 @@ function buildMenu(): MenuItem[] {
 
 const YOGA: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
   { name: "Sunrise Vinyasa", instructor: "Maya R.", description: "A warming flow to start the day open and steady.", start: at(0, 7), durationMin: 60, capacity: 18, booked: 11, price: 20, level: "All levels" },
-  { name: "Community Flow", instructor: "Dev P.", description: "Donation-based all-levels flow. Everyone welcome.", start: at(1, 9, 30), durationMin: 75, capacity: 24, booked: 8, price: 12, level: "All levels" },
+  { name: "Community Flow", instructor: "Dev P.", description: "Donation-based all-levels flow. Everyone welcome.", start: at(1, 9, 30), durationMin: 75, capacity: 24, booked: 8, price: 12, level: "All levels", image: "/photos/yoga.jpeg" },
   { name: "Restorative & Yin", instructor: "Sana K.", description: "Slow, floor-based, deeply relaxing. Props provided.", start: at(1, 18), durationMin: 60, capacity: 16, booked: 14, price: 22, level: "Gentle" },
   { name: "Power Vinyasa", instructor: "Maya R.", description: "Strong, breath-linked flow. Bring a towel.", start: at(2, 17, 30), durationMin: 60, capacity: 18, booked: 5, price: 22, level: "Intermediate" },
   { name: "Slow Flow & Meditation", instructor: "Dev P.", description: "Gentle movement into a guided sit.", start: at(3, 8), durationMin: 75, capacity: 20, booked: 3, price: 20, level: "All levels" },
