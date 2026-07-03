@@ -7,13 +7,13 @@ const config: CapacitorConfig = {
   appName: "CGP",
   webDir: "dist",
   // Launch in brand green (matches the splash + logo background).
-  backgroundColor: "#657e69",
+  backgroundColor: "#56775f",
   ios: {
     contentInset: "always",
-    backgroundColor: "#657e69",
+    backgroundColor: "#56775f",
   },
   android: {
-    backgroundColor: "#657e69",
+    backgroundColor: "#56775f",
   },
 };
 
