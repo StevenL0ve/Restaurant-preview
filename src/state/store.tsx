@@ -31,10 +31,13 @@ function load(): AppState {
     if (raw) {
       const saved = JSON.parse(raw) as Partial<AppState>;
       // User data persists. The menu always comes fresh from the seed so menu
-      // updates reach returning users; the class schedule persists because
-      // owners manage it in-app. Nested gift fields are backfilled.
+      // updates reach returning users. The built-in class schedule also
+      // refreshes from the seed (its dates roll forward and venue updates
+      // land), while slots owners added in-app (id "cx-…") are kept.
       const gift = { ...seed.gift, ...(saved.gift ?? {}) };
-      return { ...seed, ...saved, menu: seed.menu, gift } as AppState;
+      const ownerSlots = (saved.classes ?? []).filter((c) => c.id.startsWith("cx-"));
+      const classes = [...seed.classes, ...ownerSlots].sort((a, b) => a.start.localeCompare(b.start));
+      return { ...seed, ...saved, menu: seed.menu, classes, gift } as AppState;
     }
   } catch {
     /* fall through to seed */

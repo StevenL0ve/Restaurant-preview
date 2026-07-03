@@ -39,7 +39,7 @@ export function Waivers() {
       </div>
 
       <div className="photo-banner">
-        <img src="/photos/yoga-doors.jpeg" alt="The carved doors into The Studio" />
+        <img src="/photos/yoga-doors.jpeg" alt="The carved doors into the yoga studio" />
       </div>
 
       <div className="stack">

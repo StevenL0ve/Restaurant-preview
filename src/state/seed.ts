@@ -88,12 +88,16 @@ function buildMenu(): MenuItem[] {
 
 // ---- Class & treatment schedule ----
 
+// River Rock Yoga & Pilates (riverrockyoga.com) — 25+ classes a week.
+// These mirror their real class types; times & prices are placeholders until
+// the studio confirms the live schedule.
 const YOGA: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
-  { name: "Sunrise Vinyasa", instructor: "Maya R.", description: "A warming flow to start the day open and steady.", start: at(0, 7), durationMin: 60, capacity: 18, booked: 11, price: 20, level: "All levels" },
-  { name: "Community Flow", instructor: "Dev P.", description: "Donation-based all-levels flow. Everyone welcome.", start: at(1, 9, 30), durationMin: 75, capacity: 24, booked: 8, price: 12, level: "All levels", image: "/photos/yoga.jpeg" },
-  { name: "Restorative & Yin", instructor: "Sana K.", description: "Slow, floor-based, deeply relaxing. Props provided.", start: at(1, 18), durationMin: 60, capacity: 16, booked: 14, price: 22, level: "Gentle" },
-  { name: "Power Vinyasa", instructor: "Maya R.", description: "Strong, breath-linked flow. Bring a towel.", start: at(2, 17, 30), durationMin: 60, capacity: 18, booked: 5, price: 22, level: "Intermediate" },
-  { name: "Slow Flow & Meditation", instructor: "Dev P.", description: "Gentle movement into a guided sit.", start: at(3, 8), durationMin: 75, capacity: 20, booked: 3, price: 20, level: "All levels" },
+  { name: "Gentle Flow Yoga", instructor: "Kim", description: "Slow, welcoming flow — perfect first class.", start: at(0, 8), durationMin: 60, capacity: 18, booked: 11, price: 20, level: "Gentle", image: "/photos/yoga.jpeg" },
+  { name: "All-Levels Vinyasa Flow", instructor: "Moira", description: "Breath-linked flow that meets you where you are.", start: at(1, 9, 30), durationMin: 60, capacity: 20, booked: 8, price: 20, level: "All levels", image: "/photos/riverrock-camel.jpeg" },
+  { name: "Restorative & Yin", instructor: "Kim", description: "Slow, floor-based, deeply relaxing. Props provided.", start: at(1, 18), durationMin: 60, capacity: 16, booked: 14, price: 22, level: "Gentle", image: "/photos/riverrock-lotus.jpeg" },
+  { name: "Pilates Mat", instructor: "Moira", description: "Core-focused mat Pilates — strength, control, posture.", start: at(2, 8, 30), durationMin: 55, capacity: 16, booked: 6, price: 22, level: "All levels" },
+  { name: "PiYo", instructor: "Kim", description: "Pilates + yoga fusion — low impact, high energy.", start: at(3, 17, 30), durationMin: 55, capacity: 18, booked: 4, price: 22, level: "Intermediate" },
+  { name: "Heated Hatha", instructor: "Moira", description: "Classic postures in a warm room. Bring a towel.", start: at(4, 8), durationMin: 75, capacity: 18, booked: 7, price: 24, level: "Intermediate", image: "/photos/yoga-class.jpeg" },
 ];
 
 // The Zen Den (zendenms.com) — a Nordic cycle spa: infrared sauna with red

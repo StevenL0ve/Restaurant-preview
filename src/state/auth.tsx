@@ -49,7 +49,7 @@ export const STAFF_DIRECTORY: { email: string; name: string; role: Role; venues?
   // given several venues here (e.g. venues: ["cafe", "restaurant"]).
   { email: "cafe@thecommongroundprojects.com", name: "Common Grounds Café", role: "staff", venues: ["cafe"] },
   { email: "figolive@thecommongroundprojects.com", name: "By the Fig & the Olive", role: "staff", venues: ["restaurant"] },
-  { email: "yoga@thecommongroundprojects.com", name: "The Studio", role: "staff", venues: ["yoga"] },
+  { email: "yoga@thecommongroundprojects.com", name: "River Rock Yoga", role: "staff", venues: ["yoga"] },
   { email: "zenden@thecommongroundprojects.com", name: "The Zen Den", role: "staff", venues: ["zenden"] },
   { email: "massage@thecommongroundprojects.com", name: "CGP Massage", role: "staff", venues: ["massage"] },
 ];

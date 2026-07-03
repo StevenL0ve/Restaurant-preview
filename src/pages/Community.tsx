@@ -78,7 +78,7 @@ export function Community() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Community</h1>
-          <p className="page-sub">What's happening across the café, Fig + Olive, The Studio &amp; the Zen Den.</p>
+          <p className="page-sub">What's happening across the café, Fig + Olive, River Rock Yoga &amp; the Zen Den.</p>
         </div>
       </div>
 

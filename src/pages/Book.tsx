@@ -12,7 +12,7 @@ const filters: BookVenue[] = ["yoga", "zenden", "massage"];
 
 // Each venue's banner is its own space.
 const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
-  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class in The Studio" },
+  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga & Pilates" },
   zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber" },
   massage: { src: "/photos/interior.jpeg", alt: "The Common Ground community space" },
 };
