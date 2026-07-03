@@ -7,7 +7,7 @@ import { SECTIONS, type CardItem, type SectionKey } from "../types";
 
 type GroupMode = "location" | "section";
 
-const CONFETTI_COLORS = ["#0d9488", "#f59e0b", "#e11d48", "#6366f1", "#10b981", "#2dd4bf"];
+const CONFETTI_COLORS = ["#2472d8", "#f59e0b", "#e11d48", "#6366f1", "#10b981", "#63a6f4"];
 
 /** Short celebratory burst rendered when the pull-list hits 100%. */
 function Confetti() {

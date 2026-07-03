@@ -4,7 +4,7 @@
 // specialty never changes tint between sessions.
 
 const NAMED: [RegExp, string][] = [
-  [/general/i, "#0d9488"], // teal — the home hue
+  [/general/i, "#2472d8"], // brand blue — the home hue
   [/ortho/i, "#6366f1"], // indigo
   [/ob|gyn|obstet/i, "#e11d48"], // rose
   [/ent|otolaryng/i, "#d97706"], // amber
@@ -18,7 +18,7 @@ const NAMED: [RegExp, string][] = [
   [/spine/i, "#4f46e5"], // deep indigo
 ];
 
-const FALLBACK = ["#0d9488", "#6366f1", "#e11d48", "#d97706", "#7c3aed", "#0891b2", "#db2777", "#2563eb"];
+const FALLBACK = ["#2472d8", "#6366f1", "#e11d48", "#d97706", "#7c3aed", "#0891b2", "#db2777", "#2563eb"];
 
 export function accentFor(specialty: string): string {
   const s = specialty.trim();

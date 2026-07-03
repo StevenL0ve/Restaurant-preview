@@ -18,7 +18,7 @@ const FRAMES = [
     out: "store-1-hero.png",
     title: "Every case.\nReady.",
     sub: "Your surgical preference cards — yours alone. No hospital login.",
-    bg: ["#0d9488", "#134e4a"],
+    bg: ["#2472d8", "#16305e"],
   },
   {
     src: "04-setup.png",

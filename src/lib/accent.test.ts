@@ -6,7 +6,7 @@ describe("specialty accents", () => {
     expect(accentFor("Orthopedics")).toBe("#6366f1");
     expect(accentFor("OB/GYN")).toBe("#e11d48");
     expect(accentFor("ENT")).toBe("#d97706");
-    expect(accentFor("General Surgery")).toBe("#0d9488");
+    expect(accentFor("General Surgery")).toBe("#2472d8");
   });
 
   it("is deterministic for unknown specialties", () => {
