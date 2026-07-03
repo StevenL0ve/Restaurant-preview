@@ -17,6 +17,7 @@ import { Reserve } from "./pages/Reserve";
 import { Orders } from "./pages/Orders";
 import { Settings } from "./pages/Settings";
 import { Team } from "./pages/Team";
+import { Wifi } from "./pages/Wifi";
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/team" element={<Team />} />
+            <Route path="/wifi" element={<Wifi />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -737,3 +737,16 @@ input, textarea { font-family: inherit; }
   .wallet-actions { grid-template-columns: 1fr; }
   .punch-grid { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* ---- Guest Wi-Fi ---------------------------------------------------------- */
+
+.wifi-card { display: flex; flex-direction: column; gap: 14px; }
+.wifi-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wifi-pass {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 18px; font-weight: 700; letter-spacing: 1px;
+  user-select: all;
+}
+.wifi-steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--slate); line-height: 1.9; }
+.wifi-qr-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.wifi-qr { width: min(240px, 70%); border-radius: 12px; border: 1px solid var(--line); }
