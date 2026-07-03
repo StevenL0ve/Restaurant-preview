@@ -54,6 +54,11 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+/* Never let the page slide sideways. `overflow-x: clip` clamps any stray
+   overflow WITHOUT creating a scroll container (so vertical scrolling and
+   sticky headers keep working), and `overscroll-behavior-x` stops the iOS
+   WebView from rubber-banding horizontally when a nested strip is swiped. */
+html, body { max-width: 100%; overflow-x: clip; overscroll-behavior-x: none; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -344,6 +349,8 @@ input, textarea { font-family: inherit; }
   grid-auto-columns: 150px;
   gap: 12px;
   overflow-x: auto;
+  /* Keep this strip's horizontal swipe to itself — don't chain to the page. */
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   padding-bottom: 6px;
 }
@@ -659,7 +666,9 @@ input, textarea { font-family: inherit; }
 
 @media (max-width: 820px) {
   .sidebar { display: none; }
-  .content { padding-bottom: 96px; max-width: 640px; }
+  /* Clear the fixed bottom nav (~76px) plus the home-indicator safe area so the
+     last row of content is never hidden behind it. */
+  .content { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); max-width: 640px; }
 
   /* Deep brand green bar with the custom white-line icons. */
   .bottom-nav {
