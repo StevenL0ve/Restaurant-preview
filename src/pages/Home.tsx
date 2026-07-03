@@ -128,7 +128,11 @@ export function Home() {
         <div className="venue-grid">
           {orderVenues.map((v) => (
             <Link key={v} to="/menu" className="card venue-card">
-              <span className="venue-icon" aria-hidden>{VENUES[v].icon}</span>
+              {VENUES[v].logo ? (
+                <img className="venue-card-logo" src={VENUES[v].logo} alt="" aria-hidden />
+              ) : (
+                <span className="venue-icon" aria-hidden>{VENUES[v].icon}</span>
+              )}
               <div className="venue-name">{VENUES[v].name}</div>
               <div className="venue-blurb">{VENUES[v].blurb}</div>
             </Link>
@@ -141,7 +145,11 @@ export function Home() {
         <div className="venue-grid">
           {bookVenues.map((v) => (
             <Link key={v} to="/book" className="card venue-card">
-              <span className="venue-icon" aria-hidden>{VENUES[v].icon}</span>
+              {VENUES[v].logo ? (
+                <img className="venue-card-logo" src={VENUES[v].logo} alt="" aria-hidden />
+              ) : (
+                <span className="venue-icon" aria-hidden>{VENUES[v].icon}</span>
+              )}
               <div className="venue-name">{VENUES[v].name}</div>
               <div className="venue-blurb">{VENUES[v].blurb}</div>
             </Link>

@@ -371,6 +371,7 @@ input, textarea { font-family: inherit; }
 .venue-card { display: flex; flex-direction: column; gap: 6px; }
 .venue-card:hover { border-color: var(--brand-300); }
 .venue-icon { font-size: 28px; }
+.venue-card-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; }
 .venue-name { font-weight: 800; font-size: 15px; }
 .venue-blurb { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
 
@@ -481,28 +482,28 @@ input, textarea { font-family: inherit; }
 
 /* ---- Gift card ------------------------------------------------------------ */
 
-/* Styled after the printed CGP gift card: sage face, logo, cream strip. */
+/* Styled after the printed CGP gift card: the logo sits on the brand green
+   (#56775f — same as the logo art, so it blends seamlessly), with a cream
+   GIFT CARD strip across the bottom. */
 .gift-card {
-  background: linear-gradient(150deg, #6d8672 0%, var(--sage) 55%, #57705c 100%);
-  border-radius: 18px;
+  background: #56775f;
+  border-radius: 16px;
   box-shadow: var(--shadow);
   overflow: hidden;
-  aspect-ratio: 8 / 5;
+  aspect-ratio: 1.586;
   max-width: 420px;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  position: relative;
 }
-.gift-card-logo { width: 55%; max-width: 220px; border-radius: 12px; }
+.gift-card-top { flex: 1; display: grid; place-items: center; padding: 6px 10px 0; min-height: 0; }
+.gift-card-top img { width: 82%; max-width: 300px; max-height: 100%; object-fit: contain; }
 .gift-card-strip {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  background: rgba(239, 236, 221, 0.92);
-  color: #57705c;
+  background: #f3f1e7;
+  color: #4f644a;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px;
-  font-weight: 700; letter-spacing: 3px; font-size: 13px;
+  padding: 11px 20px;
+  font-weight: 800; letter-spacing: 4px; font-size: 15px;
 }
-.gift-card-number { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1.5px; }
+.gift-card-number { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 1.5px; font-size: 12px; font-weight: 600; }
 .gift-balance { font-size: 28px; font-weight: 800; color: var(--brand-600); }
 .reload-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .reload-custom { display: flex; gap: 10px; }

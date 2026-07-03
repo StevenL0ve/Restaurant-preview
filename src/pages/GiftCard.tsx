@@ -94,9 +94,12 @@ export function GiftCard() {
         </div>
       </div>
 
-      {/* The card — styled after the printed CGP gift card. */}
+      {/* The card — styled after the printed CGP gift card: logo on green,
+          cream GIFT CARD strip below. */}
       <div className="gift-card">
-        <img className="gift-card-logo" src="/brand/logo.png" alt="Common Ground logo" />
+        <div className="gift-card-top">
+          <img src="/brand/logo.png" alt="Common Ground" />
+        </div>
         <div className="gift-card-strip">
           <span>GIFT CARD</span>
           <span className="gift-card-number">{number}</span>
