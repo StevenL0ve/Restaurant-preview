@@ -6,14 +6,17 @@ const config: CapacitorConfig = {
   appId: "com.commongroundprojects.cgp",
   appName: "CGP",
   webDir: "dist",
-  // Launch in brand green (matches the splash + logo background).
-  backgroundColor: "#56775f",
+  // The native window behind the web view. iOS occasionally exposes a sliver
+  // of it below the page (e.g. after the keyboard or an overscroll settle), so
+  // it matches the bottom nav's dark green and reads as part of the bar.
+  // The splash overlay in index.html still paints the lighter brand green.
+  backgroundColor: "#42543e",
   ios: {
     contentInset: "always",
-    backgroundColor: "#56775f",
+    backgroundColor: "#42543e",
   },
   android: {
-    backgroundColor: "#56775f",
+    backgroundColor: "#42543e",
   },
 };
 
