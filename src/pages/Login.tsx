@@ -35,7 +35,7 @@ export function Login() {
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo.jpeg" alt="Common Ground logo" />
+        <img className="auth-logo" src="/brand/logo.png" alt="Common Ground logo" />
         <h1 className="auth-title">CGP</h1>
         <p className="auth-sub">The Common Ground Projects</p>
         <p className="auth-lede">Café, kitchen, yoga studio &amp; the Zen Den — all in one place.</p>

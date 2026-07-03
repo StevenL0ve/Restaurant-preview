@@ -18,7 +18,7 @@ export function Home() {
   return (
     <div className="page home">
       <section className="hero">
-        <img className="hero-logo" src="/brand/logo.jpeg" alt="Common Ground logo" />
+        <img className="hero-logo" src="/brand/logo.png" alt="Common Ground logo" />
         <div className="hero-eyebrow">The Common Ground Projects</div>
         <h1 className="hero-title">Everything under one roof.</h1>
         <p className="hero-sub">

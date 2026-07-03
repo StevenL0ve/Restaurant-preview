@@ -79,7 +79,7 @@ export function Rewards() {
       <div className="loyalty-card">
         <div className="loyalty-top">
           <span className="loyalty-brand">Common Grounds Café</span>
-          <img className="loyalty-logo" src="/brand/logo.jpeg" alt="" aria-hidden />
+          <img className="loyalty-logo" src="/brand/logo.png" alt="" aria-hidden />
         </div>
         <div className="loyalty-name">{name}</div>
         <div className="loyalty-id">{id}</div>

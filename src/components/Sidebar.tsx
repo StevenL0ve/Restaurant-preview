@@ -33,7 +33,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo.jpeg" alt="" aria-hidden />
+        <img className="brand-mark" src="/brand/logo.png" alt="" aria-hidden />
         <div>
           <div className="brand-name">CGP</div>
           <div className="brand-tag">The Common Ground Projects</div>

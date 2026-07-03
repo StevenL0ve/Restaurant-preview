@@ -71,7 +71,7 @@ export function Menu() {
       )}
       {filter === "cafe" && (
         <div className="venue-banner card">
-          <img className="venue-logo" src="/brand/logo.jpeg" alt="Common Ground logo" />
+          <img className="venue-logo" src="/brand/logo.png" alt="Common Ground logo" />
           <div>
             <div className="row-title">{VENUES.cafe.name}</div>
             <div className="row-sub">🕐 {VENUES.cafe.hours}</div>
