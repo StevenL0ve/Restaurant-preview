@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useStore, cartCount } from "../state/store";
+import { useAuth } from "../state/auth";
 import { tapLight } from "../lib/haptics";
 
 // Mobile-only bottom tab bar — the native pattern people expect from a phone
@@ -32,8 +33,12 @@ const more = [
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ] as const;
 
+// Owners & IT also get the Team screen.
+const adminMore = [{ to: "/team", label: "Team", icon: "👥" }] as const;
+
 export function BottomNav() {
   const { state } = useStore();
+  const { user } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
   const location = useLocation();
   const cart = cartCount(state);
@@ -41,14 +46,17 @@ export function BottomNav() {
 
   useEffect(() => setSheetOpen(false), [location.pathname]);
 
-  const moreActive = more.some((m) => m.to === location.pathname);
+  const sheetItems = user && (user.role === "owner" || user.role === "it")
+    ? [...more, ...adminMore]
+    : [...more];
+  const moreActive = sheetItems.some((m) => m.to === location.pathname);
 
   return (
     <>
       {sheetOpen && <div className="sheet-scrim" onClick={() => setSheetOpen(false)} />}
       {sheetOpen && (
         <div className="more-sheet" role="menu">
-          {more.map((m) => {
+          {sheetItems.map((m) => {
             const c = "badge" in m && m.badge === "cart" ? cart : 0;
             return (
               <NavLink

@@ -22,7 +22,7 @@ export function Book() {
   const { state, bookClass, signWaiver, addClass, removeClass } = useStore();
   const [venue, setVenue] = useState<BookVenue>("yoga");
   // Owners manage their own venue's schedule; IT manages all of them.
-  const canManage = postableVenues(user?.role).includes(venue);
+  const canManage = postableVenues(user?.role, user?.venues).includes(venue);
   const [manageOpen, setManageOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newWhen, setNewWhen] = useState("");

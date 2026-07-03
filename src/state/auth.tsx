@@ -13,6 +13,7 @@ import {
 // in plain text — though real security arrives with the hosted backend.
 
 import { type Role } from "../lib/roles";
+import { type Venue } from "../types";
 
 interface Account {
   name: string;
@@ -20,32 +21,47 @@ interface Account {
   passHash: string;
   createdAt: string;
   role?: Role;
+  venues?: Venue[]; // staff only — which sections they work
 }
 export interface SessionUser {
   name: string;
   email: string;
   role: Role;
-  isAdmin: boolean; // any ownership/IT role
+  venues: Venue[]; // staff venue assignments (owners/IT span all venues)
+  isAdmin: boolean; // any staff/owner/IT role
 }
 
-// Provisioned logins — one per ownership category plus IT support. These are
-// created on first launch with an initial password (rotate it in Settings →
-// Change password). New sign-ups are always plain members; roles only come
-// from this directory. With a hosted backend this becomes a server-managed
-// role table and the UI gates stay identical.
-export const STAFF_DIRECTORY: { email: string; name: string; role: Role }[] = [
+// Provisioned logins — the family owners (full admin across every venue),
+// one shared staff login per section, plus IT support. These are created on
+// first launch with an initial password (rotate it in Settings → Change
+// password). New sign-ups are always plain members; roles only come from
+// this directory. With a hosted backend this becomes a server-managed role
+// table and the UI gates stay identical.
+export const STAFF_DIRECTORY: { email: string; name: string; role: Role; venues?: Venue[] }[] = [
   { email: "bkborngaraised@gmail.com", name: "Steven", role: "it" },
-  { email: "cafe@thecommongroundprojects.com", name: "Common Grounds Café", role: "cafe" },
-  { email: "figolive@thecommongroundprojects.com", name: "By the Fig & the Olive", role: "restaurant" },
-  { email: "yoga@thecommongroundprojects.com", name: "The Studio", role: "yoga" },
-  { email: "zenden@thecommongroundprojects.com", name: "The Zen Den", role: "zenden" },
-  { email: "massage@thecommongroundprojects.com", name: "CGP Massage", role: "massage" },
+  // The family — owner accounts reach every venue. Placeholder names/emails
+  // until the real ones are provided.
+  { email: "owner-mom@thecommongroundprojects.com", name: "Mom", role: "owner" },
+  { email: "owner-son@thecommongroundprojects.com", name: "Son", role: "owner" },
+  { email: "owner-daughter@thecommongroundprojects.com", name: "Daughter", role: "owner" },
+  { email: "owner-soninlaw@thecommongroundprojects.com", name: "Son-in-law", role: "owner" },
+  // Shared per-section staff logins. Staff who work multiple sections can be
+  // given several venues here (e.g. venues: ["cafe", "restaurant"]).
+  { email: "cafe@thecommongroundprojects.com", name: "Common Grounds Café", role: "staff", venues: ["cafe"] },
+  { email: "figolive@thecommongroundprojects.com", name: "By the Fig & the Olive", role: "staff", venues: ["restaurant"] },
+  { email: "yoga@thecommongroundprojects.com", name: "The Studio", role: "staff", venues: ["yoga"] },
+  { email: "zenden@thecommongroundprojects.com", name: "The Zen Den", role: "staff", venues: ["zenden"] },
+  { email: "massage@thecommongroundprojects.com", name: "CGP Massage", role: "staff", venues: ["massage"] },
 ];
 
 // Initial passwords for the provisioned logins. Documented in the README;
 // owners should rotate them from Settings on first sign-in.
 const INITIAL_PASSWORDS: Record<string, string> = {
   "bkborngaraised@gmail.com": "CGP-IT-2026!",
+  "owner-mom@thecommongroundprojects.com": "CGP-Owner-2026!",
+  "owner-son@thecommongroundprojects.com": "CGP-Owner-2026!",
+  "owner-daughter@thecommongroundprojects.com": "CGP-Owner-2026!",
+  "owner-soninlaw@thecommongroundprojects.com": "CGP-Owner-2026!",
   "cafe@thecommongroundprojects.com": "CGP-Cafe-2026!",
   "figolive@thecommongroundprojects.com": "CGP-FigOlive-2026!",
   "yoga@thecommongroundprojects.com": "CGP-Studio-2026!",
@@ -56,9 +72,14 @@ const INITIAL_PASSWORDS: Record<string, string> = {
 function roleOf(acct: Account): Role {
   return acct.role ?? "member";
 }
+function sessionOf(acct: Account): SessionUser {
+  const role = roleOf(acct);
+  return { name: acct.name, email: acct.email, role, venues: acct.venues ?? [], isAdmin: role !== "member" };
+}
 
-// Create any missing provisioned accounts (and keep their role + display name
-// in sync with the directory) without ever touching an existing password.
+// Create any missing provisioned accounts (and keep their role, display name
+// and venue assignments in sync with the directory) without ever touching an
+// existing password.
 async function ensureStaffAccounts(): Promise<void> {
   const accounts = loadAccounts();
   let changed = false;
@@ -71,6 +92,7 @@ async function ensureStaffAccounts(): Promise<void> {
         passHash: await sha256(INITIAL_PASSWORDS[staff.email]),
         createdAt: new Date().toISOString(),
         role: staff.role,
+        venues: staff.venues,
       };
       changed = true;
     } else {
@@ -82,9 +104,79 @@ async function ensureStaffAccounts(): Promise<void> {
         existing.name = staff.name;
         changed = true;
       }
+      if (JSON.stringify(existing.venues ?? []) !== JSON.stringify(staff.venues ?? [])) {
+        existing.venues = staff.venues;
+        changed = true;
+      }
     }
   }
   if (changed) saveAccounts(accounts);
+}
+
+// ---- Team management (IT/owner) ----
+// Reads and writes the same local account store. Until the Phase-2 hosted
+// backend, teammates added here exist on this device only; the directory
+// logins above exist on every install.
+
+export interface Teammate {
+  name: string;
+  email: string;
+  role: Role;
+  venues: Venue[];
+  builtIn: boolean; // seeded from STAFF_DIRECTORY (synced on every launch)
+}
+
+export function listTeam(): Teammate[] {
+  const accounts = loadAccounts();
+  const directory = new Set(STAFF_DIRECTORY.map((s) => s.email));
+  return Object.values(accounts)
+    .filter((a) => roleOf(a) !== "member")
+    .map((a) => ({
+      name: a.name,
+      email: a.email,
+      role: roleOf(a),
+      venues: a.venues ?? [],
+      builtIn: directory.has(a.email),
+    }))
+    .sort((a, b) => a.role.localeCompare(b.role) || a.name.localeCompare(b.name));
+}
+
+// Adds a teammate with a generated temporary password (returned once so it
+// can be texted to them; they should rotate it in Settings).
+export async function addTeammate(
+  name: string,
+  email: string,
+  role: "owner" | "staff",
+  venues: Venue[],
+): Promise<string> {
+  const key = email.trim().toLowerCase();
+  if (!name.trim()) throw new Error("Please enter their name.");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(key)) throw new Error("Enter a valid email.");
+  if (role === "staff" && venues.length === 0) throw new Error("Pick at least one section they work.");
+  const accounts = loadAccounts();
+  if (accounts[key]) throw new Error("An account with that email already exists.");
+  const temp = "CGP-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  accounts[key] = {
+    name: name.trim(),
+    email: key,
+    passHash: await sha256(temp),
+    createdAt: new Date().toISOString(),
+    role,
+    venues: role === "staff" ? venues : undefined,
+  };
+  saveAccounts(accounts);
+  return temp;
+}
+
+export function removeTeammate(email: string): void {
+  const accounts = loadAccounts();
+  const acct = accounts[email];
+  if (!acct) return;
+  if (STAFF_DIRECTORY.some((s) => s.email === email)) {
+    throw new Error("Built-in logins can't be removed here.");
+  }
+  delete accounts[email];
+  saveAccounts(accounts);
 }
 
 const ACCOUNTS_KEY = "cgp.accounts.v1";
@@ -146,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const email = localStorage.getItem(SESSION_KEY);
       if (email) {
         const acct = loadAccounts()[email];
-        if (acct) return { name: acct.name, email: acct.email, role: roleOf(acct), isAdmin: roleOf(acct) !== "member" };
+        if (acct) return sessionOf(acct);
       }
     } catch {
       /* no session */
@@ -167,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const email = localStorage.getItem(SESSION_KEY);
       const acct = email ? loadAccounts()[email] : undefined;
       if (acct) {
-        setUser({ name: acct.name, email: acct.email, role: roleOf(acct), isAdmin: roleOf(acct) !== "member" });
+        setUser(sessionOf(acct));
       }
     });
   }, []);
@@ -194,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveAccounts(accounts);
       localStorage.setItem(SESSION_KEY, key);
       // New sign-ups are always members; roles come only from the directory.
-      setUser({ name: name.trim(), email: key, role: "member", isAdmin: false });
+      setUser({ name: name.trim(), email: key, role: "member", venues: [], isAdmin: false });
     },
 
     signIn: async (email, password) => {
@@ -204,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Incorrect email or password.");
       }
       localStorage.setItem(SESSION_KEY, key);
-      setUser({ name: acct.name, email: acct.email, role: roleOf(acct), isAdmin: roleOf(acct) !== "member" });
+      setUser(sessionOf(acct));
     },
 
     changePassword: async (current, next) => {

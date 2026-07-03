@@ -14,7 +14,7 @@ export function Community() {
   const [alertStatus, setAlertStatus] = useState<string | null>(null);
 
   // Owners post for their own business; IT posts anywhere; members can't.
-  const allowedVenues = postableVenues(user?.role);
+  const allowedVenues = postableVenues(user?.role, user?.venues);
 
   // "Post an event" form
   const [formOpen, setFormOpen] = useState(false);

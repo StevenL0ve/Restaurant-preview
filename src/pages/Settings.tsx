@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
 import { ROLE_LABEL } from "../lib/roles";
+import { VENUES } from "../types";
 import { memberId } from "../lib/wallet";
 
 export function Settings() {
@@ -52,7 +53,13 @@ export function Settings() {
               <div className="muted small">{user.email}</div>
               <div className="muted small">Member {memberId(user.email)}</div>
             </div>
-            {user.isAdmin && <span className="pill pill-ok" style={{ marginLeft: "auto" }}>{ROLE_LABEL[user.role]}</span>}
+            {user.isAdmin && (
+              <span className="pill pill-ok" style={{ marginLeft: "auto" }}>
+                {ROLE_LABEL[user.role]}
+                {user.role === "staff" && user.venues.length > 0 &&
+                  ` · ${user.venues.map((v) => VENUES[v].short).join(" + ")}`}
+              </span>
+            )}
           </div>
           <label className="toggle-row">
             <span>

@@ -1,25 +1,24 @@
 import type { Venue } from "../types";
 
-// Ownership categories for the app. Each business under the roof has an owner
-// login, IT support administers everything, and everyone else is a member.
-export type Role = "member" | "it" | Venue;
+// Admin tiers for the app. The family who owns The Common Ground Projects are
+// "owners" — full admin across every venue. Employees are "staff", assigned to
+// one or more venues (plenty work more than one section). IT administers
+// everything, and everyone else is a member.
+export type Role = "member" | "staff" | "owner" | "it";
 
 export const ROLE_LABEL: Record<Role, string> = {
   member: "Member",
+  staff: "Staff",
+  owner: "Owner",
   it: "IT Support",
-  cafe: "Café Owner",
-  restaurant: "Fig + Olive Owner",
-  yoga: "Studio Owner",
-  zenden: "Zen Den Owner",
-  massage: "Massage Owner",
 };
 
-const ALL_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "zenden", "massage"];
+export const ALL_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "zenden", "massage"];
 
-// Which venues a role may post events for: IT posts anywhere, an owner posts
-// for their own business, members can't post.
-export function postableVenues(role: Role | undefined): Venue[] {
+// Which venues someone may administer (post community events, manage class &
+// session schedules): owners and IT everywhere, staff only where they work.
+export function postableVenues(role: Role | undefined, venues?: Venue[]): Venue[] {
   if (!role || role === "member") return [];
-  if (role === "it") return ALL_VENUES;
-  return [role];
+  if (role === "it" || role === "owner") return ALL_VENUES;
+  return venues ?? [];
 }
