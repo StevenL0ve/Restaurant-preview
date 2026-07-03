@@ -56,9 +56,11 @@
 html, body, #root { height: 100%; margin: 0; }
 /* Never let the page slide sideways. `overflow-x: clip` clamps any stray
    overflow WITHOUT creating a scroll container (so vertical scrolling and
-   sticky headers keep working), and `overscroll-behavior-x` stops the iOS
-   WebView from rubber-banding horizontally when a nested strip is swiped. */
-html, body { max-width: 100%; overflow-x: clip; overscroll-behavior-x: none; }
+   sticky headers keep working), and `overscroll-behavior: none` stops the iOS
+   WebView from rubber-banding — horizontally when a nested strip is swiped,
+   and vertically at the ends of the page, where the bounce lifted the fixed
+   bottom nav and exposed the backdrop beneath it. */
+html, body { max-width: 100%; overflow-x: clip; overscroll-behavior: none; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -678,6 +680,16 @@ input, textarea { font-family: inherit; }
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 40;
+  }
+  /* Continue the bar's green below the viewport so that if an overscroll
+     bounce ever lifts the bar, the revealed strip matches it instead of
+     flashing the page background. */
+  .bottom-nav::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 100%;
+    height: 160px;
+    background: #42543e;
   }
   .tab {
     flex: 1;
