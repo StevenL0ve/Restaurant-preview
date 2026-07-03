@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CGP</string>
+    <string name="title_activity_main">CGP</string>
+    <string name="package_name">com.commongroundprojects.cgp</string>
+    <string name="custom_url_scheme">com.commongroundprojects.cgp</string>
+</resources>

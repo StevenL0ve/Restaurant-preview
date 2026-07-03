@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CGP brand green (matches the logo art and iOS launch background). -->
+    <color name="colorPrimary">#56775F</color>
+    <color name="colorPrimaryDark">#42543E</color>
+    <color name="colorAccent">#56775F</color>
+</resources>
