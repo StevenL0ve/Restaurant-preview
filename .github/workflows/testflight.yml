@@ -57,22 +57,20 @@ jobs:
           mkdir -p "$HOME/asc"
           echo "$ASC_KEY_CONTENT" | base64 --decode > "$HOME/asc/AuthKey.p8"
 
-      - name: Archive (cloud-managed signing)
+      # The archive itself is UNSIGNED — signing happens once at export with
+      # the cloud-managed distribution certificate. Signing the archive too
+      # minted a new Apple Development certificate on every run (ephemeral
+      # runner keychains), which eventually hit Apple's certificate cap.
+      - name: Archive (unsigned)
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive archive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/asc/AuthKey.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             MARKETING_VERSION=1.0
 
