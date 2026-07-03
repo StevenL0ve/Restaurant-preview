@@ -11,6 +11,13 @@ export const WAIVER_TEXT: Record<WaiverVenue, string> = {
     "and will tell my instructor about any injuries, conditions, or pregnancy. " +
     "I assume responsibility for my participation and release The Common Ground Projects, " +
     "its instructors, and staff from liability for any injury sustained during class.",
+  pilates:
+    "I understand that Pilates — including reformer and other apparatus work — involves " +
+    "physical movement and carries risk of injury. I confirm I am physically able to " +
+    "participate, will work within my own limits, and will tell my instructor about any " +
+    "injuries, conditions, or pregnancy. I assume responsibility for my participation and " +
+    "release The Common Ground Projects, its instructors, and staff from liability for any " +
+    "injury sustained during a session.",
   zenden:
     "I understand that infrared sauna, red light therapy, hot and cold plunge, and " +
     "salt chamber sessions at the Zen Den carry inherent risks, including heat and cold exposure. " +
@@ -28,6 +35,7 @@ export const WAIVER_TEXT: Record<WaiverVenue, string> = {
 
 export const WAIVER_TITLE: Record<WaiverVenue, string> = {
   yoga: "Yoga Studio Liability Waiver",
+  pilates: "Pilates Studio Liability Waiver",
   zenden: "Zen Den Wellness Waiver",
   massage: "Massage Therapy Consent & Waiver",
 };

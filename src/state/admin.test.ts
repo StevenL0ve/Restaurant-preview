@@ -7,7 +7,7 @@ describe("staff directory", () => {
     const byRole = (r: string) => STAFF_DIRECTORY.filter((s) => s.role === r);
     expect(byRole("it")).toHaveLength(1);
     expect(byRole("owner")).toHaveLength(4); // mom, son, daughter, son-in-law
-    expect(byRole("staff")).toHaveLength(5); // one per section
+    expect(byRole("staff")).toHaveLength(6); // one per section
   });
   it("includes the IT support login", () => {
     expect(STAFF_DIRECTORY.find((s) => s.role === "it")?.email).toBe("bkborngaraised@gmail.com");
@@ -39,9 +39,9 @@ describe("postableVenues", () => {
     expect(postableVenues("staff")).toEqual([]);
   });
   it("owners post anywhere — the family runs every section", () => {
-    expect(postableVenues("owner")).toHaveLength(5);
+    expect(postableVenues("owner")).toHaveLength(6);
   });
   it("IT posts anywhere", () => {
-    expect(postableVenues("it")).toHaveLength(5);
+    expect(postableVenues("it")).toHaveLength(6);
   });
 });

@@ -95,9 +95,17 @@ const YOGA: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
   { name: "Gentle Flow Yoga", instructor: "Kim", description: "Slow, welcoming flow — perfect first class.", start: at(0, 8), durationMin: 60, capacity: 18, booked: 11, price: 20, level: "Gentle", image: "/photos/yoga.jpeg" },
   { name: "All-Levels Vinyasa Flow", instructor: "Moira", description: "Breath-linked flow that meets you where you are.", start: at(1, 9, 30), durationMin: 60, capacity: 20, booked: 8, price: 20, level: "All levels", image: "/photos/riverrock-camel.jpeg" },
   { name: "Restorative & Yin", instructor: "Kim", description: "Slow, floor-based, deeply relaxing. Props provided.", start: at(1, 18), durationMin: 60, capacity: 16, booked: 14, price: 22, level: "Gentle", image: "/photos/riverrock-lotus.jpeg" },
-  { name: "Pilates Mat", instructor: "Moira", description: "Core-focused mat Pilates — strength, control, posture.", start: at(2, 8, 30), durationMin: 55, capacity: 16, booked: 6, price: 22, level: "All levels" },
   { name: "PiYo", instructor: "Kim", description: "Pilates + yoga fusion — low impact, high energy.", start: at(3, 17, 30), durationMin: 55, capacity: 18, booked: 4, price: 22, level: "Intermediate" },
   { name: "Heated Hatha", instructor: "Moira", description: "Classic postures in a warm room. Bring a towel.", start: at(4, 8), durationMin: 75, capacity: 18, booked: 7, price: 24, level: "Intermediate", image: "/photos/yoga-class.jpeg" },
+];
+
+// Selah Pilates & Wellness (pilatesgulfcoast.com) — reformer, mat, classical
+// and private Pilates. Times & prices are placeholders until Selah confirms.
+const PILATES: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
+  { name: "Reformer — Small Group", instructor: "Selah", description: "Dynamic full-body reformer work with individual guidance.", start: at(0, 9), durationMin: 50, capacity: 6, booked: 4, price: 32, level: "All levels" },
+  { name: "Pilates Mat", instructor: "Selah", description: "Core strength and alignment with small props — all levels.", start: at(1, 8, 30), durationMin: 50, capacity: 12, booked: 5, price: 22, level: "All levels", image: "/photos/riverrock-lotus.jpeg" },
+  { name: "Classical Pilates", instructor: "Selah", description: "Joseph Pilates' original sequence — precision, strength, mobility.", start: at(2, 9), durationMin: 55, capacity: 8, booked: 3, price: 28, level: "Intermediate" },
+  { name: "Private Session", instructor: "Selah", description: "One-on-one — injury recovery, athletic conditioning, tailored goals.", start: at(3, 13), durationMin: 55, capacity: 1, booked: 0, price: 75, level: "Private" },
 ];
 
 // The Zen Den (zendenms.com) — a Nordic cycle spa: infrared sauna with red
@@ -118,9 +126,10 @@ const MASSAGE: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
 
 function buildClasses(): SessionClass[] {
   const y = YOGA.map((c, i) => ({ ...c, id: `cy-${i + 1}`, venue: "yoga" as const, requiresWaiver: true }));
+  const p = PILATES.map((c, i) => ({ ...c, id: `cp-${i + 1}`, venue: "pilates" as const, requiresWaiver: true }));
   const z = ZENDEN.map((c, i) => ({ ...c, id: `cz-${i + 1}`, venue: "zenden" as const, requiresWaiver: true }));
   const m = MASSAGE.map((c, i) => ({ ...c, id: `cm-${i + 1}`, venue: "massage" as const, requiresWaiver: true }));
-  return [...y, ...z, ...m].sort((a, b) => a.start.localeCompare(b.start));
+  return [...y, ...p, ...z, ...m].sort((a, b) => a.start.localeCompare(b.start));
 }
 
 // ---- Community events ----

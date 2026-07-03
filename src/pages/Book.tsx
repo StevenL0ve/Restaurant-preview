@@ -7,12 +7,13 @@ import { WAIVER_TEXT } from "../lib/waiverText";
 import { money, fullDate, time } from "../lib/format";
 import { tapLight, notifySuccess } from "../lib/haptics";
 
-type BookVenue = "yoga" | "zenden" | "massage";
-const filters: BookVenue[] = ["yoga", "zenden", "massage"];
+type BookVenue = "yoga" | "pilates" | "zenden" | "massage";
+const filters: BookVenue[] = ["yoga", "pilates", "zenden", "massage"];
 
 // Each venue's banner is its own space.
 const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
-  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga & Pilates" },
+  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga" },
+  pilates: { src: "/photos/riverrock-lotus.jpeg", alt: "Mindful movement at Selah Pilates & Wellness" },
   zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber" },
   massage: { src: "/photos/interior.jpeg", alt: "The Common Ground community space" },
 };
@@ -96,7 +97,7 @@ export function Book() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Book a Session</h1>
-          <p className="page-sub">Yoga classes, Zen Den treatments &amp; massage.</p>
+          <p className="page-sub">Yoga &amp; Pilates classes, Zen Den treatments &amp; massage.</p>
         </div>
       </div>
 

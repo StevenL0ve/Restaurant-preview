@@ -5,12 +5,13 @@
 export type ID = string;
 
 // The five services under the Common Ground Projects roof.
-export type Venue = "restaurant" | "cafe" | "yoga" | "zenden" | "massage";
+export type Venue = "restaurant" | "cafe" | "yoga" | "pilates" | "zenden" | "massage";
 
 export const VENUES: Record<Venue, { name: string; short: string; icon: string; blurb: string; logo?: string; hours?: string }> = {
   restaurant: { name: "By the Fig & the Olive", short: "Restaurant", icon: "🍽️", blurb: "Mediterranean lunch from four self-taught chefs — mezze, shawarma & kabobs.", logo: "/brand/figolive-logo.jpeg", hours: "Tue–Sat 11am–3pm" },
   cafe: { name: "Common Grounds Café", short: "Coffee Shop", icon: "☕️", blurb: "Small-batch coffee & fresh bakes. Earn a punch on every drink.", hours: "Tue–Sun 7am–3pm · Fri & Sat 5–9pm" },
-  yoga: { name: "River Rock Yoga & Pilates", short: "Yoga & Pilates", icon: "🧘", blurb: "25+ weekly classes — vinyasa, yin, Pilates mat, PiYo & heated hatha.", logo: "/brand/riverrock-logo.png", hours: "Mon–Thu 8am–6pm · Fri 8–1:30 · Sat 8:30–12 · Sun 8–10" },
+  yoga: { name: "River Rock Yoga", short: "Yoga", icon: "🧘", blurb: "25+ weekly classes — vinyasa, gentle flow, yin, PiYo & heated hatha.", logo: "/brand/riverrock-logo.png", hours: "Mon–Thu 8am–6pm · Fri 8–1:30 · Sat 8:30–12 · Sun 8–10" },
+  pilates: { name: "Selah Pilates & Wellness", short: "Pilates", icon: "🤸", blurb: "Reformer, mat & private sessions — classical Pilates, small groups.", hours: "See class schedule" },
   zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Nordic cycle spa — infrared sauna, hot & cold plunge, Himalayan salt room.", logo: "/brand/zenden-logo.png", hours: "By reservation" },
   massage: { name: "Massage", short: "Massage", icon: "💆", blurb: "Therapeutic & relaxation bodywork.", hours: "By appointment" },
 };
@@ -71,7 +72,7 @@ export interface PunchCard {
 
 export interface SessionClass {
   id: ID;
-  venue: "yoga" | "zenden" | "massage";
+  venue: "yoga" | "pilates" | "zenden" | "massage";
   name: string;
   instructor: string;
   description: string;
@@ -103,7 +104,7 @@ export interface Booking {
 // A signed liability waiver, one required per venue that involves physical
 // activity or bodywork (yoga, the Zen Den spa, massage).
 
-export type WaiverVenue = "yoga" | "zenden" | "massage";
+export type WaiverVenue = "yoga" | "pilates" | "zenden" | "massage";
 
 export interface Waiver {
   id: ID;

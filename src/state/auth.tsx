@@ -50,6 +50,7 @@ export const STAFF_DIRECTORY: { email: string; name: string; role: Role; venues?
   { email: "cafe@thecommongroundprojects.com", name: "Common Grounds Café", role: "staff", venues: ["cafe"] },
   { email: "figolive@thecommongroundprojects.com", name: "By the Fig & the Olive", role: "staff", venues: ["restaurant"] },
   { email: "yoga@thecommongroundprojects.com", name: "River Rock Yoga", role: "staff", venues: ["yoga"] },
+  { email: "pilates@thecommongroundprojects.com", name: "Selah Pilates", role: "staff", venues: ["pilates"] },
   { email: "zenden@thecommongroundprojects.com", name: "The Zen Den", role: "staff", venues: ["zenden"] },
   { email: "massage@thecommongroundprojects.com", name: "CGP Massage", role: "staff", venues: ["massage"] },
 ];
@@ -65,6 +66,7 @@ const INITIAL_PASSWORDS: Record<string, string> = {
   "cafe@thecommongroundprojects.com": "CGP-Cafe-2026!",
   "figolive@thecommongroundprojects.com": "CGP-FigOlive-2026!",
   "yoga@thecommongroundprojects.com": "CGP-Studio-2026!",
+  "pilates@thecommongroundprojects.com": "CGP-Pilates-2026!",
   "zenden@thecommongroundprojects.com": "CGP-ZenDen-2026!",
   "massage@thecommongroundprojects.com": "CGP-Massage-2026!",
 };

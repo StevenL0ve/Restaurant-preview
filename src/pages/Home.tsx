@@ -5,7 +5,7 @@ import { VENUES, type Venue } from "../types";
 import { money, fullDate, time } from "../lib/format";
 
 const orderVenues: Venue[] = ["restaurant", "cafe"];
-const bookVenues: Venue[] = ["yoga", "zenden", "massage"];
+const bookVenues: Venue[] = ["yoga", "pilates", "zenden", "massage"];
 
 export function Home() {
   const { state } = useStore();

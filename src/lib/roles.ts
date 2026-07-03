@@ -13,7 +13,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   it: "IT Support",
 };
 
-export const ALL_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "zenden", "massage"];
+export const ALL_VENUES: Venue[] = ["cafe", "restaurant", "yoga", "pilates", "zenden", "massage"];
 
 // Which venues someone may administer (post community events, manage class &
 // session schedules): owners and IT everywhere, staff only where they work.

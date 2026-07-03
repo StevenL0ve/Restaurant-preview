@@ -6,7 +6,7 @@ import { WAIVER_TEXT, WAIVER_TITLE } from "../lib/waiverText";
 import { fullDate } from "../lib/format";
 import { notifySuccess, tapLight } from "../lib/haptics";
 
-const venues: WaiverVenue[] = ["yoga", "zenden", "massage"];
+const venues: WaiverVenue[] = ["yoga", "pilates", "zenden", "massage"];
 
 export function Waivers() {
   const { user } = useAuth();
