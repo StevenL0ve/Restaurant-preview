@@ -34,7 +34,7 @@ export interface SessionUser {
 // from this directory. With a hosted backend this becomes a server-managed
 // role table and the UI gates stay identical.
 export const STAFF_DIRECTORY: { email: string; name: string; role: Role }[] = [
-  { email: "bkborngaraised@gmail.com", name: "IT Support", role: "it" },
+  { email: "bkborngaraised@gmail.com", name: "Steven", role: "it" },
   { email: "cafe@thecommongroundprojects.com", name: "Common Grounds Café", role: "cafe" },
   { email: "figolive@thecommongroundprojects.com", name: "By the Fig & the Olive", role: "restaurant" },
   { email: "yoga@thecommongroundprojects.com", name: "The Studio", role: "yoga" },
@@ -57,8 +57,8 @@ function roleOf(acct: Account): Role {
   return acct.role ?? "member";
 }
 
-// Create any missing provisioned accounts (and backfill roles) without ever
-// touching an existing password.
+// Create any missing provisioned accounts (and keep their role + display name
+// in sync with the directory) without ever touching an existing password.
 async function ensureStaffAccounts(): Promise<void> {
   const accounts = loadAccounts();
   let changed = false;
@@ -73,9 +73,15 @@ async function ensureStaffAccounts(): Promise<void> {
         role: staff.role,
       };
       changed = true;
-    } else if (existing.role !== staff.role) {
-      existing.role = staff.role;
-      changed = true;
+    } else {
+      if (existing.role !== staff.role) {
+        existing.role = staff.role;
+        changed = true;
+      }
+      if (existing.name !== staff.name) {
+        existing.name = staff.name;
+        changed = true;
+      }
     }
   }
   if (changed) saveAccounts(accounts);
