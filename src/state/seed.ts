@@ -46,22 +46,36 @@ const CAFE: (Omit<MenuItem, "id" | "venue" | "earnsPunch"> & { noPunch?: boolean
   { category: "Kids + Fur Babies", name: "Hot Chocolate", description: "Steamed chocolate, milk of choice.", price: 4.0, tags: [], noPunch: true },
 ];
 
-// By the Fig & the Olive — the Mediterranean restaurant under the CGP roof
-// (figandtheolive.com). Dishes are the ones regulars rave about; prices are
-// placeholders until the printed menu is provided.
+// By the Fig & the Olive — the real printed menu (figandtheolive.com).
+// Their dishes use ghee, organic extra virgin olive oil and organic chicken.
 const KITCHEN: Omit<MenuItem, "id" | "venue" | "earnsPunch">[] = [
-  { category: "Mezze & Starters", name: "Mezze Platter", description: "Five house dips — roasted & fried eggplant baba ghanoush, two styles of hummus, yogurt sauce — with warm pita.", price: 16.0, tags: ["popular"], image: "/photos/figolive-mezze.jpeg" },
-  { category: "Mezze & Starters", name: "Stuffed Dates", description: "Sweet dates, stuffed and finished house-style. A cult favorite.", price: 9.0, tags: ["gf", "popular"] },
-  { category: "Mezze & Starters", name: "Samosas", description: "Hand-folded and fried, spiced potato & peas.", price: 7.0, tags: ["vegan"] },
-  { category: "Mezze & Starters", name: "Za'atar Pie", description: "Flaky hand pie brushed with za'atar and olive oil.", price: 6.5, tags: ["vegan"] },
-  { category: "Flatbreads", name: "Goat Cheese & Fig Flatbread", description: "Warm flatbread, whipped goat cheese, figs, honey drizzle.", price: 14.0, tags: ["popular"] },
-  { category: "Flatbreads", name: "BBQ Chicken Flatbread", description: "Sweet-tangy barbecue chicken, jalapeño, red onion & cilantro on a soft pita base.", price: 14.0, tags: [] },
-  { category: "Wraps & Sandwiches", name: "Chicken Shawarma Wrap", description: "House-marinated chicken off the spinning skewer, pickles, garlic sauce.", price: 13.0, tags: ["popular"] },
-  { category: "Wraps & Sandwiches", name: "Falafel Wrap", description: "Crisp falafel, fresh herbs, tahini & pickles.", price: 12.0, tags: ["vegan"] },
-  { category: "Wraps & Sandwiches", name: "Roasted Vegetable Sandwich", description: "Roasted seasonal vegetables with house spreads.", price: 12.0, tags: ["vegan"] },
-  { category: "Plates", name: "Chicken Kabob Plate", description: "Char-grilled chicken kabobs, cilantro chutney, jeera rice, tangy slaw.", price: 16.0, tags: ["popular", "gf"], image: "/photos/figolive-food.jpeg" },
-  { category: "Plates", name: "Seekh Kabob Plate", description: "Spiced beef & lamb kabobs, vermicelli rice, pita and tzatziki.", price: 17.0, tags: ["popular"] },
-  { category: "Plates", name: "Beef Keema", description: "Slow-simmered spiced ground beef with rice and pita.", price: 16.0, tags: [] },
+  { category: "Börek & Beyönd", name: "Spinach Börek (2)", description: "Filo pastry, feta, spinach, chili fig jam.", price: 6.0, tags: ["veg"] },
+  { category: "Börek & Beyönd", name: "Potato Börek (2)", description: "Filo pastry, spiced potatoes, spicy house sauce.", price: 6.0, tags: ["veg"] },
+  { category: "Börek & Beyönd", name: "Zeit o Zataar", description: "Pita, sumac, thyme, olive oil, marinated olive.", price: 6.0, tags: ["veg", "vegan"] },
+  { category: "Börek & Beyönd", name: "Pani Puri (3)", description: "Semolina hollow puffs, chickpea salad, spiced water.", price: 8.0, tags: ["veg", "vegan"] },
+  { category: "Börek & Beyönd", name: "Samosas (2)", description: "Fried pastry, spiced potatoes, tamarind chutney, chickpea salad.", price: 8.0, tags: ["veg", "vegan"] },
+  { category: "Börek & Beyönd", name: "Lamb Börek (2)", description: "Filo pastry, lamb, cacik.", price: 10.0, tags: [] },
+  { category: "Boards", name: "Mezze", description: "Hummus, muhammara, baba ganoush, labneh, dolma, cacik, charred & marinated olives, pita.", price: 18.0, tags: ["veg", "gf option", "popular"], image: "/photos/figolive-mezze.jpeg" },
+  { category: "Boards", name: "Fig & Goat Cheese Flatbread", description: "Brie, caramelized red onions, walnuts, fig glaze, microgreens.", price: 18.0, tags: ["veg", "popular"] },
+  { category: "Boards", name: "BBQ Chicken Flatbread", description: "Jalapeño, cilantro, cheddar, slaw.", price: 18.0, tags: [] },
+  { category: "Boards", name: "Falafel Board", description: "Harissa, hummus, olives, pickled vegetables, tahini sauce, pita.", price: 18.0, tags: ["vegan", "veg", "gf option"] },
+  { category: "Boards", name: "Avocado Board", description: "Egg salad, pico de gallo, pickled onions, dukkah, olive oil, artisan bread.", price: 18.0, tags: ["veg option", "gf option"] },
+  { category: "Breads", name: "Rainbow Sandwich", description: "Seasonal farm fresh vegetables, hummus spread.", price: 12.0, tags: ["veg", "vegan", "gf option"] },
+  { category: "Breads", name: "Roasted Veggie Sandwich", description: "Eggplant, zucchini, squash, bell pepper, fresh greens, mushrooms, pesto.", price: 14.0, tags: ["veg", "vegan", "gf option"] },
+  { category: "Breads", name: "Tandoori Chicken Sandwich", description: "Omelette, tomato, cucumber, in-house spicy sauce, seasonal side.", price: 18.0, tags: ["gf option"] },
+  { category: "Breads", name: "Shawarma Wrap", description: "House-marinated chicken, pickles, garlic sauce, baked potato fries.", price: 18.0, tags: ["gf option", "popular"] },
+  { category: "Bowls", name: "Greek Salad", description: "Artichoke, pepperoncini, kalamata olives, tomatoes, cucumber, red onions, feta cheese. Half 7.00 / full 12.00.", price: 12.0, tags: ["veg", "gf option"] },
+  { category: "Bowls", name: "Fattoush Salad", description: "Fresh greens, cucumber, tomato, radish, bell pepper, mint, parsley. Half 7.00 / full 12.00.", price: 12.0, tags: ["veg", "vegan"] },
+  { category: "Bowls", name: "Soba Noodle Salad", description: "Buckwheat noodles, edamame, seasonal veggies, roasted peanuts, coconut tamarind dressing. Half 8.00 / full 16.00.", price: 16.0, tags: ["veg", "vegan"] },
+  { category: "Bowls", name: "Shawarma Bowl", description: "Saffron rice, chicken, greens, pickled vegetables, tahini sauce, roasted pepper sauce.", price: 18.0, tags: ["gf", "popular"] },
+  { category: "Bowls", name: "Thali", description: "Basmati rice, assorted daals, vegetables, dessert, lassi, roti.", price: 20.0, tags: ["veg", "vegan option"] },
+  { category: "By the Fire", name: "Kebab Paratha Roll", description: "Beef kebab, flaky bread, onions, green chutney, tamarind sauce.", price: 12.0, tags: ["veg option"] },
+  { category: "By the Fire", name: "Seekh Kebab Platter", description: "Spiced beef, saffron vermicelli rice, grilled vegetables, garlic yogurt sauce.", price: 22.0, tags: ["gf option", "popular"], image: "/photos/figolive-food.jpeg" },
+  { category: "By the Fire", name: "Lamb Chops", description: "Roasted cajun potato, mint chimichuri.", price: 25.0, tags: ["gf"] },
+  { category: "Because You Deserve It!", name: "Baklava (3)", description: "Filo sheet, walnut, simple syrup.", price: 6.0, tags: ["veg"] },
+  { category: "Because You Deserve It!", name: "Stuffed Dates (4)", description: "Feta cheese, walnuts, preserved orange, gold flakes, rose preserve, pistachios.", price: 8.0, tags: ["veg", "gf option", "popular"] },
+  { category: "Because You Deserve It!", name: "Kulfi (2)", description: "Cream, rose petals, pistachios.", price: 10.0, tags: ["veg"] },
+  { category: "Because You Deserve It!", name: "Knafeh", description: "Kataifi, nabulsi cheese, orange blossom syrup.", price: 14.0, tags: ["veg", "popular"] },
 ];
 
 // Stable, name-derived ids so a saved cart never re-points to a different
