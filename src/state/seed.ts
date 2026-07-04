@@ -117,11 +117,15 @@ const ZENDEN: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
   { name: "Full Zen Circuit (90 min)", instructor: "Zen Den", description: "The complete Nordic cycle: sauna, plunge, and salt chamber, at your pace.", start: at(3, 16), durationMin: 90, capacity: 6, booked: 4, price: 65, level: "Circuit", image: "/photos/zenden.jpeg" },
 ];
 
+// Elemental Massage (elementalmassageos.com) — Valerie Hamby. Book ahead;
+// same-day appointments aren't available. Prices are placeholders until
+// Valerie confirms.
 const MASSAGE: Omit<SessionClass, "id" | "venue" | "requiresWaiver">[] = [
-  { name: "Swedish Massage (60 min)", instructor: "Theo M.", description: "Classic full-body relaxation massage.", start: at(0, 14), durationMin: 60, capacity: 1, booked: 0, price: 110, level: "Relaxation" },
-  { name: "Deep Tissue (60 min)", instructor: "Priya S.", description: "Focused work for tension and knots.", start: at(1, 13), durationMin: 60, capacity: 1, booked: 0, price: 125, level: "Therapeutic" },
-  { name: "Prenatal Massage (60 min)", instructor: "Theo M.", description: "Safe, supported bodywork for expecting parents.", start: at(2, 10), durationMin: 60, capacity: 1, booked: 0, price: 120, level: "Specialty" },
-  { name: "Hot Stone (90 min)", instructor: "Priya S.", description: "Warm basalt stones melt away deep tension.", start: at(4, 15), durationMin: 90, capacity: 1, booked: 0, price: 160, level: "Specialty" },
+  { name: "Swedish Massage (60 min)", instructor: "Valerie Hamby", description: "Classic full-body relaxation massage.", start: at(1, 14), durationMin: 60, capacity: 1, booked: 0, price: 110, level: "Relaxation" },
+  { name: "Deep Tissue (60 min)", instructor: "Valerie Hamby", description: "Focused work for tension and knots.", start: at(2, 13), durationMin: 60, capacity: 1, booked: 0, price: 125, level: "Therapeutic" },
+  { name: "Aromatherapy Massage (60 min)", instructor: "Valerie Hamby", description: "Relaxation massage with essential oils, tuned to how you want to feel.", start: at(3, 10), durationMin: 60, capacity: 1, booked: 0, price: 120, level: "Relaxation" },
+  { name: "Lymphatic Drainage (60 min)", instructor: "Valerie Hamby", description: "Gentle rhythmic work that reduces inflammation and supports recovery.", start: at(4, 15), durationMin: 60, capacity: 1, booked: 0, price: 130, level: "Therapeutic" },
+  { name: "Hands-On Wellness Class (2 hr)", instructor: "Valerie Hamby", description: "Learn fundamental massage techniques for relaxation and stress relief — bring a partner.", start: at(6, 10), durationMin: 120, capacity: 8, booked: 2, price: 65, level: "Class" },
 ];
 
 function buildClasses(): SessionClass[] {

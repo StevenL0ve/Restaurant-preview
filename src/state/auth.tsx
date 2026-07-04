@@ -52,7 +52,7 @@ export const STAFF_DIRECTORY: { email: string; name: string; role: Role; venues?
   { email: "yoga@thecommongroundprojects.com", name: "River Rock Yoga", role: "staff", venues: ["yoga"] },
   { email: "pilates@thecommongroundprojects.com", name: "Selah Pilates", role: "staff", venues: ["pilates"] },
   { email: "zenden@thecommongroundprojects.com", name: "The Zen Den", role: "staff", venues: ["zenden"] },
-  { email: "massage@thecommongroundprojects.com", name: "CGP Massage", role: "staff", venues: ["massage"] },
+  { email: "massage@thecommongroundprojects.com", name: "Elemental Massage", role: "staff", venues: ["massage"] },
 ];
 
 // Initial passwords for the provisioned logins. Documented in the README;

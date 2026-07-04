@@ -13,7 +13,7 @@ export const VENUES: Record<Venue, { name: string; short: string; icon: string; 
   yoga: { name: "River Rock Yoga", short: "Yoga", icon: "🧘", blurb: "25+ weekly classes — vinyasa, gentle flow, yin, PiYo & heated hatha.", logo: "/brand/riverrock-logo.png", hours: "Mon–Thu 8am–6pm · Fri 8–1:30 · Sat 8:30–12 · Sun 8–10" },
   pilates: { name: "Selah Pilates & Wellness", short: "Pilates", icon: "🤸", blurb: "Reformer, mat & private sessions — classical Pilates, small groups.", logo: "/brand/selah-logo.png", hours: "See class schedule" },
   zenden: { name: "The Zen Den", short: "Wellness Spa", icon: "🌿", blurb: "Nordic cycle spa — infrared sauna, hot & cold plunge, Himalayan salt room.", logo: "/brand/zenden-logo.png", hours: "By reservation" },
-  massage: { name: "Massage", short: "Massage", icon: "💆", blurb: "Therapeutic & relaxation bodywork.", hours: "By appointment" },
+  massage: { name: "Elemental Massage", short: "Massage", icon: "💆", blurb: "Swedish, deep tissue, aromatherapy & lymphatic drainage with Valerie Hamby.", logo: "/brand/elemental-logo.png", hours: "By appointment — book ahead" },
 };
 
 // ---- Menus & ordering (restaurant + café) ----
