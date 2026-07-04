@@ -1,9 +1,16 @@
 # Builds the Android app on a GitHub Linux runner, signs it with the Play
 # upload keystore, and publishes it to the Google Play internal-testing track.
 #
+# The native android/ project is NOT committed — it is generated on each run
+# with `npx cap add android` from capacitor.config.ts (appId
+# com.stevennelson.coparent). Because the generated Gradle project has no
+# release signingConfig, the bundle is built unsigned and then signed here with
+# jarsigner using the upload keystore (the signing scheme Play expects for AABs).
+#
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64    The upload keystore file, base64-encoded
 #   ANDROID_KEYSTORE_PASSWORD  Keystore + key password
+#   ANDROID_KEY_ALIAS          Key alias inside the keystore (default: cgp-upload)
 #   GOOGLE_PLAY_JSON           (optional) Play Console service-account JSON —
 #                              when present the signed bundle is auto-published
 #                              to the internal track; without it the .aab is
@@ -16,6 +23,19 @@ name: Play Store
 
 on:
   workflow_dispatch:
+
+# Least privilege: publishing reads the repo and (optionally) talks to Play via
+# a service account — it does not need write access to the repository.
+permissions:
+  contents: read
+
+# Never interrupt an in-flight publish; queue instead.
+concurrency:
+  group: playstore
+  cancel-in-progress: false
+
+env:
+  APP_PACKAGE: com.stevennelson.coparent
 
 jobs:
   playstore:
@@ -40,8 +60,13 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Sync Capacitor Android shell
-        run: npx cap sync android
+      - name: Add / sync Capacitor Android shell
+        run: |
+          if [ -d android ]; then
+            npx cap sync android
+          else
+            npx cap add android
+          fi
 
       - name: Decode upload keystore
         env:
@@ -52,16 +77,36 @@ jobs:
           fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/cgp-upload.keystore"
 
-      - name: Build signed release bundle
+      - name: Build release bundle
         env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: cgp-upload
           VERSION_CODE: ${{ github.run_number }}
         run: |
-          export ANDROID_KEYSTORE_PATH="$HOME/cgp-upload.keystore"
           cd android
           ./gradlew bundleRelease --no-daemon
           ls -la app/build/outputs/bundle/release/
+
+      - name: Sign bundle with upload key
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::error::ANDROID_KEYSTORE_PASSWORD secret is missing"; exit 1
+          fi
+          alias="${ANDROID_KEY_ALIAS:-cgp-upload}"
+          aab="$(find android/app/build/outputs/bundle/release -name '*.aab' | head -n1)"
+          if [ -z "$aab" ]; then
+            echo "::error::No .aab produced by bundleRelease"; exit 1
+          fi
+          # AABs are signed with jarsigner (JAR signing scheme), not apksigner.
+          jarsigner -keystore "$HOME/cgp-upload.keystore" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -keypass "$ANDROID_KEYSTORE_PASSWORD" \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            "$aab" "$alias"
+          jarsigner -verify -verbose "$aab" | tail -n1
+          # Normalise the path for the later steps.
+          cp "$aab" android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Attach bundle as artifact
         uses: actions/upload-artifact@v4
@@ -84,7 +129,7 @@ jobs:
           printf '%s' "$GOOGLE_PLAY_JSON" > "$HOME/play-key.json"
           sudo gem install fastlane --no-document
           fastlane supply \
-            --package_name com.commongroundprojects.cgp \
+            --package_name "$APP_PACKAGE" \
             --aab android/app/build/outputs/bundle/release/app-release.aab \
             --track internal \
             --json_key "$HOME/play-key.json" \
