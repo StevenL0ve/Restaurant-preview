@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyPunches } from "./punch";
+import { applyPunches, redeemRewardAtCounter } from "./punch";
 import type { PunchCard } from "../types";
 
 function card(over: Partial<PunchCard> = {}): PunchCard {
@@ -46,5 +46,19 @@ describe("applyPunches", () => {
     const r = applyPunches(card({ punches: 6 }), 0, false);
     expect(r.punchesEarned).toBe(0);
     expect(r.punch.punches).toBe(6);
+  });
+});
+
+describe("redeemRewardAtCounter", () => {
+  it("claims one free drink and keeps the card counting", () => {
+    const p = { goal: 10, punches: 3, rewards: 2, lifetimePunches: 23, redeemed: 0 };
+    const next = redeemRewardAtCounter(p)!;
+    expect(next.rewards).toBe(1);
+    expect(next.redeemed).toBe(1);
+    expect(next.punches).toBe(3); // punches untouched — free drink earns nothing
+  });
+  it("refuses when there is no reward", () => {
+    const p = { goal: 10, punches: 9, rewards: 0, lifetimePunches: 9, redeemed: 0 };
+    expect(redeemRewardAtCounter(p)).toBeNull();
   });
 });

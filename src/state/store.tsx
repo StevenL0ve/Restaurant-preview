@@ -17,7 +17,7 @@ import type {
   WaiverVenue,
 } from "../types";
 import { buildSeed } from "./seed";
-import { applyPunches } from "../lib/punch";
+import { applyPunches, redeemRewardAtCounter } from "../lib/punch";
 import { orderStatus } from "../lib/orders";
 import { giftApplicable, isValidReload } from "../lib/gift";
 import { parseGiftCode } from "../lib/giftcode";
@@ -280,11 +280,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ),
 
       redeemReward: () =>
-        update((s) =>
-          s.punch.rewards > 0
-            ? { ...s, punch: { ...s.punch, rewards: s.punch.rewards - 1, redeemed: s.punch.redeemed + 1 } }
-            : s,
-        ),
+        update((s) => {
+          const punch = redeemRewardAtCounter(s.punch);
+          return punch ? { ...s, punch } : s;
+        }),
 
       stampPunches: (drinks) => {
         let out = { punchesEarned: 0, newRewards: 0 };

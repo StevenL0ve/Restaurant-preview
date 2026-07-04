@@ -8,13 +8,17 @@ import { tapLight, notifySuccess } from "../lib/haptics";
 
 export function Rewards() {
   const { user } = useAuth();
-  const { state, stampPunches } = useStore();
+  const { state, stampPunches, redeemReward } = useStore();
   const { punch } = state;
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState<WalletKind | null>(null);
 
   // Barista counter stamp
   const [stampOpen, setStampOpen] = useState(false);
+  // Counter redemption of a free drink (barista PIN confirms)
+  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [redeemPin, setRedeemPin] = useState("");
+  const [redeemError, setRedeemError] = useState<string | null>(null);
   const [drinks, setDrinks] = useState(1);
   const [pin, setPin] = useState("");
   const [stampError, setStampError] = useState<string | null>(null);
@@ -41,6 +45,20 @@ export function Rewards() {
         : `+${res.punchesEarned} punch${res.punchesEarned === 1 ? "" : "es"} stamped. ☕️`,
     );
     setTimeout(() => setStamped(null), 4000);
+  }
+
+  function doRedeem() {
+    if (!verifyStampPin(redeemPin)) {
+      setRedeemError("Wrong staff PIN.");
+      return;
+    }
+    redeemReward();
+    notifySuccess();
+    setRedeemOpen(false);
+    setRedeemPin("");
+    setRedeemError(null);
+    setStamped("🎉 Free drink redeemed — enjoy! The card keeps counting.");
+    setTimeout(() => setStamped(null), 5000);
   }
 
   const id = memberId(user?.email ?? "guest@cgp");
@@ -142,9 +160,14 @@ export function Rewards() {
         <div className="card reward-banner">
           <div>
             <div className="row-title">🎉 You have {punch.rewards} free drink{punch.rewards > 1 ? "s" : ""}!</div>
-            <div className="row-sub">Redeem at checkout — just add a café drink to your cart.</div>
+            <div className="row-sub">At the counter, show this to your barista — or redeem in your cart when ordering ahead.</div>
           </div>
-          <Link to="/menu" className="btn btn-primary">Order</Link>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={() => { tapLight(); setRedeemOpen(true); }}>
+              ☕️ Redeem here
+            </button>
+            <Link to="/menu" className="btn btn-ghost">Order</Link>
+          </div>
         </div>
       ) : (
         <div className="card reward-banner">
@@ -189,6 +212,42 @@ export function Rewards() {
               <button className="btn btn-ghost" onClick={() => { setStampOpen(false); setPin(""); setStampError(null); }}>Cancel</button>
               <button className="btn btn-primary" disabled={!pin} onClick={doStamp}>
                 Stamp {drinks} punch{drinks === 1 ? "" : "es"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {redeemOpen && (
+        <div className="modal-scrim" onClick={() => setRedeemOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h2 className="modal-title">Redeem a free drink</h2>
+            <p className="modal-sub">
+              Staff only — hand the phone to your barista. Entering the café
+              PIN marks one free drink as used; the punch card keeps counting
+              toward the next one.
+            </p>
+            <div className="stamp-row">
+              <span className="row-title">Free drinks ready</span>
+              <span className="pill pill-reward">{punch.rewards}</span>
+            </div>
+            <label className="field">
+              <span>Staff PIN</span>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                value={redeemPin}
+                onChange={(e) => { setRedeemPin(e.target.value); setRedeemError(null); }}
+                placeholder="••••"
+                aria-label="Staff PIN"
+              />
+            </label>
+            {redeemError && <div className="auth-error">{redeemError}</div>}
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => { setRedeemOpen(false); setRedeemPin(""); setRedeemError(null); }}>Cancel</button>
+              <button className="btn btn-primary" disabled={!redeemPin} onClick={doRedeem}>
+                Redeem free drink
               </button>
             </div>
           </div>
