@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStore, locationsForFacility, areasForFacility } from "../state/store";
+import { gateNewFacility } from "../lib/tier";
 import { locationLabel, type Facility, type Location } from "../types";
 import type { Store } from "../state/store";
 
@@ -9,6 +11,7 @@ export function FacilitiesPage() {
   const store = useStore();
   const { state, addFacility } = store;
   const [name, setName] = useState("");
+  const navigate = useNavigate();
 
   return (
     <div className="page page-narrow">
@@ -28,7 +31,11 @@ export function FacilitiesPage() {
           <button
             className="btn btn-primary"
             disabled={!name.trim()}
-            onClick={() => { addFacility(name.trim()); setName(""); }}
+            onClick={() => {
+              if (!gateNewFacility(state).allowed) { navigate("/upgrade"); return; }
+              addFacility(name.trim());
+              setName("");
+            }}
           >
             Add facility
           </button>

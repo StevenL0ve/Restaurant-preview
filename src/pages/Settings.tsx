@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useStore } from "../state/store";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
+import { BETA_UNLOCKED, hasPro } from "../lib/tier";
 
 export function Settings() {
   const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll } = useStore();
@@ -67,6 +68,20 @@ export function Settings() {
         <div className="form-actions">
           <button className="btn" onClick={signOut}>{user?.guest ? "Switch / create account" : "Sign out"}</button>
         </div>
+      </div>
+
+      <div className="card settings-card">
+        <h2>Plan</h2>
+        <p>
+          {BETA_UNLOCKED ? (
+            <>You're on the <strong>beta</strong> — every Pro feature is unlocked, free, while we polish ORSync together.</>
+          ) : hasPro() ? (
+            <>You're on <strong>ORSync Pro</strong> — unlimited cards, facilities, and everything else.</>
+          ) : (
+            <>You're on the <strong>free plan</strong> — 10 cards, 1 facility.</>
+          )}
+        </p>
+        <Link className="btn" to="/upgrade">See what's in Pro →</Link>
       </div>
 
       <div className="card settings-card">

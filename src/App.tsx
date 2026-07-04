@@ -16,6 +16,7 @@ import { FacilitiesPage } from "./pages/FacilitiesPage";
 import { LoanersPage } from "./pages/LoanersPage";
 import { SearchPage } from "./pages/SearchPage";
 import { Settings } from "./pages/Settings";
+import { Paywall } from "./pages/Paywall";
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/loaners" element={<LoanersPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/upgrade" element={<Paywall />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

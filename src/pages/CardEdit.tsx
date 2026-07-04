@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { gateNewCard, gateNewFacility } from "../lib/tier";
 import {
   useStore,
   emptyCard,
@@ -20,6 +21,13 @@ export function CardEdit() {
 
   const existing = id ? state.cards.find((c) => c.id === id) : undefined;
   const firstSurgeon = state.surgeons[0];
+
+  // Free-tier gate on NEW cards only (never blocks editing). No-op during beta.
+  const newCardGate = gateNewCard(state);
+  useEffect(() => {
+    if (!existing && !newCardGate.allowed) navigate("/upgrade", { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [draft, setDraft] = useState<PrefCard>(() => {
     if (existing) return existing;
@@ -164,6 +172,7 @@ export function CardEdit() {
                   type="button"
                   disabled={!newFacilityName.trim()}
                   onClick={() => {
+                    if (!gateNewFacility(state).allowed) { navigate("/upgrade"); return; }
                     const f = addFacility(newFacilityName.trim());
                     changeFacility(f.id);
                     setNewFacilityName("");
