@@ -33,7 +33,7 @@ describe("CGP smoke", () => {
     );
     localStorage.setItem("cgp.session.v1", "sam@cgp.test");
     renderApp();
-    expect(screen.getByText("Everything under one roof.")).toBeTruthy();
+    expect(screen.getByText(/Everything under/)).toBeTruthy();
     expect(screen.getAllByText(/punch card/i).length).toBeGreaterThan(0);
   });
 });

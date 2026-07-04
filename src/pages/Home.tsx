@@ -20,7 +20,7 @@ export function Home() {
       <section className="hero">
         <img className="hero-logo" src="/brand/logo.png" alt="Common Ground logo" />
         <div className="hero-eyebrow">The Common Ground Projects</div>
-        <h1 className="hero-title">Everything under one roof.</h1>
+        <h1 className="hero-title">Everything under <em>one roof.</em></h1>
         <p className="hero-sub">
           Order from the café &amp; kitchen, earn a free coffee on your punch card,
           and book yoga, spa &amp; massage — all in one app.

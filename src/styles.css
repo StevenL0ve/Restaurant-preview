@@ -752,3 +752,24 @@ input, textarea { font-family: inherit; }
 .wifi-steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--slate); line-height: 1.9; }
 .wifi-qr-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .wifi-qr { width: min(240px, 70%); border-radius: 12px; border: 1px solid var(--line); }
+
+/* ---- Loyalty scan panel (inspired: white QR card + stat pills) ----------- */
+
+.hero-title em { font-family: Georgia, "Times New Roman", serif; font-style: italic; letter-spacing: 0; }
+
+.loyalty-scan {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+  margin: 16px 0 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.loyalty-qr { width: 128px; height: 128px; display: block; }
+.loyalty-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px; font-weight: 700; letter-spacing: 2.5px;
+  color: #2c332a;
+}
+.loyalty-pills { display: flex; gap: 8px; }
+.loyalty-pill { background: #eef1e4; color: #4f644a; }
+.loyalty-foot { justify-content: center; font-size: 12.5px; }
