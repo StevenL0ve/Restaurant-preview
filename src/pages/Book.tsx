@@ -16,7 +16,7 @@ const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string; pos?: string }>
   yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga", pos: "center 35%" },
   pilates: { src: "/photos/riverrock-lotus.jpeg", alt: "Mindful movement at Selah Pilates & Wellness", pos: "center 30%" },
   zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber", pos: "center 22%" },
-  massage: { src: "/photos/interior.jpeg", alt: "Elemental Massage at The Common Ground Projects" },
+  massage: { src: "/photos/elemental-massage.jpeg", alt: "A relaxation massage at Elemental Massage", pos: "center 40%" },
 };
 
 export function Book() {

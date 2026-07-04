@@ -54,8 +54,8 @@ export function Menu() {
 
       <div className="photo-banner">
         <img
-          src={filter === "cafe" ? "/photos/cafe-team.jpeg" : filter === "restaurant" ? "/photos/figolive-food.jpeg" : "/photos/food.jpeg"}
-          alt={filter === "cafe" ? "The Common Grounds Café team at the bar" : "A kabob plate at By the Fig & the Olive"}
+          src={filter === "cafe" ? "/photos/interior.jpeg" : filter === "restaurant" ? "/photos/figolive-food.jpeg" : "/photos/food.jpeg"}
+          alt={filter === "cafe" ? "Inside Common Grounds Café" : "A kabob plate at By the Fig & the Olive"}
         />
       </div>
 
