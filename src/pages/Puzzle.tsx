@@ -33,6 +33,18 @@ export function Puzzle() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
+  // The board takes the photo's natural shape so pieces are never stretched —
+  // wide photos make wide boards, square logos make square boards.
+  const [aspect, setAspect] = useState<number | null>(null);
+  const activeImage = active?.image;
+  useEffect(() => {
+    setAspect(null);
+    if (!activeImage) return;
+    const img = new Image();
+    img.onload = () => setAspect(img.naturalWidth / img.naturalHeight);
+    img.src = activeImage;
+  }, [activeImage]);
+
   // Admin: add a puzzle to the rotation
   const canAdmin = !!user && (user.role === "it" || user.role === "owner" || postableVenues(user.role, user.venues).includes("cafe"));
   const [formOpen, setFormOpen] = useState(false);
@@ -106,7 +118,7 @@ export function Puzzle() {
 
           <div
             className="puzzle-board"
-            style={{ gridTemplateColumns: `repeat(${active.cols}, 1fr)`, aspectRatio: `${active.cols} / ${active.rows}` }}
+            style={{ gridTemplateColumns: `repeat(${active.cols}, 1fr)`, aspectRatio: aspect ?? active.cols / active.rows }}
           >
             {Array.from({ length: puzzleSlots(active) }, (_, i) => {
               const isPlaced = placedBy.has(i);
@@ -130,7 +142,10 @@ export function Puzzle() {
               <div
                 key={`${active.id}-${hand}`}
                 className="puzzle-hand"
-                style={pieceStyle(active, hand)}
+                style={{
+                  ...pieceStyle(active, hand),
+                  aspectRatio: aspect ? (aspect * active.rows) / active.cols : 1,
+                }}
                 aria-label="The piece in your hand"
               />
               <div className="puzzle-hand-info">
