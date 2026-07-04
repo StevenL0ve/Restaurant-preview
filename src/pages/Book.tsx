@@ -10,11 +10,12 @@ import { tapLight, notifySuccess } from "../lib/haptics";
 type BookVenue = "yoga" | "pilates" | "zenden" | "massage";
 const filters: BookVenue[] = ["yoga", "pilates", "zenden", "massage"];
 
-// Each venue's banner is its own space.
-const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string }> = {
-  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga" },
-  pilates: { src: "/photos/riverrock-lotus.jpeg", alt: "Mindful movement at Selah Pilates & Wellness" },
-  zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber" },
+// Each venue's banner is its own space. `pos` biases the wide banner crop
+// toward the photo's subject so faces don't get cut off.
+const VENUE_PHOTO: Record<BookVenue, { src: string; alt: string; pos?: string }> = {
+  yoga: { src: "/photos/yoga-class.jpeg", alt: "A joyful class at River Rock Yoga", pos: "center 35%" },
+  pilates: { src: "/photos/riverrock-lotus.jpeg", alt: "Mindful movement at Selah Pilates & Wellness", pos: "center 30%" },
+  zenden: { src: "/photos/zenden-salt.jpeg", alt: "The Zen Den Himalayan salt chamber", pos: "center 22%" },
   massage: { src: "/photos/interior.jpeg", alt: "The Common Ground community space" },
 };
 
@@ -102,7 +103,11 @@ export function Book() {
       </div>
 
       <div className="photo-banner">
-        <img src={VENUE_PHOTO[venue].src} alt={VENUE_PHOTO[venue].alt} />
+        <img
+          src={VENUE_PHOTO[venue].src}
+          alt={VENUE_PHOTO[venue].alt}
+          style={VENUE_PHOTO[venue].pos ? { objectPosition: VENUE_PHOTO[venue].pos } : undefined}
+        />
       </div>
 
       <div className="segmented">
