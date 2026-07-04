@@ -811,3 +811,14 @@ input, textarea { font-family: inherit; }
   box-shadow: var(--shadow-sm);
 }
 .puzzle-hand-info { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+
+/* Puzzle rotation: hand re-deal pop + completed gallery */
+.puzzle-hand { animation: puzzle-deal 0.35s ease; }
+@keyframes puzzle-deal {
+  from { transform: scale(0.7) rotate(-6deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+.puzzle-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.puzzle-trophy { padding: 0; overflow: hidden; }
+.puzzle-trophy img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+.puzzle-trophy-body { padding: 10px 12px 12px; }

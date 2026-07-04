@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { contributors, isComplete, place, pieceStyle, puzzleSlots, unplacedIndices } from "./puzzle";
+import { activePuzzle, contributors, isComplete, place, pieceStyle, puzzleSlots, unplacedIndices } from "./puzzle";
 import type { CommunityPuzzle } from "../types";
 
 function mkPuzzle(placed: CommunityPuzzle["placed"] = []): CommunityPuzzle {
@@ -48,6 +48,15 @@ describe("community puzzle", () => {
       { name: "Mom", pieces: 2 },
       { name: "Steven", pieces: 1 },
     ]);
+  });
+
+  it("rotates to the first unfinished puzzle and rests when all are done", () => {
+    const all = Array.from({ length: 20 }, (_, idx) => ({ idx, by: "Crew", at: "t" }));
+    const doneP = { ...mkPuzzle(all), id: "pz-a" };
+    const openP = { ...mkPuzzle(), id: "pz-b" };
+    expect(activePuzzle([doneP, openP])?.id).toBe("pz-b");
+    expect(activePuzzle([openP, doneP])?.id).toBe("pz-b");
+    expect(activePuzzle([doneP])).toBeNull();
   });
 
   it("maps each slot to its crop of the image", () => {

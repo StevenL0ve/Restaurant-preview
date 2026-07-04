@@ -18,7 +18,7 @@ import type {
 } from "../types";
 import { buildSeed } from "./seed";
 import { applyPunches, redeemRewardAtCounter } from "../lib/punch";
-import { place as placePuzzle } from "../lib/puzzle";
+import { activePuzzle, place as placePuzzle } from "../lib/puzzle";
 import { orderStatus } from "../lib/orders";
 import { giftApplicable, isValidReload } from "../lib/gift";
 import { parseGiftCode } from "../lib/giftcode";
@@ -38,8 +38,8 @@ function load(): AppState {
       const gift = { ...seed.gift, ...(saved.gift ?? {}) };
       const ownerSlots = (saved.classes ?? []).filter((c) => c.id.startsWith("cx-"));
       const classes = [...seed.classes, ...ownerSlots].sort((a, b) => a.start.localeCompare(b.start));
-      const puzzle = saved.puzzle ?? seed.puzzle;
-      return { ...seed, ...saved, menu: seed.menu, classes, gift, puzzle } as AppState;
+      const puzzles = saved.puzzles ?? seed.puzzles;
+      return { ...seed, ...saved, menu: seed.menu, classes, gift, puzzles } as AppState;
     }
   } catch {
     /* fall through to seed */
@@ -69,6 +69,7 @@ interface Store {
   redeemReward: () => void;
   placePuzzlePiece: (idx: number, by: string) => boolean;
   startNewPuzzle: (image: string, title: string, by: string) => void;
+  restartPuzzle: (id: string) => void;
   // Barista counter stamp: N drinks bought at the till, no in-app order.
   stampPunches: (drinks: number) => { punchesEarned: number; newRewards: number };
   // community events
@@ -292,27 +293,49 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       placePuzzlePiece: (idx, by) => {
         let ok = false;
         update((s) => {
-          const placement = placePuzzle(s.puzzle, idx, by);
+          const active = activePuzzle(s.puzzles);
+          if (!active) return s;
+          const placement = placePuzzle(active, idx, by);
           if (!placement) return s;
           ok = true;
-          return { ...s, puzzle: { ...s.puzzle, placed: [...s.puzzle.placed, placement] } };
+          return {
+            ...s,
+            puzzles: s.puzzles.map((p) =>
+              p.id === active.id ? { ...p, placed: [...p.placed, placement] } : p,
+            ),
+          };
         });
         return ok;
       },
 
+      // Admin: wipe a finished board and send it to the back of the rotation
+      // so the current puzzle stays on the table.
+      restartPuzzle: (id) =>
+        update((s) => {
+          const target = s.puzzles.find((p) => p.id === id);
+          if (!target) return s;
+          const fresh = { ...target, placed: [], startedAt: new Date().toISOString() };
+          return { ...s, puzzles: [...s.puzzles.filter((p) => p.id !== id), fresh] };
+        }),
+
+      // Adds a fresh board to the rotation (completed puzzles stay in the
+      // gallery; history is capped so storage stays lean).
       startNewPuzzle: (image, title, by) =>
         update((s) => ({
           ...s,
-          puzzle: {
-            id: uid("pz"),
-            title: title.trim() || "Community Puzzle",
-            image,
-            cols: s.puzzle.cols,
-            rows: s.puzzle.rows,
-            startedAt: new Date().toISOString(),
-            startedBy: by,
-            placed: [],
-          },
+          puzzles: [
+            ...s.puzzles.slice(-8),
+            {
+              id: uid("pz"),
+              title: title.trim() || "Community Puzzle",
+              image,
+              cols: 4,
+              rows: 5,
+              startedAt: new Date().toISOString(),
+              startedBy: by,
+              placed: [],
+            },
+          ],
         })),
 
       stampPunches: (drinks) => {

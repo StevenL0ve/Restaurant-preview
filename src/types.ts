@@ -189,5 +189,5 @@ export interface AppState {
   gift: GiftCard;
   eventAlerts: boolean;
   reservations: Reservation[];
-  puzzle: CommunityPuzzle;
+  puzzles: CommunityPuzzle[]; // rotation: first incomplete is active, completed shown below
 }

@@ -22,6 +22,12 @@ export function unplacedIndices(p: CommunityPuzzle): number[] {
   return out;
 }
 
+// The board being worked on: the first puzzle in the rotation that isn't
+// finished. Null when every puzzle is complete.
+export function activePuzzle(list: CommunityPuzzle[]): CommunityPuzzle | null {
+  return list.find((p) => !isComplete(p)) ?? null;
+}
+
 export function isComplete(p: CommunityPuzzle): boolean {
   return p.placed.length >= puzzleSlots(p);
 }

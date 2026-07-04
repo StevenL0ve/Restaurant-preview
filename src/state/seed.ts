@@ -184,15 +184,10 @@ export function buildSeed(): AppState {
     gift: { number: "GC-000000", balance: 0, history: [], redeemedCodes: [] },
     eventAlerts: false,
     reservations: [],
-    puzzle: {
-      id: "pz-1",
-      title: "July at Common Ground",
-      image: "/photos/storefront.jpeg",
-      cols: 4,
-      rows: 5,
-      startedAt: new Date().toISOString(),
-      startedBy: "Common Grounds Café",
-      placed: [],
-    },
+    puzzles: [
+      { id: "pz-1", title: "July at Common Ground", image: "/photos/storefront.jpeg", cols: 4, rows: 5, startedAt: new Date().toISOString(), startedBy: "Common Grounds Café", placed: [] },
+      { id: "pz-2", title: "The Common Grounds Logo", image: "/brand/logo.png", cols: 4, rows: 5, startedAt: new Date().toISOString(), startedBy: "Common Grounds Café", placed: [] },
+      { id: "pz-3", title: "Latte Art", image: "/photos/puzzle-latte.jpeg", cols: 4, rows: 5, startedAt: new Date().toISOString(), startedBy: "Common Grounds Café", placed: [] },
+    ],
   };
 }
