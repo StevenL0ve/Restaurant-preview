@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../state/auth";
 import { useStore } from "../state/store";
@@ -13,7 +12,6 @@ export function Rewards() {
   const { punch } = state;
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState<WalletKind | null>(null);
-  const [qr, setQr] = useState<string | null>(null);
 
   // Barista counter stamp
   const [stampOpen, setStampOpen] = useState(false);
@@ -67,12 +65,6 @@ export function Rewards() {
   const name = user?.name ?? "CGP Member";
   const preferred = preferredWallet();
 
-  useEffect(() => {
-    QRCode.toDataURL(id, { width: 300, margin: 0, color: { dark: "#2c332a", light: "#ffffff" } })
-      .then(setQr)
-      .catch(() => setQr(null));
-  }, [id]);
-
   async function add(kind: WalletKind) {
     setBusy(kind);
     setStatus(null);
@@ -109,7 +101,6 @@ export function Rewards() {
         </div>
         <div className="loyalty-name">{name}</div>
         <div className="loyalty-scan">
-          {qr && <img className="loyalty-qr" src={qr} alt={`Member code ${id}`} />}
           <div className="loyalty-code">{id}</div>
           <div className="loyalty-pills">
             <span className="pill loyalty-pill">{punch.punches} / {punch.goal}</span>
@@ -121,7 +112,7 @@ export function Rewards() {
           </div>
         </div>
         <div className="loyalty-foot">
-          <span>Show this code — the barista stamps for you.</span>
+          <span>Show this card — the barista stamps it with the staff PIN.</span>
         </div>
       </div>
 

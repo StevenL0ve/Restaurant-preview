@@ -764,10 +764,9 @@ input, textarea { font-family: inherit; }
   margin: 16px 0 12px;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
-.loyalty-qr { width: 128px; height: 128px; display: block; }
 .loyalty-code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 13px; font-weight: 700; letter-spacing: 2.5px;
+  font-size: 17px; font-weight: 700; letter-spacing: 3px;
   color: #2c332a;
 }
 .loyalty-pills { display: flex; gap: 8px; }
