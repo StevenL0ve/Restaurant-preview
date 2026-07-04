@@ -18,6 +18,7 @@ import type {
 } from "../types";
 import { buildSeed } from "./seed";
 import { applyPunches, redeemRewardAtCounter } from "../lib/punch";
+import { place as placePuzzle } from "../lib/puzzle";
 import { orderStatus } from "../lib/orders";
 import { giftApplicable, isValidReload } from "../lib/gift";
 import { parseGiftCode } from "../lib/giftcode";
@@ -37,7 +38,8 @@ function load(): AppState {
       const gift = { ...seed.gift, ...(saved.gift ?? {}) };
       const ownerSlots = (saved.classes ?? []).filter((c) => c.id.startsWith("cx-"));
       const classes = [...seed.classes, ...ownerSlots].sort((a, b) => a.start.localeCompare(b.start));
-      return { ...seed, ...saved, menu: seed.menu, classes, gift } as AppState;
+      const puzzle = saved.puzzle ?? seed.puzzle;
+      return { ...seed, ...saved, menu: seed.menu, classes, gift, puzzle } as AppState;
     }
   } catch {
     /* fall through to seed */
@@ -65,6 +67,8 @@ interface Store {
   placeOrder: (method: OrderMethod, useReward: boolean, useGift?: boolean) => CheckoutResult | null;
   // punch card
   redeemReward: () => void;
+  placePuzzlePiece: (idx: number, by: string) => boolean;
+  startNewPuzzle: (image: string, title: string, by: string) => void;
   // Barista counter stamp: N drinks bought at the till, no in-app order.
   stampPunches: (drinks: number) => { punchesEarned: number; newRewards: number };
   // community events
@@ -284,6 +288,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const punch = redeemRewardAtCounter(s.punch);
           return punch ? { ...s, punch } : s;
         }),
+
+      placePuzzlePiece: (idx, by) => {
+        let ok = false;
+        update((s) => {
+          const placement = placePuzzle(s.puzzle, idx, by);
+          if (!placement) return s;
+          ok = true;
+          return { ...s, puzzle: { ...s.puzzle, placed: [...s.puzzle.placed, placement] } };
+        });
+        return ok;
+      },
+
+      startNewPuzzle: (image, title, by) =>
+        update((s) => ({
+          ...s,
+          puzzle: {
+            id: uid("pz"),
+            title: title.trim() || "Community Puzzle",
+            image,
+            cols: s.puzzle.cols,
+            rows: s.puzzle.rows,
+            startedAt: new Date().toISOString(),
+            startedBy: by,
+            placed: [],
+          },
+        })),
 
       stampPunches: (drinks) => {
         let out = { punchesEarned: 0, newRewards: 0 };

@@ -126,6 +126,28 @@ export interface CommunityEvent {
   image?: string;
 }
 
+// ---- Community café puzzle ----
+// One shared jigsaw at the coffee shop. Admins start a fresh puzzle (usually
+// monthly) from an uploaded image; every placement records who placed it.
+// The placements log is device-local until the Phase-2 backend syncs it live.
+
+export interface PuzzlePlacement {
+  idx: number; // board slot claimed
+  by: string; // display name of who placed it
+  at: string; // ISO
+}
+
+export interface CommunityPuzzle {
+  id: ID;
+  title: string;
+  image: string; // photo path (seeded) or data URL (admin upload)
+  cols: number;
+  rows: number;
+  startedAt: string;
+  startedBy: string;
+  placed: PuzzlePlacement[];
+}
+
 // ---- Reloadable gift card ----
 
 export interface GiftTxn {
@@ -167,4 +189,5 @@ export interface AppState {
   gift: GiftCard;
   eventAlerts: boolean;
   reservations: Reservation[];
+  puzzle: CommunityPuzzle;
 }

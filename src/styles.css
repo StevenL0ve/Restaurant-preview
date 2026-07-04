@@ -772,3 +772,42 @@ input, textarea { font-family: inherit; }
 .loyalty-pills { display: flex; gap: 8px; }
 .loyalty-pill { background: #eef1e4; color: #4f644a; }
 .loyalty-foot { justify-content: center; font-size: 12.5px; }
+
+/* ---- Community café puzzle ----------------------------------------------- */
+
+.puzzle-board {
+  display: grid;
+  gap: 3px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.puzzle-slot {
+  border: none;
+  background: var(--brand-50);
+  background-size: cover;
+  display: grid; place-items: center;
+  padding: 0;
+  transition: transform 0.1s ease;
+}
+.puzzle-slot.placed { cursor: default; }
+.puzzle-slot.wrong { animation: puzzle-shake 0.4s ease; background-color: #f3e0dc; }
+@keyframes puzzle-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.puzzle-num { font-size: 12px; font-weight: 700; color: var(--brand-300); }
+.puzzle-done .puzzle-slot { animation: puzzle-reveal 0.8s ease; }
+@keyframes puzzle-reveal { from { filter: saturate(0.4) brightness(1.15); } to { filter: none; } }
+
+.puzzle-hand-card { display: flex; align-items: center; gap: 16px; }
+.puzzle-hand {
+  width: 84px; height: 84px; flex-shrink: 0;
+  border-radius: 12px;
+  border: 2px solid var(--brand);
+  box-shadow: var(--shadow-sm);
+}
+.puzzle-hand-info { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
