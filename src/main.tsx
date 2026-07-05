@@ -18,9 +18,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>,
 );
 
-// Register the service worker for offline/installable PWA behavior.
-// Skipped under Capacitor's native shell, which serves its own bundle.
-if ("serviceWorker" in navigator && !/(android|ios);capacitor/i.test(navigator.userAgent)) {
+// Register the service worker for offline/installable PWA behavior. Skipped
+// under Capacitor's native shell, and on a non-root base (the GitHub Pages
+// preview) where the shell-cache paths wouldn't line up.
+if (
+  "serviceWorker" in navigator &&
+  import.meta.env.BASE_URL === "/" &&
+  !/(android|ios);capacitor/i.test(navigator.userAgent)
+) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {
       /* offline support is a progressive enhancement; ignore failures */

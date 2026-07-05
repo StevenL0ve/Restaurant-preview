@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore, expenseBalance, triggerDownload } from "../state/store";
+import { asset } from "../lib/asset";
 import { money, shortDate } from "../lib/format";
 import { expensesCSV } from "../lib/csv";
 import { expandRecurringExpense } from "../lib/recurring";
@@ -73,7 +74,7 @@ export function Expenses() {
 
       {state.expenses.length === 0 ? (
         <div className="card empty-state">
-          <img className="empty-art" src="/brand/nav-expenses.png" alt="" aria-hidden width={72} height={72} />
+          <img className="empty-art" src={asset("brand/nav-expenses.png")} alt="" aria-hidden width={72} height={72} />
           <p>No expenses yet. Add a shared cost and we'll track who owes what.</p>
         </div>
       ) : (

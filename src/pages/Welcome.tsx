@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { asset } from "../lib/asset";
 import { useAuth } from "../state/auth";
 
 // One-time family setup after account creation: replace the demo family with
@@ -28,7 +29,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="CoParent" width={64} height={64} />
+        <img className="auth-logo" src={asset("brand/logo-mark.png")} alt="CoParent" width={64} height={64} />
         <h1 className="auth-title">Set up your family</h1>
         <p className="auth-sub">A minute now, organized forever.</p>
 

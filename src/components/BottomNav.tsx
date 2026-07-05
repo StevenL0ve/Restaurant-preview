@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useStore, unreadCount, pendingRequests } from "../state/store";
 import { tapLight } from "../lib/haptics";
+import { asset } from "../lib/asset";
 
 // Mobile-only bottom tab bar. On phones the icon-rail sidebar feels like a
 // cramped desktop app; a bottom nav is the native pattern people expect from a
@@ -79,7 +80,7 @@ export function BottomNav() {
             >
               <span className="tab-icon">
                 {it.img ? (
-                  <img className="tab-img" src={it.img} alt="" aria-hidden width={28} height={28} />
+                  <img className="tab-img" src={asset(it.img)} alt="" aria-hidden width={28} height={28} />
                 ) : (
                   it.icon
                 )}
@@ -99,7 +100,7 @@ export function BottomNav() {
           aria-expanded={sheetOpen}
         >
           <span className="tab-icon">
-            <img className="tab-img" src="/brand/nav-more.png" alt="" aria-hidden width={28} height={28} />
+            <img className="tab-img" src={asset("brand/nav-more.png")} alt="" aria-hidden width={28} height={28} />
           </span>
           <span className="tab-label">More</span>
         </button>

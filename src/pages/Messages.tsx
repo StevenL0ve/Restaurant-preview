@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore, triggerDownload } from "../state/store";
+import { asset } from "../lib/asset";
 import { analyzeTone, toneLabel } from "../lib/tone";
 import { time, fullDate } from "../lib/format";
 import { messagesCSV } from "../lib/csv";
@@ -98,7 +99,7 @@ export function Messages() {
       <div className="thread">
         {state.messages.length === 0 ? (
           <div className="empty-state">
-            <img className="empty-art" src="/brand/nav-messages.png" alt="" aria-hidden width={72} height={72} />
+            <img className="empty-art" src={asset("brand/nav-messages.png")} alt="" aria-hidden width={72} height={72} />
             <p>
               No messages yet. Say hello — every message is timestamped and kept
               as a clean, unchangeable record.

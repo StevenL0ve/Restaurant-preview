@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../state/auth";
+import { asset } from "../lib/asset";
 
 // Login + create-account gate. Phase 1 uses local accounts; the same screen
 // will drive Supabase auth in Phase 2 with no UI change.
@@ -37,7 +38,7 @@ export function Login() {
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src="/brand/logo-mark.png" alt="CoParent" width={64} height={64} />
+        <img className="auth-logo" src={asset("brand/logo-mark.png")} alt="CoParent" width={64} height={64} />
         <h1 className="auth-title">CoParent</h1>
         <p className="auth-sub">Calm, organized co-parenting</p>
 

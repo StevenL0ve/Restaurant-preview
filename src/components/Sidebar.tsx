@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useStore, unreadCount, pendingRequests } from "../state/store";
+import { asset } from "../lib/asset";
 import { APP_VERSION } from "../version";
 
 interface NavItem {
@@ -30,7 +31,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <img className="brand-mark" src="/brand/logo-mark.png" alt="CoParent logo" width={38} height={38} />
+        <img className="brand-mark" src={asset("brand/logo-mark.png")} alt="CoParent logo" width={38} height={38} />
         <div>
           <div className="brand-name">CoParent</div>
           <div className="brand-tag">Calm, organized co-parenting</div>
