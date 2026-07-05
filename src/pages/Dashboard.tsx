@@ -8,6 +8,8 @@ import {
   loanerStats,
   isLoanerOverdue,
   isLoanerSoon,
+  casesOn,
+  localDay,
 } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { Icon, type IconName } from "../components/Icon";
@@ -58,6 +60,8 @@ export function Dashboard() {
           </Link>
         ))}
       </div>
+
+      <TodayLineup />
 
       {inProgress.length > 0 && (
         <div className="card form-card">
@@ -143,6 +147,38 @@ export function Dashboard() {
           </ul>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Today's lineup — the first thing to check in the morning. Shows up to three
+// cases with time/room and setup state; links through to the full day view.
+function TodayLineup() {
+  const { state } = useStore();
+  const cases = casesOn(state, localDay(0)).slice(0, 3);
+  if (cases.length === 0) return null;
+  return (
+    <div className="card form-card">
+      <div className="card-head">
+        <h2>🗓️ Today's lineup</h2>
+        <Link className="link" to="/today">My day</Link>
+      </div>
+      {cases.map((c) => {
+        const card = state.cards.find((x) => x.id === c.cardId);
+        if (!card) return null;
+        const { done, total } = setupProgress(state, card);
+        const ready = total > 0 && done === total;
+        return (
+          <Link key={c.id} to="/today" className="resume-row">
+            <span className="case-time">{c.time ?? "—"}</span>
+            <span className="resume-title">{card.procedure}</span>
+            <span className={"small " + (ready ? "pos" : "muted")}>
+              {ready ? "Ready" : c.room ?? `${done}/${total}`}
+            </span>
+            <span className="resume-go">→</span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

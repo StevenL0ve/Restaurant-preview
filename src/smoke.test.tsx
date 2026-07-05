@@ -46,6 +46,7 @@ describe("app smoke test", () => {
   });
 
   it.each([
+    ["/today", "My day"],
     ["/cards", "Cards"],
     ["/cards/new", "New card"],
     ["/surgeons", "Surgeons"],

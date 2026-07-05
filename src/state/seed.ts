@@ -1,4 +1,4 @@
-import type { AppState, CardItem, Facility, Location, LoanerTray, PrefCard, Surgeon } from "../types";
+import type { AppState, CardItem, CaseEntry, Facility, Location, LoanerTray, PrefCard, Surgeon } from "../types";
 
 // A realistic, fully-populated demo library so the app never opens to an empty
 // screen. Cards are authored with plain location *strings* for readability; the
@@ -412,7 +412,19 @@ export function buildSeed(): AppState {
     }),
   ];
 
-  return { facilities, locations, surgeons, cards, loaners, setups: {} };
+  // Demo case day: two cases today, one tomorrow, linked to seeded cards.
+  const localDay = (offsetDays: number) => {
+    const d = new Date(Date.now() + offsetDays * day);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const csec = cards.find((c) => c.procedure.startsWith("Cesarean"));
+  const cases: CaseEntry[] = [
+    { id: "case-seed-0", date: localDay(0), time: "07:30", cardId: cards[0].id, room: "OR 2" },
+    ...(tka ? [{ id: "case-seed-1", date: localDay(0), time: "10:15", cardId: tka.id, room: "OR 5", notes: "Rep bringing size 4 trials" }] : []),
+    ...(csec ? [{ id: "case-seed-2", date: localDay(1), time: "08:00", cardId: csec.id, room: "L&D OR 1" }] : []),
+  ];
+
+  return { facilities, locations, surgeons, cards, loaners, cases, setups: {} };
 }
 
 // Re-export so the store's migration can reuse the section list.

@@ -11,6 +11,7 @@ interface NavItem {
 
 const items: NavItem[] = [
   { to: "/", label: "Home", icon: "home", end: true },
+  { to: "/today", label: "My day", icon: "calendar" },
   { to: "/cards", label: "Cards", icon: "cards" },
   { to: "/surgeons", label: "Surgeons", icon: "surgeon" },
   { to: "/loaners", label: "Loaner trays", icon: "truck" },

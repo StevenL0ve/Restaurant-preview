@@ -24,7 +24,7 @@ describe("portable card bundles", () => {
     const card = src.cards.find((c) => c.procedure.startsWith("Total Knee"))!;
     const bundle = bundleCards(src, [card.id], NOW);
 
-    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], setups: {} };
+    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {} };
     const { state, added } = importBundle(empty, bundle);
     expect(added).toBe(1);
     expect(state.cards).toHaveLength(1);

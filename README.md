@@ -49,6 +49,9 @@ hospital admin.
   filterable by specialty, favorites pinned. Each card carries position, skin
   prep, draping, notes, and five item sections: instruments & trays, sutures,
   supplies, medications & irrigation, equipment.
+- **My day** — the 6 AM screen: today's lineup in time order, each case tied to
+  its card with live setup progress, room, notes, and a loud flag when a linked
+  loaner tray isn't sterile-ready yet. Step forward/back through any day.
 - **Setup mode** — the differentiator. Turn any card into a live **pull-list**
   with big tap targets; check items off as you gather them; a progress bar hits
   **"Case ready"** at 100%. Progress is saved, so locking your phone mid-setup

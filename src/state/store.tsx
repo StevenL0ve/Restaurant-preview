@@ -9,6 +9,7 @@ import {
 import type {
   AppState,
   CardItem,
+  CaseEntry,
   Facility,
   Location,
   LoanerStatus,
@@ -90,6 +91,7 @@ function migrateLegacy(old: any): AppState {
     surgeons: old.surgeons ?? [],
     cards,
     loaners: old.loaners ?? [],
+    cases: old.cases ?? [],
     setups: old.setups ?? {},
   };
 }
@@ -143,6 +145,10 @@ export interface Store {
   // setup / pull-list mode
   toggleSetupItem: (cardId: string, itemId: string) => void;
   resetSetup: (cardId: string) => void;
+  // case day
+  addCase: (c: Omit<CaseEntry, "id">) => CaseEntry;
+  updateCase: (id: string, patch: Partial<CaseEntry>) => void;
+  deleteCase: (id: string) => void;
   // loaner trays
   addLoaner: (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history" | "status"> & { status?: LoanerStatus }) => LoanerTray;
   updateLoaner: (id: string, patch: Partial<LoanerTray>) => void;
@@ -325,6 +331,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...st, setups };
         }),
 
+      addCase: (c) => {
+        const entry: CaseEntry = { ...c, id: uid("case") };
+        update((st) => ({ ...st, cases: [...st.cases, entry] }));
+        return entry;
+      },
+
+      updateCase: (id, patch) =>
+        update((st) => ({
+          ...st,
+          cases: st.cases.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
+
+      deleteCase: (id) =>
+        update((st) => ({ ...st, cases: st.cases.filter((c) => c.id !== id) })),
+
       addLoaner: (l) => {
         const now = new Date().toISOString();
         const status = l.status ?? "requested";
@@ -422,6 +443,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           surgeons: parsed.surgeons ?? st.surgeons,
           cards: parsed.cards ?? st.cards,
           loaners: parsed.loaners ?? st.loaners,
+          cases: parsed.cases ?? st.cases,
           setups: parsed.setups ?? {},
         }));
       },
@@ -429,7 +451,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetDemo: () => setState(buildSeed()),
 
       wipeAll: () =>
-        setState({ facilities: [], locations: [], surgeons: [], cards: [], loaners: [], setups: {} }),
+        setState({ facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {} }),
     };
   }, [state]);
 
@@ -559,6 +581,28 @@ export function setupProgress(s: AppState, card: PrefCard): { done: number; tota
   const total = totalItems(card);
   const done = s.setups[card.id]?.checked.length ?? 0;
   return { done: Math.min(done, total), total };
+}
+
+// ---- Case-day selectors ----------------------------------------------------
+
+/** Local calendar day as "YYYY-MM-DD" (offset in days from today). */
+export function localDay(offsetDays = 0): string {
+  const d = new Date(Date.now() + offsetDays * 86400000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Cases on a given day, sorted by time (untimed cases last). */
+export function casesOn(s: AppState, date: string): CaseEntry[] {
+  return s.cases
+    .filter((c) => c.date === date)
+    .sort((a, b) => (a.time ?? "99:99").localeCompare(b.time ?? "99:99"));
+}
+
+/** Loaners tied to a card that aren't sterile/ready yet — the case-day worry. */
+export function pendingLoanersForCard(s: AppState, cardId: string): LoanerTray[] {
+  return s.loaners.filter(
+    (l) => l.cardId === cardId && l.status !== "ready" && l.status !== "in-use" && l.status !== "returned",
+  );
 }
 
 // ---- Loaner selectors ------------------------------------------------------

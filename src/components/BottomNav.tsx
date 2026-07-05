@@ -11,12 +11,13 @@ interface Tab {
   end?: boolean;
 }
 
+// Search stays off the tab bar — the top-bar search field is on every screen.
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: "home", end: true },
+  { to: "/today", label: "My day", icon: "calendar" },
   { to: "/cards", label: "Cards", icon: "cards" },
   { to: "/loaners", label: "Loaners", icon: "truck" },
   { to: "/surgeons", label: "Surgeons", icon: "surgeon" },
-  { to: "/search", label: "Search", icon: "search" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 

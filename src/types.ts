@@ -134,11 +134,26 @@ export interface LoanerTray {
   history: { status: LoanerStatus; at: string }[]; // status timeline
 }
 
+// ---- Case day --------------------------------------------------------------
+// A scheduled case: "7:30, OR 4, Dr. Chen's total knee." Links to the
+// preference card so the day view can show setup progress and loaner readiness
+// per case — the 6 AM "what am I walking into" screen.
+
+export interface CaseEntry {
+  id: ID;
+  date: string; // "2026-07-02" (local calendar day)
+  time?: string; // "07:30"
+  cardId: ID;
+  room?: string; // "OR 4"
+  notes?: string;
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
   surgeons: Surgeon[];
   cards: PrefCard[];
   loaners: LoanerTray[];
+  cases: CaseEntry[];
   setups: Record<ID, SetupState>; // cardId -> progress
 }

@@ -6,6 +6,7 @@ import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
 import { Welcome } from "./components/Welcome";
 import { Dashboard } from "./pages/Dashboard";
+import { TodayPage } from "./pages/TodayPage";
 import { CardsPage } from "./pages/CardsPage";
 import { CardDetail } from "./pages/CardDetail";
 import { CardEdit } from "./pages/CardEdit";
@@ -34,6 +35,7 @@ export default function App() {
         <main id="main-content" className="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/today" element={<TodayPage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/:id" element={<CardDetail />} />
