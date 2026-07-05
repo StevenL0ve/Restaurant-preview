@@ -4,6 +4,7 @@ import { useStore } from "../state/store";
 import { activePuzzle, contributors, isComplete, pieceStyle, puzzleSlots, unplacedIndices } from "../lib/puzzle";
 import { postableVenues } from "../lib/roles";
 import { fullDate } from "../lib/format";
+import { fileToDataURL } from "../lib/image";
 import { notifySuccess, tapLight } from "../lib/haptics";
 
 // The community café puzzles: a rotation of boards. The first unfinished one
@@ -77,9 +78,7 @@ export function Puzzle() {
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result));
-    reader.readAsDataURL(f);
+    fileToDataURL(f).then(setImage).catch(() => setImage(null));
   }
 
   function launch() {

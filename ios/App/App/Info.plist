@@ -45,5 +45,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>CGP uses the camera when you snap a photo for a community puzzle or event poster.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CGP lets you pick photos from your library for community puzzles and event posters.</string>
 </dict>
 </plist>

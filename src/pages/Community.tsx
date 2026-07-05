@@ -3,6 +3,7 @@ import { useAuth } from "../state/auth";
 import { useStore, upcomingEvents } from "../state/store";
 import { VENUES, type Venue } from "../types";
 import { postableVenues } from "../lib/roles";
+import { fileToDataURL } from "../lib/image";
 import { requestEventAlerts, notify } from "../lib/notify";
 import { fullDate, time } from "../lib/format";
 import { tapLight, notifySuccess } from "../lib/haptics";
@@ -52,9 +53,7 @@ export function Community() {
 
   function onPosterPick(file: File | undefined) {
     if (!file) return setPoster(undefined);
-    const reader = new FileReader();
-    reader.onload = () => setPoster(typeof reader.result === "string" ? reader.result : undefined);
-    reader.readAsDataURL(file);
+    fileToDataURL(file).then(setPoster).catch(() => setPoster(undefined));
   }
 
   function post() {
