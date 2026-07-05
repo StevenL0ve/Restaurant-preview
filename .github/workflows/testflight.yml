@@ -2,6 +2,9 @@
 # No local Mac needed: signing is cloud-managed by Xcode using an App Store
 # Connect API key (Admin role required for automatic cert/profile creation).
 #
+# The native ios/ project is NOT committed — it is generated on each run with
+# `npx cap add ios` from capacitor.config.ts (appId com.stevennelson.coparent).
+#
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   ASC_KEY_ID       App Store Connect API key ID (e.g. 2X9R4HXF34)
 #   ASC_ISSUER_ID    Issuer ID from the same page (a UUID)
@@ -15,6 +18,21 @@ name: TestFlight
 
 on:
   workflow_dispatch:
+    inputs:
+      marketing_version:
+        description: "Marketing version (CFBundleShortVersionString), e.g. 1.0.0"
+        required: false
+        default: "1.0.0"
+
+# Least privilege: the build reads the repo and talks to App Store Connect via
+# an API key — it needs no write access to the repository.
+permissions:
+  contents: read
+
+# Never interrupt an in-flight upload; queue instead.
+concurrency:
+  group: testflight
+  cancel-in-progress: false
 
 jobs:
   testflight:
@@ -34,8 +52,13 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Sync Capacitor iOS shell
-        run: npx cap sync ios
+      - name: Add / sync Capacitor iOS shell
+        run: |
+          if [ -d ios ]; then
+            npx cap sync ios
+          else
+            npx cap add ios
+          fi
 
       - name: Write App Store Connect API key
         env:
@@ -61,7 +84,7 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_STYLE=Automatic \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
-            MARKETING_VERSION=1.0
+            MARKETING_VERSION=${{ inputs.marketing_version }}
 
       - name: Export & upload to TestFlight
         env:

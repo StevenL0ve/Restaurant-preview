@@ -2,12 +2,23 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
   pull_request:
+
+# Least privilege: CI only needs to read the repository contents.
+permissions:
+  contents: read
+
+# One in-flight run per branch. A push and its pull_request event share the
+# same group (keyed by branch name), so PR branches build once instead of
+# twice, and new pushes cancel superseded runs.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
