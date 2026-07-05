@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Apollo_io__apollo_users_api_profile",
+      "mcp__Apollo_io__apollo_email_accounts_index",
+      "mcp__Apollo_io__apollo_emailer_campaigns_search",
+      "mcp__Apollo_io__apollo_emailer_schedules_index",
+      "mcp__Apollo_io__apollo_contacts_search",
+      "mcp__Apollo_io__apollo_contacts_create",
+      "mcp__Apollo_io__apollo_contacts_bulk_create",
+      "mcp__Apollo_io__apollo_mixed_companies_search",
+      "mcp__Apollo_io__apollo_mixed_people_api_search",
+      "mcp__Apollo_io__apollo_people_match",
+      "mcp__Apollo_io__apollo_people_bulk_match",
+      "mcp__Apollo_io__apollo_organizations_enrich",
+      "mcp__Apollo_io__apollo_emailer_campaigns_add_contact_ids"
+    ]
+  }
+}
