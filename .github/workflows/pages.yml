@@ -3,10 +3,12 @@
 # rewrites are needed; VITE_BASE makes assets resolve on the project subpath.
 name: Deploy preview to GitHub Pages
 
+# Manual trigger only — Pages must first be enabled (Settings → Pages →
+# Source: "GitHub Actions") and this branch allowed in the github-pages
+# environment. Then run it from the Actions tab. Kept off `push` so it doesn't
+# red-flag the PR before Pages is configured.
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/ourfamilywizard-analysis-J8t30]
 
 permissions:
   contents: read
