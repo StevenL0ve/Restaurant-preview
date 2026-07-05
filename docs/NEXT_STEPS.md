@@ -1,47 +1,70 @@
 # CoParent — What's done & what needs you
 
 A running checklist so we can pick up fast. Items marked **[you]** need an
-account, a key, or the Mac — everything else is already built and on the branch.
+account or a key — but **none of these require a Mac anymore** (see §1).
 
 ## ✅ Built & on `claude/ourfamilywizard-analysis-J8t30`
 - Full app: dashboard, messages + on-device tone check, calendar + custody
   rotations + `.ics`, expenses + splits + recurring, journal, **info bank
-  (editable)**, notifications, global search, JSON/CSV/print exports
-- **On-device AI assistant** ("Ask CoParent") — schedule, info, events, messages, packing
-- **Family setup wizard** (new accounts + Settings > "Set up my family") — real names instead of demo data
-- **Swap requests**: full round-trip (request, waiting state, cancel, accept/decline)
-- **Packing / exchange checklist** ("never forget the teddy bear")
+  (editable)**, packing list, notifications, global search, JSON/CSV/print exports
+- **On-device AI assistant** ("Ask CoParent") — schedule, kids' info, events,
+  messages, packing, and money ("who owes who?")
+- **Family setup wizard** (new accounts + Settings → "Set up my family")
+- **Swap requests**: full round-trip (request → waiting → cancel / accept / decline)
 - **Login / create-account** gate + Face ID affordance
-- Real **logo**, custom **bottom-nav icons**, indigo branding, dark mode, mobile layout
+- Real **logo**, custom claymation **nav icons**, playful clay design + **haptics**
 - **Paywall** ($59.99/yr · $7.99/mo per family) + Pro entitlement scaffold
+- **Cloud build workflows** (TestFlight + Play Store) — no local machine needed
 - Phase-2 **backend scaffolding**: Supabase schema, Claude edge function, cloud config
 - Siri **App Intents** scaffold
 
-## 🔜 Quick wins waiting on you
+## 🔜 What needs you
 
-### 1. Ship the latest to TestFlight (5 min, on the Mac)
-```bash
-cd ~/CoParent && git pull && npm install && npm run build
-npx capacitor-assets generate --ios && npx cap sync ios
-```
-Then in Xcode: bump **Build** number → **Product → Archive** → **Distribute → TestFlight**.
+### 1. Ship a new TestFlight build — from your phone, no Mac 🎉
+The repo has a **TestFlight** GitHub Action that builds + signs + uploads on a
+cloud macOS runner. One-time: add 4 repository secrets (all creatable in a phone
+browser), then run it from the Actions tab whenever you want to ship.
+
+**Create an App Store Connect API key** (appstoreconnect.apple.com → Users and
+Access → Integrations → App Store Connect API → **＋**, role **Admin**). Download
+the `AuthKey_XXXX.p8`. Note the **Key ID** and **Issuer ID** on that page.
+
+**Add secrets** (GitHub → repo → Settings → Secrets and variables → Actions → New):
+| Secret | Value |
+| --- | --- |
+| `ASC_KEY_ID` | the Key ID (e.g. `2X9R4HXF34`) |
+| `ASC_ISSUER_ID` | the Issuer ID (a UUID) |
+| `ASC_KEY_CONTENT` | paste the whole `.p8` file text (begins `-----BEGIN PRIVATE KEY-----`) |
+| `APPLE_TEAM_ID` | your 10-char Apple Developer Team ID (developer.apple.com → Membership) |
+
+**Run it:** GitHub → **Actions** tab → **TestFlight** → **Run workflow** →
+branch `claude/ourfamilywizard-analysis-J8t30`. ~15–20 min later the build shows
+up in TestFlight (bundle id `com.steven.coparent`, app "Co-Parently").
+
+> A **Play Store** workflow exists too — needs `ANDROID_KEYSTORE_BASE64` +
+> `ANDROID_KEYSTORE_PASSWORD` (and optionally `GOOGLE_PLAY_JSON`). Same idea.
 
 ### 2. Stand up the backend — **[you]** create free accounts, send me keys
-- **Supabase:** create a project → SQL editor → paste & run `supabase/schema.sql`
-  → Project Settings → API → send me the **Project URL** + **anon/public key**
+- **Supabase:** create a project → SQL editor → run `supabase/schema.sql` →
+  Project Settings → API → send me the **Project URL** + **anon/public key**
   (publishable; safe to share). Then I wire real accounts + cross-device sync.
-- **Anthropic:** create an API key for the conversational assistant. It goes in
-  Supabase as a secret (`supabase secrets set ANTHROPIC_API_KEY=…`), never in the app.
+- **Anthropic:** create an API key for the conversational assistant. It's stored
+  as a Supabase Edge Function secret, never shipped in the app.
 
 ### 3. Subscriptions — **[you]** create accounts; I wire the rest
-- **RevenueCat** (free tier) + **App Store Connect**: create the products
-  `coparent_yearly` ($59.99) and `coparent_monthly` ($7.99). Send me the
-  RevenueCat public SDK key. I'll replace the demo entitlement with real IAP.
+- **App Store Connect + RevenueCat** (free): create the products
+  `coparent_yearly` ($59.99) and `coparent_monthly` ($7.99), send me the
+  RevenueCat public SDK key → I replace the demo entitlement with real IAP.
 
-### 4. Siri (after the backend) — **[you]** in Xcode
-- Add `ios-app-intents/CoParentShortcuts.swift` to the App target, set the
-  backend URL + auth token bridge (see the file header).
+### 4. Siri (after the backend) — one-time in the native project
+- Add `ios-app-intents/CoParentShortcuts.swift`, set the backend URL + auth
+  bridge (see the file header).
 
 ## Notes
+- **Bundle ID is `com.steven.coparent`** everywhere — matches the live App
+  Store record. Don't let anything reintroduce `com.stevennelson.coparent`.
 - The remote branch is the source of truth (this sandbox resets periodically).
 - Internal storage keys are kept stable so saved data survives updates.
+- Icon/asset generation needs `npm i -D sharp @capacitor/assets` on demand;
+  they're intentionally not committed deps (native binaries don't install
+  everywhere). CI fetches them via `npx`.
