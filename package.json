@@ -26,16 +26,14 @@
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.2.1",
-    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "jsdom": "^25.0.0",
-    "sharp": "^0.35.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.6",
     "vitest": "^2.1.1"
-  }
+  },
+  "//": "Icon/asset generation needs `npm i -D sharp @capacitor/assets` on demand; they are not committed deps because their native binaries can't install in every environment. The CI workflows fetch @capacitor/assets via npx."
 }

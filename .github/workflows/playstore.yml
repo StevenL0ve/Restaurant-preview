@@ -2,7 +2,10 @@
 # upload keystore, and publishes it to the Google Play internal-testing track.
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
-#   ANDROID_KEYSTORE_BASE64    The upload keystore file, base64-encoded
+#   ANDROID_KEYSTORE_BASE64    The upload keystore file, base64-encoded.
+#                              Create one anywhere with:
+#                              keytool -genkeypair -v -keystore upload.keystore \
+#                                -alias upload -keyalg RSA -keysize 2048 -validity 10000
 #   ANDROID_KEYSTORE_PASSWORD  Keystore + key password
 #   GOOGLE_PLAY_JSON           (optional) Play Console service-account JSON —
 #                              when present the signed bundle is auto-published
@@ -40,8 +43,13 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Sync Capacitor Android shell
-        run: npx cap sync android
+      # The native project is not committed — generate it fresh, stamp the
+      # launcher icons/splash from the real logo, then sync the web build in.
+      - name: Generate Android native project
+        run: |
+          npx cap add android
+          npx capacitor-assets generate --android
+          npx cap sync android
 
       - name: Decode upload keystore
         env:
@@ -50,15 +58,39 @@ jobs:
           if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing"; exit 1
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/cgp-upload.keystore"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/upload.keystore"
+
+      - name: Configure release signing + version code
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          # Stamp a monotonically-increasing versionCode into the generated project.
+          sed -i "s/versionCode 1$/versionCode $VERSION_CODE/" android/app/build.gradle
+          # Append a release signing config; Gradle merges repeated android{} blocks.
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias "upload"
+                      keyPassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
 
       - name: Build signed release bundle
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: cgp-upload
-          VERSION_CODE: ${{ github.run_number }}
         run: |
-          export ANDROID_KEYSTORE_PATH="$HOME/cgp-upload.keystore"
+          export ANDROID_KEYSTORE_PATH="$HOME/upload.keystore"
           cd android
           ./gradlew bundleRelease --no-daemon
           ls -la app/build/outputs/bundle/release/
@@ -66,7 +98,7 @@ jobs:
       - name: Attach bundle as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cgp-release-aab
+          name: coparent-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
 
@@ -78,13 +110,13 @@ jobs:
         run: |
           if [ -z "$GOOGLE_PLAY_JSON" ]; then
             echo "GOOGLE_PLAY_JSON secret not set — skipping auto-publish."
-            echo "Download the cgp-release-aab artifact from this run and upload it in the Play Console."
+            echo "Download the coparent-release-aab artifact from this run and upload it in the Play Console."
             exit 0
           fi
           printf '%s' "$GOOGLE_PLAY_JSON" > "$HOME/play-key.json"
           sudo gem install fastlane --no-document
           fastlane supply \
-            --package_name com.commongroundprojects.cgp \
+            --package_name com.steven.coparent \
             --aab android/app/build/outputs/bundle/release/app-release.aab \
             --track internal \
             --json_key "$HOME/play-key.json" \

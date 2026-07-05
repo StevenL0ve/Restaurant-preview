@@ -35,7 +35,7 @@ npm run cap:add:ios       # [you, on a Mac] generates ios/  (runs CocoaPods)
 npm run cap:add:android   # generates android/  (works on any OS)
 ```
 
-`capacitor.config.ts` is already set: appId `com.stevennelson.coparent`, appName `CoParent`,
+`capacitor.config.ts` is already set: appId `com.steven.coparent`, appName `CoParent`,
 webDir `dist`. After any web change, re-sync:
 
 ```bash
@@ -62,7 +62,7 @@ npm run cap:sync          # = npm run build && cap sync
    provisioning. Set version & build number.
 3. **Product → Archive**, then **Distribute App → App Store Connect**.
 4. In [App Store Connect](https://appstoreconnect.apple.com/): create the app
-   record (bundle id `com.stevennelson.coparent`), fill the listing (`docs/STORE_LISTING.md`),
+   record (bundle id `com.steven.coparent`), fill the listing (`docs/STORE_LISTING.md`),
    **App Privacy** answers (data not collected / stored on device — see `docs/PRIVACY.md`),
    screenshots, and submit for review (typically 1–3 days).
 
