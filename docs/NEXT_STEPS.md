@@ -20,6 +20,20 @@ account or a key — but **none of these require a Mac anymore** (see §1).
 
 ## 🔜 What needs you
 
+### 0. See the whole app on your phone in ~2 min (web preview, zero secrets)
+A **Deploy preview to GitHub Pages** Action is ready — it builds a live,
+phone-openable copy of the app (uses HashRouter + base-aware assets, verified
+loading on the project subpath). One-time enablement:
+
+1. GitHub → repo → **Settings → Pages** → **Source: GitHub Actions**.
+2. GitHub → **Settings → Environments → github-pages** → Deployment branches →
+   add `claude/ourfamilywizard-analysis-J8t30` (or "No restriction").
+3. **Actions** tab → **Deploy preview to GitHub Pages** → **Run workflow**.
+
+Live at **https://stevenl0ve.github.io/Restaurant-preview/** — open it in Safari,
+tap Share → Add to Home Screen for a full-screen app-like preview. (No offline
+service worker or native haptics in the web preview; those are iOS-only.)
+
 ### 1. Ship a new TestFlight build — from your phone, no Mac 🎉
 The repo has a **TestFlight** GitHub Action that builds + signs + uploads on a
 cloud macOS runner. One-time: add 4 repository secrets (all creatable in a phone
