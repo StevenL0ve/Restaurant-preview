@@ -76,11 +76,20 @@ function uid(prefix: string): string {
 export interface ImportResult {
   state: AppState;
   added: number; // cards added
+  skipped: number; // cards already present (same surgeon + procedure + facility)
+}
+
+/** Identity of a card for dedup: surgeon name + procedure + facility name,
+ *  lowercased. Resolves ids through the given surgeon/facility name maps. */
+function cardKey(procedure: string, surgeonName: string, facilityName: string): string {
+  return `${surgeonName.trim().toLowerCase()}|${procedure.trim().toLowerCase()}|${facilityName.trim().toLowerCase()}`;
 }
 
 /** Merge a bundle into an existing library. Matches facilities/surgeons by name
  *  (case-insensitive) and locations by facility + label so nothing duplicates;
- *  remaps all ids so imported cards are independent, editable copies. */
+ *  remaps all ids so imported cards are independent, editable copies. Cards that
+ *  already exist (same surgeon + procedure + facility) are skipped, so
+ *  re-importing the same file is safe. */
 export function importBundle(state: AppState, bundle: CardBundle): ImportResult {
   const facilities = [...state.facilities];
   const surgeons = [...state.surgeons];
@@ -125,19 +134,41 @@ export function importBundle(state: AppState, bundle: CardBundle): ImportResult 
   const remapItems = (arr: PrefCard["instruments"]) =>
     arr.map((it) => ({ ...it, id: uid("it"), locationId: it.locationId ? locMap.get(it.locationId) : undefined }));
 
-  const newCards: PrefCard[] = bundle.cards.map((c) => ({
-    ...c,
-    id: uid("card"),
-    surgeonId: sgMap.get(c.surgeonId) ?? c.surgeonId,
-    facilityId: c.facilityId ? facMap.get(c.facilityId) : undefined,
-    favorite: false,
-    updatedAt: new Date().toISOString(),
-    instruments: remapItems(c.instruments),
-    sutures: remapItems(c.sutures),
-    supplies: remapItems(c.supplies),
-    medications: remapItems(c.medications),
-    equipment: remapItems(c.equipment),
-  }));
+  // Existing-card keys, so re-importing the same cards doesn't duplicate them.
+  const nameOf = <T extends { id: string; name: string }>(list: T[], id?: string) =>
+    (id ? list.find((x) => x.id === id)?.name : "") ?? "";
+  const seen = new Set(
+    state.cards.map((c) =>
+      cardKey(c.procedure, nameOf(state.surgeons, c.surgeonId), nameOf(state.facilities, c.facilityId)),
+    ),
+  );
+
+  const bundleSg = (id: string) => bundle.surgeons.find((s) => s.id === id)?.name ?? "";
+  const bundleFac = (id?: string) => (id ? bundle.facilities.find((f) => f.id === id)?.name ?? "" : "");
+
+  const newCards: PrefCard[] = [];
+  let skipped = 0;
+  for (const c of bundle.cards) {
+    const key = cardKey(c.procedure, bundleSg(c.surgeonId), bundleFac(c.facilityId));
+    if (seen.has(key)) {
+      skipped++;
+      continue;
+    }
+    seen.add(key);
+    newCards.push({
+      ...c,
+      id: uid("card"),
+      surgeonId: sgMap.get(c.surgeonId) ?? c.surgeonId,
+      facilityId: c.facilityId ? facMap.get(c.facilityId) : undefined,
+      favorite: false,
+      updatedAt: new Date().toISOString(),
+      instruments: remapItems(c.instruments),
+      sutures: remapItems(c.sutures),
+      supplies: remapItems(c.supplies),
+      medications: remapItems(c.medications),
+      equipment: remapItems(c.equipment),
+    });
+  }
 
   return {
     state: {
@@ -148,5 +179,6 @@ export function importBundle(state: AppState, bundle: CardBundle): ImportResult 
       cards: [...newCards, ...state.cards],
     },
     added: newCards.length,
+    skipped,
   };
 }

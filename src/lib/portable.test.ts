@@ -39,19 +39,32 @@ describe("portable card bundles", () => {
     expect(imported.id).not.toBe(card.id);
   });
 
-  it("merges by name without duplicating an existing facility/surgeon", () => {
-    const target = buildSeed(); // already has Dr. Chen @ Mercy General
-    const facBefore = target.facilities.length;
-    const sgBefore = target.surgeons.length;
-
+  it("skips a card that already exists (same surgeon + procedure + facility)", () => {
+    const target = buildSeed(); // already has Dr. Chen's Total Knee @ Mercy General
     const card = target.cards.find((c) => c.procedure.startsWith("Total Knee"))!;
     const bundle = bundleCards(target, [card.id], NOW);
-    const { state, added } = importBundle(target, bundle);
+    const { state, added, skipped } = importBundle(target, bundle);
+
+    expect(added).toBe(0);
+    expect(skipped).toBe(1);
+    expect(state.cards.length).toBe(target.cards.length); // nothing duplicated
+    expect(state.facilities).toHaveLength(target.facilities.length);
+    expect(state.surgeons).toHaveLength(target.surgeons.length);
+  });
+
+  it("imports a new procedure for an existing surgeon without duplicating them", () => {
+    const target = buildSeed();
+    const card = target.cards.find((c) => c.procedure.startsWith("Total Knee"))!;
+    const bundle = bundleCards(target, [card.id], NOW);
+    bundle.cards[0] = { ...bundle.cards[0], procedure: "Total Knee — Revision" }; // a different case (clone so the source card isn't mutated)
+    const facBefore = target.facilities.length;
+    const sgBefore = target.surgeons.length;
+    const { state, added, skipped } = importBundle(target, bundle);
 
     expect(added).toBe(1);
+    expect(skipped).toBe(0);
     expect(state.facilities).toHaveLength(facBefore); // matched, not duplicated
     expect(state.surgeons).toHaveLength(sgBefore);
-    expect(state.cards.length).toBe(target.cards.length + 1);
   });
 
   it("coerces a full library export into a mergeable bundle", () => {

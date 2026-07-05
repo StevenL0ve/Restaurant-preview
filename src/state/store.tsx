@@ -157,8 +157,8 @@ export interface Store {
   // sharing — portable card bundles
   exportCardFile: (cardId: string) => void;
   exportFacilityFile: (facilityId: string) => void;
-  importCards: (json: string) => number; // merges; returns # cards added; throws if invalid
-  importCsv: (text: string) => number; // bulk import from a spreadsheet; returns # added
+  importCards: (json: string) => { added: number; skipped: number }; // merges; dedups; throws if invalid
+  importCsv: (text: string) => { added: number; skipped: number }; // bulk import from a spreadsheet
   downloadCsvTemplate: () => void;
   copyCardToFacility: (cardId: string, facilityId: string) => PrefCard | null;
   // data ownership
@@ -404,16 +404,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       importCards: (json) => {
         const bundle = asBundle(JSON.parse(json), new Date().toISOString());
         if (!bundle || !bundle.cards.length) throw new Error("No cards found in that file.");
-        const { state: next, added } = importBundle(state, bundle);
+        const { state: next, added, skipped } = importBundle(state, bundle);
         setState(next);
-        return added;
+        return { added, skipped };
       },
 
       importCsv: (text) => {
         const bundle = csvToBundle(parseCsv(text), new Date().toISOString());
-        const { state: next, added } = importBundle(state, bundle);
+        const { state: next, added, skipped } = importBundle(state, bundle);
         setState(next);
-        return added;
+        return { added, skipped };
       },
 
       downloadCsvTemplate: () =>

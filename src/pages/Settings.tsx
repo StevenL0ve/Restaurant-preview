@@ -5,6 +5,13 @@ import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
 
+function importMessage(added: number, skipped: number, source: string): string {
+  const cards = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
+  if (added === 0 && skipped > 0) return `Already had all of it — skipped ${cards(skipped)} you already have.`;
+  const base = `Imported ${cards(added)} from ${source}.`;
+  return skipped > 0 ? `${base} Skipped ${cards(skipped)} you already had.` : base;
+}
+
 export function Settings() {
   const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll } = useStore();
   const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
@@ -19,12 +26,12 @@ export function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const added = importCards(String(reader.result));
-        setMsg(`Imported ${added} ${added === 1 ? "card" : "cards"} into your library.`);
+        const { added, skipped } = importCards(String(reader.result));
+        setMsg(importMessage(added, skipped, "your library"));
       } catch {
-        setMsg("That file didn’t look like a ORSync card file.");
+        setMsg("That file didn’t look like an ORSync card file.");
       }
-      setTimeout(() => setMsg(null), 3000);
+      setTimeout(() => setMsg(null), 3500);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -36,8 +43,8 @@ export function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const added = importCsv(String(reader.result));
-        setMsg(`Imported ${added} ${added === 1 ? "card" : "cards"} from the spreadsheet.`);
+        const { added, skipped } = importCsv(String(reader.result));
+        setMsg(importMessage(added, skipped, "the spreadsheet"));
       } catch (err) {
         const m = err && typeof err === "object" && "message" in err ? String((err as { message: string }).message) : "Couldn’t read that CSV.";
         setMsg(m);
