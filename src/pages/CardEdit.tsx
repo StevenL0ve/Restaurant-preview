@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { gateNewCard, gateNewFacility } from "../lib/tier";
 import {
   useStore,
@@ -16,8 +16,15 @@ import { SECTIONS, locationLabel, type CardItem, type Location, type PrefCard, t
 export function CardEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const store = useStore();
   const { state, saveCard, addSurgeon, addFacility, addLocation } = store;
+
+  // A draft handed in from the scan/paste flow: a prefilled card plus, when the
+  // scanned surgeon wasn't matched to one you already have, their name.
+  const seedState = location.state as { seed?: PrefCard; surgeonName?: string } | null;
+  const seed = seedState?.seed;
+  const seedSurgeonName = seedState?.surgeonName;
 
   const existing = id ? state.cards.find((c) => c.id === id) : undefined;
   const firstSurgeon = state.surgeons[0];
@@ -31,6 +38,7 @@ export function CardEdit() {
 
   const [draft, setDraft] = useState<PrefCard>(() => {
     if (existing) return existing;
+    if (seed) return seed;
     // Prefill facility from the surgeon's facility name if one matches.
     const fac = firstSurgeon?.facility
       ? state.facilities.find((f) => f.name === firstSurgeon.facility)
@@ -38,9 +46,11 @@ export function CardEdit() {
     return emptyCard(firstSurgeon?.id ?? "", firstSurgeon?.specialty ?? "General Surgery", fac?.id);
   });
 
-  const [newSurgeon, setNewSurgeon] = useState(state.surgeons.length === 0);
-  const [sgName, setSgName] = useState("");
-  const [sgSpecialty, setSgSpecialty] = useState("General Surgery");
+  // Start on the "new surgeon" path when scanning turned up a surgeon we
+  // couldn't match, or when there are no surgeons yet.
+  const [newSurgeon, setNewSurgeon] = useState(!!seedSurgeonName || state.surgeons.length === 0);
+  const [sgName, setSgName] = useState(seedSurgeonName ?? "");
+  const [sgSpecialty, setSgSpecialty] = useState(seed?.specialty || "General Surgery");
   // Inline "add facility" capture.
   const [newFacilityName, setNewFacilityName] = useState("");
   const [addingFacility, setAddingFacility] = useState(false);

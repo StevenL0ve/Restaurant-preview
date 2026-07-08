@@ -751,6 +751,26 @@ a { color: inherit; }
 .edit-item-list .loc-select { margin-left: auto; }
 [data-theme="dark"] .item-add input, [data-theme="dark"] .item-add select, [data-theme="dark"] .loc-select { background: var(--bg); color: var(--ink); }
 
+/* Scan / paste a card */
+.scan-textarea {
+  width: 100%; box-sizing: border-box; margin-top: 4px;
+  border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.5;
+  background: var(--card); color: var(--ink); resize: vertical; min-height: 200px;
+}
+.scan-textarea:focus { outline: none; border-color: var(--brand); }
+[data-theme="dark"] .scan-textarea { background: var(--bg); }
+.ocr-progress { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ocr-bar { height: 8px; border-radius: 99px; background: var(--brand-50); overflow: hidden; }
+.ocr-bar span { display: block; height: 100%; background: var(--brand); border-radius: 99px; transition: width 0.25s ease; }
+.ocr-error { color: var(--danger, #b91c1c); margin-top: 10px; }
+.parse-summary { margin-top: 10px; color: var(--muted); }
+.parse-preview { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.parse-preview li {
+  font-size: 12.5px; padding: 4px 10px; border-radius: 99px;
+  background: var(--brand-50); color: var(--ink); border: 1px solid var(--line);
+}
+
 /* Inline "new location" creator inside the item editor */
 .newloc-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; padding: 12px; border: 1px dashed var(--brand); border-radius: 11px; background: var(--brand-50); }
 .newloc-title { font-size: 12px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.04em; width: 100%; }

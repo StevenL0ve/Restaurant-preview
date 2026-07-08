@@ -72,6 +72,11 @@ hospital admin.
   matched into their surgeons/facilities/locations by name. Build a personal
   archive of cards from many hospitals. Surgeons can **copy a card to another
   facility** in one tap (locations remap to the new site automatically).
+- **Create a card** — build one from scratch in the editor, or **scan a printed
+  card / paste typed text** and ORSync pulls out the procedure, surgeon, and
+  items (sorted into sections) as a head start you review and save. The photo is
+  read **on-device** (Tesseract OCR) — nothing is uploaded — and the paste/type
+  path works fully offline. Surgeons are matched to your library by name.
 - **Bulk import** — facilities can upload preexisting cards from a CSV/Excel
   export (Genesis, SIS / S3, or a spreadsheet) with a downloadable template.
 - **Loaner trays** — request and track vendor loaner sets for a case
