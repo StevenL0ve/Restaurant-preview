@@ -148,6 +148,50 @@ export interface CaseEntry {
   notes?: string;
 }
 
+// ---- On-call schedule ------------------------------------------------------
+// Who to call at 2 AM. Every OR keeps a rotating list of who's on call for each
+// role — OR tech, circulating nurse, the general surgeon, the ortho surgeon,
+// anesthesia. When something comes in, staff need to know *who is on right now*
+// and reach them in one tap. This is a directory + a schedule:
+//   • Positions — the roles you cover (customizable).
+//   • People — the pool who can take call for a position (a fallback list, in
+//     case the schedule is blank, wrong, or someone's covering informally).
+//   • Shifts — "this person has this position for this window" (open-ended =
+//     "on until you change it"). The current on-call is the covering shift with
+//     the latest start.
+
+/** Broad grouping so the board can section positions (OR staff vs. surgeons). */
+export const ON_CALL_CATEGORIES = ["OR Staff", "Surgeons", "Anesthesia", "Other"] as const;
+export type OnCallCategory = (typeof ON_CALL_CATEGORIES)[number];
+
+export interface OnCallPosition {
+  id: ID;
+  name: string; // "On-call OR Tech", "On-call Ortho Surgeon"
+  category: OnCallCategory;
+}
+
+/** Someone who can take call. `positionIds` is the pool they belong to. */
+export interface OnCallPerson {
+  id: ID;
+  name: string;
+  phone?: string; // digits for a tel: link — one tap to call
+  role?: string; // "CST", "RN", "MD", "CRNA" — a short label
+  positionIds: ID[]; // positions this person is in the pool for
+  notes?: string;
+  color: string;
+  initials: string;
+}
+
+/** A scheduled coverage window. `end` omitted means "on until changed". */
+export interface OnCallShift {
+  id: ID;
+  positionId: ID;
+  personId: ID;
+  start: string; // ISO datetime
+  end?: string; // ISO datetime, or undefined for open-ended
+  note?: string; // "covering for Dana"
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
@@ -156,4 +200,7 @@ export interface AppState {
   loaners: LoanerTray[];
   cases: CaseEntry[];
   setups: Record<ID, SetupState>; // cardId -> progress
+  onCallPositions: OnCallPosition[];
+  onCallPeople: OnCallPerson[];
+  onCallShifts: OnCallShift[];
 }

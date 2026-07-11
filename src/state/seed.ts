@@ -1,4 +1,4 @@
-import type { AppState, CardItem, CaseEntry, Facility, Location, LoanerTray, PrefCard, Surgeon } from "../types";
+import type { AppState, CardItem, CaseEntry, Facility, Location, LoanerTray, OnCallPerson, OnCallPosition, OnCallShift, PrefCard, Surgeon } from "../types";
 
 // A realistic, fully-populated demo library so the app never opens to an empty
 // screen. Cards are authored with plain location *strings* for readability; the
@@ -424,7 +424,62 @@ export function buildSeed(): AppState {
     ...(csec ? [{ id: "case-seed-2", date: localDay(1), time: "08:00", cardId: csec.id, room: "L&D OR 1" }] : []),
   ];
 
-  return { facilities, locations, surgeons, cards, loaners, cases, setups: {} };
+  // ---- On-call schedule demo ----------------------------------------------
+  const ocInitials = (name: string) => {
+    const parts = name.replace(/^(dr\.?|crna)\s*/i, "").trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || name.slice(0, 2).toUpperCase();
+  };
+  const ocPalette = ["#4338ca", "#0e7490", "#b45309", "#15803d", "#7c3aed", "#be185d", "#b91c1c", "#0369a1"];
+  let pi = 0;
+  const person = (id: string, name: string, role: string, phone: string, positionIds: string[]): OnCallPerson => ({
+    id, name, role, phone, positionIds, color: ocPalette[pi++ % ocPalette.length], initials: ocInitials(name),
+  });
+
+  const onCallPositions: OnCallPosition[] = [
+    { id: "pos-tech", name: "On-call OR Tech", category: "OR Staff" },
+    { id: "pos-circ", name: "On-call Circulating Nurse", category: "OR Staff" },
+    { id: "pos-charge", name: "On-call Charge Nurse", category: "OR Staff" },
+    { id: "pos-gensurg", name: "On-call General Surgeon", category: "Surgeons" },
+    { id: "pos-ortho", name: "On-call Ortho Surgeon", category: "Surgeons" },
+    { id: "pos-anes", name: "On-call Anesthesiologist", category: "Anesthesia" },
+  ];
+
+  const onCallPeople: OnCallPerson[] = [
+    person("oc-marcus", "Marcus Reed", "CST", "+15125550170", ["pos-tech"]),
+    person("oc-tanya", "Tanya Brooks", "CST", "+15125550171", ["pos-tech"]),
+    person("oc-priya", "Priya Nair", "RN", "+15125550172", ["pos-circ", "pos-charge"]),
+    person("oc-james", "James Whitfield", "RN", "+15125550173", ["pos-circ"]),
+    person("oc-elena", "Elena Duarte", "RN, Charge", "+15125550174", ["pos-charge", "pos-circ"]),
+    person("oc-alvarez", "Dr. Alvarez", "General Surgery", "+15125550180", ["pos-gensurg"]),
+    person("oc-park", "Dr. Park", "General Surgery", "+15125550181", ["pos-gensurg"]),
+    person("oc-chen", "Dr. Chen", "Orthopedics", "+15125550182", ["pos-ortho"]),
+    person("oc-boyd", "Dr. Boyd", "Orthopedics", "+15125550183", ["pos-ortho"]),
+    person("oc-sato", "Dr. Sato", "Anesthesiology", "+15125550190", ["pos-anes"]),
+    person("oc-kelly", "Kelly Osei", "CRNA", "+15125550191", ["pos-anes"]),
+  ];
+
+  const hour = 3600000;
+  const at7amTomorrow = () => {
+    const d = new Date(Date.now() + day);
+    d.setHours(7, 0, 0, 0);
+    return d.toISOString();
+  };
+  // Most positions have someone on now (open-ended = "until changed"); the
+  // charge nurse is intentionally left blank to show the fallback pool. One
+  // upcoming shift shows the next rotation.
+  const onCallShifts: OnCallShift[] = [
+    { id: "shift-tech", positionId: "pos-tech", personId: "oc-marcus", start: iso(-2 * hour) },
+    { id: "shift-circ", positionId: "pos-circ", personId: "oc-priya", start: iso(-2 * hour), end: at7amTomorrow(), note: "Covering for James (swap)" },
+    { id: "shift-gensurg", positionId: "pos-gensurg", personId: "oc-alvarez", start: iso(-6 * hour) },
+    { id: "shift-ortho", positionId: "pos-ortho", personId: "oc-chen", start: iso(-6 * hour) },
+    { id: "shift-anes", positionId: "pos-anes", personId: "oc-sato", start: iso(-6 * hour) },
+    { id: "shift-tech-next", positionId: "pos-tech", personId: "oc-tanya", start: at7amTomorrow() },
+  ];
+
+  return {
+    facilities, locations, surgeons, cards, loaners, cases, setups: {},
+    onCallPositions, onCallPeople, onCallShifts,
+  };
 }
 
 // Re-export so the store's migration can reuse the section list.

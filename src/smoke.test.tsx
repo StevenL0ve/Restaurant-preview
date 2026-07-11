@@ -52,6 +52,8 @@ describe("app smoke test", () => {
     ["/cards/scan", "Scan or paste a card"],
     ["/surgeons", "Surgeons"],
     ["/loaners", "Loaner trays"],
+    ["/on-call", "On call"],
+    ["/on-call/people", "everyone who can take call"],
     ["/facilities", "Add a facility"],
     ["/search", "Search"],
     ["/settings", "Your data"],

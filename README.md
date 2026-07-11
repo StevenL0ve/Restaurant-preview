@@ -84,6 +84,13 @@ hospital admin.
   with overdue/arriving-soon alerts, a status pipeline (requested → confirmed →
   delivered → sterile/ready → in use → returned) with a timestamped history, and
   one-tap call/text the rep. Loaners to watch surface on the dashboard.
+- **On-call schedule** — the 2 AM "who do I call" board. Each position (on-call
+  OR tech, circulator, charge nurse, general surgeon, ortho surgeon, anesthesia,
+  or any role you add) shows who's on **right now** with **one-tap call/text**
+  through your phone. Put someone on by searching their name and tapping — for a
+  window or open-ended "until you change it" — and edit anytime. Every position
+  also lists its **full pool** as a fallback, for when the schedule's blank,
+  wrong, or someone's covering informally.
 - **Optional account + Face ID** — use it anonymously, or add a local account to
   lock the app. Nothing leaves your device.
 - **Offline-first PWA** wrapped for the App Store with **Capacitor**.

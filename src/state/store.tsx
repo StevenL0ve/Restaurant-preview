@@ -14,11 +14,14 @@ import type {
   Location,
   LoanerStatus,
   LoanerTray,
+  OnCallPerson,
+  OnCallPosition,
+  OnCallShift,
   PrefCard,
   SectionKey,
   Surgeon,
 } from "../types";
-import { SECTIONS, locationLabel } from "../types";
+import { ON_CALL_CATEGORIES, SECTIONS, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
@@ -93,6 +96,9 @@ function migrateLegacy(old: any): AppState {
     loaners: old.loaners ?? [],
     cases: old.cases ?? [],
     setups: old.setups ?? {},
+    onCallPositions: old.onCallPositions ?? [],
+    onCallPeople: old.onCallPeople ?? [],
+    onCallShifts: old.onCallShifts ?? [],
   };
 }
 
@@ -154,6 +160,17 @@ export interface Store {
   updateLoaner: (id: string, patch: Partial<LoanerTray>) => void;
   setLoanerStatus: (id: string, status: LoanerStatus) => void;
   deleteLoaner: (id: string) => void;
+  // on-call schedule
+  addOnCallPosition: (name: string, category: OnCallPosition["category"]) => OnCallPosition;
+  updateOnCallPosition: (id: string, patch: Partial<Pick<OnCallPosition, "name" | "category">>) => void;
+  deleteOnCallPosition: (id: string) => void;
+  addOnCallPerson: (p: Omit<OnCallPerson, "id" | "color" | "initials">) => OnCallPerson;
+  updateOnCallPerson: (id: string, patch: Partial<Omit<OnCallPerson, "id" | "color" | "initials">>) => void;
+  deleteOnCallPerson: (id: string) => void;
+  /** Put a person on call for a position over a window (end omitted = open-ended). */
+  assignOnCall: (positionId: string, personId: string, start: string, end?: string, note?: string) => OnCallShift;
+  updateOnCallShift: (id: string, patch: Partial<Omit<OnCallShift, "id">>) => void;
+  deleteOnCallShift: (id: string) => void;
   // sharing — portable card bundles
   exportCardFile: (cardId: string) => void;
   exportFacilityFile: (facilityId: string) => void;
@@ -382,6 +399,98 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteLoaner: (id) =>
         update((st) => ({ ...st, loaners: st.loaners.filter((l) => l.id !== id) })),
 
+      addOnCallPosition: (name, category) => {
+        const pos: OnCallPosition = { id: uid("pos"), name: name.trim(), category };
+        update((st) => ({ ...st, onCallPositions: [...st.onCallPositions, pos] }));
+        return pos;
+      },
+
+      updateOnCallPosition: (id, patch) =>
+        update((st) => ({
+          ...st,
+          onCallPositions: st.onCallPositions.map((p) =>
+            p.id === id ? { ...p, ...patch, name: (patch.name ?? p.name).trim() } : p,
+          ),
+        })),
+
+      // Removing a position clears its shifts and drops it from every pool.
+      deleteOnCallPosition: (id) =>
+        update((st) => ({
+          ...st,
+          onCallPositions: st.onCallPositions.filter((p) => p.id !== id),
+          onCallShifts: st.onCallShifts.filter((s) => s.positionId !== id),
+          onCallPeople: st.onCallPeople.map((p) =>
+            p.positionIds.includes(id) ? { ...p, positionIds: p.positionIds.filter((x) => x !== id) } : p,
+          ),
+        })),
+
+      addOnCallPerson: (p) => {
+        const person: OnCallPerson = {
+          ...p,
+          name: p.name.trim(),
+          phone: p.phone?.trim() || undefined,
+          id: uid("oc"),
+          color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+          initials: initials(p.name),
+        };
+        update((st) => ({ ...st, onCallPeople: [...st.onCallPeople, person] }));
+        return person;
+      },
+
+      updateOnCallPerson: (id, patch) =>
+        update((st) => ({
+          ...st,
+          onCallPeople: st.onCallPeople.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  ...patch,
+                  name: (patch.name ?? p.name).trim(),
+                  phone: patch.phone !== undefined ? patch.phone.trim() || undefined : p.phone,
+                  initials: patch.name ? initials(patch.name) : p.initials,
+                }
+              : p,
+          ),
+        })),
+
+      // Removing a person clears their shifts too.
+      deleteOnCallPerson: (id) =>
+        update((st) => ({
+          ...st,
+          onCallPeople: st.onCallPeople.filter((p) => p.id !== id),
+          onCallShifts: st.onCallShifts.filter((s) => s.personId !== id),
+        })),
+
+      assignOnCall: (positionId, personId, start, end, note) => {
+        const shift: OnCallShift = { id: uid("shift"), positionId, personId, start, end, note: note?.trim() || undefined };
+        update((st) => {
+          // Ensure the person is in this position's pool going forward.
+          const onCallPeople = st.onCallPeople.map((p) =>
+            p.id === personId && !p.positionIds.includes(positionId)
+              ? { ...p, positionIds: [...p.positionIds, positionId] }
+              : p,
+          );
+          // Close any open-ended shift already covering this position, so the
+          // board shows exactly one current person per position.
+          const onCallShifts = st.onCallShifts.map((s) =>
+            s.positionId === positionId && !s.end && s.start <= start
+              ? { ...s, end: start }
+              : s,
+          );
+          return { ...st, onCallPeople, onCallShifts: [...onCallShifts, shift] };
+        });
+        return shift;
+      },
+
+      updateOnCallShift: (id, patch) =>
+        update((st) => ({
+          ...st,
+          onCallShifts: st.onCallShifts.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        })),
+
+      deleteOnCallShift: (id) =>
+        update((st) => ({ ...st, onCallShifts: st.onCallShifts.filter((s) => s.id !== id) })),
+
       exportCardFile: (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
@@ -445,13 +554,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           loaners: parsed.loaners ?? st.loaners,
           cases: parsed.cases ?? st.cases,
           setups: parsed.setups ?? {},
+          onCallPositions: parsed.onCallPositions ?? st.onCallPositions,
+          onCallPeople: parsed.onCallPeople ?? st.onCallPeople,
+          onCallShifts: parsed.onCallShifts ?? st.onCallShifts,
         }));
       },
 
       resetDemo: () => setState(buildSeed()),
 
       wipeAll: () =>
-        setState({ facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {} }),
+        setState({
+          facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
+          onCallPositions: [], onCallPeople: [], onCallShifts: [],
+        }),
     };
   }, [state]);
 
@@ -676,4 +791,65 @@ export function groupByArea(s: AppState, card: PrefCard): AreaGroup[] {
   const groups: AreaGroup[] = named.map(([area, rows]) => ({ area, rows }));
   if (unplaced?.length) groups.push({ area: "", rows: unplaced });
   return groups;
+}
+
+// ---- On-call selectors -----------------------------------------------------
+
+export function onCallPersonOf(s: AppState, id?: string): OnCallPerson | undefined {
+  return id ? s.onCallPeople.find((p) => p.id === id) : undefined;
+}
+
+export function onCallPositionOf(s: AppState, id?: string): OnCallPosition | undefined {
+  return id ? s.onCallPositions.find((p) => p.id === id) : undefined;
+}
+
+/** True if a shift covers the given instant (open-ended shifts have no end). */
+export function shiftCovers(shift: OnCallShift, atISO: string): boolean {
+  return shift.start <= atISO && (!shift.end || shift.end >= atISO);
+}
+
+/** The shift currently on call for a position — the covering shift with the
+ *  latest start (a fresh assignment supersedes an earlier one). */
+export function currentShift(s: AppState, positionId: string, atISO: string = new Date().toISOString()): OnCallShift | undefined {
+  return s.onCallShifts
+    .filter((sh) => sh.positionId === positionId && shiftCovers(sh, atISO))
+    .sort((a, b) => b.start.localeCompare(a.start))[0];
+}
+
+/** Who's on call for a position right now (person + shift), if anyone. */
+export function currentOnCall(
+  s: AppState,
+  positionId: string,
+  atISO: string = new Date().toISOString(),
+): { person: OnCallPerson; shift: OnCallShift } | undefined {
+  const shift = currentShift(s, positionId, atISO);
+  const person = onCallPersonOf(s, shift?.personId);
+  return shift && person ? { person, shift } : undefined;
+}
+
+/** The pool: everyone who can take call for a position (the fallback list). */
+export function poolForPosition(s: AppState, positionId: string): OnCallPerson[] {
+  return s.onCallPeople
+    .filter((p) => p.positionIds.includes(positionId))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Future shifts for a position (the upcoming rotation), soonest first. */
+export function upcomingShifts(s: AppState, positionId: string, atISO: string = new Date().toISOString()): OnCallShift[] {
+  return s.onCallShifts
+    .filter((sh) => sh.positionId === positionId && sh.start > atISO)
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+/** Positions grouped by category, in ON_CALL_CATEGORIES order, empty groups dropped. */
+export function positionsByCategory(s: AppState): { category: string; positions: OnCallPosition[] }[] {
+  return ON_CALL_CATEGORIES
+    .map((category) => ({ category, positions: s.onCallPositions.filter((p) => p.category === category) }))
+    .filter((g) => g.positions.length);
+}
+
+/** Digits-only tel: target so tapping dials on a real phone. */
+export function telHref(phone?: string): string | undefined {
+  const digits = phone?.replace(/[^\d+]/g, "");
+  return digits ? `tel:${digits}` : undefined;
 }

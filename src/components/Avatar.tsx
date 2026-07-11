@@ -1,7 +1,12 @@
-import type { Surgeon } from "../types";
-
-/** Colored initials chip for a surgeon — soft gradient + ring for depth. */
-export function Avatar({ surgeon, size = 36 }: { surgeon: Surgeon; size?: number }) {
+/** Colored initials chip for a surgeon or on-call person — soft gradient +
+ *  ring for depth. Accepts any record with a name, color, and initials. */
+export function Avatar({
+  surgeon,
+  size = 36,
+}: {
+  surgeon: { name: string; color: string; initials: string };
+  size?: number;
+}) {
   return (
     <span
       className="avatar"
