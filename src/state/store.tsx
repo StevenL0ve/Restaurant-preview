@@ -29,11 +29,32 @@ import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 const STORAGE_KEY = "orsync.v2";
 const LEGACY_KEY = "orsync.v1"; // free-text item.location strings, no facilities
 
+// Positions used to read "On-call OR Tech"; they now read "OR Tech — On call".
+// Rename any that still carry an exact old default so early testers see the new
+// wording without wiping their data. Only touches untouched defaults.
+const ONCALL_RENAMES: Record<string, string> = {
+  "On-call OR Tech": "OR Tech — On call",
+  "On-call Circulating Nurse": "Circulating Nurse — On call",
+  "On-call Charge Nurse": "Charge Nurse — On call",
+  "On-call General Surgeon": "General Surgeon — On call",
+  "On-call Ortho Surgeon": "Ortho Surgeon — On call",
+  "On-call Anesthesiologist": "Anesthesiologist — On call",
+};
+function migrateOnCallNames(state: AppState): AppState {
+  if (!state.onCallPositions?.some((p) => ONCALL_RENAMES[p.name])) return state;
+  return {
+    ...state,
+    onCallPositions: state.onCallPositions.map((p) =>
+      ONCALL_RENAMES[p.name] ? { ...p, name: ONCALL_RENAMES[p.name] } : p,
+    ),
+  };
+}
+
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return { ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState;
+      return migrateOnCallNames({ ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState);
     }
     // One-time migration from the pre-facility format.
     const legacy = localStorage.getItem(LEGACY_KEY);

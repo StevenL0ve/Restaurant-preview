@@ -42,7 +42,7 @@ export function OnCallPeoplePage() {
           );
         })}
         <div className="pos-add">
-          <input value={posName} onChange={(e) => setPosName(e.target.value)} placeholder="New position (e.g. On-call Perfusionist)" />
+          <input value={posName} onChange={(e) => setPosName(e.target.value)} placeholder="New position (e.g. Perfusionist — On call)" />
           <select value={posCat} onChange={(e) => setPosCat(e.target.value as OnCallCategory)}>
             {ON_CALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>

@@ -436,12 +436,12 @@ export function buildSeed(): AppState {
   });
 
   const onCallPositions: OnCallPosition[] = [
-    { id: "pos-tech", name: "On-call OR Tech", category: "OR Staff" },
-    { id: "pos-circ", name: "On-call Circulating Nurse", category: "OR Staff" },
-    { id: "pos-charge", name: "On-call Charge Nurse", category: "OR Staff" },
-    { id: "pos-gensurg", name: "On-call General Surgeon", category: "Surgeons" },
-    { id: "pos-ortho", name: "On-call Ortho Surgeon", category: "Surgeons" },
-    { id: "pos-anes", name: "On-call Anesthesiologist", category: "Anesthesia" },
+    { id: "pos-tech", name: "OR Tech — On call", category: "OR Staff" },
+    { id: "pos-circ", name: "Circulating Nurse — On call", category: "OR Staff" },
+    { id: "pos-charge", name: "Charge Nurse — On call", category: "OR Staff" },
+    { id: "pos-gensurg", name: "General Surgeon — On call", category: "Surgeons" },
+    { id: "pos-ortho", name: "Ortho Surgeon — On call", category: "Surgeons" },
+    { id: "pos-anes", name: "Anesthesiologist — On call", category: "Anesthesia" },
   ];
 
   const onCallPeople: OnCallPerson[] = [
