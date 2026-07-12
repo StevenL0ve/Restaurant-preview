@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { windowState, presetWindow, toLocalInputValue, fromLocalInputValue } from "./oncall";
+import { windowState, presetWindow, toLocalInputValue, fromLocalInputValue, formatPhone } from "./oncall";
 
 const NOW = Date.parse("2026-07-11T12:00:00.000Z");
 
@@ -37,6 +37,19 @@ describe("presetWindow", () => {
     const end = new Date(w.end!);
     expect(end.getHours()).toBe(7);
     expect(end.getTime()).toBeGreaterThan(NOW);
+  });
+});
+
+describe("formatPhone", () => {
+  it("formats a +1 11-digit number", () => {
+    expect(formatPhone("+15125550170")).toBe("+1 512-555-0170");
+  });
+  it("formats a bare 10-digit number", () => {
+    expect(formatPhone("5125550170")).toBe("512-555-0170");
+  });
+  it("passes through anything unusual, trimmed", () => {
+    expect(formatPhone("  x-99  ")).toBe("x-99");
+    expect(formatPhone(undefined)).toBe("");
   });
 });
 

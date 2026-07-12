@@ -1341,6 +1341,13 @@ body {
 .oncall-who { flex: 1; min-width: 140px; }
 .oncall-name { font-weight: 700; font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
 .oncall-role { font-weight: 500; font-size: 12px; color: var(--muted); }
+.oncall-phone {
+  display: inline-block; font-size: 17px; font-weight: 700; letter-spacing: 0.01em;
+  color: var(--brand); text-decoration: none; margin: 2px 0; user-select: all;
+  font-variant-numeric: tabular-nums;
+}
+.oncall-phone:hover { text-decoration: underline; }
+.oncall-pool-phone { user-select: all; font-variant-numeric: tabular-nums; }
 .oncall-note { color: var(--muted); font-style: italic; }
 .oncall-call { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .oncall-none { margin-top: 12px; display: flex; flex-direction: column; gap: 3px; }

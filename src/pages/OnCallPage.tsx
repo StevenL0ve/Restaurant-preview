@@ -12,7 +12,7 @@ import {
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { tapLight } from "../lib/haptics";
-import { describeWindow, presetWindow, PRESETS, toLocalInputValue, fromLocalInputValue, type PresetKind } from "../lib/oncall";
+import { describeWindow, formatPhone, presetWindow, PRESETS, toLocalInputValue, fromLocalInputValue, type PresetKind } from "../lib/oncall";
 import type { OnCallPerson, OnCallPosition } from "../types";
 
 // The on-call board: who to call, per role, right now. Every position shows the
@@ -81,6 +81,9 @@ function PositionCard({ position }: { position: OnCallPosition }) {
           <Avatar surgeon={now.person} size={44} />
           <div className="oncall-who">
             <div className="oncall-name">{now.person.name} {now.person.role && <span className="oncall-role">{now.person.role}</span>}</div>
+            {now.person.phone
+              ? <a className="oncall-phone" href={telHref(now.person.phone)}>{formatPhone(now.person.phone)}</a>
+              : <span className="muted small">No number on file</span>}
             <div className="muted small">{describeWindow(now.shift, Date.now())}</div>
             {now.shift.note && <div className="oncall-note small">“{now.shift.note}”</div>}
           </div>
@@ -130,7 +133,9 @@ function PositionCard({ position }: { position: OnCallPosition }) {
                     <Avatar surgeon={p} size={30} />
                     <div className="oncall-pool-meta">
                       <span className="oncall-pool-name">{p.name}{isNow && <span className="oncall-oncall-tag">on now</span>}</span>
-                      {p.role && <span className="muted small">{p.role}</span>}
+                      <span className="muted small">
+                        {p.role}{p.role && p.phone ? " · " : ""}{p.phone && <span className="oncall-pool-phone">{formatPhone(p.phone)}</span>}
+                      </span>
                     </div>
                     <CallButtons person={p} />
                     {!isNow && (
