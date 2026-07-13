@@ -45,23 +45,22 @@ Signing uses **Xcode cloud signing**: Apple manages the distribution
 certificate, and your App Store Connect API key authorizes the runner. No
 certificates to export, no `match` repo.
 
-Set these in the repo: **Settings → Secrets and variables → Actions → New
-repository secret** (works fine from a phone browser):
+> **This repo already has the secrets configured** (the TestFlight workflow has
+> shipped from it before). Skip straight to running the workflow.
+
+If setting up a fresh repo, add these under **Settings → Secrets and
+variables → Actions** (works fine from a phone browser):
 
 | Secret | Value |
 | --- | --- |
-| `APP_STORE_CONNECT_API_KEY_ID` | the Key ID from the step above |
-| `APP_STORE_CONNECT_API_ISSUER_ID` | the Issuer ID |
-| `APP_STORE_CONNECT_API_KEY_P8` | open the downloaded `AuthKey_XXXX.p8` in any text viewer and **paste its contents as-is** (base64 also accepted) |
-| `APPLE_TEAM_ID` | your 10-character Team ID — shown in App Store Connect under your name/membership, or developer.apple.com → Membership |
+| `ASC_KEY_ID` | the Key ID from the step above |
+| `ASC_ISSUER_ID` | the Issuer ID |
+| `ASC_KEY_CONTENT` | open the downloaded `AuthKey_XXXX.p8` in any text viewer and **paste its contents as-is** (base64 also accepted) |
+| `APPLE_TEAM_ID` | your 10-character Team ID — App Store Connect membership details, or developer.apple.com → Membership |
 
-Now go to the repo's **Actions** tab → **iOS · TestFlight** → **Run workflow**
-(or ask Claude to trigger it). It builds on a macOS runner and uploads to
-TestFlight. Subsequent releases are just that one click.
-
-> Advanced: if you already use `fastlane match`, set `MATCH_GIT_URL`,
-> `MATCH_PASSWORD`, and `MATCH_GIT_BASIC_AUTHORIZATION` instead and the lane
-> will use your match certs rather than cloud signing.
+Now run the **TestFlight** workflow from the repo's **Actions** tab on the
+branch you want to ship (or ask Claude to trigger it). It builds on a macOS
+runner and uploads. Subsequent releases are just that one click.
 
 ## Path B — Your Mac (one command)
 
