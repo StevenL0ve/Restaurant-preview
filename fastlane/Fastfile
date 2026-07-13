@@ -49,7 +49,9 @@ platform :ios do
     sync
     key = api_key
 
-    # On CI, install distribution certs + profiles from a match repo if set.
+    # Optional: install distribution certs + profiles from a match repo. Not
+    # required — without it we use Xcode *cloud signing* below, where Apple
+    # manages the distribution certificate and the API key authorizes it.
     if ENV["MATCH_GIT_URL"]
       match(type: "appstore", readonly: true, api_key: key)
     end
@@ -59,12 +61,25 @@ platform :ios do
       build_number: latest_testflight_build_number(api_key: key, initial_build_number: 0) + 1,
     )
 
-    # Make signing non-interactive: set the team (so Xcode auto-signing doesn't
-    # prompt) and let it create/refresh the provisioning profile via the API key.
+    # Make signing fully non-interactive on an ephemeral runner: set the team,
+    # and hand xcodebuild the App Store Connect API key so automatic signing can
+    # register/refresh the provisioning profile and sign with Apple's
+    # cloud-managed distribution certificate — no local certs, no match repo,
+    # no 2FA prompt. (On a Mac with Xcode signed in, this also just works.)
     team = ENV["APPLE_TEAM_ID"]
     xcargs = []
     xcargs << "DEVELOPMENT_TEAM=#{team}" if team && !team.empty?
-    xcargs << "-allowProvisioningUpdates" unless ENV["MATCH_GIT_URL"]
+    auth = []
+    unless ENV["MATCH_GIT_URL"]
+      xcargs << "CODE_SIGN_STYLE=Automatic"
+      auth << "-allowProvisioningUpdates"
+      if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+        auth << "-authenticationKeyPath #{File.expand_path(ENV["APP_STORE_CONNECT_API_KEY_PATH"])}"
+        auth << "-authenticationKeyID #{ENV["APP_STORE_CONNECT_API_KEY_ID"]}"
+        auth << "-authenticationKeyIssuerID #{ENV["APP_STORE_CONNECT_API_ISSUER_ID"]}"
+      end
+      xcargs.concat(auth)
+    end
 
     build_app(
       workspace: WORKSPACE,
@@ -73,6 +88,9 @@ platform :ios do
       output_directory: "build",
       clean: true,
       xcargs: xcargs.empty? ? nil : xcargs.join(" "),
+      # The export/re-sign step needs the same authorization as the archive.
+      export_xcargs: auth.empty? ? nil : auth.join(" "),
+      export_team_id: team,
     )
 
     upload_to_testflight(

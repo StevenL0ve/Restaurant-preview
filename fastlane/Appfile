@@ -1,6 +1,10 @@
 # Fastlane app configuration for ORSync.
-# Fill in apple_id and the team IDs from your Apple Developer account before use.
+#
+# Nothing to edit here: everything sensitive comes from the environment.
+# All lanes authenticate with an App Store Connect API key, so an Apple ID
+# email isn't needed at all. Set APPLE_TEAM_ID (and optionally APPLE_ID /
+# ITC_TEAM_ID) as env vars or CI secrets.
 app_identifier("com.stevennelson.orsync")
-apple_id("YOUR_APPLE_ID_EMAIL")      # the email you log into App Store Connect with
-itc_team_id("YOUR_APP_STORE_CONNECT_TEAM_ID")
-team_id("YOUR_DEVELOPER_TEAM_ID")    # 10-char Apple Developer Team ID
+apple_id(ENV["APPLE_ID"]) if ENV["APPLE_ID"]
+team_id(ENV["APPLE_TEAM_ID"]) if ENV["APPLE_TEAM_ID"]
+itc_team_id(ENV["ITC_TEAM_ID"]) if ENV["ITC_TEAM_ID"]

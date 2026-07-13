@@ -1,16 +1,20 @@
 name: iOS · TestFlight
 
-# Builds the iOS app on a macOS runner and uploads it to TestFlight.
-# Trigger it manually from the Actions tab once the repo secrets below are set.
+# Builds the iOS app on a macOS runner, signs it with Apple's cloud-managed
+# distribution certificate, and uploads it to TestFlight.
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   APP_STORE_CONNECT_API_KEY_ID     – the Key ID of your App Store Connect API key
 #   APP_STORE_CONNECT_API_ISSUER_ID  – the Issuer ID (Users and Access → Integrations)
-#   APP_STORE_CONNECT_API_KEY_B64    – the .p8 key file, base64-encoded
-#   MATCH_GIT_URL                    – git URL of a private repo holding signing certs
-#   MATCH_PASSWORD                   – the passphrase that encrypts that match repo
-#   MATCH_GIT_BASIC_AUTHORIZATION    – base64 "user:token" to clone the match repo
-# See docs/TESTFLIGHT.md for how to create each of these (it's ~15 minutes, once).
+#   APP_STORE_CONNECT_API_KEY_P8     – the .p8 key: paste the file's text as-is
+#                                      (base64 also accepted)
+#   APPLE_TEAM_ID                    – your 10-character Apple Developer Team ID
+#
+# Optional (only if you prefer fastlane match over cloud signing):
+#   MATCH_GIT_URL, MATCH_PASSWORD, MATCH_GIT_BASIC_AUTHORIZATION
+#
+# See docs/TESTFLIGHT.md for where to find each value (~10 minutes, once).
+# Trigger manually from the Actions tab (or ask Claude to trigger it).
 
 on:
   workflow_dispatch:
@@ -34,16 +38,33 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane --no-document
 
-      - name: Decode App Store Connect API key
+      - name: Write App Store Connect API key
         env:
+          KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
           KEY_B64: ${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}
-        run: echo "$KEY_B64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
+        run: |
+          set -euo pipefail
+          KEY_FILE="$RUNNER_TEMP/asc_key.p8"
+          if [ -n "${KEY_P8:-}" ]; then
+            if printf '%s' "$KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then
+              printf '%s\n' "$KEY_P8" > "$KEY_FILE"        # pasted as-is
+            else
+              printf '%s' "$KEY_P8" | base64 --decode > "$KEY_FILE"  # pasted base64
+            fi
+          elif [ -n "${KEY_B64:-}" ]; then
+            printf '%s' "$KEY_B64" | base64 --decode > "$KEY_FILE"   # legacy secret name
+          else
+            echo "::error::Set the APP_STORE_CONNECT_API_KEY_P8 repository secret (paste the .p8 file's contents)."
+            exit 1
+          fi
+          grep -q "BEGIN PRIVATE KEY" "$KEY_FILE" || { echo "::error::That doesn't look like a .p8 private key."; exit 1; }
 
       - name: Build & upload to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}

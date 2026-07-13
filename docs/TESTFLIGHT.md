@@ -33,39 +33,35 @@ App Store Connect identifier.
 ## Create an App Store Connect API key (both paths, ~2 min)
 
 App Store Connect → **Users and Access → Integrations → App Store Connect API →
-+**. Role: **App Manager**. Download the `.p8` (you only get one chance). Note
-the **Key ID** and the **Issuer ID** shown above the table.
++** (Team Keys). Role: **Admin** (cloud signing needs it to manage certificates
+and profiles). Download the `.p8` — you only get one chance. Note the **Key ID**
+next to the new key and the **Issuer ID** shown above the table.
 
 ---
 
-## Path A — Cloud build (no Mac)
+## Path A — Cloud build (no Mac) — 4 secrets, that's it
+
+Signing uses **Xcode cloud signing**: Apple manages the distribution
+certificate, and your App Store Connect API key authorizes the runner. No
+certificates to export, no `match` repo.
 
 Set these in the repo: **Settings → Secrets and variables → Actions → New
-repository secret**.
+repository secret** (works fine from a phone browser):
 
 | Secret | Value |
 | --- | --- |
 | `APP_STORE_CONNECT_API_KEY_ID` | the Key ID from the step above |
 | `APP_STORE_CONNECT_API_ISSUER_ID` | the Issuer ID |
-| `APP_STORE_CONNECT_API_KEY_B64` | the `.p8` file, base64-encoded — run `base64 -i AuthKey_XXXX.p8 \| pbcopy` |
-| `MATCH_GIT_URL` | URL of a **private** git repo to hold signing certs (make an empty one) |
-| `MATCH_PASSWORD` | any passphrase you choose (encrypts the certs) |
-| `MATCH_GIT_BASIC_AUTHORIZATION` | `base64 "<github-username>:<personal-access-token>"` so the runner can clone the certs repo |
+| `APP_STORE_CONNECT_API_KEY_P8` | open the downloaded `AuthKey_XXXX.p8` in any text viewer and **paste its contents as-is** (base64 also accepted) |
+| `APPLE_TEAM_ID` | your 10-character Team ID — shown in App Store Connect under your name/membership, or developer.apple.com → Membership |
 
-Then, once, generate the signing certificates into that repo (needs a Mac **or**
-I can guide you through `fastlane match` in a Codespace):
+Now go to the repo's **Actions** tab → **iOS · TestFlight** → **Run workflow**
+(or ask Claude to trigger it). It builds on a macOS runner and uploads to
+TestFlight. Subsequent releases are just that one click.
 
-```bash
-fastlane match appstore   # creates + stores the distribution cert & profile
-```
-
-Now go to the repo's **Actions** tab → **iOS · TestFlight** → **Run workflow**.
-It builds on a macOS runner and uploads to TestFlight. Subsequent releases are
-just that one click.
-
-> No certs repo yet? Apple requires a distribution certificate that headless
-> runners can't mint on their own, so the `match` repo is the reliable route.
-> Ping me and I'll walk you through the one-time `match` bootstrap.
+> Advanced: if you already use `fastlane match`, set `MATCH_GIT_URL`,
+> `MATCH_PASSWORD`, and `MATCH_GIT_BASIC_AUTHORIZATION` instead and the lane
+> will use your match certs rather than cloud signing.
 
 ## Path B — Your Mac (one command)
 
