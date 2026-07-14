@@ -122,6 +122,23 @@ export function Settings() {
       </div>
 
       <div className="card settings-card">
+        <h2>ORSync on your computer</h2>
+        <p>
+          ORSync is also a website — open it in any browser to <strong>create, edit, and print</strong>
+          {" "}cards with a real keyboard:
+        </p>
+        <p>
+          <a className="link" href="https://stevenl0ve.github.io/Restaurant-preview/" target="_blank" rel="noreferrer">
+            stevenl0ve.github.io/Restaurant-preview
+          </a>
+        </p>
+        <p className="muted small">
+          Your library lives on each device. To move it: <strong>Export library</strong> here, send the
+          file to yourself, and import it on the computer (and back again after big edits).
+        </p>
+      </div>
+
+      <div className="card settings-card">
         <h2>Bulk import from a spreadsheet</h2>
         <p>
           Already have preference cards in Genesis, SIS / S3, or Excel? Export them to CSV and import

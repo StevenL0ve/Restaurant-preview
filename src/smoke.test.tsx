@@ -79,4 +79,14 @@ describe("app smoke test", () => {
     const setup = renderAt(`/cards/${id}/setup`);
     expect(setup).toContain("Pull-list setup");
   });
+
+  it("renders a card's print view with items and locations in the table", () => {
+    asGuest();
+    const id = buildSeed().cards[0].id;
+    const html = renderAt(`/cards/${id}/print`);
+    expect(html).toContain("print-sheet");
+    expect(html).toContain("Lap chole tray");
+    expect(html).toContain("Location"); // the location column exists
+    expect(html).toContain("Print"); // toolbar button (hidden on paper)
+  });
 });

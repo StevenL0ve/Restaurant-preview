@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store";
 import { Avatar } from "../components/Avatar";
-import { shareCard } from "../lib/share";
+import { mailtoHref, shareCard, smsHref } from "../lib/share";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import { SECTIONS, type SectionKey } from "../types";
@@ -136,6 +136,9 @@ export function CardDetail() {
       })}
 
       <div className="detail-actions">
+        <button className="btn" onClick={() => navigate(`/cards/${card.id}/print`)}>🖨 Print / PDF</button>
+        <a className="btn" href={mailtoHref(card, sg, (locId) => locationLabelOf(state, locId))}>✉️ Email</a>
+        <a className="btn" href={smsHref(card, sg, (locId) => locationLabelOf(state, locId))}>💬 Text</a>
         <button className="btn" onClick={onShare}>Share text</button>
         <button className="btn" onClick={() => exportCardFile(card.id)}>Export file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>

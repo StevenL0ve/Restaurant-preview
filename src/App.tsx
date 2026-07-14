@@ -10,6 +10,7 @@ import { TodayPage } from "./pages/TodayPage";
 import { CardsPage } from "./pages/CardsPage";
 import { CardDetail } from "./pages/CardDetail";
 import { CardEdit } from "./pages/CardEdit";
+import { CardPrint } from "./pages/CardPrint";
 import { CardScan } from "./pages/CardScan";
 import { SetupMode } from "./pages/SetupMode";
 import { SurgeonsPage } from "./pages/SurgeonsPage";
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/cards/scan" element={<CardScan />} />
             <Route path="/cards/:id" element={<CardDetail />} />
             <Route path="/cards/:id/edit" element={<CardEdit />} />
+            <Route path="/cards/:id/print" element={<CardPrint />} />
             <Route path="/cards/:id/setup" element={<SetupMode />} />
             <Route path="/surgeons" element={<SurgeonsPage />} />
             <Route path="/surgeons/:id" element={<SurgeonDetail />} />

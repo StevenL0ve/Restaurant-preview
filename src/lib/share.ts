@@ -43,6 +43,29 @@ export function cardToText(
   return lines.join("\n");
 }
 
+/** mailto: link that opens the user's mail app with the card as the body —
+ *  works everywhere (phone or computer) with no server. */
+export function mailtoHref(
+  card: PrefCard,
+  surgeon?: Surgeon,
+  locationName?: (id: string) => string | undefined,
+): string {
+  const subject = `Preference card: ${card.procedure}${surgeon ? ` — ${surgeon.name}` : ""}`;
+  const body = cardToText(card, surgeon, locationName);
+  return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/** sms: link with the card text prefilled — opens Messages on a phone. */
+export function smsHref(
+  card: PrefCard,
+  surgeon?: Surgeon,
+  locationName?: (id: string) => string | undefined,
+): string {
+  const body = cardToText(card, surgeon, locationName);
+  // `sms:?&body=` is the form iOS and Android both accept for no-recipient texts.
+  return `sms:?&body=${encodeURIComponent(body)}`;
+}
+
 /** Copy text to the clipboard, falling back to a hidden textarea + execCommand
  *  for the older WKWebView path. Resolves true on success. */
 export async function copyText(text: string): Promise<boolean> {

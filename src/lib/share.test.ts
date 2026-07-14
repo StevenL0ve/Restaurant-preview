@@ -39,3 +39,25 @@ describe("cardToText", () => {
     expect(t).not.toContain("📍");
   });
 });
+
+describe("email / text links", () => {
+  const state = buildSeed();
+  const card = state.cards.find((c) => c.procedure.startsWith("Laparoscopic"))!;
+  const surgeon = state.surgeons.find((s) => s.id === card.surgeonId);
+
+  it("mailtoHref carries subject and the card text", async () => {
+    const { mailtoHref } = await import("./share");
+    const href = mailtoHref(card, surgeon);
+    expect(href.startsWith("mailto:?subject=")).toBe(true);
+    const decoded = decodeURIComponent(href);
+    expect(decoded).toContain("Preference card: Laparoscopic Cholecystectomy — Dr. Alvarez");
+    expect(decoded).toContain("LAPAROSCOPIC CHOLECYSTECTOMY");
+  });
+
+  it("smsHref prefixes the iOS/Android no-recipient form", async () => {
+    const { smsHref } = await import("./share");
+    const href = smsHref(card, surgeon);
+    expect(href.startsWith("sms:?&body=")).toBe(true);
+    expect(decodeURIComponent(href)).toContain("Dr. Alvarez");
+  });
+});
