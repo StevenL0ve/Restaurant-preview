@@ -43,6 +43,9 @@ describe("app smoke test", () => {
     expect(html).toContain("Ready for your next case");
     // A seeded favorite card should appear on the dashboard.
     expect(html).toContain("Laparoscopic Cholecystectomy");
+    // The on-call strip shows who's reachable, with the unfilled position first.
+    expect(html).toContain("On call now");
+    expect(html).toContain("nobody set");
   });
 
   it.each([

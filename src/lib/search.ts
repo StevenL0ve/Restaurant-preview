@@ -1,13 +1,15 @@
-import type { AppState, PrefCard, SectionKey, Surgeon } from "../types";
+import type { AppState, OnCallPerson, PrefCard, SectionKey, Surgeon } from "../types";
 import { SECTIONS, locationLabel } from "../types";
 
-// One global search across the whole library: surgeons, procedures, and every
-// item on every card. Techs search by all of these — "Dr. Chen", "total knee",
-// "tourniquet", "Vicryl" — so a single ranked index covers them all.
+// One global search across the whole library: surgeons, procedures, every item
+// on every card, and the on-call directory. Techs search by all of these —
+// "Dr. Chen", "total knee", "tourniquet", "Vicryl", "Marcus" — so a single
+// ranked index covers them all.
 
 export type SearchHit =
   | { kind: "surgeon"; id: string; title: string; subtitle: string; snippet?: string; surgeon: Surgeon }
-  | { kind: "card"; id: string; title: string; subtitle: string; snippet?: string; card: PrefCard };
+  | { kind: "card"; id: string; title: string; subtitle: string; snippet?: string; card: PrefCard }
+  | { kind: "oncall"; id: string; title: string; subtitle: string; snippet?: string; person: OnCallPerson };
 
 export function search(state: AppState, raw: string): SearchHit[] {
   const q = raw.trim().toLowerCase();
@@ -36,6 +38,36 @@ export function search(state: AppState, raw: string): SearchHit[] {
           title: s.name,
           subtitle: [s.specialty, s.facility].filter(Boolean).join(" · "),
           surgeon: s,
+        },
+      });
+    }
+  }
+
+  // On-call people: find by name, role, or number — someone on call right now
+  // ranks above everything (that's usually why you're searching a name).
+  const nowISO = new Date().toISOString();
+  const onNow = new Map<string, string>(); // personId -> position name
+  for (const pos of state.onCallPositions) {
+    const covering = state.onCallShifts
+      .filter((sh) => sh.positionId === pos.id && sh.start <= nowISO && (!sh.end || sh.end >= nowISO))
+      .sort((a, b) => b.start.localeCompare(a.start))[0];
+    if (covering && !onNow.has(covering.personId)) onNow.set(covering.personId, pos.name);
+  }
+  for (const p of state.onCallPeople) {
+    const sc = Math.max(score(p.name), score(p.role ?? ""), score(p.phone ?? ""));
+    if (sc > 0) {
+      const nowPos = onNow.get(p.id);
+      // On-now boost ties with (never beats) a same-named surgeon profile,
+      // which stays the richer destination; stable sort keeps surgeons first.
+      hits.push({
+        score: sc + (nowPos ? 1 : 0.25),
+        hit: {
+          kind: "oncall",
+          id: p.id,
+          title: p.name,
+          subtitle: [p.role, p.phone].filter(Boolean).join(" · "),
+          snippet: nowPos ? `📟 On call now — ${nowPos}` : undefined,
+          person: p,
         },
       });
     }

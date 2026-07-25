@@ -40,4 +40,19 @@ describe("global search", () => {
     expect(hits.length).toBeGreaterThan(1);
     expect(hits.every((h) => h.kind === "card")).toBe(true);
   });
+
+  it("finds an on-call person by name and flags who's on right now", () => {
+    const hits = search(state, "Marcus");
+    const oc = hits.find((h) => h.kind === "oncall");
+    expect(oc).toBeTruthy();
+    if (oc && oc.kind === "oncall") {
+      expect(oc.title).toBe("Marcus Reed");
+      expect(oc.snippet).toContain("On call now"); // seeded as current OR tech
+    }
+  });
+
+  it("finds on-call people by role", () => {
+    const hits = search(state, "CRNA");
+    expect(hits.some((h) => h.kind === "oncall" && h.title === "Kelly Osei")).toBe(true);
+  });
 });

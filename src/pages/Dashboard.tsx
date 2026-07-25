@@ -10,7 +10,10 @@ import {
   isLoanerSoon,
   casesOn,
   localDay,
+  currentOnCall,
+  telHref,
 } from "../state/store";
+import { formatPhone } from "../lib/oncall";
 import { Avatar } from "../components/Avatar";
 import { Icon, type IconName } from "../components/Icon";
 import { relativeTime, formatDate } from "../lib/format";
@@ -62,6 +65,8 @@ export function Dashboard() {
       </div>
 
       <TodayLineup />
+
+      <OnCallNow />
 
       {inProgress.length > 0 && (
         <div className="card form-card">
@@ -147,6 +152,53 @@ export function Dashboard() {
           </ul>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Who's reachable right now — the top of the on-call board, one tap to dial.
+// Positions with nobody assigned surface first so gaps get noticed early.
+function OnCallNow() {
+  const { state } = useStore();
+  if (state.onCallPositions.length === 0) return null;
+  const rows = state.onCallPositions
+    .map((pos) => ({ pos, now: currentOnCall(state, pos.id) }))
+    .sort((a, b) => Number(!!a.now) - Number(!!b.now));
+  const gaps = rows.filter((r) => !r.now).length;
+  return (
+    <div className="card form-card">
+      <div className="card-head">
+        <h2>📟 On call now</h2>
+        <Link className="link" to="/on-call">Full board</Link>
+      </div>
+      {rows.slice(0, 4).map(({ pos, now }) => (
+        <div key={pos.id} className="resume-row oncall-dash-row">
+          <span className="resume-title">{pos.name}</span>
+          {now ? (
+            <>
+              <span className="oncall-dash-who">
+                {now.person.name}
+                {now.person.phone && <span className="muted small"> · {formatPhone(now.person.phone)}</span>}
+              </span>
+              {telHref(now.person.phone) ? (
+                <a className="btn btn-sm" href={telHref(now.person.phone)}>📞</a>
+              ) : (
+                <Link className="resume-go" to="/on-call">→</Link>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="small oncall-dash-gap">⚠️ nobody set</span>
+              <Link className="btn btn-sm" to="/on-call">Fix</Link>
+            </>
+          )}
+        </div>
+      ))}
+      {rows.length > 4 && (
+        <Link className="link small" to="/on-call">
+          {rows.length - 4} more position{rows.length - 4 === 1 ? "" : "s"}{gaps > 1 ? ` · ${gaps} unfilled` : ""} →
+        </Link>
+      )}
     </div>
   );
 }

@@ -317,8 +317,23 @@ function ItemEditor({
         <ul className="edit-item-list">
           {items.map((it) => (
             <li key={it.id}>
-              <span className="item-name">{it.name}</span>
-              {it.detail && <span className="item-detail">{it.detail}</span>}
+              {/* Tap any item to fix it in place — essential after a scan
+                  import, where OCR gets a word or two wrong. */}
+              <input
+                className="inline-edit item-name"
+                value={it.name}
+                aria-label="Item name"
+                onChange={(e) => onChange(items.map((x) => (x.id === it.id ? { ...x, name: e.target.value } : x)))}
+              />
+              <input
+                className="inline-edit item-detail"
+                value={it.detail ?? ""}
+                placeholder="detail"
+                aria-label="Item detail"
+                onChange={(e) =>
+                  onChange(items.map((x) => (x.id === it.id ? { ...x, detail: e.target.value || undefined } : x)))
+                }
+              />
               <LocationSelect value={it.locationId ?? ""} onPick={(v) => setItemLoc(it.id, v)} target={it.id} />
               <button className="info-del" aria-label={`Remove ${it.name}`} onClick={() => onChange(items.filter((x) => x.id !== it.id))}>✕</button>
             </li>

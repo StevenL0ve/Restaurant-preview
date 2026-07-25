@@ -38,9 +38,9 @@ export function SearchPage() {
             <button
               key={h.kind + h.id}
               className="card search-list-item"
-              onClick={() => navigate(h.kind === "surgeon" ? `/surgeons/${h.id}` : `/cards/${h.id}`)}
+              onClick={() => navigate(h.kind === "surgeon" ? `/surgeons/${h.id}` : h.kind === "oncall" ? "/on-call" : `/cards/${h.id}`)}
             >
-              <span className="hit-icon big" aria-hidden>{h.kind === "surgeon" ? "🧑‍⚕️" : "🗂️"}</span>
+              <span className="hit-icon big" aria-hidden>{h.kind === "surgeon" ? "🧑‍⚕️" : h.kind === "oncall" ? "📟" : "🗂️"}</span>
               <span className="hit-text">
                 <span className="hit-title">{h.title} <span className="hit-type">{h.kind}</span></span>
                 <span className="hit-snippet">{h.snippet ?? h.subtitle}</span>

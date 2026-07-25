@@ -47,9 +47,9 @@ export function TopBar() {
                 <button
                   key={h.kind + h.id}
                   className="search-hit"
-                  onMouseDown={() => go(h.kind === "surgeon" ? `/surgeons/${h.id}` : `/cards/${h.id}`)}
+                  onMouseDown={() => go(h.kind === "surgeon" ? `/surgeons/${h.id}` : h.kind === "oncall" ? "/on-call" : `/cards/${h.id}`)}
                 >
-                  <span className="hit-icon"><Icon name={h.kind === "surgeon" ? "surgeon" : "cards"} size={18} /></span>
+                  <span className="hit-icon"><Icon name={h.kind === "surgeon" ? "surgeon" : h.kind === "oncall" ? "bell" : "cards"} size={18} /></span>
                   <span className="hit-text">
                     <span className="hit-title">{h.title}</span>
                     <span className="hit-snippet">{h.snippet ?? h.subtitle}</span>
