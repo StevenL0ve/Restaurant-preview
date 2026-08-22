@@ -20,5 +20,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_B64: ${{ secrets.ASC_API_KEY_B64 }}
         run: |
-          echo "$ASC_API_KEY_B64" | base64 -d > AuthKey.p8
-          ASC_KEY_PATH=AuthKey.p8 .venv/bin/python scripts/testflight_public_link.py
+          echo "$ASC_API_KEY_B64" | base64 -di > AuthKey.p8 || echo "$ASC_API_KEY_B64" | base64 -d > AuthKey.p8
+          # Canonicalize through OpenSSL (the parser Apple's own tools use);
+          # emit safe framing diagnostics if even OpenSSL rejects it.
+          if openssl pkey -in AuthKey.p8 -out AuthKey-clean.p8 2>openssl.err; then
+            echo "key canonicalized via openssl"
+          else
+            echo "openssl could not parse the decoded key:"; cat openssl.err
+            echo "decoded size: $(wc -c < AuthKey.p8) bytes"
+            head -c 28 AuthKey.p8 | cat -v; echo
+            tail -c 30 AuthKey.p8 | cat -v; echo
+            cp AuthKey.p8 AuthKey-clean.p8
+          fi
+          ASC_KEY_PATH=AuthKey-clean.p8 .venv/bin/python scripts/testflight_public_link.py
