@@ -1,0 +1,50 @@
+# Deploys a live web preview of the app to GitHub Pages so it can be opened in
+# any phone browser — no TestFlight, no secrets. Uses HashRouter, so no server
+# rewrites are needed; VITE_BASE makes assets resolve on the project subpath.
+name: Deploy preview to GitHub Pages
+
+# Manual trigger only — Pages must first be enabled (Settings → Pages →
+# Source: "GitHub Actions") and this branch allowed in the github-pages
+# environment. Then run it from the Actions tab. Kept off `push` so it doesn't
+# red-flag the PR before Pages is configured.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Build preview (project subpath base)
+        run: npm run build
+        env:
+          VITE_BASE: /Restaurant-preview/
+      - name: SPA 404 fallback
+        run: cp dist/index.html dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
