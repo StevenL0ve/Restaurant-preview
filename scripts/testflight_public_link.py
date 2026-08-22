@@ -6,14 +6,24 @@ the newest processed build, answers export compliance, fills in the Beta App
 Review info, and submits the build for beta review. Prints the public link.
 Safe to re-run: every step is get-or-create.
 """
-import json, os, sys, time
+import json, os, sys, textwrap, time
 
 import jwt  # pyjwt
 import requests
 
+def normalized_pem(path: str) -> str:
+    """Rebuild strict PEM framing — tolerates \r, literal \n, or single-line keys."""
+    raw = open(path).read().replace("\\n", "\n")
+    body = "".join(raw.split())
+    for marker in ("-----BEGINPRIVATEKEY-----", "-----ENDPRIVATEKEY-----"):
+        body = body.replace(marker, "")
+    return ("-----BEGIN PRIVATE KEY-----\n"
+            + "\n".join(textwrap.wrap(body, 64))
+            + "\n-----END PRIVATE KEY-----\n")
+
 KEY_ID = os.environ["ASC_KEY_ID"]
 ISSUER_ID = os.environ["ASC_ISSUER_ID"]
-PRIVATE_KEY = open(os.environ["ASC_KEY_PATH"]).read()
+PRIVATE_KEY = normalized_pem(os.environ["ASC_KEY_PATH"])
 BUNDLE_ID = "com.commongroundprojects.cgp"
 GROUP_NAME = "CGP Family & Friends"
 FEEDBACK_EMAIL = "bkborngaraised@gmail.com"
