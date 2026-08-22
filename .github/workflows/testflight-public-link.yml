@@ -4,6 +4,11 @@
 name: testflight-public-link
 on:
   workflow_dispatch:
+    inputs:
+      contact_phone:
+        description: "Beta-review contact phone (E.164, e.g. +12285551234)"
+        required: false
+        default: ""
 
 jobs:
   public-link:
@@ -19,6 +24,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          CONTACT_PHONE: ${{ inputs.contact_phone }}
         run: |
           echo "$ASC_KEY_CONTENT" | base64 --decode > AuthKey.p8
           # Canonicalize through OpenSSL (the parser Apple's own tools use);

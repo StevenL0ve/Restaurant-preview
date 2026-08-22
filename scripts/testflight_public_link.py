@@ -98,13 +98,16 @@ else:
                    "attributes": {"locale": "en-US", "feedbackEmail": FEEDBACK_EMAIL,
                                   "description": "One app for The Common Ground Projects: order from the cafe & kitchen, earn punch-card rewards, book yoga, Pilates, spa and massage, and play the community puzzle."},
                    "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})
+# Apple requires a real reachable phone for the beta-review contact; pass it
+# via the workflow's contact_phone input (E.164, e.g. +12285551234).
 review_contacts = call("GET", f"/v1/apps/{app_id}/betaAppReviewDetail").json().get("data")
-if review_contacts:
+contact_phone = os.environ.get("CONTACT_PHONE", "").strip()
+if review_contacts and contact_phone:
     call("PATCH", f"/v1/betaAppReviewDetails/{review_contacts['id']}",
          {"data": {"type": "betaAppReviewDetails", "id": review_contacts["id"],
                    "attributes": {"contactEmail": FEEDBACK_EMAIL,
                                   "contactFirstName": "Steven", "contactLastName": "Nelson",
-                                  "contactPhone": "+12280000000"}}})
+                                  "contactPhone": contact_phone}}})
 
 # 6) What to test on this build
 bl = call("GET", f"/v1/builds/{build_id}/betaBuildLocalizations").json()["data"]
@@ -129,9 +132,10 @@ call("POST", "/v1/betaAppReviewSubmissions",
                "relationships": {"build": {"data": {"type": "builds", "id": build_id}}}}},
      ok=(200, 201, 409))
 
-# 9) The link
+# 9) The link + external review state
 group = call("GET", f"/v1/betaGroups/{group['id']}").json()["data"]
 print("PUBLIC_LINK=" + str(group["attributes"].get("publicLink")))
-review = call("GET", f"/v1/builds/{build_id}",
-              params={"fields[builds]": "betaReviewState,version"}).json()["data"]
-print("REVIEW_STATE=" + str(review["attributes"].get("betaReviewState")))
+details = call("GET", "/v1/buildBetaDetails",
+               params={"filter[build]": build_id}).json().get("data", [])
+if details:
+    print("REVIEW_STATE=" + str(details[0]["attributes"].get("externalBuildState")))
