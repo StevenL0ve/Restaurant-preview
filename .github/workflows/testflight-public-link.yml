@@ -18,9 +18,9 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_API_KEY_B64: ${{ secrets.ASC_API_KEY_B64 }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
         run: |
-          echo "$ASC_API_KEY_B64" | base64 -di > AuthKey.p8 || echo "$ASC_API_KEY_B64" | base64 -d > AuthKey.p8
+          echo "$ASC_KEY_CONTENT" | base64 --decode > AuthKey.p8
           # Canonicalize through OpenSSL (the parser Apple's own tools use);
           # emit safe framing diagnostics if even OpenSSL rejects it.
           if openssl pkey -in AuthKey.p8 -out AuthKey-clean.p8 2>openssl.err; then
