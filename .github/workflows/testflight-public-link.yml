@@ -11,10 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install API client deps
-        run: pip install --quiet pyjwt cryptography requests
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pyjwt cryptography requests
       - name: Ensure group, build & review; print public link
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_B64: ${{ secrets.ASC_API_KEY_B64 }}
-        run: python3 scripts/testflight_public_link.py
+        run: |
+          echo "$ASC_API_KEY_B64" | base64 -d > AuthKey.p8
+          ASC_KEY_PATH=AuthKey.p8 .venv/bin/python scripts/testflight_public_link.py

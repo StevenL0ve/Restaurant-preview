@@ -6,14 +6,14 @@ the newest processed build, answers export compliance, fills in the Beta App
 Review info, and submits the build for beta review. Prints the public link.
 Safe to re-run: every step is get-or-create.
 """
-import base64, json, os, sys, time
+import json, os, sys, time
 
 import jwt  # pyjwt
 import requests
 
 KEY_ID = os.environ["ASC_KEY_ID"]
 ISSUER_ID = os.environ["ASC_ISSUER_ID"]
-PRIVATE_KEY = base64.b64decode(os.environ["ASC_API_KEY_B64"]).decode()
+PRIVATE_KEY = open(os.environ["ASC_KEY_PATH"]).read()
 BUNDLE_ID = "com.commongroundprojects.cgp"
 GROUP_NAME = "CGP Family & Friends"
 FEEDBACK_EMAIL = "bkborngaraised@gmail.com"
