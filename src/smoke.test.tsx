@@ -55,6 +55,8 @@ describe("app smoke test", () => {
     ["/cards/scan", "Scan or paste a card"],
     ["/surgeons", "Surgeons"],
     ["/loaners", "Loaner trays"],
+    ["/carts", "Case carts"],
+    ["/carts/missing", "Missing — all carts"],
     ["/on-call", "On call"],
     ["/on-call/people", "everyone who can take call"],
     ["/facilities", "Add a facility"],
@@ -81,6 +83,17 @@ describe("app smoke test", () => {
     expect(detail).toContain("Start setup");
     const setup = renderAt(`/cards/${id}/setup`);
     expect(setup).toContain("Pull-list setup");
+  });
+
+  it("renders a seeded case cart with pull attribution and the done cart's missing list", () => {
+    asGuest();
+    const pull = renderAt("/carts/cart-seed-0");
+    expect(pull).toContain("Case cart");
+    expect(pull).toContain("pulled · "); // who pulled each checked item
+    const done = renderAt("/carts/cart-seed-2");
+    expect(done).toContain("Missing (1)");
+    expect(done).toContain("In SPD being prepared");
+    expect(done).toContain("Resolved — now in the cart:");
   });
 
   it("renders a card's print view with items and locations in the table", () => {

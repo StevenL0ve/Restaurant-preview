@@ -1,4 +1,4 @@
-import type { AppState, CardItem, CaseEntry, Facility, Location, LoanerTray, OnCallPerson, OnCallPosition, OnCallShift, PrefCard, Surgeon } from "../types";
+import type { AppState, CardItem, CaseCart, CaseEntry, Facility, Location, LoanerTray, OnCallPerson, OnCallPosition, OnCallShift, PrefCard, Surgeon } from "../types";
 
 // A realistic, fully-populated demo library so the app never opens to an empty
 // screen. Cards are authored with plain location *strings* for readability; the
@@ -476,9 +476,97 @@ export function buildSeed(): AppState {
     { id: "shift-tech-next", positionId: "pos-tech", personId: "oc-tanya", start: at7amTomorrow() },
   ];
 
+  // ---- Case carts demo -----------------------------------------------------
+  // Two lap-chole carts for today (same card pulled twice — different cases):
+  // #1 is mid-pull by two people at once; #2 hasn't started. Plus a total-knee
+  // cart already marked done with a missing list (one item commented, one
+  // resolved after the rep dropped it off).
+  const lapChole = cards[0];
+  const itemsOf = (card: PrefCard): CardItem[] =>
+    ([] as CardItem[]).concat(card.instruments, card.sutures, card.supplies, card.medications, card.equipment);
+  const lapItems = itemsOf(lapChole);
+  const cartPulls = (card: PrefCard, n: number, names: string[]): Record<string, { by: string; at: string }> => {
+    const out: Record<string, { by: string; at: string }> = {};
+    itemsOf(card).slice(0, n).forEach((it, i) => {
+      out[it.id] = { by: names[i % names.length], at: iso(-1 * hour + i * 60000) };
+    });
+    return out;
+  };
+
+  const tkaItems = tka ? itemsOf(tka) : [];
+  const tkaMissTourniquet = tkaItems.find((i) => /tourniquet/i.test(i.name));
+  const tkaMissCement = tkaItems.find((i) => /cement/i.test(i.name));
+  const tkaPulls: Record<string, { by: string; at: string }> = {};
+  if (tka) {
+    for (const it of tkaItems) {
+      if (it === tkaMissTourniquet || it === tkaMissCement) continue;
+      tkaPulls[it.id] = { by: "Tanya B.", at: iso(-3 * hour) };
+    }
+    // The cement arrived later and was resolved into the cart.
+    if (tkaMissCement) tkaPulls[tkaMissCement.id] = { by: "Ops — J. Ruiz", at: iso(-1 * hour) };
+  }
+
+  const carts: CaseCart[] = [
+    {
+      id: "cart-seed-0",
+      cardId: lapChole.id,
+      date: localDay(0),
+      label: "#1 of 2",
+      pulls: cartPulls(lapChole, Math.min(9, lapItems.length - 3), ["Marcus R.", "Priya N."]),
+      missing: [],
+      createdAt: iso(-2 * hour),
+      updatedAt: iso(-1 * hour),
+    },
+    {
+      id: "cart-seed-1",
+      cardId: lapChole.id,
+      date: localDay(0),
+      label: "#2 of 2",
+      pulls: {},
+      missing: [],
+      createdAt: iso(-2 * hour + 1000),
+      updatedAt: iso(-2 * hour + 1000),
+    },
+    ...(tka
+      ? [{
+          id: "cart-seed-2",
+          cardId: tka.id,
+          date: localDay(0),
+          label: "OR 5 — 10:15",
+          pulls: tkaPulls,
+          donePulling: iso(-2 * hour),
+          doneBy: "Tanya B.",
+          missing: [
+            ...(tkaMissTourniquet
+              ? [{
+                  itemId: tkaMissTourniquet.id,
+                  name: tkaMissTourniquet.name,
+                  detail: tkaMissTourniquet.detail,
+                  sectionLabel: "Equipment",
+                  comment: "In SPD being prepared — ETA 08:30",
+                }]
+              : []),
+            ...(tkaMissCement
+              ? [{
+                  itemId: tkaMissCement.id,
+                  name: tkaMissCement.name,
+                  detail: tkaMissCement.detail,
+                  sectionLabel: "Supplies & disposables",
+                  comment: "Rep delivering with trays",
+                  resolvedAt: iso(-1 * hour),
+                  resolvedBy: "Ops — J. Ruiz",
+                }]
+              : []),
+          ],
+          createdAt: iso(-4 * hour),
+          updatedAt: iso(-1 * hour),
+        }]
+      : []),
+  ];
+
   return {
     facilities, locations, surgeons, cards, loaners, cases, setups: {},
-    onCallPositions, onCallPeople, onCallShifts,
+    onCallPositions, onCallPeople, onCallShifts, carts,
   };
 }
 

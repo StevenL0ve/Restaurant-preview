@@ -4,7 +4,7 @@ import { importBundle } from "./portable";
 import { totalItems } from "../state/store";
 
 const NOW = "2026-06-27T00:00:00.000Z";
-const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [] };
+const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [] };
 
 describe("CSV import", () => {
   it("parses quoted fields, escaped quotes, and embedded commas", () => {

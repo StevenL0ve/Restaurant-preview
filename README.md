@@ -79,6 +79,15 @@ hospital admin.
   path works fully offline. Surgeons are matched to your library by name.
 - **Bulk import** — facilities can upload preexisting cards from a CSV/Excel
   export (Genesis, SIS / S3, or a spreadsheet) with a downloadable template.
+- **Case carts** — the pulling workflow for the whole team. Spin up one cart
+  per case (the same card five times for five cataracts), and pull together:
+  every checkmark is stamped **who pulled it and when**, so co-pullers see each
+  other's progress and nobody double-pulls. "I'm done" turns whatever's left
+  into the cart's **missing list** — comment each line ("waiting on rep
+  delivery", "in SPD being prepared", ETA, "alternative pulled…") and resolve
+  it when the item finally lands. Ops gets a **one-screen rollup of every
+  missing item for the day** with live-editable comments and a copyable
+  summary for SPD/materials.
 - **Loaner trays** — request and track vendor loaner sets for a case
   (Casechek-style): vendor, rep, PO, quantity, **case date + delivery deadline**
   with overdue/arriving-soon alerts, a status pipeline (requested → confirmed →

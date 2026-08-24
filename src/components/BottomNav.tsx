@@ -17,7 +17,7 @@ const tabs: Tab[] = [
   { to: "/today", label: "My day", icon: "calendar" },
   { to: "/cards", label: "Cards", icon: "cards" },
   { to: "/on-call", label: "On call", icon: "bell" },
-  { to: "/loaners", label: "Loaners", icon: "truck" },
+  { to: "/carts", label: "Carts", icon: "cart" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 

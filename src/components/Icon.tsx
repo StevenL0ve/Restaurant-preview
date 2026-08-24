@@ -8,7 +8,7 @@ export type IconName =
   | "home" | "cards" | "surgeon" | "truck" | "building" | "search" | "settings"
   | "plus" | "star" | "star-fill" | "back" | "next" | "check" | "close"
   | "share" | "copy" | "edit" | "trash" | "phone" | "chat" | "calendar"
-  | "clock" | "download" | "upload" | "filter" | "pin" | "sun" | "moon" | "bell";
+  | "clock" | "download" | "upload" | "filter" | "pin" | "sun" | "moon" | "bell" | "cart";
 
 const gearTeeth = Array.from({ length: 6 }).map((_, i) => (
   <rect key={i} x="10.4" y="1.6" width="3.2" height="3.6" rx="1.2" fill="currentColor" stroke="none" transform={`rotate(${i * 60} 12 12)`} />
@@ -92,6 +92,12 @@ const PATHS: Record<IconName, ReactNode> = {
   bell: <>
     <path d="M6 16V10.5a6 6 0 0 1 12 0V16l1.6 2.5H4.4z" />
     <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
+  </>,
+  cart: <>
+    <rect x="4" y="5" width="14" height="10" rx="1.5" />
+    <path d="M4 10h14M20 3.5v13" />
+    <circle cx="8" cy="19" r="1.8" />
+    <circle cx="15" cy="19" r="1.8" />
   </>,
 };
 

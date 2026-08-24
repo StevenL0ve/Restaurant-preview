@@ -1502,3 +1502,72 @@ body {
 .oncall-dash-who { font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .oncall-dash-gap { color: #b45309; font-weight: 600; }
 [data-theme="dark"] .oncall-dash-gap { color: #fbbf24; }
+
+/* ---- Case carts ------------------------------------------------------------ */
+.day-stepper { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.day-stepper .day-label { font-weight: 700; font-size: 15px; }
+
+.missing-banner {
+  display: block; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px;
+  background: color-mix(in srgb, #d97706 12%, var(--card)); border: 1px solid color-mix(in srgb, #d97706 40%, var(--line));
+  color: var(--ink); text-decoration: none; font-size: 14px;
+}
+.missing-banner:hover { filter: brightness(0.98); }
+
+.newcart-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.newcart-form select {
+  flex: 2; min-width: 220px; border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px;
+  font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink);
+}
+.cart-count { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.cart-count input {
+  width: 90px; border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px;
+  font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink);
+}
+
+.cart-list { display: flex; flex-direction: column; gap: 12px; }
+.cart-row {
+  display: block; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 16px; text-decoration: none; color: var(--ink); box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--accent, var(--brand));
+}
+.cart-row:hover { border-color: var(--accent, var(--brand)); }
+.cart-row-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.cart-row-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cart-proc { font-weight: 700; font-size: 15px; }
+.cart-label {
+  margin-left: 8px; font-size: 11.5px; font-weight: 700; color: var(--accent, var(--brand));
+  background: color-mix(in srgb, var(--accent, var(--brand)) 12%, transparent);
+  border-radius: 99px; padding: 2px 9px; vertical-align: 2px;
+}
+.cart-badge { font-size: 12.5px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.cart-badge-missing { color: #b45309; }
+[data-theme="dark"] .cart-badge-missing { color: #fbbf24; }
+.cart-badge-done { color: var(--pos, #15803d); }
+.cart-track { height: 7px; }
+
+.puller-row { margin-bottom: 14px; }
+.puller-edit { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.puller-edit input {
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-family: inherit;
+  font-size: 14px; background: var(--card); color: var(--ink); width: 160px;
+}
+.pulled-by { display: block; font-size: 11.5px; color: var(--brand); font-weight: 600; margin-top: 2px; }
+
+.missing-row { border-top: 1px solid var(--line); padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.missing-row:first-of-type { border-top: none; }
+.missing-main { display: flex; align-items: baseline; gap: 10px; }
+.missing-name { font-weight: 700; font-size: 14.5px; }
+.missing-comment {
+  width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px;
+  padding: 9px 11px; font-family: inherit; font-size: 13.5px; background: var(--card); color: var(--ink);
+}
+.missing-comment:focus { outline: none; border-color: var(--brand); }
+.missing-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.chips-tight { gap: 5px; }
+.chip-sm { font-size: 11.5px; padding: 4px 10px; }
+.missing-cart-link { color: inherit; text-decoration: none; }
+.missing-cart-link:hover { color: var(--brand); }
+.resolved-block { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.resolved-row { display: flex; align-items: center; gap: 10px; }
+.resolved-name { font-size: 13.5px; color: var(--muted); text-decoration: line-through; }

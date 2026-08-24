@@ -192,6 +192,51 @@ export interface OnCallShift {
   note?: string; // "covering for Dana"
 }
 
+// ---- Case carts ------------------------------------------------------------
+// Pulling the physical cart for a case. Distinct from personal setup mode:
+// a cart is one *instance* of a card for one case — the same card can be
+// pulled five separate times in a day (five cataracts), each its own cart.
+// Every checkmark records WHO pulled it and when, so two people working the
+// same cart can see each other's progress and nobody double-pulls. When a
+// puller marks the cart done, whatever isn't pulled becomes the cart's
+// missing list — each entry can carry a comment ("waiting on rep", "in SPD",
+// ETA, "alternative pulled: …") and is resolved when the item finally lands
+// in the cart. The ops view rolls up every open missing item for a day.
+//
+// NOTE: cart labels are for slots/rooms/sequence ("#2 of 5", "OR 4 07:30") —
+// never patient information.
+
+/** One checkmark: who pulled this item into the cart, and when. */
+export interface CartPullRecord {
+  by: string;
+  at: string; // ISO
+}
+
+/** An item that wasn't in the cart when pulling finished. Name/section are
+ *  snapshotted so the list stays meaningful even if the card is edited. */
+export interface MissingEntry {
+  itemId: ID;
+  name: string;
+  detail?: string;
+  sectionLabel: string;
+  comment?: string; // "Waiting on rep — ETA 06:30", "In SPD", "On order", …
+  resolvedAt?: string; // set when the item finally made it into the cart
+  resolvedBy?: string;
+}
+
+export interface CaseCart {
+  id: ID;
+  cardId: ID;
+  date: string; // local day "2026-07-14"
+  label?: string; // "#2 of 5", "OR 4 — 07:30" — sequence/room, no PHI
+  pulls: Record<ID, CartPullRecord>; // itemId -> who/when
+  donePulling?: string; // ISO when a puller marked the cart done
+  doneBy?: string;
+  missing: MissingEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
@@ -203,4 +248,5 @@ export interface AppState {
   onCallPositions: OnCallPosition[];
   onCallPeople: OnCallPerson[];
   onCallShifts: OnCallShift[];
+  carts: CaseCart[];
 }

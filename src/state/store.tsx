@@ -9,8 +9,10 @@ import {
 import type {
   AppState,
   CardItem,
+  CaseCart,
   CaseEntry,
   Facility,
+  MissingEntry,
   Location,
   LoanerStatus,
   LoanerTray,
@@ -120,6 +122,7 @@ function migrateLegacy(old: any): AppState {
     onCallPositions: old.onCallPositions ?? [],
     onCallPeople: old.onCallPeople ?? [],
     onCallShifts: old.onCallShifts ?? [],
+    carts: old.carts ?? [],
   };
 }
 
@@ -192,6 +195,21 @@ export interface Store {
   assignOnCall: (positionId: string, personId: string, start: string, end?: string, note?: string) => OnCallShift;
   updateOnCallShift: (id: string, patch: Partial<Omit<OnCallShift, "id">>) => void;
   deleteOnCallShift: (id: string) => void;
+  // case carts
+  /** Create `count` carts for a card on a date — five cataracts = five carts. */
+  addCarts: (cardId: string, date: string, count: number) => CaseCart[];
+  deleteCart: (id: string) => void;
+  updateCartLabel: (id: string, label: string) => void;
+  /** Check/uncheck an item, recording who pulled it (so co-pullers can see). */
+  toggleCartPull: (cartId: string, itemId: string, puller: string) => void;
+  /** Mark the cart done: everything unpulled becomes the missing list. */
+  finishCartPull: (cartId: string, by: string) => void;
+  /** Reopen a done cart for more pulling (missing comments are kept). */
+  resumeCartPull: (cartId: string) => void;
+  setMissingComment: (cartId: string, itemId: string, comment: string) => void;
+  /** The missing item finally landed in the cart — resolve + record the pull. */
+  resolveMissing: (cartId: string, itemId: string, by: string) => void;
+  unresolveMissing: (cartId: string, itemId: string) => void;
   // sharing — portable card bundles
   exportCardFile: (cardId: string) => void;
   exportFacilityFile: (facilityId: string) => void;
@@ -420,6 +438,117 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteLoaner: (id) =>
         update((st) => ({ ...st, loaners: st.loaners.filter((l) => l.id !== id) })),
 
+      addCarts: (cardId, date, count) => {
+        const now = new Date().toISOString();
+        const n = Math.max(1, Math.min(20, Math.floor(count)));
+        const created: CaseCart[] = Array.from({ length: n }, (_, i) => ({
+          id: uid("cart"),
+          cardId,
+          date,
+          label: n > 1 ? `#${i + 1} of ${n}` : undefined,
+          pulls: {},
+          missing: [],
+          createdAt: now,
+          updatedAt: now,
+        }));
+        update((st) => ({ ...st, carts: [...st.carts, ...created] }));
+        return created;
+      },
+
+      deleteCart: (id) => update((st) => ({ ...st, carts: st.carts.filter((c) => c.id !== id) })),
+
+      updateCartLabel: (id, label) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => (c.id === id ? { ...c, label: label.trim() || undefined } : c)),
+        })),
+
+      toggleCartPull: (cartId, itemId, puller) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const pulls = { ...c.pulls };
+            if (pulls[itemId]) delete pulls[itemId];
+            else pulls[itemId] = { by: puller.trim() || "Someone", at: new Date().toISOString() };
+            return { ...c, pulls, updatedAt: new Date().toISOString() };
+          }),
+        })),
+
+      finishCartPull: (cartId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const card = st.cards.find((x) => x.id === c.cardId);
+            if (!card) return c;
+            const now = new Date().toISOString();
+            return {
+              ...c,
+              donePulling: now,
+              doneBy: by.trim() || "Someone",
+              missing: buildMissingList(card, c),
+              updatedAt: now,
+            };
+          }),
+        })),
+
+      resumeCartPull: (cartId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId ? { ...c, donePulling: undefined, doneBy: undefined, updatedAt: new Date().toISOString() } : c,
+          ),
+        })),
+
+      setMissingComment: (cartId, itemId, comment) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId
+              ? {
+                  ...c,
+                  missing: c.missing.map((m) => (m.itemId === itemId ? { ...m, comment: comment.trim() || undefined } : m)),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        })),
+
+      resolveMissing: (cartId, itemId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const now = new Date().toISOString();
+            const who = by.trim() || "Someone";
+            return {
+              ...c,
+              pulls: { ...c.pulls, [itemId]: { by: who, at: now } },
+              missing: c.missing.map((m) => (m.itemId === itemId ? { ...m, resolvedAt: now, resolvedBy: who } : m)),
+              updatedAt: now,
+            };
+          }),
+        })),
+
+      unresolveMissing: (cartId, itemId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const pulls = { ...c.pulls };
+            delete pulls[itemId];
+            return {
+              ...c,
+              pulls,
+              missing: c.missing.map((m) =>
+                m.itemId === itemId ? { ...m, resolvedAt: undefined, resolvedBy: undefined } : m,
+              ),
+              updatedAt: new Date().toISOString(),
+            };
+          }),
+        })),
+
       addOnCallPosition: (name, category) => {
         const pos: OnCallPosition = { id: uid("pos"), name: name.trim(), category };
         update((st) => ({ ...st, onCallPositions: [...st.onCallPositions, pos] }));
@@ -578,6 +707,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           onCallPositions: parsed.onCallPositions ?? st.onCallPositions,
           onCallPeople: parsed.onCallPeople ?? st.onCallPeople,
           onCallShifts: parsed.onCallShifts ?? st.onCallShifts,
+          carts: parsed.carts ?? st.carts,
         }));
       },
 
@@ -586,7 +716,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [],
         }),
     };
   }, [state]);
@@ -873,4 +1003,98 @@ export function positionsByCategory(s: AppState): { category: string; positions:
 export function telHref(phone?: string): string | undefined {
   const digits = phone?.replace(/[^\d+]/g, "");
   return digits ? `tel:${digits}` : undefined;
+}
+
+// ---- Case-cart selectors ---------------------------------------------------
+
+/** Carts for a local day, in creation order (matching "#1 of 5" labels). */
+export function cartsOn(s: AppState, date: string): CaseCart[] {
+  return s.carts.filter((c) => c.date === date).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/** Pull progress against the card's current items. */
+export function cartProgress(s: AppState, cart: CaseCart): { pulled: number; total: number } {
+  const card = s.cards.find((c) => c.id === cart.cardId);
+  if (!card) return { pulled: 0, total: 0 };
+  let pulled = 0;
+  let total = 0;
+  for (const sec of SECTIONS) {
+    for (const it of card[sec.key as SectionKey]) {
+      total++;
+      if (cart.pulls[it.id]) pulled++;
+    }
+  }
+  return { pulled, total };
+}
+
+/** Missing entries not yet resolved. */
+export function openMissing(cart: CaseCart): MissingEntry[] {
+  return cart.missing.filter((m) => !m.resolvedAt);
+}
+
+/** Every cart on a day that still has open missing items — the ops rollup. */
+export function missingForDay(s: AppState, date: string): { cart: CaseCart; card: PrefCard | undefined; missing: MissingEntry[] }[] {
+  return cartsOn(s, date)
+    .map((cart) => ({ cart, card: s.cards.find((c) => c.id === cart.cardId), missing: openMissing(cart) }))
+    .filter((x) => x.missing.length > 0);
+}
+
+/** Plain-text rollup of a day's missing items — for ops to paste into an
+ *  email/text to SPD, materials, or the board runner. */
+export function missingDayText(s: AppState, date: string): string {
+  const groups = missingForDay(s, date);
+  if (!groups.length) return `No open missing items for ${date}.`;
+  const lines: string[] = [`MISSING ITEMS — case carts, ${date}`, ""];
+  for (const { cart, card, missing } of groups) {
+    const sg = card ? s.surgeons.find((x) => x.id === card.surgeonId) : undefined;
+    lines.push(`${card?.procedure ?? "Unknown card"}${cart.label ? ` (${cart.label})` : ""}${sg ? ` — ${sg.name}` : ""}`);
+    for (const m of missing) {
+      lines.push(`  • ${m.name}${m.detail ? ` — ${m.detail}` : ""}${m.comment ? `  [${m.comment}]` : ""}`);
+    }
+    lines.push("");
+  }
+  lines.push("— sent from ORSync");
+  return lines.join("\n");
+}
+
+// Who's pulling on this device — a lightweight name so checkmarks carry
+// attribution ("pulled · Marcus 07:12"). Not an account; just a label.
+const PULLER_KEY = "orsync.puller.v1";
+export function getPullerName(): string {
+  try {
+    return localStorage.getItem(PULLER_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+export function setPullerName(name: string) {
+  try {
+    localStorage.setItem(PULLER_KEY, name.trim());
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Everything on the card that isn't pulled into the cart, snapshotted for the
+ *  missing list. Comments/resolutions already entered for still-missing items
+ *  survive a re-finish (pull more, mark done again). Pure — tested directly. */
+export function buildMissingList(card: PrefCard, cart: CaseCart): MissingEntry[] {
+  const prior = new Map(cart.missing.map((m) => [m.itemId, m]));
+  const missing: MissingEntry[] = [];
+  for (const sec of SECTIONS) {
+    for (const it of card[sec.key as SectionKey]) {
+      if (cart.pulls[it.id]) continue;
+      const old = prior.get(it.id);
+      missing.push({
+        itemId: it.id,
+        name: it.name,
+        detail: it.detail,
+        sectionLabel: sec.label,
+        comment: old?.comment,
+        resolvedAt: old?.resolvedAt,
+        resolvedBy: old?.resolvedBy,
+      });
+    }
+  }
+  return missing;
 }
