@@ -20,6 +20,7 @@ import { LoanersPage } from "./pages/LoanersPage";
 import { CartsPage } from "./pages/CartsPage";
 import { CartPullPage } from "./pages/CartPullPage";
 import { MissingDayPage } from "./pages/MissingDayPage";
+import { SendPullPage } from "./pages/SendPullPage";
 import { OnCallPage } from "./pages/OnCallPage";
 import { OnCallPeoplePage } from "./pages/OnCallPeoplePage";
 import { SearchPage } from "./pages/SearchPage";
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/loaners" element={<LoanersPage />} />
             <Route path="/carts" element={<CartsPage />} />
             <Route path="/carts/missing" element={<MissingDayPage />} />
+            <Route path="/carts/send" element={<SendPullPage />} />
             <Route path="/carts/:id" element={<CartPullPage />} />
             <Route path="/on-call" element={<OnCallPage />} />
             <Route path="/on-call/people" element={<OnCallPeoplePage />} />

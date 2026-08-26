@@ -1571,3 +1571,11 @@ body {
 .resolved-block { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .resolved-row { display: flex; align-items: center; gap: 10px; }
 .resolved-name { font-size: 13.5px; color: var(--muted); text-decoration: line-through; }
+
+/* Send-a-card-to-pull */
+.cart-note {
+  margin: 6px 0 0; font-size: 13.5px; color: var(--ink);
+  background: var(--brand-50); border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent);
+  border-radius: 9px; padding: 8px 12px; display: inline-block;
+}
+.send-result p { margin: 0; font-size: 14px; line-height: 1.55; }

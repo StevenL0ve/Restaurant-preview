@@ -57,6 +57,7 @@ describe("app smoke test", () => {
     ["/loaners", "Loaner trays"],
     ["/carts", "Case carts"],
     ["/carts/missing", "Missing — all carts"],
+    ["/carts/send", "Send a card to pull"],
     ["/on-call", "On call"],
     ["/on-call/people", "everyone who can take call"],
     ["/facilities", "Add a facility"],

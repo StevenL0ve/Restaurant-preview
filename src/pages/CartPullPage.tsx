@@ -84,6 +84,7 @@ export function CartPullPage() {
           <p className="muted">
             {cart.label && <strong>{cart.label} · </strong>}{sg?.name} · Case cart
           </p>
+          {cart.note && <p className="cart-note">📩 {cart.note}</p>}
         </div>
       </div>
 

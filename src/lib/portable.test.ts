@@ -67,6 +67,29 @@ describe("portable card bundles", () => {
     expect(state.surgeons).toHaveLength(sgBefore);
   });
 
+
+  it("maps every bundle card to a local id — fresh for added, existing for dups", () => {
+    const src = buildSeed();
+    const card = src.cards.find((c) => c.procedure.startsWith("Total Knee"))!;
+    const bundle = bundleCards(src, [card.id], NOW);
+    bundle.pullRequest = { date: "2026-08-25", count: 3, requestedBy: "Steven" };
+
+    // Import into an empty library: the id is the fresh copy's.
+    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [] };
+    const fresh = importBundle(empty, bundle);
+    expect(fresh.cardIds).toHaveLength(1);
+    expect(fresh.state.cards[0].id).toBe(fresh.cardIds[0]);
+
+    // Import into the source library (dup): the id is the EXISTING card's,
+    // so a pull request can still attach carts to it.
+    const dup = importBundle(src, bundle);
+    expect(dup.added).toBe(0);
+    expect(dup.cardIds).toEqual([card.id]);
+    // The pull request itself round-trips through serialization.
+    const parsed = JSON.parse(JSON.stringify(bundle));
+    expect(parsed.pullRequest).toEqual({ date: "2026-08-25", count: 3, requestedBy: "Steven" });
+  });
+
   it("coerces a full library export into a mergeable bundle", () => {
     const s = buildSeed();
     const bundle = asBundle(s, NOW);

@@ -13,6 +13,17 @@ import { locationLabel } from "../types";
 
 export const BUNDLE_KIND = "orsync/card-bundle";
 
+/** "Please pull this for me": a bundle can carry a pull assignment, so sending
+ *  a card to a colleague sets them up with ready-to-pull case carts on import —
+ *  not just a library entry. `count` covers "5 cataracts = 5 carts". */
+export interface PullRequest {
+  date: string; // local day "2026-08-24"
+  count: number;
+  label?: string; // "OR 5 — 10:15" (no PHI)
+  note?: string; // "need it staged by 06:30"
+  requestedBy?: string;
+}
+
 export interface CardBundle {
   kind: typeof BUNDLE_KIND;
   version: 1;
@@ -21,6 +32,7 @@ export interface CardBundle {
   surgeons: Surgeon[];
   locations: Location[];
   cards: PrefCard[];
+  pullRequest?: PullRequest;
 }
 
 export function isCardBundle(x: unknown): x is CardBundle {
@@ -77,6 +89,10 @@ export interface ImportResult {
   state: AppState;
   added: number; // cards added
   skipped: number; // cards already present (same surgeon + procedure + facility)
+  /** Local card id for each bundle card, in order — the fresh copy's id when
+   *  added, or the matching existing card's id when deduped. Lets a
+   *  pull-request import attach carts to the right card either way. */
+  cardIds: string[];
 }
 
 /** Identity of a card for dedup: surgeon name + procedure + facility name,
@@ -137,27 +153,33 @@ export function importBundle(state: AppState, bundle: CardBundle): ImportResult 
   // Existing-card keys, so re-importing the same cards doesn't duplicate them.
   const nameOf = <T extends { id: string; name: string }>(list: T[], id?: string) =>
     (id ? list.find((x) => x.id === id)?.name : "") ?? "";
-  const seen = new Set(
-    state.cards.map((c) =>
+  const seenId = new Map(
+    state.cards.map((c) => [
       cardKey(c.procedure, nameOf(state.surgeons, c.surgeonId), nameOf(state.facilities, c.facilityId)),
-    ),
+      c.id,
+    ]),
   );
 
   const bundleSg = (id: string) => bundle.surgeons.find((s) => s.id === id)?.name ?? "";
   const bundleFac = (id?: string) => (id ? bundle.facilities.find((f) => f.id === id)?.name ?? "" : "");
 
   const newCards: PrefCard[] = [];
+  const cardIds: string[] = [];
   let skipped = 0;
   for (const c of bundle.cards) {
     const key = cardKey(c.procedure, bundleSg(c.surgeonId), bundleFac(c.facilityId));
-    if (seen.has(key)) {
+    const existingId = seenId.get(key);
+    if (existingId) {
       skipped++;
+      cardIds.push(existingId);
       continue;
     }
-    seen.add(key);
+    const newId = uid("card");
+    seenId.set(key, newId);
+    cardIds.push(newId);
     newCards.push({
       ...c,
-      id: uid("card"),
+      id: newId,
       surgeonId: sgMap.get(c.surgeonId) ?? c.surgeonId,
       facilityId: c.facilityId ? facMap.get(c.facilityId) : undefined,
       favorite: false,
@@ -180,5 +202,6 @@ export function importBundle(state: AppState, bundle: CardBundle): ImportResult 
     },
     added: newCards.length,
     skipped,
+    cardIds,
   };
 }

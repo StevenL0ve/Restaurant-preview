@@ -26,6 +26,7 @@ import type {
 import { ON_CALL_CATEGORIES, SECTIONS, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
+import { shareJsonFile } from "../lib/share";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
 const STORAGE_KEY = "orsync.v2";
@@ -212,8 +213,11 @@ export interface Store {
   unresolveMissing: (cartId: string, itemId: string) => void;
   // sharing — portable card bundles
   exportCardFile: (cardId: string) => void;
+  /** Package a card + a pull assignment as a shareable file — the recipient's
+   *  import creates ready-to-pull carts for that date. */
+  sendCardForPull: (cardId: string, date: string, count: number, note?: string, requestedBy?: string) => Promise<"shared" | "downloaded">;
   exportFacilityFile: (facilityId: string) => void;
-  importCards: (json: string) => { added: number; skipped: number }; // merges; dedups; throws if invalid
+  importCards: (json: string) => { added: number; skipped: number; carts: number }; // merges; dedups; may create pull-request carts
   importCsv: (text: string) => { added: number; skipped: number }; // bulk import from a spreadsheet
   downloadCsvTemplate: () => void;
   copyCardToFacility: (cardId: string, facilityId: string) => PrefCard | null;
@@ -660,12 +664,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
 
+      sendCardForPull: async (cardId, date, count, note, requestedBy) => {
+        const card = state.cards.find((c) => c.id === cardId);
+        const bundle = bundleCards(state, [cardId], new Date().toISOString());
+        bundle.pullRequest = {
+          date,
+          count: Math.max(1, Math.min(20, Math.floor(count))),
+          note: note?.trim() || undefined,
+          requestedBy: requestedBy?.trim() || undefined,
+        };
+        return shareJsonFile(
+          `pull-${slugName(card?.procedure ?? "card")}.orsync.json`,
+          bundle,
+          `Pull request: ${card?.procedure ?? "preference card"}`,
+        );
+      },
+
       importCards: (json) => {
         const bundle = asBundle(JSON.parse(json), new Date().toISOString());
         if (!bundle || !bundle.cards.length) throw new Error("No cards found in that file.");
-        const { state: next, added, skipped } = importBundle(state, bundle);
-        setState(next);
-        return { added, skipped };
+        const { state: next, added, skipped, cardIds } = importBundle(state, bundle);
+
+        // A pull request rides along: set up the carts so the recipient lands
+        // ready to pull. Re-importing the same file won't stack duplicates —
+        // carts already on that date for that card block re-creation.
+        let cartsMade = 0;
+        let carts = next.carts;
+        const pr = bundle.pullRequest;
+        if (pr && /^\d{4}-\d{2}-\d{2}$/.test(pr.date)) {
+          const n = Math.max(1, Math.min(20, Math.floor(pr.count) || 1));
+          const now = new Date().toISOString();
+          const note = [pr.note, pr.requestedBy ? `asked by ${pr.requestedBy}` : undefined]
+            .filter(Boolean)
+            .join(" — ") || undefined;
+          const newCarts: CaseCart[] = [];
+          for (const localId of new Set(cardIds)) {
+            if (next.carts.some((c) => c.cardId === localId && c.date === pr.date)) continue;
+            for (let i = 0; i < n; i++) {
+              newCarts.push({
+                id: uid("cart"),
+                cardId: localId,
+                date: pr.date,
+                label: n > 1 ? `#${i + 1} of ${n}` : pr.label,
+                note,
+                pulls: {},
+                missing: [],
+                createdAt: now,
+                updatedAt: now,
+              });
+            }
+          }
+          cartsMade = newCarts.length;
+          carts = [...next.carts, ...newCarts];
+        }
+
+        setState({ ...next, carts });
+        return { added, skipped, carts: cartsMade };
       },
 
       importCsv: (text) => {

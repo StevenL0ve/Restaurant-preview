@@ -137,6 +137,7 @@ export function CardDetail() {
 
       <div className="detail-actions">
         <button className="btn" onClick={() => navigate(`/cards/${card.id}/print`)}>🖨 Print / PDF</button>
+        <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>📤 Send to pull</button>
         <a className="btn" href={mailtoHref(card, sg, (locId) => locationLabelOf(state, locId))}>✉️ Email</a>
         <a className="btn" href={smsHref(card, sg, (locId) => locationLabelOf(state, locId))}>💬 Text</a>
         <button className="btn" onClick={onShare}>Share text</button>

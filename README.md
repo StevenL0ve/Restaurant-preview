@@ -87,7 +87,10 @@ hospital admin.
   delivery", "in SPD being prepared", ETA, "alternative pulled…") and resolve
   it when the item finally lands. Ops gets a **one-screen rollup of every
   missing item for the day** with live-editable comments and a copyable
-  summary for SPD/materials.
+  summary for SPD/materials. Need someone else to pull? **Send them the card
+  as a pull request** — a small file (share sheet → AirDrop/text/email) that,
+  on import, merges the card into their library and creates the day's carts,
+  count, label, and note included, ready to check off.
 - **Loaner trays** — request and track vendor loaner sets for a case
   (Casechek-style): vendor, rep, PO, quantity, **case date + delivery deadline**
   with overdue/arriving-soon alerts, a status pipeline (requested → confirmed →

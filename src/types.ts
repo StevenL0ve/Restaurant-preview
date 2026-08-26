@@ -229,6 +229,7 @@ export interface CaseCart {
   cardId: ID;
   date: string; // local day "2026-07-14"
   label?: string; // "#2 of 5", "OR 4 — 07:30" — sequence/room, no PHI
+  note?: string; // from a pull request: "need it staged by 06:30 — asked by Steven"
   pulls: Record<ID, CartPullRecord>; // itemId -> who/when
   donePulling?: string; // ISO when a puller marked the cart done
   doneBy?: string;

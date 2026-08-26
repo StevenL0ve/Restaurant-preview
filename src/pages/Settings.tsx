@@ -5,11 +5,12 @@ import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
 
-function importMessage(added: number, skipped: number, source: string): string {
+function importMessage(added: number, skipped: number, source: string, carts = 0): string {
   const cards = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
-  if (added === 0 && skipped > 0) return `Already had all of it — skipped ${cards(skipped)} you already have.`;
+  const cartNote = carts > 0 ? ` Set up ${carts} case cart${carts === 1 ? "" : "s"} — see the Carts tab.` : "";
+  if (added === 0 && skipped > 0) return `Already had all of it — skipped ${cards(skipped)} you already have.${cartNote}`;
   const base = `Imported ${cards(added)} from ${source}.`;
-  return skipped > 0 ? `${base} Skipped ${cards(skipped)} you already had.` : base;
+  return (skipped > 0 ? `${base} Skipped ${cards(skipped)} you already had.` : base) + cartNote;
 }
 
 export function Settings() {
@@ -26,8 +27,8 @@ export function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const { added, skipped } = importCards(String(reader.result));
-        setMsg(importMessage(added, skipped, "your library"));
+        const { added, skipped, carts } = importCards(String(reader.result));
+        setMsg(importMessage(added, skipped, "your library", carts));
       } catch {
         setMsg("That file didn’t look like an ORSync card file.");
       }

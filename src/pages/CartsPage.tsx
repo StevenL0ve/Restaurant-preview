@@ -54,6 +54,7 @@ export function CartsPage() {
           <p className="muted">Pull together, see who pulled what, and hand ops the missing list.</p>
         </div>
         <div className="head-actions">
+          <Link className="btn" to="/carts/send">📤 Send to a puller</Link>
           {!adding && <button className="btn btn-primary" onClick={() => setAdding(true)}>+ New carts</button>}
         </div>
       </div>

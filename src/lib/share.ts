@@ -110,3 +110,36 @@ export async function shareCard(
   }
   return (await copyText(text)) ? "copied" : "failed";
 }
+
+/** Share a JSON file through the native share sheet (AirDrop / Messages /
+ *  Mail on a phone); falls back to a download where file-sharing isn't
+ *  available (desktop browsers). */
+export async function shareJsonFile(
+  filename: string,
+  data: unknown,
+  title: string,
+): Promise<"shared" | "downloaded"> {
+  const json = JSON.stringify(data, null, 2);
+  const nav = navigator as Navigator & {
+    share?: (d: { files?: File[]; title?: string }) => Promise<void>;
+    canShare?: (d: { files?: File[] }) => boolean;
+  };
+  try {
+    const file = new File([json], filename, { type: "application/json" });
+    if (nav.share && nav.canShare?.({ files: [file] })) {
+      await nav.share({ files: [file], title });
+      return "shared";
+    }
+  } catch {
+    // cancelled or unsupported — fall through to download
+  }
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  return "downloaded";
+}
