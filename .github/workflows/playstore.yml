@@ -45,10 +45,27 @@ jobs:
 
       # The native project is not committed — generate it fresh, stamp the
       # launcher icons/splash from the real logo, then sync the web build in.
+      # @capacitor/assets isn't a committed dep (its sharp binary can't install
+      # everywhere), so pull it here rather than relying on npx to guess.
+      #
+      # `cap add android` lays down Capacitor's placeholder launcher icon, so
+      # verify generation actually replaced it: a silent no-op would ship a
+      # stranger's logo to Play while the run stayed green.
       - name: Generate Android native project
         run: |
+          set -euo pipefail
           npx cap add android
+          RES=android/app/src/main/res
+          BEFORE=$(find "$RES" -name "ic_launcher*" -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum)
+          npm i -D --no-save @capacitor/assets
           npx capacitor-assets generate --android
+          AFTER=$(find "$RES" -name "ic_launcher*" -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum)
+          if [ "$BEFORE" = "$AFTER" ]; then
+            echo "::error::Launcher icons are still Capacitor's placeholder — " \
+                 "capacitor-assets did not stamp assets/icon-only.png."
+            exit 1
+          fi
+          echo "Launcher icons stamped from assets/"
           npx cap sync android
 
       - name: Decode upload keystore

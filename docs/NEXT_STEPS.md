@@ -52,11 +52,45 @@ the `AuthKey_XXXX.p8`. Note the **Key ID** and **Issuer ID** on that page.
 | `APPLE_TEAM_ID` | your 10-char Apple Developer Team ID (developer.apple.com → Membership) |
 
 **Run it:** GitHub → **Actions** tab → **TestFlight** → **Run workflow** →
-branch `claude/ourfamilywizard-analysis-J8t30`. ~15–20 min later the build shows
+branch `claude/ourfamilywizard-analysis-J8t30`. ~5 min later the build shows
 up in TestFlight (bundle id `com.steven.coparent`, app "Co-Parently").
 
-> A **Play Store** workflow exists too — needs `ANDROID_KEYSTORE_BASE64` +
-> `ANDROID_KEYSTORE_PASSWORD` (and optionally `GOOGLE_PLAY_JSON`). Same idea.
+**Status:** ✅ working — the secrets above are already set in this repo and the
+workflow has uploaded real builds. Nothing to do here unless a build fails.
+
+### 1b. Google Play — **[you]**, three things only you can do
+
+Unlike iOS, this one needs you. The workflow (`.github/workflows/playstore.yml`)
+is written but has **never run**, so expect to debug the first attempt.
+
+1. **Play Developer account** — $25 one-time, play.google.com/console. Google
+   also requires ID verification, which can take a few days. Start early.
+2. **Upload keystore** — generate it *on your machine*, not in CI. It is the
+   key that proves future updates come from you; if it leaks, someone else can
+   push an update to your app. Run:
+
+   ```sh
+   keytool -genkeypair -v -keystore upload.keystore \
+     -alias upload -keyalg RSA -keysize 2048 -validity 10000
+   base64 -i upload.keystore | pbcopy   # now in your clipboard
+   ```
+
+   Then GitHub → Settings → Secrets → Actions:
+
+   | Secret | Value |
+   | --- | --- |
+   | `ANDROID_KEYSTORE_BASE64` | paste from clipboard |
+   | `ANDROID_KEYSTORE_PASSWORD` | the password you just typed |
+   | `GOOGLE_PLAY_JSON` | *(optional)* service-account JSON, for auto-publish |
+
+   Back up `upload.keystore` somewhere safe. With Play App Signing a lost
+   upload key is recoverable via Google support, but it is a bad afternoon.
+3. **Create the app** in the Play Console with package `com.steven.coparent`,
+   and upload the first bundle by hand — Google requires one manual upload
+   before API publishing works.
+
+Without `GOOGLE_PLAY_JSON` the workflow still builds and attaches a signed
+`coparent-release-aab` artifact you can download and upload yourself.
 
 ### 2. Stand up the backend — **[you]** create free accounts, send me keys
 - **Supabase:** create a project → SQL editor → run `supabase/schema.sql` →
