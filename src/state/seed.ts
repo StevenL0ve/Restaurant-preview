@@ -34,7 +34,7 @@ const surgeons: Surgeon[] = [
     gloveSize: "6.5",
     gloveType: "Biogel, double-glove with colored underglove",
     quirks:
-      "Tourniquet up before prep — confirm pressure and time out loud. No talking during cementing. Counts twice on closing.",
+      "Tourniquet up before prep; confirm pressure and time out loud. No talking during cementing. Counts twice on closing.",
     color: "#0e7490",
     initials: "DC",
   },
@@ -46,7 +46,7 @@ const surgeons: Surgeon[] = [
     gloveSize: "6.0",
     gloveType: "Latex-free",
     quirks:
-      "Moves fast on a c-section — have the second suction ready. Baby warmer confirmed on before incision.",
+      "Moves fast on a c-section; have the second suction ready. Baby warmer confirmed on before incision.",
     color: "#b91c1c",
     initials: "DO",
   },
@@ -88,7 +88,7 @@ const seedCards: SeedCard[] = [
     procedure: "Laparoscopic Cholecystectomy",
     specialty: "General Surgery",
     position: "Supine, both arms tucked, reverse Trendelenburg + slight left tilt",
-    prep: "ChloraPrep — xiphoid to pubis, table side to table side",
+    prep: "ChloraPrep: xiphoid to pubis, table side to table side",
     draping: "Laparotomy drape",
     notes: "Have the cholangiogram setup on standby but unopened. Specimen in retrieval bag.",
     favorite: true,
@@ -154,7 +154,7 @@ const seedCards: SeedCard[] = [
     procedure: "Total Knee Arthroplasty",
     specialty: "Orthopedics",
     position: "Supine, tourniquet high on operative thigh, leg holder",
-    prep: "ChloraPrep ×2 — foot to tourniquet, circumferential",
+    prep: "ChloraPrep ×2: foot to tourniquet, circumferential",
     draping: "Extremity drape + impervious stockinette + Coban",
     notes: "Confirm implant vendor + sizes in room BEFORE prep. Tourniquet pressure and time called out.",
     favorite: true,
@@ -183,7 +183,7 @@ const seedCards: SeedCard[] = [
       ["Local infiltration cocktail", undefined, "Med room"],
     ),
     equipment: items(
-      ["Tourniquet — confirm pressure/time", undefined, "Equipment alcove 2"],
+      ["Tourniquet (confirm pressure/time)", undefined, "Equipment alcove 2"],
       ["Cement mixing / vacuum system", undefined, "Ortho room, power cart"],
       ["Leg positioner / holder", undefined, "Ortho room, positioner shelf"],
       ["ESU unit", undefined, "Equipment alcove 1"],
@@ -248,7 +248,7 @@ const seedCards: SeedCard[] = [
     ),
     medications: items(["Oxytocin", "to anesthesia at delivery", "L&D med room"], ["Hemabate / methergine", "available, NOT on field", "L&D med room, fridge"]),
     equipment: items(
-      ["Infant warmer — confirm on", undefined, "Warmer station"],
+      ["Infant warmer (confirm on)", undefined, "Warmer station"],
       ["ESU unit", undefined, "L&D core, equipment bay"],
       ["Second suction canister", undefined, "L&D core, equipment bay"],
     ),
@@ -258,7 +258,7 @@ const seedCards: SeedCard[] = [
     procedure: "Tonsillectomy & Adenoidectomy",
     specialty: "ENT",
     position: "Supine, shoulder roll, head of bed turned 90° to anesthesia",
-    prep: "None — oral case",
+    prep: "None (oral case)",
     draping: "Head drape / split sheet",
     notes: "Headlight on the field before timeout. Have a tonsil sponge count system ready.",
     daysAgo: 12,
@@ -397,7 +397,7 @@ export function buildSeed(): AppState {
       status: "requested",
     }),
     loaner({
-      description: "Medtronic spine set — pedicle screws",
+      description: "Medtronic spine set, pedicle screws",
       vendor: "Medtronic",
       repName: "Chris L.",
       repPhone: "+15125550199",
@@ -436,12 +436,12 @@ export function buildSeed(): AppState {
   });
 
   const onCallPositions: OnCallPosition[] = [
-    { id: "pos-tech", name: "OR Tech — On call", category: "OR Staff" },
-    { id: "pos-circ", name: "Circulating Nurse — On call", category: "OR Staff" },
-    { id: "pos-charge", name: "Charge Nurse — On call", category: "OR Staff" },
-    { id: "pos-gensurg", name: "General Surgeon — On call", category: "Surgeons" },
-    { id: "pos-ortho", name: "Ortho Surgeon — On call", category: "Surgeons" },
-    { id: "pos-anes", name: "Anesthesiologist — On call", category: "Anesthesia" },
+    { id: "pos-tech", name: "OR Tech", category: "OR Staff" },
+    { id: "pos-circ", name: "Circulating Nurse", category: "OR Staff" },
+    { id: "pos-charge", name: "Charge Nurse", category: "OR Staff" },
+    { id: "pos-gensurg", name: "General Surgeon", category: "Surgeons" },
+    { id: "pos-ortho", name: "Ortho Surgeon", category: "Surgeons" },
+    { id: "pos-anes", name: "Anesthesiologist", category: "Anesthesia" },
   ];
 
   const onCallPeople: OnCallPerson[] = [
@@ -503,7 +503,7 @@ export function buildSeed(): AppState {
       tkaPulls[it.id] = { by: "Tanya B.", at: iso(-3 * hour) };
     }
     // The cement arrived later and was resolved into the cart.
-    if (tkaMissCement) tkaPulls[tkaMissCement.id] = { by: "Ops — J. Ruiz", at: iso(-1 * hour) };
+    if (tkaMissCement) tkaPulls[tkaMissCement.id] = { by: "J. Ruiz (Ops)", at: iso(-1 * hour) };
   }
 
   const carts: CaseCart[] = [
@@ -532,7 +532,7 @@ export function buildSeed(): AppState {
           id: "cart-seed-2",
           cardId: tka.id,
           date: localDay(0),
-          label: "OR 5 — 10:15",
+          label: "OR 5, 10:15",
           pulls: tkaPulls,
           donePulling: iso(-2 * hour),
           doneBy: "Tanya B.",
@@ -543,7 +543,7 @@ export function buildSeed(): AppState {
                   name: tkaMissTourniquet.name,
                   detail: tkaMissTourniquet.detail,
                   sectionLabel: "Equipment",
-                  comment: "In SPD being prepared — ETA 08:30",
+                  comment: "In SPD being prepared, ETA 08:30",
                 }]
               : []),
             ...(tkaMissCement
@@ -554,7 +554,7 @@ export function buildSeed(): AppState {
                   sectionLabel: "Supplies & disposables",
                   comment: "Rep delivering with trays",
                   resolvedAt: iso(-1 * hour),
-                  resolvedBy: "Ops — J. Ruiz",
+                  resolvedBy: "J. Ruiz (Ops)",
                 }]
               : []),
           ],

@@ -266,7 +266,7 @@ function LoanerForm({ store, existing, onDone }: { store: Store; existing?: Loan
                 setF((s) => ({ ...s, cardId: e.target.value, procedure: card?.procedure ?? s.procedure }));
               }}
             >
-              <option value="">— (or type below)</option>
+              <option value="">(or type below)</option>
               {surgeonCards.map((c) => <option key={c.id} value={c.id}>{c.procedure}</option>)}
             </select>
           ) : (

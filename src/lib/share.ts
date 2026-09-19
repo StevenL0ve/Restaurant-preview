@@ -13,7 +13,7 @@ export function cardToText(
   const lines: string[] = [];
   lines.push(card.procedure.toUpperCase());
   if (surgeon) {
-    lines.push(`${surgeon.name} — ${surgeon.specialty}${surgeon.facility ? ` · ${surgeon.facility}` : ""}`);
+    lines.push(`${surgeon.name} · ${surgeon.specialty}${surgeon.facility ? ` · ${surgeon.facility}` : ""}`);
     if (surgeon.gloveSize) lines.push(`Gloves: ${surgeon.gloveSize}${surgeon.gloveType ? ` (${surgeon.gloveType})` : ""}`);
   }
   lines.push("");
@@ -32,14 +32,14 @@ export function cardToText(
     lines.push("");
     lines.push(`${sec.label.toUpperCase()}`);
     for (const it of arr) {
-      lines.push(`  • ${it.name}${it.detail ? ` — ${it.detail}` : ""}`);
+      lines.push(`  • ${it.name}${it.detail ? ` (${it.detail})` : ""}`);
       const where = it.locationId ? locationName?.(it.locationId) : undefined;
       if (where) lines.push(`      📍 ${where}`);
     }
   }
 
   lines.push("");
-  lines.push("— shared from ORSync");
+  lines.push("Shared from ORSync");
   return lines.join("\n");
 }
 
@@ -50,7 +50,7 @@ export function mailtoHref(
   surgeon?: Surgeon,
   locationName?: (id: string) => string | undefined,
 ): string {
-  const subject = `Preference card: ${card.procedure}${surgeon ? ` — ${surgeon.name}` : ""}`;
+  const subject = `Preference card: ${card.procedure}${surgeon ? `, ${surgeon.name}` : ""}`;
   const body = cardToText(card, surgeon, locationName);
   return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

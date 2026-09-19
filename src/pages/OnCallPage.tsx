@@ -28,7 +28,7 @@ export function OnCallPage() {
       <div className="page-head">
         <div>
           <h1>On call</h1>
-          <p className="muted">Who’s on right now — tap a number to call from your phone.</p>
+          <p className="muted">Who’s on right now. Tap a number to call from your phone.</p>
         </div>
         <div className="head-actions">
           <Link className="btn" to="/on-call/people">Manage people & positions</Link>

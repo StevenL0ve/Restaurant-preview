@@ -19,8 +19,8 @@ export function FacilitiesPage() {
         <div>
           <h1>Facilities & locations</h1>
           <p className="muted">
-            A location lives in a facility. Edit one here and it updates on every card that uses it —
-            no hunting through cards.
+            A location lives in a facility. Edit one here and it updates on every card that uses it.
+            No hunting through cards.
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@ function FacilityCard({ facility, store }: { facility: Facility; store: Store })
       <datalist id={areaListId}>{areas.map((a) => <option key={a} value={a} />)}</datalist>
       <div className="item-add loc-add">
         <input list={areaListId} placeholder="Area (e.g. Lap cart)" value={area} onChange={(e) => setArea(e.target.value)} />
-        <input placeholder="Spot (e.g. drawer 2) — optional" value={spot} onChange={(e) => setSpot(e.target.value)} />
+        <input placeholder="Spot (e.g. drawer 2), optional" value={spot} onChange={(e) => setSpot(e.target.value)} />
         <button
           className="btn btn-sm"
           disabled={!area.trim()}

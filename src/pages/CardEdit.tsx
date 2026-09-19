@@ -126,7 +126,7 @@ export function CardEdit() {
                 }}
               >
                 {state.surgeons.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name} — {s.specialty}</option>
+                  <option key={s.id} value={s.id}>{s.name} · {s.specialty}</option>
                 ))}
                 <option value="__new">+ Add a new surgeon…</option>
               </select>
@@ -160,7 +160,7 @@ export function CardEdit() {
                   changeFacility(e.target.value || undefined);
                 }}
               >
-                <option value="">— none —</option>
+                <option value="">None</option>
                 {state.facilities.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
@@ -356,7 +356,7 @@ function ItemEditor({
         <div className="newloc-form">
           <span className="newloc-title">New location</span>
           <input list={areaListId} placeholder="Area (e.g. Lap cart)" value={newLoc.area} onChange={(e) => setNewLoc((n) => ({ ...n, area: e.target.value }))} />
-          <input placeholder="Spot (e.g. drawer 2) — optional" value={newLoc.spot} onChange={(e) => setNewLoc((n) => ({ ...n, spot: e.target.value }))} />
+          <input placeholder="Spot (e.g. drawer 2), optional" value={newLoc.spot} onChange={(e) => setNewLoc((n) => ({ ...n, spot: e.target.value }))} />
           <button
             className="btn btn-sm btn-primary"
             disabled={!newLoc.area.trim()}

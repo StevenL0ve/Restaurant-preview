@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   backgroundColor: "#f6f8fb",
   ios: {
-    contentInset: "always",
+    contentInset: "never",
     backgroundColor: "#f6f8fb",
   },
   android: {

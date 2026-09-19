@@ -141,7 +141,7 @@ export function CardDetail() {
         <a className="btn" href={mailtoHref(card, sg, (locId) => locationLabelOf(state, locId))}>✉️ Email</a>
         <a className="btn" href={smsHref(card, sg, (locId) => locationLabelOf(state, locId))}>💬 Text</a>
         <button className="btn" onClick={onShare}>Share text</button>
-        <button className="btn" onClick={() => exportCardFile(card.id)}>Export file</button>
+        <button className="btn" onClick={() => exportCardFile(card.id)}>Share file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (
           <select

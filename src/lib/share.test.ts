@@ -25,7 +25,7 @@ describe("cardToText", () => {
   });
 
   it("renders items with their detail", () => {
-    expect(text).toMatch(/Vicryl 0 — fascia/);
+    expect(text).toMatch(/Vicryl 0 \(fascia/);
   });
 
   it("includes the location for items that have one", () => {
@@ -50,7 +50,7 @@ describe("email / text links", () => {
     const href = mailtoHref(card, surgeon);
     expect(href.startsWith("mailto:?subject=")).toBe(true);
     const decoded = decodeURIComponent(href);
-    expect(decoded).toContain("Preference card: Laparoscopic Cholecystectomy — Dr. Alvarez");
+    expect(decoded).toContain("Preference card: Laparoscopic Cholecystectomy, Dr. Alvarez");
     expect(decoded).toContain("LAPAROSCOPIC CHOLECYSTECTOMY");
   });
 

@@ -17,7 +17,7 @@ const COMMENT_PRESETS = [
   "Waiting on rep delivery",
   "In SPD being prepared",
   "On order",
-  "Backordered — sub approved",
+  "Backordered, sub approved",
 ];
 
 function timeShort(iso: string): string {
@@ -105,7 +105,7 @@ export function CartPullPage() {
           <span className="muted small">
             Pulling as <strong>{me}</strong>{" "}
             <button className="link small" onClick={() => setEditingName(true)}>change</button>
-            {" "}— your name is stamped on each item so co-pullers don’t double-pull.
+            . Your name is stamped on each item so co-pullers don’t double-pull.
           </span>
         )}
       </div>
@@ -159,7 +159,7 @@ export function CartPullPage() {
               className="btn btn-primary"
               onClick={() => { tapMedium(); finishCartPull(cart.id, me); }}
             >
-              I’m done pulling {pulled < total ? `(${total - pulled} left → missing list)` : "— cart complete"}
+              I’m done pulling {pulled < total ? `(${total - pulled} left, they go on the missing list)` : "(cart complete)"}
             </button>
           </div>
         </>
@@ -196,7 +196,7 @@ function DoneView({ cart, me, onResume }: { cart: CaseCart; me: string; onResume
         ))}
         {resolved.length > 0 && (
           <div className="resolved-block">
-            <span className="muted small">Resolved — now in the cart:</span>
+            <span className="muted small">Resolved and now in the cart:</span>
             {resolved.map((m) => (
               <div key={m.itemId} className="resolved-row">
                 <span className="resolved-name">✓ {m.name}</span>
@@ -234,7 +234,7 @@ export function MissingRow({
       </div>
       <input
         className="missing-comment"
-        placeholder="Comment — waiting on rep, in SPD, ETA, alternative pulled…"
+        placeholder="Comment: waiting on rep, in SPD, ETA, alternative pulled…"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => draft.trim() !== (entry.comment ?? "") && onComment(draft)}

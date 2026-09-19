@@ -1579,3 +1579,8 @@ body {
   border-radius: 9px; padding: 8px 12px; display: inline-block;
 }
 .send-result p { margin: 0; font-size: 14px; line-height: 1.55; }
+
+/* Never allow sideways scroll of the whole app; long lines wrap instead. */
+html, body { overflow-x: hidden; }
+.oncall-up-item { white-space: normal; }
+.oncall-phone { word-break: keep-all; }

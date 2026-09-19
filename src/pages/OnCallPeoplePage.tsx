@@ -28,7 +28,7 @@ export function OnCallPeoplePage() {
 
       <div className="card settings-card">
         <h2>Positions</h2>
-        <p className="muted small">The on-call roles staff need to reach — OR tech, circulator, surgeons, anesthesia.</p>
+        <p className="muted small">The on-call roles staff need to reach: OR tech, circulator, surgeons, anesthesia.</p>
         {ON_CALL_CATEGORIES.map((cat) => {
           const list = state.onCallPositions.filter((p) => p.category === cat);
           if (!list.length) return null;
@@ -42,7 +42,7 @@ export function OnCallPeoplePage() {
           );
         })}
         <div className="pos-add">
-          <input value={posName} onChange={(e) => setPosName(e.target.value)} placeholder="New position (e.g. Perfusionist — On call)" />
+          <input value={posName} onChange={(e) => setPosName(e.target.value)} placeholder="New position (e.g. Perfusionist)" />
           <select value={posCat} onChange={(e) => setPosCat(e.target.value as OnCallCategory)}>
             {ON_CALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -68,7 +68,7 @@ export function OnCallPeoplePage() {
         )}
         <ul className="people-list">
           {state.onCallPeople.length === 0 && editingPerson !== "new" && (
-            <li className="muted small">No people yet — add the folks who take call.</li>
+            <li className="muted small">No people yet. Add the folks who take call.</li>
           )}
           {state.onCallPeople.map((p) =>
             editingPerson === p.id ? (

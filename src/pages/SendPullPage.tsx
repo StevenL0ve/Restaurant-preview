@@ -44,7 +44,7 @@ export function SendPullPage() {
         <div>
           <h1>Send a card to pull</h1>
           <p className="muted">
-            Need someone else to pull this cart? Send them the card — importing it gives them the
+            Need someone else to pull this cart? Send them the card. Importing it gives them the
             full card <strong>and</strong> the carts for that day, ready to check off.
           </p>
         </div>
@@ -57,7 +57,7 @@ export function SendPullPage() {
             <select value={cardId} onChange={(e) => setCardId(e.target.value)} autoFocus={!preset}>
               <option value="">Pick a card…</option>
               {cardOptions.map(({ c, sg }) => (
-                <option key={c.id} value={c.id}>{c.procedure} — {sg?.name ?? "Unassigned"}</option>
+                <option key={c.id} value={c.id}>{c.procedure} · {sg?.name ?? "Unassigned"}</option>
               ))}
             </select>
           </label>
@@ -90,7 +90,7 @@ export function SendPullPage() {
 
           <label className="field field-wide">
             <span>Note for the puller (optional)</span>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. staged by 06:30, OR 5 — no patient info" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. staged by 06:30, OR 5 (no patient info)" />
           </label>
 
           <label className="field">
@@ -113,7 +113,7 @@ export function SendPullPage() {
             <p>✅ Sent. When they open the file in ORSync (Settings → <strong>Import cards…</strong>),
               the card merges into their library and <strong>{parseInt(count, 10) || 1} cart{(parseInt(count, 10) || 1) === 1 ? "" : "s"}</strong> for {date} appear on their Carts tab.</p>
           ) : (
-            <p>💾 File saved. Send it however you like (text, email, chat) — importing it via Settings →
+            <p>💾 File saved. Send it however you like (text, email, chat). Importing it via Settings →
               <strong> Import cards…</strong> gives them the card and the ready-to-pull carts.</p>
           )}
         </div>

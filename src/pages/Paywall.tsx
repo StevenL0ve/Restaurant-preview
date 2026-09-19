@@ -33,13 +33,13 @@ export function Paywall() {
       <div className="paywall-hero">
         <img src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="" width={64} height={64} className="paywall-logo" />
         <h1>ORSync Pro</h1>
-        <p className="muted">Your whole career's worth of cards — every surgeon, every facility.</p>
+        <p className="muted">Your whole career's worth of cards: every surgeon, every facility.</p>
       </div>
 
       {BETA_UNLOCKED && (
         <div className="beta-banner">
           🎉 <strong>Free during beta.</strong> Everything below is unlocked while ORSync is in
-          TestFlight — enjoy Pro on us and tell us what to improve.
+          TestFlight. Enjoy Pro on us and tell us what to improve.
         </div>
       )}
 
@@ -71,7 +71,7 @@ export function Paywall() {
         </button>
       ) : (
         <button className="btn btn-primary paywall-cta" onClick={subscribe}>
-          Continue — {plan === "annual" ? `${PRICE_ANNUAL}/yr` : `${PRICE_MONTHLY}/mo`}
+          Continue: {plan === "annual" ? `${PRICE_ANNUAL}/yr` : `${PRICE_MONTHLY}/mo`}
         </button>
       )}
 

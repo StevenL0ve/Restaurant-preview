@@ -56,7 +56,7 @@ describe("app smoke test", () => {
     ["/surgeons", "Surgeons"],
     ["/loaners", "Loaner trays"],
     ["/carts", "Case carts"],
-    ["/carts/missing", "Missing — all carts"],
+    ["/carts/missing", "Missing items"],
     ["/carts/send", "Send a card to pull"],
     ["/on-call", "On call"],
     ["/on-call/people", "everyone who can take call"],
@@ -94,7 +94,7 @@ describe("app smoke test", () => {
     const done = renderAt("/carts/cart-seed-2");
     expect(done).toContain("Missing (1)");
     expect(done).toContain("In SPD being prepared");
-    expect(done).toContain("Resolved — now in the cart:");
+    expect(done).toContain("Resolved and now in the cart:");
   });
 
   it("renders a card's print view with items and locations in the table", () => {

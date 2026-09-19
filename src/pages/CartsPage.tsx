@@ -68,7 +68,7 @@ export function CartsPage() {
 
       {missingCount > 0 && (
         <Link to="/carts/missing" className="missing-banner">
-          ⚠️ <strong>{missingCount}</strong> missing item{missingCount === 1 ? "" : "s"} across {dayLabel(offset).toLowerCase()}’s carts — open the ops list →
+          ⚠️ <strong>{missingCount}</strong> missing item{missingCount === 1 ? "" : "s"} across {dayLabel(offset).toLowerCase()}’s carts. Open the ops list →
         </Link>
       )}
 
@@ -77,13 +77,13 @@ export function CartsPage() {
           <h2>New carts for {dayLabel(offset).toLowerCase()}</h2>
           <p className="muted small">
             Pulling the same procedure for several cases? Set the count and each case gets its own
-            cart — five cataracts means five carts, pulled and tracked separately.
+            cart. Five cataracts means five carts, pulled and tracked separately.
           </p>
           <div className="newcart-form">
             <select value={cardId} onChange={(e) => setCardId(e.target.value)} autoFocus>
               <option value="">Pick a preference card…</option>
               {cardOptions.map(({ c, sg }) => (
-                <option key={c.id} value={c.id}>{c.procedure} — {sg?.name ?? "Unassigned"}</option>
+                <option key={c.id} value={c.id}>{c.procedure} · {sg?.name ?? "Unassigned"}</option>
               ))}
             </select>
             <label className="cart-count">

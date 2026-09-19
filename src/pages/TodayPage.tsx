@@ -182,7 +182,7 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
           <select value={cardId} onChange={(e) => setCardId(e.target.value)}>
             {state.cards.map((c) => {
               const sg = surgeonOf(state, c.surgeonId);
-              return <option key={c.id} value={c.id}>{c.procedure} — {sg?.name ?? "?"}</option>;
+              return <option key={c.id} value={c.id}>{c.procedure} · {sg?.name ?? "?"}</option>;
             })}
           </select>
         </label>

@@ -62,7 +62,7 @@ export function SurgeonDetail() {
               <span className="meta-value">{sg.quirks}</span>
             </div>
           ) : (
-            !sg.gloveSize && <p className="muted small" style={{ margin: 0 }}>No glove size or quirks recorded yet — tap Edit to add them.</p>
+            !sg.gloveSize && <p className="muted small" style={{ margin: 0 }}>No glove size or quirks recorded yet. Tap Edit to add them.</p>
           )}
         </div>
       )}

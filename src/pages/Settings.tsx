@@ -7,8 +7,8 @@ import { BETA_UNLOCKED, hasPro } from "../lib/tier";
 
 function importMessage(added: number, skipped: number, source: string, carts = 0): string {
   const cards = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
-  const cartNote = carts > 0 ? ` Set up ${carts} case cart${carts === 1 ? "" : "s"} — see the Carts tab.` : "";
-  if (added === 0 && skipped > 0) return `Already had all of it — skipped ${cards(skipped)} you already have.${cartNote}`;
+  const cartNote = carts > 0 ? ` Set up ${carts} case cart${carts === 1 ? "" : "s"}. See the Carts tab.` : "";
+  if (added === 0 && skipped > 0) return `Already had all of it. Skipped ${cards(skipped)} you already have.${cartNote}`;
   const base = `Imported ${cards(added)} from ${source}.`;
   return (skipped > 0 ? `${base} Skipped ${cards(skipped)} you already had.` : base) + cartNote;
 }
@@ -63,7 +63,7 @@ export function Settings() {
       <div className="card settings-card">
         <h2>Account</h2>
         {user?.guest ? (
-          <p>You’re using ORSync <strong>without an account</strong> — everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
+          <p>You’re using ORSync <strong>without an account</strong>. Everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
         ) : (
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
@@ -82,11 +82,11 @@ export function Settings() {
         <h2>Plan</h2>
         <p>
           {BETA_UNLOCKED ? (
-            <>You're on the <strong>beta</strong> — every Pro feature is unlocked, free, while we polish ORSync together.</>
+            <>You're on the <strong>beta</strong>: every Pro feature is unlocked, free, while we polish ORSync together.</>
           ) : hasPro() ? (
-            <>You're on <strong>ORSync Pro</strong> — unlimited cards, facilities, and everything else.</>
+            <>You're on <strong>ORSync Pro</strong>: unlimited cards, facilities, and everything else.</>
           ) : (
-            <>You're on the <strong>free plan</strong> — 10 cards, 1 facility.</>
+            <>You're on the <strong>free plan</strong>: 10 cards, 1 facility.</>
           )}
         </p>
         <Link className="btn" to="/upgrade">See what's in Pro →</Link>
@@ -105,7 +105,7 @@ export function Settings() {
         <h2>Your data</h2>
         <p>
           Your whole library lives on this device. Export it to back it up or move to a new phone, and
-          <strong> import cards a colleague shared</strong> — they merge into your library as your own
+          <strong> import cards a colleague shared</strong>. They merge into your library as your own
           editable copies (surgeons, facilities, and locations are matched by name, never duplicated).
         </p>
         <ul className="data-counts">
@@ -125,7 +125,7 @@ export function Settings() {
       <div className="card settings-card">
         <h2>ORSync on your computer</h2>
         <p>
-          ORSync is also a website — open it in any browser to <strong>create, edit, and print</strong>
+          ORSync is also a website. Open it in any browser to <strong>create, edit, and print</strong>
           {" "}cards with a real keyboard:
         </p>
         <p>
@@ -143,7 +143,7 @@ export function Settings() {
         <h2>Bulk import from a spreadsheet</h2>
         <p>
           Already have preference cards in Genesis, SIS / S3, or Excel? Export them to CSV and import
-          here — one row per item (Facility, Surgeon, Procedure, Section, Item, Detail, Area, Spot).
+          here, one row per item (Facility, Surgeon, Procedure, Section, Item, Detail, Area, Spot).
           Surgeons, facilities, and locations are created automatically and matched by name.
         </p>
         <div className="form-actions">
@@ -155,7 +155,7 @@ export function Settings() {
 
       <div className="card settings-card danger-zone">
         <h2>Wipe everything</h2>
-        <p>Remove all surgeons and cards from this device. This can’t be undone — export first.</p>
+        <p>Remove all surgeons and cards from this device. This can’t be undone, so export first.</p>
         {confirmWipe ? (
           <div className="confirm">
             Delete all your data?
@@ -171,7 +171,7 @@ export function Settings() {
         <h2>About</h2>
         <p>
           ORSync is a personal surgical preference-card library for scrub techs and circulating
-          nurses — including travelers who move between facilities. It’s the tool the old apps wouldn’t
+          nurses, including travelers who move between facilities. It’s the tool the old apps wouldn’t
           let you use for yourself.
         </p>
         <p className="muted small">ORSync v{APP_VERSION}</p>

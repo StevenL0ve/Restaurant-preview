@@ -37,10 +37,10 @@ export function Login() {
       <div className="auth-card">
         <img className="auth-logo" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="ORSync" width={64} height={64} />
         <h1 className="auth-title">ORSync</h1>
-        <p className="auth-sub">Your surgical preference cards — yours alone</p>
+        <p className="auth-sub">Your surgical preference cards. Yours alone.</p>
 
         <button className="btn btn-primary auth-submit" onClick={continueAsGuest} type="button">
-          Use it now — no account
+          Use it now, no account
         </button>
         <p className="auth-foot" style={{ margin: "10px 0 18px" }}>
           Everything stays on this device. Add an account anytime to lock it with Face&nbsp;ID.

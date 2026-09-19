@@ -6,7 +6,7 @@ import { ocrImage } from "../lib/ocr";
 import type { CardItem, PrefCard } from "../types";
 import { SECTIONS } from "../types";
 
-const PLACEHOLDER = `Paste or type a card — for example:
+const PLACEHOLDER = `Paste or type a card. For example:
 
 Procedure: Laparoscopic Cholecystectomy
 Surgeon: Dr. Chen
@@ -18,7 +18,7 @@ Instruments
 - Maryland dissector
 
 Sutures
-- Vicryl 0 — fascia
+- Vicryl 0 (fascia)
 
 Equipment
 - ESU unit (coag 30)`;
@@ -92,12 +92,12 @@ export function CardScan() {
     try {
       const recognized = await ocrImage(file, (p, s) => { setPct(p); setStatus(prettyStatus(s)); });
       if (!recognized) {
-        setErr("Couldn’t read any text from that photo. Try a straighter, brighter shot — or just type it below.");
+        setErr("Couldn’t read any text from that photo. Try a straighter, brighter shot, or just type it below.");
       } else {
         setText((prev) => (prev.trim() ? `${prev}\n${recognized}` : recognized));
       }
     } catch {
-      setErr("Couldn’t start the scanner — you may be offline. You can still paste or type the card below.");
+      setErr("Couldn’t start the scanner. You may be offline. You can still paste or type the card below.");
     } finally {
       setBusy(false);
     }
@@ -118,7 +118,7 @@ export function CardScan() {
           <h1>Scan or paste a card</h1>
           <p className="muted">
             Take a photo of a printed card, or paste text you already have. We’ll pull out the
-            procedure, surgeon, and items so you can review and save — a fast head start on a new card.
+            procedure, surgeon, and items so you can review and save. A fast head start on a new card.
           </p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export function CardScan() {
       <div className="card form-card">
         <h2>Scan a printed or typed card</h2>
         <p className="muted small">
-          The photo is read <strong>on your device</strong> — nothing is uploaded. Best results: lay the
+          The photo is read <strong>on your device</strong>. Nothing is uploaded. Best results: lay the
           card flat, fill the frame, good light.
         </p>
         <div className="form-actions">

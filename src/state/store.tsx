@@ -36,12 +36,18 @@ const LEGACY_KEY = "orsync.v1"; // free-text item.location strings, no facilitie
 // Rename any that still carry an exact old default so early testers see the new
 // wording without wiping their data. Only touches untouched defaults.
 const ONCALL_RENAMES: Record<string, string> = {
-  "On-call OR Tech": "OR Tech — On call",
-  "On-call Circulating Nurse": "Circulating Nurse — On call",
-  "On-call Charge Nurse": "Charge Nurse — On call",
-  "On-call General Surgeon": "General Surgeon — On call",
-  "On-call Ortho Surgeon": "Ortho Surgeon — On call",
-  "On-call Anesthesiologist": "Anesthesiologist — On call",
+  "On-call OR Tech": "OR Tech",
+  "OR Tech — On call": "OR Tech",
+  "On-call Circulating Nurse": "Circulating Nurse",
+  "Circulating Nurse — On call": "Circulating Nurse",
+  "On-call Charge Nurse": "Charge Nurse",
+  "Charge Nurse — On call": "Charge Nurse",
+  "On-call General Surgeon": "General Surgeon",
+  "General Surgeon — On call": "General Surgeon",
+  "On-call Ortho Surgeon": "Ortho Surgeon",
+  "Ortho Surgeon — On call": "Ortho Surgeon",
+  "On-call Anesthesiologist": "Anesthesiologist",
+  "Anesthesiologist — On call": "Anesthesiologist",
 };
 function migrateOnCallNames(state: AppState): AppState {
   if (!state.onCallPositions?.some((p) => ONCALL_RENAMES[p.name])) return state;
@@ -648,9 +654,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       exportCardFile: (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
-        triggerDownload(
-          new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }),
+        // Share sheet on phones (text it, AirDrop it, mail it); download on desktop.
+        void shareJsonFile(
           `${slugName(card?.procedure ?? "card")}.orsync.json`,
+          bundle,
+          `Preference card: ${card?.procedure ?? ""}`,
         );
       },
 
@@ -696,7 +704,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const now = new Date().toISOString();
           const note = [pr.note, pr.requestedBy ? `asked by ${pr.requestedBy}` : undefined]
             .filter(Boolean)
-            .join(" — ") || undefined;
+            .join(", ") || undefined;
           const newCarts: CaseCart[] = [];
           for (const localId of new Set(cardIds)) {
             if (next.carts.some((c) => c.cardId === localId && c.date === pr.date)) continue;
@@ -1101,13 +1109,13 @@ export function missingDayText(s: AppState, date: string): string {
   const lines: string[] = [`MISSING ITEMS — case carts, ${date}`, ""];
   for (const { cart, card, missing } of groups) {
     const sg = card ? s.surgeons.find((x) => x.id === card.surgeonId) : undefined;
-    lines.push(`${card?.procedure ?? "Unknown card"}${cart.label ? ` (${cart.label})` : ""}${sg ? ` — ${sg.name}` : ""}`);
+    lines.push(`${card?.procedure ?? "Unknown card"}${cart.label ? ` (${cart.label})` : ""}${sg ? ` · ${sg.name}` : ""}`);
     for (const m of missing) {
       lines.push(`  • ${m.name}${m.detail ? ` — ${m.detail}` : ""}${m.comment ? `  [${m.comment}]` : ""}`);
     }
     lines.push("");
   }
-  lines.push("— sent from ORSync");
+  lines.push("Sent from ORSync");
   return lines.join("\n");
 }
 

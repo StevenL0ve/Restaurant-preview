@@ -47,7 +47,7 @@ export function Dashboard() {
       <div className="dash-hero">
         <div className="dash-hero-text">
           <h1>Ready for your next case</h1>
-          <p>Your preference cards, your way — no hospital login, works offline.</p>
+          <p>Your preference cards, your way. No hospital login, works offline.</p>
         </div>
         <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
           <Icon name="plus" size={17} /> New card

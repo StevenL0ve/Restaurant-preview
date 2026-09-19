@@ -37,8 +37,8 @@ export function MissingDayPage() {
       </div>
       <div className="page-head">
         <div>
-          <h1>Missing — all carts</h1>
-          <p className="muted">Everything still not in a cart, across the whole day. Comments are live — edit here, pullers see it on the cart.</p>
+          <h1>Missing items</h1>
+          <p className="muted">Everything still not in a cart, across the whole day. Comments are live: edit here and pullers see it on the cart.</p>
         </div>
         <div className="head-actions">
           <button className="btn" onClick={copyRollup}>{copied ? "✓ Copied" : "📋 Copy for SPD / email"}</button>
@@ -55,7 +55,7 @@ export function MissingDayPage() {
       {groups.length === 0 ? (
         <div className="empty-state">
           <span className="empty-emoji">🎉</span>
-          <p>No open missing items for {dayLabel(offset).toLowerCase()} — every cart is whole.</p>
+          <p>No open missing items for {dayLabel(offset).toLowerCase()}. Every cart is whole.</p>
         </div>
       ) : (
         groups.map(({ cart, card, missing }) => {

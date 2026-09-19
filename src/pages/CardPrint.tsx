@@ -18,7 +18,7 @@ export function CardPrint() {
   useEffect(() => {
     if (!card) return;
     const prev = document.title;
-    document.title = `${card.procedure} — preference card`;
+    document.title = `${card.procedure} preference card`;
     return () => { document.title = prev; };
   }, [card]);
 
@@ -45,7 +45,7 @@ export function CardPrint() {
     <div className="print-page">
       <div className="print-toolbar">
         <Link className="btn" to={`/cards/${card.id}`}>← Back to card</Link>
-        <span className="muted small">On a phone, Print also offers <strong>Save to PDF</strong> — you can email or text the PDF from there.</span>
+        <span className="muted small">On a phone, Print also offers <strong>Save to PDF</strong>, so you can email or text the PDF from there.</span>
         <button className="btn btn-primary" onClick={() => window.print()}>🖨 Print</button>
       </div>
 
@@ -107,7 +107,7 @@ export function CardPrint() {
         })}
 
         <footer className="print-foot">
-          Printed from ORSync — the personal preference-card app. No patient information on this card.
+          Printed from ORSync, the personal preference-card app. No patient information on this card.
         </footer>
       </div>
     </div>
