@@ -1,0 +1,20 @@
+# Creates/fetches the public TestFlight link: ensures the external beta group
+# exists with its public link on, attaches the newest processed build, and
+# submits it for Apple's one-time beta review. Prints the link in the log.
+name: testflight-public-link
+on:
+  workflow_dispatch:
+
+jobs:
+  public-link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install API client deps
+        run: pip install --quiet pyjwt cryptography requests
+      - name: Ensure group, build & review; print public link
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_B64: ${{ secrets.ASC_API_KEY_B64 }}
+        run: python3 scripts/testflight_public_link.py
