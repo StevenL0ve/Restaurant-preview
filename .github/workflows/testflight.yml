@@ -1,13 +1,15 @@
-# Builds the iOS app on a GitHub macOS runner and uploads it to TestFlight.
+# Builds CoParent for iOS on a GitHub macOS runner and uploads it to TestFlight.
 # No local Mac needed: signing is cloud-managed by Xcode using an App Store
 # Connect API key (Admin role required for automatic cert/profile creation).
 #
-# Required repository secrets (Settings → Secrets and variables → Actions):
-#   ASC_KEY_ID       App Store Connect API key ID (e.g. 2X9R4HXF34)
-#   ASC_ISSUER_ID    Issuer ID from the same page (a UUID)
-#   ASC_KEY_CONTENT  The AuthKey_XXXX.p8 — paste the file's RAW text
-#                    (starts with "-----BEGIN PRIVATE KEY-----") or base64
+# The bundle ID comes from capacitor.config.ts (com.steven.coparent) and must
+# match the App Store Connect record ("Co-Parently").
+#
+# Repository secrets used (already configured in this repo):
+#   ASC_ISSUER_ID    App Store Connect API Issuer ID (a UUID)
+#   ASC_KEY_CONTENT  The AuthKey_XXXX.p8 — raw text or base64
 #   APPLE_TEAM_ID    10-character Apple Developer Team ID
+#   ASC_KEY_ID       (optional) API key ID — defaults to the team's known key
 #
 # Run it from the Actions tab (workflow_dispatch) on the branch to ship.
 name: TestFlight
@@ -35,11 +37,15 @@ jobs:
 
       # The native project is not committed — generate it fresh (runs pod
       # install), stamp app icons/splash from the real logo, then sync the
-      # web build in.
+      # web build in. @capacitor/assets isn't a committed dep (its sharp
+      # binary can't install everywhere), so pull it here; if icon stamping
+      # fails we still ship with Capacitor's defaults rather than lose the run.
       - name: Generate iOS native project
         run: |
           npx cap add ios
-          npx capacitor-assets generate --ios
+          npm i -D --no-save @capacitor/assets \
+            && npx capacitor-assets generate --ios \
+            || echo "::warning::icon generation skipped — using default icons"
           npx cap sync ios
 
       - name: Set export-compliance flag
@@ -47,6 +53,19 @@ jobs:
           PLIST=ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+
+      # Apple requires the iOS 26 SDK (Xcode 26+) for App Store uploads; the
+      # runner's default is older, so pick the newest Xcode 26 on the image.
+      - name: Select Xcode 26
+        run: |
+          ls -d /Applications/Xcode*.app
+          XCODE_APP=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_APP" ]; then
+            XCODE_APP=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          fi
+          echo "Using $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
 
       - name: Write App Store Connect API key
         env:
@@ -59,46 +78,45 @@ jobs:
             echo "$ASC_KEY_CONTENT" | base64 --decode > "$HOME/asc/AuthKey.p8"
           fi
 
-      - name: Archive (cloud-managed signing)
+      # The archive itself is UNSIGNED — signing happens once at export with
+      # the cloud-managed distribution certificate. Signing the archive too
+      # minted a new Apple Development certificate on every run (ephemeral
+      # runner keychains), which eventually hit Apple's certificate cap.
+      - name: Archive (unsigned)
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Offset keeps CI build numbers clear of the builds already uploaded
-          # from the Mac (1.0 (1) and 1.0 (2)).
-          BUILD_NUM=$(( ${{ github.run_number }} + 10 ))
+          # +100 keeps CI build numbers clear of the Co-Parently builds
+          # uploaded earlier from a Mac; run_number only ever increases, so
+          # numbers stay unique and monotonic.
+          BUILD_NUM=$(( ${{ github.run_number }} + 100 ))
           echo "Using build number $BUILD_NUM"
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/App.xcarchive archive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/asc/AuthKey.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             CURRENT_PROJECT_VERSION=$BUILD_NUM \
             MARKETING_VERSION=1.0
 
-      - name: Export & upload to TestFlight
+      - name: Export signed IPA
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          cat > build/ExportOptions.plist <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0"><dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>upload</string>
-            <key>teamID</key><string>$APPLE_TEAM_ID</string>
-            <key>signingStyle</key><string>automatic</string>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-          </dict></plist>
-          PLIST
+          python3 - <<'PY'
+          import plistlib, os
+          with open("build/ExportOptions.plist", "wb") as f:
+              plistlib.dump({
+                  "method": "app-store-connect",
+                  "signingStyle": "automatic",
+                  "teamID": os.environ["APPLE_TEAM_ID"],
+              }, f)
+          PY
+          set +e
           xcodebuild -exportArchive \
             -archivePath build/App.xcarchive \
             -exportOptionsPlist build/ExportOptions.plist \
@@ -107,3 +125,36 @@ jobs:
             -authenticationKeyPath "$HOME/asc/AuthKey.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "::group::Xcode distribution logs"
+            for d in $(find /var/folders -type d -name "*.xcdistributionlogs" 2>/dev/null); do
+              for f in "$d"/*.log; do echo "== $f =="; tail -n 150 "$f"; done
+            done
+            echo "::endgroup::"
+            exit $STATUS
+          fi
+          ls -la build/export
+
+      # Xcode 26.3's combined export+upload fails with an "unnamed format
+      # error", so upload separately with fastlane pilot.
+      - name: Upload to TestFlight (fastlane pilot)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          key = open(os.path.expanduser("~/asc/AuthKey.p8")).read()
+          with open(os.path.expanduser("~/asc/key.json"), "w") as f:
+              json.dump({"key_id": os.environ["ASC_KEY_ID"],
+                         "issuer_id": os.environ["ASC_ISSUER_ID"],
+                         "key": key, "in_house": False}, f)
+          PY
+          IPA=$(ls build/export/*.ipa | head -1)
+          echo "Uploading $IPA"
+          fastlane pilot upload \
+            --ipa "$IPA" \
+            --api_key_path "$HOME/asc/key.json" \
+            --skip_waiting_for_build_processing true \
+            --skip_submission true
