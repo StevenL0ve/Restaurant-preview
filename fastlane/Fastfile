@@ -69,6 +69,7 @@ platform :ios do
     team = ENV["APPLE_TEAM_ID"]
     xcargs = []
     xcargs << "DEVELOPMENT_TEAM=#{team}" if team && !team.empty?
+    xcargs << "IPHONEOS_DEPLOYMENT_TARGET=15.0" # Apple requires ≥15.0 from Spring 2027 (ITMS-90068)
     auth = []
     unless ENV["MATCH_GIT_URL"]
       xcargs << "CODE_SIGN_STYLE=Automatic"
