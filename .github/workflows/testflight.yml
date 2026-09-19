@@ -38,14 +38,29 @@ jobs:
       # The native project is not committed — generate it fresh (runs pod
       # install), stamp app icons/splash from the real logo, then sync the
       # web build in. @capacitor/assets isn't a committed dep (its sharp
-      # binary can't install everywhere), so pull it here; if icon stamping
-      # fails we still ship with Capacitor's defaults rather than lose the run.
+      # binary can't install everywhere), so pull it here.
+      #
+      # Icon stamping is checked, not assumed: `cap add ios` lays down
+      # Capacitor's placeholder icon, so if the appiconset is byte-identical
+      # afterwards then generation silently no-opped and we would ship a
+      # stranger's logo to TestFlight. Fail instead — a wrong icon is worse
+      # than a missing build, and it is invisible in a green run.
       - name: Generate iOS native project
         run: |
+          set -euo pipefail
           npx cap add ios
-          npm i -D --no-save @capacitor/assets \
-            && npx capacitor-assets generate --ios \
-            || echo "::warning::icon generation skipped — using default icons"
+          ICONSET=ios/App/App/Assets.xcassets/AppIcon.appiconset
+          BEFORE=$(find "$ICONSET" -type f -exec md5 -q {} + | sort | md5 -q)
+          npm i -D --no-save @capacitor/assets
+          npx capacitor-assets generate --ios
+          AFTER=$(find "$ICONSET" -type f -exec md5 -q {} + | sort | md5 -q)
+          if [ "$BEFORE" = "$AFTER" ]; then
+            echo "::error::App icons are still Capacitor's placeholder — " \
+                 "capacitor-assets did not stamp assets/icon-only.png."
+            ls -la "$ICONSET"
+            exit 1
+          fi
+          echo "App icons stamped from assets/ ($BEFORE -> $AFTER)"
           npx cap sync ios
 
       - name: Set export-compliance flag
