@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store";
 import { Avatar } from "../components/Avatar";
-import { mailtoHref, shareCard, smsHref } from "../lib/share";
+import { shareBlobFile } from "../lib/share";
+import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import { SECTIONS, type SectionKey } from "../types";
@@ -28,10 +29,22 @@ export function CardDetail() {
   const sg = surgeonOf(state, card.surgeonId);
   const facility = facilityOf(state, card.facilityId);
 
-  async function onShare() {
-    const r = await shareCard(card!, sg, (locId) => locationLabelOf(state, locId));
-    setToast(r === "copied" ? "Card copied to clipboard" : r === "failed" ? "Couldn’t share" : null);
-    if (r) setTimeout(() => setToast(null), 1800);
+  // Text or email the card as a proper document, not a wall of words: build a
+  // PDF on-device and hand it to the share sheet (Messages, Mail, AirDrop).
+  const [pdfBusy, setPdfBusy] = useState(false);
+  async function onSharePdf() {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId));
+      const r = await shareBlobFile(cardPdfFilename(card!.procedure), blob, `Preference card: ${card!.procedure}`, "application/pdf");
+      setToast(r === "downloaded" ? "PDF saved. Attach it to a text or email." : null);
+    } catch {
+      setToast("Couldn’t build the PDF.");
+    } finally {
+      setPdfBusy(false);
+      setTimeout(() => setToast(null), 2500);
+    }
   }
 
   function onDuplicate() {
@@ -136,12 +149,12 @@ export function CardDetail() {
       })}
 
       <div className="detail-actions">
-        <button className="btn" onClick={() => navigate(`/cards/${card.id}/print`)}>🖨 Print / PDF</button>
+        <button className="btn btn-primary" onClick={onSharePdf} disabled={pdfBusy}>
+          {pdfBusy ? "Building PDF…" : "💬 Text / email PDF"}
+        </button>
+        <button className="btn" onClick={() => navigate(`/cards/${card.id}/print`)}>🖨 Print</button>
         <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>📤 Send to pull</button>
-        <a className="btn" href={mailtoHref(card, sg, (locId) => locationLabelOf(state, locId))}>✉️ Email</a>
-        <a className="btn" href={smsHref(card, sg, (locId) => locationLabelOf(state, locId))}>💬 Text</a>
-        <button className="btn" onClick={onShare}>Share text</button>
-        <button className="btn" onClick={() => exportCardFile(card.id)}>Share file</button>
+        <button className="btn" onClick={() => exportCardFile(card.id)}>Share import file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (
           <select

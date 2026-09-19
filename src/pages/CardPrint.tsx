@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useStore, surgeonOf, facilityOf, locationLabelOf } from "../state/store";
+import { shareBlobFile } from "../lib/share";
+import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
 import { SECTIONS, type SectionKey } from "../types";
 
 // A paper-ready view of one card: black-on-white, compact, no app chrome.
@@ -45,6 +47,7 @@ export function CardPrint() {
     <div className="print-page">
       <div className="print-toolbar">
         <Link className="btn" to={`/cards/${card.id}`}>← Back to card</Link>
+        <SharePdfButton cardId={card.id} />
         <span className="muted small">On a phone, Print also offers <strong>Save to PDF</strong>, so you can email or text the PDF from there.</span>
         <button className="btn btn-primary" onClick={() => window.print()}>🖨 Print</button>
       </div>
@@ -111,5 +114,26 @@ export function CardPrint() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function SharePdfButton({ cardId }: { cardId: string }) {
+  const { state } = useStore();
+  const [busy, setBusy] = useState(false);
+  const card = state.cards.find((c) => c.id === cardId);
+  if (!card) return null;
+  const sg = surgeonOf(state, card.surgeonId);
+  const facility = facilityOf(state, card.facilityId);
+  async function share() {
+    setBusy(true);
+    try {
+      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId));
+      await shareBlobFile(cardPdfFilename(card!.procedure), blob, `Preference card: ${card!.procedure}`, "application/pdf");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button className="btn" onClick={share} disabled={busy}>{busy ? "Building…" : "💬 Text / email PDF"}</button>
   );
 }
