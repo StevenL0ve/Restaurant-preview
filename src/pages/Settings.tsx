@@ -116,7 +116,7 @@ export function Settings() {
         <div className="form-actions">
           <button className="btn btn-primary" onClick={exportAll}>Export library</button>
           <button className="btn" onClick={() => fileRef.current?.click()}>Import cards…</button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={onImportFile} />
+          <input ref={fileRef} type="file" accept="application/json,.json,.orsync" hidden onChange={onImportFile} />
           <button className="btn" onClick={resetDemo}>Reset demo data</button>
         </div>
         {msg && <p className="muted small" style={{ marginTop: 10 }}>{msg}</p>}

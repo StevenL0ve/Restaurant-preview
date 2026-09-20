@@ -110,8 +110,9 @@ export function SendPullPage() {
       {result && (
         <div className="card form-card send-result">
           {result === "shared" ? (
-            <p>✅ Sent. When they open the file in ORSync (Settings → <strong>Import cards…</strong>),
-              the card merges into their library and <strong>{parseInt(count, 10) || 1} cart{(parseInt(count, 10) || 1) === 1 ? "" : "s"}</strong> for {date} appear on their Carts tab.</p>
+            <p>✅ Sent. They just <strong>tap the file and open it in ORSync</strong> (from Messages:
+              tap the file, then the share icon, then ORSync). The card merges into their library and
+              <strong> {parseInt(count, 10) || 1} cart{(parseInt(count, 10) || 1) === 1 ? "" : "s"}</strong> for {date} appear on their Carts tab automatically.</p>
           ) : (
             <p>💾 File saved. Send it however you like (text, email, chat). Importing it via Settings →
               <strong> Import cards…</strong> gives them the card and the ready-to-pull carts.</p>

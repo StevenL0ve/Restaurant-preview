@@ -1,5 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./state/auth";
+import { useStore } from "./state/store";
+import { initNativeFileOpen } from "./lib/nativeFileOpen";
 import { Login } from "./pages/Login";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
@@ -29,12 +32,39 @@ import { Paywall } from "./pages/Paywall";
 
 export default function App() {
   const { user, ready } = useAuth();
+  const { importCards } = useStore();
+  const navigate = useNavigate();
+  const [banner, setBanner] = useState<string | null>(null);
+  const importRef = useRef(importCards);
+  importRef.current = importCards;
+
+  // A tapped .orsync file (Messages, Mail, AirDrop) imports itself: merge the
+  // card, create any pull-request carts, land the user on the right screen.
+  useEffect(() => {
+    initNativeFileOpen((json) => {
+      try {
+        const { added, skipped, carts } = importRef.current(json);
+        const bits = [
+          added ? `Imported ${added} card${added === 1 ? "" : "s"}` : "Card already in your library",
+          carts ? `set up ${carts} cart${carts === 1 ? "" : "s"}` : "",
+          skipped && added ? `(${skipped} you already had)` : "",
+        ].filter(Boolean);
+        setBanner(`✅ ${bits.join(", ")}.`);
+        navigate(carts ? "/carts" : "/cards");
+      } catch {
+        setBanner("That file didn’t look like an ORSync card file.");
+      }
+      setTimeout(() => setBanner(null), 4500);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!ready) return null;
   if (!user) return <Login />;
 
   return (
     <div className="app">
+      {banner && <div className="toast">{banner}</div>}
       <a href="#main-content" className="skip-link">Skip to content</a>
       <Welcome />
       <Sidebar />

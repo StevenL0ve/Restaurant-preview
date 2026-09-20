@@ -47,6 +47,28 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 
+      - name: Register the .orsync document type
+        run: |
+          PLIST=ios/App/App/Info.plist
+          PB=/usr/libexec/PlistBuddy
+          "$PB" -c "Add :UTExportedTypeDeclarations array" "$PLIST" 2>/dev/null || true
+          "$PB" -c "Add :UTExportedTypeDeclarations:0 dict" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeIdentifier string com.stevennelson.orsync.card" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeDescription string ORSync Preference Card" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo array" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo:0 string public.json" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo:1 string public.data" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification dict" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension array" "$PLIST"
+          "$PB" -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension:0 string orsync" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes array" "$PLIST" 2>/dev/null || true
+          "$PB" -c "Add :CFBundleDocumentTypes:0 dict" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string ORSync Preference Card" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Viewer" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes:0:LSHandlerRank string Owner" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes array" "$PLIST"
+          "$PB" -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string com.stevennelson.orsync.card" "$PLIST"
+
       # Apple requires the iOS 26 SDK (Xcode 26+) for App Store uploads; the
       # runner's default is older, so pick the newest Xcode 26 on the image.
       - name: Select Xcode 26

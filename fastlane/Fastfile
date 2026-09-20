@@ -42,6 +42,29 @@ platform :ios do
     # prompt (the app only uses standard HTTPS).
     plist = "../ios/App/App/Info.plist"
     sh(%(/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "#{plist}"))
+
+    # Register the .orsync document type so tapped card files open in the app.
+    [
+      "Add :UTExportedTypeDeclarations array",
+      "Add :UTExportedTypeDeclarations:0 dict",
+      "Add :UTExportedTypeDeclarations:0:UTTypeIdentifier string com.stevennelson.orsync.card",
+      "Add :UTExportedTypeDeclarations:0:UTTypeDescription string ORSync Preference Card",
+      "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo array",
+      "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo:0 string public.json",
+      "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo:1 string public.data",
+      "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification dict",
+      "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension array",
+      "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension:0 string orsync",
+      "Add :CFBundleDocumentTypes array",
+      "Add :CFBundleDocumentTypes:0 dict",
+      "Add :CFBundleDocumentTypes:0:CFBundleTypeName string ORSync Preference Card",
+      "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Viewer",
+      "Add :CFBundleDocumentTypes:0:LSHandlerRank string Owner",
+      "Add :CFBundleDocumentTypes:0:LSItemContentTypes array",
+      "Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string com.stevennelson.orsync.card",
+    ].each do |cmd|
+      sh(%(/usr/libexec/PlistBuddy -c "#{cmd}" "#{plist}" 2>/dev/null || true))
+    end
   end
 
   desc "Build and upload a new build to TestFlight"
