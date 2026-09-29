@@ -52,6 +52,7 @@ const SECTION_ALIASES: Record<string, SectionKey> = {
   dressing: "supplies", dressings: "supplies",
   drapes: "supplies", drape: "supplies",
   opth: "supplies", ophth: "supplies", positioning: "supplies",
+  "fluid cart": "medications", fluids: "medications", fluid: "medications",
   "clean room": "supplies", clinic: "supplies", "clinic - dental": "supplies",
   // medications & irrigation
   medication: "medications", medications: "medications", med: "medications", meds: "medications",
@@ -70,7 +71,7 @@ const NOTES_HEADER_RE = /^notes?\s*[/&]?\s*(special\s*)?(instructions?)?$|^speci
 const FIELD_LABELS: { key: keyof ParsedCard | "notes+" | "ignore"; re: RegExp; strip?: RegExp }[] = [
   // "PREF CARD: 4138 - Osteotomy, Lefort I…" — the best title; strip the card number.
   { key: "procedure", re: /^pref\.?\s*card\b/i, strip: /^[#\d]+\s*[-–—]\s*/ },
-  { key: "procedure", re: /^(procedure|proc|case|surgery|operation)\b/i, strip: /^\d+\s*[-–—]\s*/ },
+  { key: "procedure", re: /^(procedures?|procs?|cases?|surger(?:y|ies)|operations?)\b/i, strip: /^\d+\s*[-–—]\s*/ },
   { key: "surgeonName", re: /^(surgeon|physician|doctor|provider|staff|md)\b/i },
   { key: "specialty", re: /^(specialty|speciality|service|discipline)\b/i },
   { key: "position", re: /^(position|positioning)\b/i },
@@ -181,6 +182,22 @@ function asSectionHeader(line: string): SectionKey | null {
   return SECTION_ALIASES[first] ?? null;
 }
 
+/** Item-shaped: a checkbox/quantity prefix ("_ 1 SCOPE…") or a bullet. */
+const ITEMISH_RE = /^[\s_☐□■◻▢]*\d{1,3}\s+\D/;
+function isItemish(line: string): boolean {
+  return ITEMISH_RE.test(line) || BULLET_RE.test(line);
+}
+
+/** Could this short, clean line be a facility-custom section header
+ *  ("Urology", "Fluid Cart")? Confirmed only when the next line is an item. */
+function isHeaderish(line: string): boolean {
+  if (line.length > 28 || /[\d;:,.()]/.test(line)) return false;
+  const words = line.split(/[\s/&]+/).filter(Boolean);
+  if (!words.length || words.length > 4) return false;
+  const dense = line.replace(/\s/g, "");
+  return dense.length > 0 && (line.match(/[a-zA-Z]/g) ?? []).length / dense.length > 0.8;
+}
+
 function labelValue(line: string, re: RegExp): string {
   return line.replace(re, "").replace(/^\s*[:\-–—]\s*/, "").trim();
 }
@@ -198,9 +215,13 @@ export function parseCardText(text: string): ParsedCard {
   // ("…ORTHOGNATHIC MATRIX,\nSYNTHES") or wrap a catalog number ("(0703-…)").
   let lastItem: ParsedItem | null = null;
   let lastEndedWithComma = false;
+  // S3 prints the PROCEDURES list over several wrapped, semicolon-packed
+  // lines; once that label is seen, such lines are list debris, not items.
+  let dropProcList = false;
 
-  for (const raw of rawLines) {
-    const line = raw.replace(/\t/g, " ").trim();
+  const lines = rawLines.map((r) => r.replace(/\t/g, " ").trim());
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (!line) { lastEndedWithComma = false; continue; }
     if (NOISE_RES.some((re) => re.test(line))) continue;
 
@@ -219,6 +240,7 @@ export function parseCardText(text: string): ParsedCard {
     if (label && /^[a-z .]*[a-z]\s*[:\-–—]/i.test(line)) { // needs a real "Label:" shape
       const rawValue = labelValue(line, label.re);
       const value = label.strip ? rawValue.replace(label.strip, "") : rawValue;
+      dropProcList = label.key === "procedure";
       if (label.key === "ignore") continue;
       if (label.key === "notes+") {
         if (rawValue) {
@@ -241,8 +263,27 @@ export function parseCardText(text: string): ParsedCard {
       inNotes = false;
       sawSectionHeader = true;
       lastItem = null;
+      dropProcList = false;
       continue;
     }
+
+    // 3b) Facility-custom section headers ("Urology", specialty carts):
+    //     once the printout has shown real sections, a short clean line whose
+    //     NEXT line is an item starts a new section. Unknown names get a
+    //     keyword guess, else land in supplies.
+    if (sawSectionHeader && !inNotes && !isBullet && isHeaderish(line) && !(lastItem && lastEndedWithComma)) {
+      const next = lines.slice(i + 1).find((l) => l !== "");
+      if (next && isItemish(next)) {
+        current = guessSection({ name: line });
+        lastItem = null;
+        dropProcList = false;
+        continue;
+      }
+    }
+
+    // 3c) Leftover procedure-list wrap lines ("…; Cystoscopy, Flexible; …").
+    if (dropProcList && line.includes(";")) continue;
+    if (dropProcList && isItemish(line)) dropProcList = false;
 
     // 4) Inside the notes block, every content line is a note.
     if (inNotes) {

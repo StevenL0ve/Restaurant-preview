@@ -212,3 +212,86 @@ describe("hospital-system printout (AORS/Genesis style)", () => {
     expect(everything).not.toContain("UPDATE BY");
   });
 });
+
+// Transcript of a second real S3 printout (cystoscopy): PROCEDURES (plural)
+// with a wrapped semicolon list, a FLUID CART section, and a facility-custom
+// "Urology" section that is not in any alias table.
+const S3_CYSTO_CARD = `
+PREF CARD: 4536 - Cystoscopy
+PROCEDURES: 233 - Cystoscopy, Biopsy, Bladder; Cystoscopy, Excision, Lesion, Urethra; Cystoscopy, Placement, Ure
+Stent; Cystoscopy, Diagnostic; Cystoscopy, Pediatric; Cystoscopy, Flexible; Dilation, Urethral; Cystoscopy
+Dilation Balloon Urethral; Bulkamid
+STAFF: Peterson, Adam
+SERVICE: Urology
+GLOVES:
+POSITION: Lithotomy
+PREP: Hibiclens
+LAST UPDATE: 10/04/2021
+PULL BY:
+
+Instruments
+_ 1 CAMERA, STORZ, UROLOGY W/LIGHT CORD
+_ 1 SCOPE, URO, CYSTOSCOPE, 4MM 30 DEG
+_ 1 URO, CYSTOSCOPY SET, UNIVERSAL
+_ 1 URO, DILATORS, VAN BURENS (Avail)
+
+Gowns/Gloves
+_ 1 GLOVES, OVER, 7
+
+PACKS
+_ 1 PACK, CYSTO
+
+FLUID CART
+_ 1 NORMAL SALINE, 1000ML
+
+OR Equipment
+_ 1 SCD
+_ 1 TOWER, UROLOGY, HD, CYSTO OR
+
+Clean Room
+_ 1 BAG, URINARY DRAINAGE 2000mL
+
+Urology
+_ 1 URO, BULKAMID KIT (If Bulkamid Case)
+
+NOTES/SPECIAL INSTRUCTIONS
+• Bugbee cords located in peel packs (cysto room) Sterile water with bovie machine set on 15 on Coag.
+`;
+
+describe("S3 cystoscopy printout", () => {
+  const p = parseCardText(S3_CYSTO_CARD);
+  const allNames = () =>
+    (Object.keys(p.sections) as (keyof typeof p.sections)[]).flatMap((k) => p.sections[k].map((i) => i.name));
+
+  it("titles from PREF CARD and reads the header block", () => {
+    expect(p.procedure).toBe("Cystoscopy");
+    expect(p.surgeonName).toBe("Peterson");
+    expect(p.specialty).toBe("Urology");
+    expect(p.position).toBe("Lithotomy");
+    expect(p.prep).toBe("Hibiclens");
+  });
+
+  it("drops the wrapped multi-procedure list instead of turning it into items", () => {
+    const names = allNames().join(" | ");
+    expect(names).not.toContain("Diagnostic;");
+    expect(names).not.toContain("Bulkamid\n");
+    expect(names).not.toContain("Dilation Balloon Urethral");
+  });
+
+  it("maps FLUID CART to medications", () => {
+    expect(p.sections.medications.map((i) => i.name)).toContain("NORMAL SALINE, 1000ML");
+  });
+
+  it("treats the custom 'Urology' line as a section header, not an item", () => {
+    expect(allNames()).not.toContain("Urology");
+    const kit = allNames().find((n) => n.startsWith("URO, BULKAMID KIT"));
+    expect(kit).toBeTruthy();
+  });
+
+  it("keeps instruments and notes intact", () => {
+    expect(p.sections.instruments.map((i) => i.name)).toContain("SCOPE, URO, CYSTOSCOPE, 4MM 30 DEG");
+    const dilators = p.sections.instruments.find((i) => i.name.startsWith("URO, DILATORS"));
+    expect(dilators?.detail).toContain("Avail");
+    expect(p.notes).toContain("Bugbee cords");
+  });
+});
