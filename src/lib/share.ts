@@ -32,7 +32,9 @@ export function cardToText(
     lines.push("");
     lines.push(`${sec.label.toUpperCase()}`);
     for (const it of arr) {
-      lines.push(`  • ${it.name}${it.detail ? ` (${it.detail})` : ""}`);
+      const qty = (it.qty ?? 1) > 1 ? `${it.qty}× ` : "";
+      const hold = it.hold ? " [hold]" : "";
+      lines.push(`  • ${qty}${it.name}${it.detail ? ` (${it.detail})` : ""}${hold}`);
       const where = it.locationId ? locationName?.(it.locationId) : undefined;
       if (where) lines.push(`      📍 ${where}`);
     }

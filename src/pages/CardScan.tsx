@@ -35,7 +35,7 @@ function buildSeed(
     : undefined;
   const specialty = parsed.specialty || sgMatch?.specialty || "General Surgery";
   const toItems = (arr: ParsedCard["sections"][keyof ParsedCard["sections"]]): CardItem[] =>
-    arr.map((i) => ({ id: uid("it"), name: i.name, detail: i.detail }));
+    arr.map((i) => ({ id: uid("it"), name: i.name, detail: i.detail, qty: i.qty, hold: i.hold }));
 
   const seed: PrefCard = {
     ...emptyCard(sgMatch?.id ?? "", specialty),
@@ -182,6 +182,7 @@ export function CardScan() {
         <button className="btn btn-primary" disabled={!canCreate} onClick={onCreate}>
           Create card from this →
         </button>
+        <button className="btn" onClick={() => navigate("/cards/templates")}>📋 Use a template</button>
         <button className="btn" onClick={() => navigate("/cards/new")}>Start blank instead</button>
         {!canCreate && <span className="muted small">Add a procedure or some items to continue.</span>}
       </div>

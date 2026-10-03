@@ -58,8 +58,8 @@ describe("parseCardText", () => {
     expect(p.sections.equipment.map((i) => i.name)).toContain("Bovie unit");
     expect(p.sections.instruments.map((i) => i.name)).toContain("Kelly clamp");
     expect(p.sections.medications.map((i) => i.name)).toContain("Bacitracin irrigation");
-    // "Raytec x2" → supplies, qty split into detail.
-    expect(p.sections.supplies.find((i) => i.name === "Raytec")?.detail).toBe("x2");
+    // "Raytec x2" → supplies, with a structured quantity.
+    expect(p.sections.supplies.find((i) => i.name === "Raytec")?.qty).toBe(2);
   });
 
   it("splits parenthetical and dash details", () => {
@@ -193,12 +193,13 @@ describe("hospital-system printout (AORS/Genesis style)", () => {
     expect(p.sections.medications.map((i) => i.name)).toContain("AFRIN NASAL SPRAY");
   });
 
-  it("carries quantity, catalog number, and Avail flags into detail", () => {
+  it("turns quantities and Avail flags into structured qty/hold, keeps catalog numbers", () => {
     const bowls = p.sections.supplies.find((i) => i.name === "BOWLS, BLUE");
-    expect(bowls?.detail).toBe("×2 · 61200");
+    expect(bowls?.qty).toBe(2);
+    expect(bowls?.detail).toBe("61200");
     const chromic = p.sections.sutures.find((i) => i.name.startsWith("CHROMIC"));
-    expect(chromic?.detail).toContain("×2");
-    expect(chromic?.detail).toContain("Avail");
+    expect(chromic?.qty).toBe(2);
+    expect(chromic?.hold).toBe(true); // "(Avail)" on the printout
     const drill = p.sections.equipment.find((i) => i.name.startsWith("DRILL, SYSTEM"));
     expect(drill?.detail).toContain("XPS 3000");
   });
@@ -291,7 +292,7 @@ describe("S3 cystoscopy printout", () => {
   it("keeps instruments and notes intact", () => {
     expect(p.sections.instruments.map((i) => i.name)).toContain("SCOPE, URO, CYSTOSCOPE, 4MM 30 DEG");
     const dilators = p.sections.instruments.find((i) => i.name.startsWith("URO, DILATORS"));
-    expect(dilators?.detail).toContain("Avail");
+    expect(dilators?.hold).toBe(true); // "(Avail)" on the printout
     expect(p.notes).toContain("Bugbee cords");
   });
 });

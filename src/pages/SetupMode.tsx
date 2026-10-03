@@ -96,8 +96,9 @@ export function SetupMode() {
           />
           <span className="check-main">
             <span className="check-line">
-              <span className="check-name">{it.name}</span>
+              <span className="check-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
               {it.detail && <span className="item-detail">{it.detail}</span>}
+              {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
             </span>
             {sub && <span className="row-sub">{sub}</span>}
             {where && mode === "section" && <span className="item-location">📍 {where}</span>}

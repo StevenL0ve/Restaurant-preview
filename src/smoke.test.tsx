@@ -53,6 +53,7 @@ describe("app smoke test", () => {
     ["/cards", "Cards"],
     ["/cards/new", "New card"],
     ["/cards/scan", "Scan or paste a card"],
+    ["/cards/templates", "Start from a template"],
     ["/surgeons", "Surgeons"],
     ["/loaners", "Loaner trays"],
     ["/carts", "Case carts"],

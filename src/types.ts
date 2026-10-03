@@ -47,14 +47,21 @@ export interface Surgeon {
 }
 
 /** A single line on a card: an instrument, suture, supply, med, or piece of
- *  equipment. `detail` carries size / quantity / "for fascia" context;
- *  `locationId` points at a shared Location in the card's facility — so where
- *  to find it stays consistent and updates everywhere when the location moves. */
+ *  equipment. `detail` carries size / "for fascia" context; `locationId`
+ *  points at a shared Location in the card's facility — so where to find it
+ *  stays consistent and updates everywhere when the location moves.
+ *
+ *  `qty` and `hold` mirror how hospital pick lists (S3 / Cerner style) work:
+ *  qty is how many to pull (unset = 1), and hold means "pull it, keep it
+ *  unopened" — available in the room if asked for, returnable if not, which
+ *  is exactly what the "(Avail)" flag on an S3 printout means. */
 export interface CardItem {
   id: ID;
   name: string;
   detail?: string;
   locationId?: ID;
+  qty?: number;
+  hold?: boolean;
 }
 
 /** The five checklist sections every card shares. Kept as a const tuple so the

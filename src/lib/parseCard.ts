@@ -18,6 +18,10 @@ import { SECTIONS } from "../types";
 export interface ParsedItem {
   name: string;
   detail?: string;
+  /** How many to pull (only set when > 1). */
+  qty?: number;
+  /** S3's "(Avail)": pull it but keep it unopened unless asked for. */
+  hold?: boolean;
 }
 
 export interface ParsedCard {
@@ -124,10 +128,12 @@ function splitDetail(line: string): ParsedItem {
   if (colon && colon[1].trim() && !/\d$/.test(colon[1])) return { name: colon[1].trim(), detail: colon[2].trim() };
   const dash = text.match(/^(.+?)\s+(?:[—–]|-{1,2})\s+(.+)$/);
   if (dash && dash[1].trim() && dash[2].trim()) return { name: dash[1].trim(), detail: dash[2].trim() };
-  const qty = text.match(/^(.+?)\s+(?:[x×]\s?\d+|qty\.?\s*\d+|\d+\s?(?:ea|each|pk|packs?))\s*$/i);
+  // Trailing quantity ("Raytec x2", "Towels qty 4", "Blades 2 ea") becomes a
+  // structured qty, not detail text.
+  const qty = text.match(/^(.+?)\s+(?:[x×]\s?(\d+)|qty\.?\s*(\d+)|(\d+)\s?(?:ea|each|pk|packs?))\s*$/i);
   if (qty && qty[1].trim()) {
-    const detail = text.slice(qty[1].length).trim();
-    return { name: qty[1].trim(), detail };
+    const n = parseInt(qty[2] ?? qty[3] ?? qty[4], 10);
+    return { name: qty[1].trim(), qty: n > 1 ? n : undefined };
   }
   return { name: text };
 }
@@ -138,10 +144,10 @@ function parseItemLine(raw: string): ParsedItem | null {
   let text = raw.replace(CHECKBOX_RE, "").replace(BULLET_RE, "").trim();
   if (!text) return null;
 
-  const extras: string[] = [];
-  // "(Avail)" = stocked in the room, don't pull — keep it, techs care.
+  // "(Avail)" = pull it, keep it unopened unless asked — a structured hold.
+  let hold = false;
   if (/\(avail\.?\)\s*$/i.test(text)) {
-    extras.push("Avail");
+    hold = true;
     text = text.replace(/\s*\(avail\.?\)\s*$/i, "").trim();
   }
   // Leading quantity: "2 BOWLS, BLUE (61200)".
@@ -155,12 +161,12 @@ function parseItemLine(raw: string): ParsedItem | null {
 
   const item = splitDetail(text);
   if (looksLikeJunk(item.name)) return null;
-  const detailParts = [
-    ...(count && count > 1 ? [`×${count}`] : []),
-    ...(item.detail ? [item.detail] : []),
-    ...extras,
-  ];
-  return { name: item.name, detail: detailParts.length ? detailParts.join(" · ") : undefined };
+  return {
+    name: item.name,
+    detail: item.detail,
+    qty: count && count > 1 ? count : item.qty,
+    hold: hold || undefined,
+  };
 }
 
 function guessSection(item: ParsedItem): SectionKey {

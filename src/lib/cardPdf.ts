@@ -107,9 +107,11 @@ export async function cardPdfBlob(
       startY: y,
       margin: { left: MARGIN, right: MARGIN },
       head: [[sec.label.toUpperCase(), "DETAIL", "LOCATION"]],
+      // Qty and hold render the way a hospital pick list prints them:
+      // "2×" ahead of the name, "(hold)" after the detail.
       body: items.map((it) => [
-        it.name,
-        it.detail ?? "",
+        `${(it.qty ?? 1) > 1 ? `${it.qty}× ` : ""}${it.name}`,
+        [it.detail, it.hold ? "(hold)" : null].filter(Boolean).join(" "),
         (it.locationId ? locationName?.(it.locationId) : "") ?? "",
       ]),
       theme: "plain",

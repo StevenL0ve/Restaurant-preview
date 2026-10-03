@@ -320,6 +320,19 @@ function ItemEditor({
               {/* Tap any item to fix it in place — essential after a scan
                   import, where OCR gets a word or two wrong. */}
               <input
+                className="inline-edit item-qty"
+                type="number"
+                min={1}
+                max={99}
+                value={it.qty ?? 1}
+                aria-label="Quantity to pull"
+                title="How many to pull"
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  onChange(items.map((x) => (x.id === it.id ? { ...x, qty: n > 1 ? n : undefined } : x)));
+                }}
+              />
+              <input
                 className="inline-edit item-name"
                 value={it.name}
                 aria-label="Item name"
@@ -334,6 +347,17 @@ function ItemEditor({
                   onChange(items.map((x) => (x.id === it.id ? { ...x, detail: e.target.value || undefined } : x)))
                 }
               />
+              {/* Open vs. hold, like a hospital pick list: hold = pull it but
+                  keep it unopened unless the surgeon asks for it. */}
+              <button
+                className={"hold-toggle" + (it.hold ? " on" : "")}
+                type="button"
+                title={it.hold ? "Hold: pull it, keep it unopened unless asked" : "Open: opened for the case. Tap to make it a hold item."}
+                aria-pressed={!!it.hold}
+                onClick={() => onChange(items.map((x) => (x.id === it.id ? { ...x, hold: !x.hold || undefined } : x)))}
+              >
+                {it.hold ? "hold" : "open"}
+              </button>
               <LocationSelect value={it.locationId ?? ""} onPick={(v) => setItemLoc(it.id, v)} target={it.id} />
               <button className="info-del" aria-label={`Remove ${it.name}`} onClick={() => onChange(items.filter((x) => x.id !== it.id))}>✕</button>
             </li>

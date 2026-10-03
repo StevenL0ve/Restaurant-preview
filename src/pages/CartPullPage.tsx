@@ -141,8 +141,9 @@ export function CartPullPage() {
                         />
                         <span className="check-main">
                           <span className="check-line">
-                            <span className="check-name">{sectionIcon} {item.name}</span>
+                            <span className="check-name">{sectionIcon} {(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
                             {item.detail && <span className="item-detail">{item.detail}</span>}
+                            {item.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
                           </span>
                           {rec && <span className="pulled-by">pulled · {rec.by} {timeShort(rec.at)}</span>}
                         </span>

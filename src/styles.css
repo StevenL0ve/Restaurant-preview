@@ -741,7 +741,7 @@ a { color: inherit; }
 
 /* Item editor (card edit) */
 .edit-item-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; }
-.edit-item-list li { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.edit-item-list li { display: flex; align-items: baseline; gap: 8px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .edit-item-list li:last-child { border-bottom: none; }
 .edit-item-list .info-del { margin-left: auto; }
 /* Inline, always-editable item fields — look like text until touched. */
@@ -750,8 +750,8 @@ a { color: inherit; }
   padding: 3px 6px; margin: -3px 0; font-family: inherit; color: var(--ink);
   min-width: 0;
 }
-.edit-item-list .inline-edit.item-name { flex: 1.3; font-weight: 600; font-size: 14px; }
-.edit-item-list .inline-edit.item-detail { flex: 1; font-size: 13px; color: var(--muted); }
+.edit-item-list .inline-edit.item-name { flex: 1.3 1 140px; font-weight: 600; font-size: 14px; }
+.edit-item-list .inline-edit.item-detail { flex: 1 1 100px; font-size: 13px; color: var(--muted); }
 .edit-item-list .inline-edit:hover { border-color: var(--line); }
 .edit-item-list .inline-edit:focus { outline: none; border-color: var(--brand); background: var(--card); color: var(--ink); }
 .item-add { display: grid; grid-template-columns: 1.2fr 1fr minmax(120px, 0.9fr) auto; gap: 8px; align-items: center; }
@@ -760,7 +760,42 @@ a { color: inherit; }
 .loc-select { border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font-size: 13px; font-family: inherit; background: var(--card); color: var(--ink); max-width: 200px; }
 .loc-select:disabled { opacity: 0.6; }
 .edit-item-list .loc-select { margin-left: auto; }
+/* Qty + open/hold, the hospital pick-list fields on each item row. */
+.edit-item-list .inline-edit.item-qty { width: 44px; flex: none; text-align: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.hold-toggle {
+  flex: none; border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+  padding: 3px 9px; cursor: pointer; text-transform: uppercase;
+}
+.hold-toggle.on { border-color: var(--warn, #c77700); color: var(--warn, #c77700); background: rgba(199, 119, 0, 0.08); }
+.qty-chip {
+  display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px;
+  background: var(--brand-50); color: var(--brand); font-size: 12px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hold-chip {
+  display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 10.5px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--warn, #c77700); border: 1px solid currentColor; background: rgba(199, 119, 0, 0.07);
+}
+[data-theme="dark"] .hold-chip, [data-theme="dark"] .hold-toggle.on { color: #f0a84b; border-color: #f0a84b; }
 [data-theme="dark"] .item-add input, [data-theme="dark"] .item-add select, [data-theme="dark"] .loc-select { background: var(--bg); color: var(--ink); }
+
+/* Template library: starter cards grouped by specialty. */
+.tpl-group { margin-bottom: 18px; }
+.tpl-specialty { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 8px; }
+.tpl-list { display: flex; flex-direction: column; gap: 8px; }
+.tpl-row {
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center;
+  column-gap: 10px; text-align: left; width: 100%;
+  border: 1px solid var(--line); border-left: 4px solid var(--accent, var(--brand));
+  background: var(--card); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  font-family: inherit; color: var(--ink);
+}
+.tpl-row:hover { border-color: var(--accent, var(--brand)); }
+.tpl-proc { font-weight: 700; font-size: 15px; }
+.tpl-row .muted { grid-column: 1; }
+.tpl-go { grid-row: 1 / span 2; grid-column: 2; font-size: 18px; color: var(--muted); }
 
 /* Scan / paste a card */
 .scan-textarea {
