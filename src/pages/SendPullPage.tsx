@@ -102,7 +102,7 @@ export function SendPullPage() {
 
       <div className="form-actions">
         <button className="btn btn-primary" disabled={!card} onClick={send}>
-          📤 Share the pull file
+          Share the pull file
         </button>
         {!card && <span className="muted small">Pick a card first.</span>}
       </div>
@@ -110,11 +110,11 @@ export function SendPullPage() {
       {result && (
         <div className="card form-card send-result">
           {result === "shared" ? (
-            <p>✅ Sent. They just <strong>tap the file and open it in ORSync</strong> (from Messages:
+            <p>Sent. They just <strong>tap the file and open it in ORSync</strong> (from Messages:
               tap the file, then the share icon, then ORSync). The card merges into their library and
               <strong> {parseInt(count, 10) || 1} cart{(parseInt(count, 10) || 1) === 1 ? "" : "s"}</strong> for {date} appear on their Carts tab automatically.</p>
           ) : (
-            <p>💾 File saved. Send it however you like (text, email, chat). Importing it via Settings →
+            <p>File saved. Send it however you like (text, email, chat). Importing it via Settings →
               <strong> Import cards…</strong> gives them the card and the ready-to-pull carts.</p>
           )}
         </div>

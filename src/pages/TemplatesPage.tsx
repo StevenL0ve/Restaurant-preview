@@ -4,7 +4,6 @@ import { TEMPLATES, templatesBySpecialty, templateItemCount, type CardTemplate }
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import type { CardItem, PrefCard, SectionKey } from "../types";
-import { SECTIONS } from "../types";
 
 // Pick a starter card for a common procedure instead of typing from a blank
 // page. Opening one lands in the normal editor as an unsaved draft, so the
@@ -57,7 +56,7 @@ export function TemplatesPage() {
               <button key={t.procedure} className="tpl-row" style={accentStyle(t.specialty)} onClick={() => openTemplate(t)}>
                 <span className="tpl-proc">{t.procedure}</span>
                 <span className="muted small">
-                  {templateItemCount(t)} items · {SECTIONS.filter((s) => t.sections[s.key]?.length).map((s) => s.icon).join(" ")}
+                  {templateItemCount(t)} items
                   {t.position ? ` · ${t.position.split(",")[0]}` : ""}
                 </span>
                 <span className="tpl-go" aria-hidden>→</span>

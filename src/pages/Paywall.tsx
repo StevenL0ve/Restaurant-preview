@@ -38,7 +38,7 @@ export function Paywall() {
 
       {BETA_UNLOCKED && (
         <div className="beta-banner">
-          🎉 <strong>Free during beta.</strong> Everything below is unlocked while ORSync is in
+          <strong>Free during beta.</strong> Everything below is unlocked while ORSync is in
           TestFlight. Enjoy Pro on us and tell us what to improve.
         </div>
       )}

@@ -36,7 +36,7 @@ export function cardToText(
       const hold = it.hold ? " [hold]" : "";
       lines.push(`  • ${qty}${it.name}${it.detail ? ` (${it.detail})` : ""}${hold}`);
       const where = it.locationId ? locationName?.(it.locationId) : undefined;
-      if (where) lines.push(`      📍 ${where}`);
+      if (where) lines.push(`      at ${where}`);
     }
   }
 

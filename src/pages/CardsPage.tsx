@@ -46,8 +46,8 @@ export function CardsPage() {
           <p className="muted">{state.cards.length} preference cards across {specialties.length - 1} specialties.</p>
         </div>
         <div className="head-actions">
-          <button className="btn" onClick={() => navigate("/cards/templates")}>📋 Templates</button>
-          <button className="btn" onClick={() => navigate("/cards/scan")}>📷 Scan / paste</button>
+          <button className="btn" onClick={() => navigate("/cards/templates")}>Templates</button>
+          <button className="btn" onClick={() => navigate("/cards/scan")}>Scan / paste</button>
           <button className="btn btn-primary" onClick={() => navigate("/cards/new")}>+ New card</button>
         </div>
       </div>
@@ -74,11 +74,10 @@ export function CardsPage() {
 
       {cards.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🗂️</span>
           <p>No cards yet. Start from a <strong>template</strong>, scan a printed card, or build from scratch.</p>
           <div className="form-actions" style={{ justifyContent: "center" }}>
-            <button className="btn btn-primary" onClick={() => navigate("/cards/templates")}>📋 Start from a template</button>
-            <button className="btn" onClick={() => navigate("/cards/scan")}>📷 Scan / paste a card</button>
+            <button className="btn btn-primary" onClick={() => navigate("/cards/templates")}>Start from a template</button>
+            <button className="btn" onClick={() => navigate("/cards/scan")}>Scan / paste a card</button>
             <button className="btn" onClick={() => navigate("/cards/new")}>+ New card</button>
           </div>
         </div>

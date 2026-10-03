@@ -18,7 +18,6 @@ export function SurgeonDetail() {
     return (
       <div className="page">
         <div className="empty-state">
-          <span className="empty-emoji">🤔</span>
           <p>No such surgeon. <Link className="link" to="/surgeons">Back to surgeons</Link>.</p>
         </div>
       </div>
@@ -72,7 +71,6 @@ export function SurgeonDetail() {
       </div>
       {cards.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🗂️</span>
           <p>No cards for {sg.name} yet.</p>
         </div>
       ) : (

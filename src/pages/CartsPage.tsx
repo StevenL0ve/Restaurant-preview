@@ -54,7 +54,7 @@ export function CartsPage() {
           <p className="muted">Pull together, see who pulled what, and hand ops the missing list.</p>
         </div>
         <div className="head-actions">
-          <Link className="btn" to="/carts/send">📤 Send to a puller</Link>
+          <Link className="btn" to="/carts/send">Send to a puller</Link>
           {!adding && <button className="btn btn-primary" onClick={() => setAdding(true)}>+ New carts</button>}
         </div>
       </div>
@@ -68,7 +68,7 @@ export function CartsPage() {
 
       {missingCount > 0 && (
         <Link to="/carts/missing" className="missing-banner">
-          ⚠️ <strong>{missingCount}</strong> missing item{missingCount === 1 ? "" : "s"} across {dayLabel(offset).toLowerCase()}’s carts. Open the ops list →
+          <strong>{missingCount}</strong> missing item{missingCount === 1 ? "" : "s"} across {dayLabel(offset).toLowerCase()}’s carts. Open the ops list →
         </Link>
       )}
 
@@ -98,7 +98,6 @@ export function CartsPage() {
 
       {carts.length === 0 && !adding ? (
         <div className="empty-state">
-          <span className="empty-emoji">🛒</span>
           <p>No carts for {dayLabel(offset).toLowerCase()}. Tap <strong>New carts</strong> to start pulling.</p>
         </div>
       ) : (

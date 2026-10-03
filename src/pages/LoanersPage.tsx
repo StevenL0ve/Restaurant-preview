@@ -66,14 +66,13 @@ export function LoanersPage() {
         ))}
         {LOANER_STATUSES.map((s) => (
           <button key={s.key} className={"chip" + (filter === s.key ? " active" : "")} onClick={() => setFilter(s.key)}>
-            {s.icon} {s.label}
+            {s.label}
           </button>
         ))}
       </div>
 
       {loaners.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🚚</span>
           <p>No loaner requests here. Tap <strong>New request</strong> to track a vendor tray for a case.</p>
         </div>
       ) : (
@@ -117,12 +116,12 @@ function LoanerCard({ loaner: l, store, onEdit }: { loaner: LoanerTray; store: S
       <div className="loaner-meta">
         {(surgeon || l.procedure) && (
           <span>
-            🧑‍⚕️ {surgeon?.name}{surgeon && l.procedure ? " · " : ""}
+            {surgeon?.name}{surgeon && l.procedure ? " · " : ""}
             {l.cardId ? <Link className="link" to={`/cards/${l.cardId}`}>{l.procedure}</Link> : l.procedure}
           </span>
         )}
-        {facility && <span>🏥 {facility.name}</span>}
-        {l.caseDate && <span>🗓️ Case {formatDate(l.caseDate)}</span>}
+        {facility && <span>{facility.name}</span>}
+        {l.caseDate && <span>Case {formatDate(l.caseDate)}</span>}
         {l.neededBy && (
           <span className={overdue ? "neg" : ""}>
             ⏰ Needed {formatDate(l.neededBy)}
@@ -148,7 +147,6 @@ function LoanerCard({ loaner: l, store, onEdit }: { loaner: LoanerTray; store: S
               }}
               title={`Mark ${s.label}`}
             >
-              <span aria-hidden>{s.icon}</span>
               <span className="pipe-label">{s.label}</span>
             </button>
           );
@@ -157,10 +155,10 @@ function LoanerCard({ loaner: l, store, onEdit }: { loaner: LoanerTray; store: S
 
       <div className="loaner-actions">
         {l.repPhone && (
-          <a className="btn btn-sm" href={`tel:${l.repPhone}`}>📞 Call {l.repName ?? "rep"}</a>
+          <a className="btn btn-sm" href={`tel:${l.repPhone}`}>Call {l.repName ?? "rep"}</a>
         )}
         {l.repPhone && (
-          <a className="btn btn-sm" href={`sms:${l.repPhone}`}>💬 Text</a>
+          <a className="btn btn-sm" href={`sms:${l.repPhone}`}>Text</a>
         )}
         <button className="btn btn-sm" onClick={onEdit}>Edit</button>
         {confirmDel ? (

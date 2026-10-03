@@ -69,7 +69,6 @@ export function SetupMode() {
     return (
       <div className="page">
         <div className="empty-state">
-          <span className="empty-emoji">🤔</span>
           <p>That card doesn’t exist. <Link className="link" to="/cards">Back to all cards</Link>.</p>
         </div>
       </div>
@@ -101,7 +100,7 @@ export function SetupMode() {
               {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
             </span>
             {sub && <span className="row-sub">{sub}</span>}
-            {where && mode === "section" && <span className="item-location">📍 {where}</span>}
+            {where && mode === "section" && <span className="item-location">{where}</span>}
           </span>
         </label>
       </li>
@@ -135,10 +134,10 @@ export function SetupMode() {
 
       <div className="seg">
         <button className={"seg-btn" + (mode === "location" ? " active" : "")} onClick={() => setMode("location")}>
-          📍 By location
+          By location
         </button>
         <button className={"seg-btn" + (mode === "section" ? " active" : "")} onClick={() => setMode("section")}>
-          🗂️ By section
+          By section
         </button>
       </div>
 
@@ -157,7 +156,7 @@ export function SetupMode() {
               <div className="card section-card" key={g.area || "__none"}>
                 <div className="card-head">
                   <h2>
-                    <span aria-hidden>📍</span> {g.area || "No location set"}
+                    {g.area || "No location set"}
                   </h2>
                   <span className="pill">{groupDone}/{g.rows.length}</span>
                 </div>
@@ -166,7 +165,7 @@ export function SetupMode() {
                     <Row
                       key={r.item.id}
                       it={r.item}
-                      sub={`${r.sectionIcon} ${r.sectionLabel}${locationLabelOf(state, r.item.locationId) ? ` · ${locationLabelOf(state, r.item.locationId)}` : ""}`}
+                      sub={`${r.sectionLabel}${locationLabelOf(state, r.item.locationId) ? ` · ${locationLabelOf(state, r.item.locationId)}` : ""}`}
                     />
                   ))}
                 </ul>
@@ -179,7 +178,7 @@ export function SetupMode() {
             return (
               <div className="card section-card" key={sec.key}>
                 <div className="card-head">
-                  <h2><span aria-hidden>{sec.icon}</span> {sec.label}</h2>
+                  <h2>{sec.label}</h2>
                 </div>
                 <ul className="check-list">
                   {arr.map((it) => <Row key={it.id} it={it} />)}
@@ -190,7 +189,7 @@ export function SetupMode() {
 
       {ready && (
         <div className="ready-cta">
-          <p>Everything’s pulled. 🎉</p>
+          <p>Everything’s pulled.</p>
           <button className="btn btn-primary" onClick={() => navigate(`/cards/${card.id}`)}>Back to card</button>
         </div>
       )}

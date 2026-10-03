@@ -32,7 +32,7 @@ describe("global search", () => {
     const hits = search(state, "cabinet 7");
     const card = hits.find((h) => h.kind === "card");
     expect(card).toBeTruthy();
-    if (card && card.kind === "card") expect(card.snippet).toContain("📍");
+    if (card && card.kind === "card") expect(card.snippet).toContain("cabinet 7");
   });
 
   it("ranks exact procedure matches above incidental item matches", () => {

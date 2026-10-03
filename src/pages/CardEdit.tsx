@@ -229,7 +229,6 @@ export function CardEdit() {
         <ItemEditor
           key={sec.key}
           label={sec.label}
-          icon={sec.icon}
           items={draft[sec.key as SectionKey]}
           locations={facilityLocations}
           areas={facilityAreas}
@@ -250,7 +249,6 @@ export function CardEdit() {
 
 function ItemEditor({
   label,
-  icon,
   items,
   locations,
   areas,
@@ -259,7 +257,6 @@ function ItemEditor({
   onChange,
 }: {
   label: string;
-  icon: string;
   items: CardItem[];
   locations: Location[];
   areas: string[];
@@ -297,7 +294,7 @@ function ItemEditor({
           onPick(e.target.value);
         }}
       >
-        <option value="">{hasFacility ? "📍 location…" : "set a facility first"}</option>
+        <option value="">{hasFacility ? "location…" : "set a facility first"}</option>
         {locations.map((l) => (
           <option key={l.id} value={l.id}>{locationLabel(l)}</option>
         ))}
@@ -309,7 +306,7 @@ function ItemEditor({
   return (
     <div className="card section-card">
       <div className="card-head">
-        <h2><span aria-hidden>{icon}</span> {label}</h2>
+        <h2>{label}</h2>
         <span className="pill">{items.length}</span>
       </div>
 

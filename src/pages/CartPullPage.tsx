@@ -43,7 +43,6 @@ export function CartPullPage() {
     return (
       <div className="page">
         <div className="empty-state">
-          <span className="empty-emoji">🛒</span>
           <p>That cart doesn’t exist. <Link className="link" to="/carts">Back to carts</Link>.</p>
         </div>
       </div>
@@ -84,7 +83,7 @@ export function CartPullPage() {
           <p className="muted">
             {cart.label && <strong>{cart.label} · </strong>}{sg?.name} · Case cart
           </p>
-          {cart.note && <p className="cart-note">📩 {cart.note}</p>}
+          {cart.note && <p className="cart-note">Note: {cart.note}</p>}
         </div>
       </div>
 
@@ -125,11 +124,11 @@ export function CartPullPage() {
           {groups.map((g) => (
             <div className="card section-card" key={g.area || "none"}>
               <div className="card-head">
-                <h2>📍 {g.area || "No location set"}</h2>
+                <h2>{g.area || "No location set"}</h2>
                 <span className="pill">{g.rows.filter((r) => cart.pulls[r.item.id]).length}/{g.rows.length}</span>
               </div>
               <ul className="check-list">
-                {g.rows.map(({ item, sectionIcon }) => {
+                {g.rows.map(({ item }) => {
                   const rec = cart.pulls[item.id];
                   return (
                     <li key={item.id} className={rec ? "done" : ""}>
@@ -141,7 +140,7 @@ export function CartPullPage() {
                         />
                         <span className="check-main">
                           <span className="check-line">
-                            <span className="check-name">{sectionIcon} {(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
+                            <span className="check-name">{(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
                             {item.detail && <span className="item-detail">{item.detail}</span>}
                             {item.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
                           </span>
@@ -181,7 +180,7 @@ function DoneView({ cart, me, onResume }: { cart: CaseCart; me: string; onResume
     <>
       <div className="card form-card">
         <div className="card-head">
-          <h2>{open.length ? `⚠️ Missing (${open.length})` : "✓ Nothing missing"}</h2>
+          <h2>{open.length ? `Missing (${open.length})` : "✓ Nothing missing"}</h2>
           <span className="muted small">done by {cart.doneBy}</span>
         </div>
         {open.length === 0 && resolved.length === 0 && (

@@ -29,7 +29,6 @@ export function SearchPage() {
         </p>
       ) : hits.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🔍</span>
           <p>No matches for “{q}”.</p>
         </div>
       ) : (
@@ -40,8 +39,7 @@ export function SearchPage() {
               className="card search-list-item"
               onClick={() => navigate(h.kind === "surgeon" ? `/surgeons/${h.id}` : h.kind === "oncall" ? "/on-call" : `/cards/${h.id}`)}
             >
-              <span className="hit-icon big" aria-hidden>{h.kind === "surgeon" ? "🧑‍⚕️" : h.kind === "oncall" ? "📟" : "🗂️"}</span>
-              <span className="hit-text">
+                <span className="hit-text">
                 <span className="hit-title">{h.title} <span className="hit-type">{h.kind}</span></span>
                 <span className="hit-snippet">{h.snippet ?? h.subtitle}</span>
               </span>

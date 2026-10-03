@@ -84,7 +84,7 @@ export function Dashboard() {
       {loanerWatch.length > 0 && (
         <div className="card form-card">
           <div className="card-head">
-            <h2>🚚 Loaner trays to watch</h2>
+            <h2>Loaner trays to watch</h2>
             <Link className="link" to="/loaners">All loaners</Link>
           </div>
           {loanerWatch.map((l) => {
@@ -105,7 +105,7 @@ export function Dashboard() {
       <div className="dash-cols">
         <div className="card">
           <div className="card-head">
-            <h2>★ Favorites</h2>
+            <h2>Favorites</h2>
             <Link className="link" to="/cards">All cards</Link>
           </div>
           {favorites.length === 0 ? (
@@ -168,7 +168,7 @@ function OnCallNow() {
   return (
     <div className="card form-card">
       <div className="card-head">
-        <h2>📟 On call now</h2>
+        <h2>On call now</h2>
         <Link className="link" to="/on-call">Full board</Link>
       </div>
       {rows.slice(0, 4).map(({ pos, now }) => (
@@ -181,14 +181,14 @@ function OnCallNow() {
                 {now.person.phone && <span className="muted small"> · {formatPhone(now.person.phone)}</span>}
               </span>
               {telHref(now.person.phone) ? (
-                <a className="btn btn-sm" href={telHref(now.person.phone)}>📞</a>
+                <a className="btn btn-sm" href={telHref(now.person.phone)}>Call</a>
               ) : (
                 <Link className="resume-go" to="/on-call">→</Link>
               )}
             </>
           ) : (
             <>
-              <span className="small oncall-dash-gap">⚠️ nobody set</span>
+              <span className="small oncall-dash-gap">nobody set</span>
               <Link className="btn btn-sm" to="/on-call">Fix</Link>
             </>
           )}
@@ -212,7 +212,7 @@ function TodayLineup() {
   return (
     <div className="card form-card">
       <div className="card-head">
-        <h2>🗓️ Today's lineup</h2>
+        <h2>Today's lineup</h2>
         <Link className="link" to="/today">My day</Link>
       </div>
       {cases.map((c) => {

@@ -66,7 +66,7 @@ export function search(state: AppState, raw: string): SearchHit[] {
           id: p.id,
           title: p.name,
           subtitle: [p.role, p.phone].filter(Boolean).join(" · "),
-          snippet: nowPos ? `📟 On call now — ${nowPos}` : undefined,
+          snippet: nowPos ? `On call now: ${nowPos}` : undefined,
           person: p,
         },
       });
@@ -84,7 +84,7 @@ export function search(state: AppState, raw: string): SearchHit[] {
         const where = it.locationId ? locLabel.get(it.locationId) : undefined;
         const sc = Math.max(score(it.name), score(it.detail ?? ""), score(where ?? ""));
         if (sc > 0 && sc >= best && !snippet) {
-          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where ? ` 📍 ${where}` : ""}`;
+          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where ? ` · ${where}` : ""}`;
         }
         best = Math.max(best, sc);
       }

@@ -67,11 +67,11 @@ export interface CardItem {
 /** The five checklist sections every card shares. Kept as a const tuple so the
  *  UI, search, and setup mode can iterate them in a stable order. */
 export const SECTIONS = [
-  { key: "instruments", label: "Instruments & trays", icon: "🔧" },
-  { key: "sutures", label: "Sutures", icon: "🧵" },
-  { key: "supplies", label: "Supplies & disposables", icon: "📦" },
-  { key: "medications", label: "Medications & irrigation", icon: "💉" },
-  { key: "equipment", label: "Equipment", icon: "🖥️" },
+  { key: "instruments", label: "Instruments & trays" },
+  { key: "sutures", label: "Sutures" },
+  { key: "supplies", label: "Supplies & disposables" },
+  { key: "medications", label: "Medications & irrigation" },
+  { key: "equipment", label: "Equipment" },
 ] as const;
 
 export type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -110,12 +110,12 @@ export interface SetupState {
 // clear pipeline with a timestamped history.
 
 export const LOANER_STATUSES = [
-  { key: "requested", label: "Requested", icon: "📝" },
-  { key: "confirmed", label: "Confirmed", icon: "✅" },
-  { key: "delivered", label: "Delivered", icon: "📦" },
-  { key: "ready", label: "Sterile / ready", icon: "♨️" },
-  { key: "in-use", label: "In use", icon: "🔪" },
-  { key: "returned", label: "Returned", icon: "↩️" },
+  { key: "requested", label: "Requested" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "delivered", label: "Delivered" },
+  { key: "ready", label: "Sterile / ready" },
+  { key: "in-use", label: "In use" },
+  { key: "returned", label: "Returned" },
 ] as const;
 
 export type LoanerStatus = (typeof LOANER_STATUSES)[number]["key"];

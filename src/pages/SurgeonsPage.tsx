@@ -54,7 +54,6 @@ export function SurgeonsPage() {
 
       {surgeons.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🧑‍⚕️</span>
           <p>No surgeons yet. Add the surgeons you scrub for, then build their cards.</p>
         </div>
       ) : (

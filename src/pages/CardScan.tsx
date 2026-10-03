@@ -131,7 +131,7 @@ export function CardScan() {
         </p>
         <div className="form-actions">
           <button className="btn btn-primary" onClick={() => fileRef.current?.click()} disabled={busy}>
-            {busy ? "Reading…" : "📷 Take / choose photo"}
+            {busy ? "Reading…" : "Take / choose photo"}
           </button>
           <input
             ref={fileRef}
@@ -171,7 +171,7 @@ export function CardScan() {
           <ul className="parse-preview">
             {SECTIONS.filter((s) => parsed.sections[s.key].length).map((s) => (
               <li key={s.key}>
-                <span aria-hidden>{s.icon}</span> <strong>{parsed.sections[s.key].length}</strong> {s.label.toLowerCase()}
+                <strong>{parsed.sections[s.key].length}</strong> {s.label.toLowerCase()}
               </li>
             ))}
           </ul>
@@ -182,7 +182,7 @@ export function CardScan() {
         <button className="btn btn-primary" disabled={!canCreate} onClick={onCreate}>
           Create card from this →
         </button>
-        <button className="btn" onClick={() => navigate("/cards/templates")}>📋 Use a template</button>
+        <button className="btn" onClick={() => navigate("/cards/templates")}>Use a template</button>
         <button className="btn" onClick={() => navigate("/cards/new")}>Start blank instead</button>
         {!canCreate && <span className="muted small">Add a procedure or some items to continue.</span>}
       </div>

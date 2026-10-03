@@ -37,7 +37,6 @@ export function OnCallPage() {
 
       {state.onCallPositions.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">📟</span>
           <p>No on-call positions yet. Add the roles your OR covers (OR tech, circulator, surgeons…).</p>
           <Link className="btn btn-primary" to="/on-call/people">Set up positions & people</Link>
         </div>
@@ -99,7 +98,7 @@ function PositionCard({ position }: { position: OnCallPosition }) {
         </div>
       ) : (
         <div className="oncall-none">
-          <span className="oncall-none-flag">⚠️ No one is set on call for this position.</span>
+          <span className="oncall-none-flag">No one is set on call for this position.</span>
           {pool.length > 0 && <span className="muted small">Pick from the {pool.length}-person pool below, or set someone.</span>}
         </div>
       )}

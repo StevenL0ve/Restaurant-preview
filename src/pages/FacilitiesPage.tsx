@@ -44,7 +44,6 @@ export function FacilitiesPage() {
 
       {state.facilities.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-emoji">🏥</span>
           <p>No facilities yet. Add the hospitals you work at, then build their location sets.</p>
         </div>
       ) : (
@@ -77,7 +76,7 @@ function FacilityCard({ facility, store }: { facility: Facility; store: Store })
             <button className="btn btn-sm" onClick={() => { setFname(facility.name); setEditing(false); }}>Cancel</button>
           </span>
         ) : (
-          <h2>🏥 {facility.name}</h2>
+          <h2>{facility.name}</h2>
         )}
         <span className="head-actions">
           <span className="pill">{locations.length} loc · {cardCount} cards</span>
@@ -144,7 +143,7 @@ function LocationRow({ loc, store, areaListId }: { loc: Location; store: Store; 
   }
   return (
     <li className="loc-row">
-      <span className="loc-name">📍 {locationLabel(loc)}</span>
+      <span className="loc-name">{locationLabel(loc)}</span>
       <button className="link" onClick={() => setEditing(true)}>Edit</button>
       <button className="info-del" aria-label="Delete location" onClick={() => deleteLocation(loc.id)}>✕</button>
     </li>

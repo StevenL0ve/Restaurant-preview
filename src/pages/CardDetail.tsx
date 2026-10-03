@@ -20,7 +20,6 @@ export function CardDetail() {
     return (
       <div className="page">
         <div className="empty-state">
-          <span className="empty-emoji">🤔</span>
           <p>That card doesn’t exist. <Link className="link" to="/cards">Back to all cards</Link>.</p>
         </div>
       </div>
@@ -87,7 +86,7 @@ export function CardDetail() {
         </div>
         <div className="head-actions">
           <button className="btn btn-primary" onClick={() => navigate(`/cards/${card.id}/setup`)}>
-            ▶ Start setup
+            Start setup
           </button>
           <button className="btn" onClick={() => navigate(`/cards/${card.id}/edit`)}>Edit</button>
         </div>
@@ -132,7 +131,7 @@ export function CardDetail() {
         return (
           <div className="card section-card" key={sec.key}>
             <div className="card-head">
-              <h2><span aria-hidden>{sec.icon}</span> {sec.label}</h2>
+              <h2>{sec.label}</h2>
               <span className="pill">{arr.length}</span>
             </div>
             <ul className="item-list">
@@ -143,7 +142,7 @@ export function CardDetail() {
                     <span className="item-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
                     {it.detail && <span className="item-detail">{it.detail}</span>}
                     {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
-                    {where && <span className="item-location">📍 {where}</span>}
+                    {where && <span className="item-location">{where}</span>}
                   </li>
                 );
               })}
@@ -154,9 +153,9 @@ export function CardDetail() {
 
       <div className="detail-actions">
         <button className="btn btn-primary" onClick={onSharePdf} disabled={pdfBusy}>
-          {pdfBusy ? "Building PDF…" : "📤 Share"}
+          {pdfBusy ? "Building PDF…" : "Share"}
         </button>
-        <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>📤 Send to pull</button>
+        <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>Send to pull</button>
         <button className="btn" onClick={() => exportCardFile(card.id)}>Share import file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (

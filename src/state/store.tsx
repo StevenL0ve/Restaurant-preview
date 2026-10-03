@@ -978,7 +978,6 @@ export function loanersSorted(s: AppState): LoanerTray[] {
 export interface SetupRow {
   item: CardItem;
   sectionLabel: string;
-  sectionIcon: string;
 }
 export interface AreaGroup {
   area: string; // "Lap cart", or "" for items with no location set
@@ -995,7 +994,7 @@ export function groupByArea(s: AppState, card: PrefCard): AreaGroup[] {
       const loc = locationOf(s, item.locationId);
       const area = loc?.area ?? "";
       const rows = byArea.get(area) ?? [];
-      rows.push({ item, sectionLabel: sec.label, sectionIcon: sec.icon });
+      rows.push({ item, sectionLabel: sec.label });
       byArea.set(area, rows);
     }
   }

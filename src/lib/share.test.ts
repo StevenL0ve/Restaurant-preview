@@ -29,14 +29,14 @@ describe("cardToText", () => {
   });
 
   it("includes the location for items that have one", () => {
-    expect(text).toContain("📍 Sterile store room, cabinet 7, shelf 3");
+    expect(text).toContain("at Sterile store room, cabinet 7, shelf 3");
   });
 
   it("works without a surgeon or location resolver", () => {
     const t = cardToText(card);
     expect(t).toContain("LAPAROSCOPIC CHOLECYSTECTOMY");
     expect(t).not.toContain("Gloves:");
-    expect(t).not.toContain("📍");
+    expect(t).not.toContain("at Sterile store room");
   });
 });
 

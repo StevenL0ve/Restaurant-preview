@@ -83,7 +83,7 @@ describe("app smoke test", () => {
     const id = buildSeed().cards[0].id;
     const detail = renderAt(`/cards/${id}`);
     expect(detail).toContain("Start setup");
-    expect(detail).toContain("📤 Share"); // the one share-sheet button
+    expect(detail).toContain(">Share</button>"); // the one share-sheet button
     expect(detail).not.toContain("/print"); // old print view is gone
     const setup = renderAt(`/cards/${id}/setup`);
     expect(setup).toContain("Pull-list setup");

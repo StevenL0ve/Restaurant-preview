@@ -72,7 +72,6 @@ export function TodayPage() {
 
       {cases.length === 0 && !adding ? (
         <div className="empty-state">
-          <span className="empty-emoji">🗓️</span>
           <p>Nothing on the board for {labelFor(date).toLowerCase()}. Tap <strong>Add case</strong> to build the lineup.</p>
         </div>
       ) : (

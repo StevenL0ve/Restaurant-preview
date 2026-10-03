@@ -94,7 +94,7 @@ export function Login() {
 
         {bioAvailable && bioEnabled && mode === "signin" && (
           <button className="btn auth-faceid" onClick={faceId} type="button">
-            <span aria-hidden>☺</span> Unlock with Face ID
+            Unlock with Face ID
           </button>
         )}
       </div>

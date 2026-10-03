@@ -49,7 +49,7 @@ export default function App() {
           carts ? `set up ${carts} cart${carts === 1 ? "" : "s"}` : "",
           skipped && added ? `(${skipped} you already had)` : "",
         ].filter(Boolean);
-        setBanner(`✅ ${bits.join(", ")}.`);
+        setBanner(`${bits.join(", ")}.`);
         navigate(carts ? "/carts" : "/cards");
       } catch {
         setBanner("That file didn’t look like an ORSync card file.");
