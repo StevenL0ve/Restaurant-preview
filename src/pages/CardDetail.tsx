@@ -29,8 +29,11 @@ export function CardDetail() {
   const sg = surgeonOf(state, card.surgeonId);
   const facility = facilityOf(state, card.facilityId);
 
-  // Text or email the card as a proper document, not a wall of words: build a
-  // PDF on-device and hand it to the share sheet (Messages, Mail, AirDrop).
+  // One button for every way a card leaves the app: build a PDF on-device and
+  // hand it to the phone's native share sheet, where the user picks what to do
+  // with it: text it, email it, AirDrop it, save it, or print it (the iOS and
+  // Android sheets both offer Print). On a computer without a share sheet the
+  // PDF downloads instead, ready to print or attach.
   const [pdfBusy, setPdfBusy] = useState(false);
   async function onSharePdf() {
     if (pdfBusy) return;
@@ -38,12 +41,12 @@ export function CardDetail() {
     try {
       const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId));
       const r = await shareBlobFile(cardPdfFilename(card!.procedure), blob, `Preference card: ${card!.procedure}`, "application/pdf");
-      setToast(r === "downloaded" ? "PDF saved. Attach it to a text or email." : null);
+      setToast(r === "downloaded" ? "PDF downloaded. Open it to print, or attach it to a text or email." : null);
     } catch {
       setToast("Couldn’t build the PDF.");
     } finally {
       setPdfBusy(false);
-      setTimeout(() => setToast(null), 2500);
+      setTimeout(() => setToast(null), 3000);
     }
   }
 
@@ -150,9 +153,8 @@ export function CardDetail() {
 
       <div className="detail-actions">
         <button className="btn btn-primary" onClick={onSharePdf} disabled={pdfBusy}>
-          {pdfBusy ? "Building PDF…" : "💬 Text / email PDF"}
+          {pdfBusy ? "Building PDF…" : "📤 Share or print"}
         </button>
-        <button className="btn" onClick={() => navigate(`/cards/${card.id}/print`)}>🖨 Print</button>
         <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>📤 Send to pull</button>
         <button className="btn" onClick={() => exportCardFile(card.id)}>Share import file</button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>

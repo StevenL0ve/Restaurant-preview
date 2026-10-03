@@ -82,6 +82,8 @@ describe("app smoke test", () => {
     const id = buildSeed().cards[0].id;
     const detail = renderAt(`/cards/${id}`);
     expect(detail).toContain("Start setup");
+    expect(detail).toContain("Share or print"); // the one share-sheet button
+    expect(detail).not.toContain("/print"); // old print view is gone
     const setup = renderAt(`/cards/${id}/setup`);
     expect(setup).toContain("Pull-list setup");
   });
@@ -95,15 +97,5 @@ describe("app smoke test", () => {
     expect(done).toContain("Missing (1)");
     expect(done).toContain("In SPD being prepared");
     expect(done).toContain("Resolved and now in the cart:");
-  });
-
-  it("renders a card's print view with items and locations in the table", () => {
-    asGuest();
-    const id = buildSeed().cards[0].id;
-    const html = renderAt(`/cards/${id}/print`);
-    expect(html).toContain("print-sheet");
-    expect(html).toContain("Lap chole tray");
-    expect(html).toContain("Location"); // the location column exists
-    expect(html).toContain("Print"); // toolbar button (hidden on paper)
   });
 });
