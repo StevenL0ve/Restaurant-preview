@@ -153,7 +153,7 @@ export function CardDetail() {
 
       <div className="detail-actions">
         <button className="btn btn-primary" onClick={onSharePdf} disabled={pdfBusy}>
-          {pdfBusy ? "Building PDF…" : "📤 Share or print"}
+          {pdfBusy ? "Building PDF…" : "📤 Share"}
         </button>
         <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>📤 Send to pull</button>
         <button className="btn" onClick={() => exportCardFile(card.id)}>Share import file</button>
