@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildSeed } from "./seed";
 import { casesOn, localDay, pendingLoanersForCard } from "./store";
+import { loanerStatusIndex } from "../types";
 
 describe("case day", () => {
   it("seeds cases on today, sorted by time", () => {
@@ -23,6 +24,7 @@ describe("case day", () => {
     const acl = s.cards.find((c) => c.procedure.startsWith("ACL"))!;
     const pending = pendingLoanersForCard(s, acl.id);
     expect(pending.length).toBeGreaterThanOrEqual(1);
-    expect(pending.every((l) => l.status !== "ready" && l.status !== "returned")).toBe(true);
+    // "Pending" = not yet out of the sterilizer (before cooling in the pipeline).
+    expect(pending.every((l) => loanerStatusIndex(l.status) < loanerStatusIndex("cooling"))).toBe(true);
   });
 });

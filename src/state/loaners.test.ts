@@ -5,12 +5,14 @@ import type { LoanerTray } from "../types";
 
 const base: Omit<LoanerTray, "id" | "status" | "createdAt" | "updatedAt" | "history"> = {
   description: "Test set",
+  sets: [],
 };
 function mk(partial: Partial<LoanerTray>): LoanerTray {
   return {
     id: partial.id ?? "l1",
     description: partial.description ?? "Test set",
     status: partial.status ?? "requested",
+    sets: partial.sets ?? [],
     createdAt: "2026-06-20T00:00:00Z",
     updatedAt: "2026-06-20T00:00:00Z",
     history: partial.history ?? [{ status: partial.status ?? "requested", at: "2026-06-20T00:00:00Z" }],
@@ -48,7 +50,7 @@ describe("loaner trays", () => {
       loaners: [
         mk({ id: "ok", caseDate: new Date(Date.now() + 20 * 86400000).toISOString(), status: "confirmed" }),
         mk({ id: "late", neededBy: past, status: "requested" }),
-        mk({ id: "done", status: "returned" }),
+        mk({ id: "done", status: "checked-out" }),
       ],
     };
     const stats = loanerStats(state);

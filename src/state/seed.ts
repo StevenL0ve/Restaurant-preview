@@ -357,12 +357,21 @@ export function buildSeed(): AppState {
   const day = 86400000;
   const iso = (ms: number) => new Date(Date.now() + ms).toISOString();
   let ki = 0;
-  const loaner = (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history">): LoanerTray => ({
+  let si = 0;
+  const loaner = (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history" | "sets"> & { sets?: LoanerTray["sets"] }): LoanerTray => ({
     ...l,
+    sets: l.sets ?? [],
     id: `loaner-seed-${ki++}`,
     createdAt: iso(-5 * day),
     updatedAt: iso(-1 * day),
     history: [{ status: l.status, at: iso(-1 * day) }],
+  });
+  const lset = (name: string, status: LoanerTray["sets"][number]["status"]) => ({
+    id: `set-seed-${si++}`,
+    name,
+    photos: [],
+    status,
+    history: [{ status, at: iso(-1 * day) }],
   });
 
   const loaners: LoanerTray[] = [
@@ -379,8 +388,17 @@ export function buildSeed(): AppState {
       procedure: "Total Knee Arthroplasty",
       caseDate: iso(2 * day),
       neededBy: iso(1 * day), // must arrive a day ahead to sterilize
+      estimatedDelivery: iso(1 * day),
+      clinicContact: "SPD desk +1 512 555 0190",
+      repEmail: "mike.r@stryker-demo.com",
+      altContact: "Sam K. +1 512 555 0177",
       status: "confirmed",
       notes: "Confirm cement restrictor sizes are in the set.",
+      sets: [
+        lset("Triathlon Primary, tray 1 of 3", "in-transit"),
+        lset("Triathlon Primary, tray 2 of 3", "in-transit"),
+        lset("Triathlon trials + implants", "confirmed"),
+      ],
     }),
     loaner({
       description: "Arthrex ACL reconstruction set + implants",
@@ -408,7 +426,8 @@ export function buildSeed(): AppState {
       procedure: "Lumbar fusion",
       caseDate: iso(-2 * day),
       neededBy: iso(-3 * day),
-      status: "returned",
+      status: "checked-out",
+      sets: [lset("MAS midline set", "checked-out")],
     }),
   ];
 

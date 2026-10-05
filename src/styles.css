@@ -904,6 +904,45 @@ a { color: inherit; }
   .item-add { grid-template-columns: 1fr; }
 }
 
+/* Loaner sets: named trays, layer photos, per-set pipeline. */
+.loaner-status-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; }
+.status-select { max-width: 220px; }
+.rep-contact {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-top: 10px;
+  background: var(--bg);
+}
+.rep-contact-name { font-weight: 600; font-size: 13.5px; }
+.rep-contact-actions { display: flex; gap: 6px; }
+.rep-facility-group { margin-bottom: 20px; }
+.set-list { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.set-list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.set-list-head h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.set-row { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.set-row:last-of-type { border-bottom: none; }
+.set-row-top { display: flex; align-items: center; gap: 8px; }
+.set-name { font-weight: 600; font-size: 14px; flex: 1; min-width: 0; }
+.set-step { flex: none; }
+.set-row-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.set-photos { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.set-thumb { position: relative; display: inline-block; }
+.set-thumb-open { padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: none; cursor: pointer; display: block; }
+.set-thumb-open img { display: block; width: 64px; height: 64px; object-fit: cover; }
+.set-thumb-del {
+  position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  font-size: 11px; line-height: 1; cursor: pointer;
+}
+.set-add { display: flex; gap: 8px; margin-top: 10px; }
+.set-add input { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; font-size: 13.5px; font-family: inherit; background: var(--card); color: var(--ink); }
+.lightbox {
+  position: fixed; inset: 0; z-index: 90; border: none; cursor: zoom-out;
+  background: rgba(10, 15, 25, 0.92); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; padding: 20px;
+}
+.lightbox img { max-width: 100%; max-height: 82vh; border-radius: 10px; }
+.lightbox .muted { color: #cbd5e1; }
+
 /* ============================================================
    Loaner trays
    ============================================================ */

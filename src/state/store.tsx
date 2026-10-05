@@ -14,6 +14,7 @@ import type {
   Facility,
   MissingEntry,
   Location,
+  LoanerSet,
   LoanerStatus,
   LoanerTray,
   OnCallPerson,
@@ -23,9 +24,10 @@ import type {
   SectionKey,
   Surgeon,
 } from "../types";
-import { ON_CALL_CATEGORIES, SECTIONS, locationLabel } from "../types";
+import { ON_CALL_CATEGORIES, SECTIONS, loanerStatusIndex, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
+import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from "../lib/loanerFile";
 import { shareJsonFile } from "../lib/share";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
@@ -59,15 +61,22 @@ function migrateOnCallNames(state: AppState): AppState {
   };
 }
 
+/** Bring stored loaners up to the current shape (full SPD pipeline, sets). */
+function migrateLoaners(s: AppState): AppState {
+  return { ...s, loaners: (s.loaners ?? []).map(normalizeLoaner) };
+}
+
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return migrateOnCallNames({ ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState);
+      return migrateLoaners(
+        migrateOnCallNames({ ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState),
+      );
     }
     // One-time migration from the pre-facility format.
     const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy) return migrateLegacy(JSON.parse(legacy));
+    if (legacy) return migrateLoaners(migrateLegacy(JSON.parse(legacy)));
   } catch {
     /* fall through to seed */
   }
@@ -187,10 +196,18 @@ export interface Store {
   updateCase: (id: string, patch: Partial<CaseEntry>) => void;
   deleteCase: (id: string) => void;
   // loaner trays
-  addLoaner: (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history" | "status"> & { status?: LoanerStatus }) => LoanerTray;
+  addLoaner: (l: Omit<LoanerTray, "id" | "createdAt" | "updatedAt" | "history" | "status" | "sets"> & { status?: LoanerStatus; sets?: LoanerSet[] }) => LoanerTray;
   updateLoaner: (id: string, patch: Partial<LoanerTray>) => void;
   setLoanerStatus: (id: string, status: LoanerStatus) => void;
   deleteLoaner: (id: string) => void;
+  // loaner sets (the rep's side: named sets, layer photos, per-set status)
+  addLoanerSet: (loanerId: string, name: string) => LoanerSet;
+  updateLoanerSet: (loanerId: string, setId: string, patch: Partial<LoanerSet>) => void;
+  deleteLoanerSet: (loanerId: string, setId: string) => void;
+  setLoanerSetStatus: (loanerId: string, setId: string, status: LoanerStatus) => void;
+  addLoanerSetPhotos: (loanerId: string, setId: string, photos: string[]) => void;
+  removeLoanerSetPhoto: (loanerId: string, setId: string, index: number) => void;
+  sendLoanerFile: (loanerId: string) => Promise<"shared" | "downloaded">;
   // on-call schedule
   addOnCallPosition: (name: string, category: OnCallPosition["category"]) => OnCallPosition;
   updateOnCallPosition: (id: string, patch: Partial<Pick<OnCallPosition, "name" | "category">>) => void;
@@ -223,7 +240,7 @@ export interface Store {
    *  import creates ready-to-pull carts for that date. */
   sendCardForPull: (cardId: string, date: string, count: number, note?: string, requestedBy?: string) => Promise<"shared" | "downloaded">;
   exportFacilityFile: (facilityId: string) => void;
-  importCards: (json: string) => { added: number; skipped: number; carts: number }; // merges; dedups; may create pull-request carts
+  importCards: (json: string) => { added: number; skipped: number; carts: number; loaners: number; loanerOutcome?: "created" | "merged" }; // merges; dedups; may create pull-request carts or loaner requests
   importCsv: (text: string) => { added: number; skipped: number }; // bulk import from a spreadsheet
   downloadCsvTemplate: () => void;
   copyCardToFacility: (cardId: string, facilityId: string) => PrefCard | null;
@@ -250,7 +267,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Quota exceeded (tray photos add up). The app keeps working from
+      // memory; the next smaller state will persist again.
+      console.warn("ORSync: could not persist state (storage full?)");
+    }
   }, [state]);
 
   const store = useMemo<Store>(() => {
@@ -418,6 +441,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const loaner: LoanerTray = {
           ...l,
           status,
+          sets: l.sets ?? [],
           id: uid("loaner"),
           createdAt: now,
           updatedAt: now,
@@ -447,6 +471,107 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       deleteLoaner: (id) =>
         update((st) => ({ ...st, loaners: st.loaners.filter((l) => l.id !== id) })),
+
+      // ---- Loaner sets: the rep's side of the record -----------------------
+      addLoanerSet: (loanerId, name) => {
+        const set: LoanerSet = {
+          id: uid("set"),
+          name: name.trim(),
+          photos: [],
+          status: "requested",
+          history: [{ status: "requested", at: new Date().toISOString() }],
+        };
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === loanerId ? { ...l, sets: [...l.sets, set], updatedAt: set.history[0].at } : l,
+          ),
+        }));
+        return set;
+      },
+
+      updateLoanerSet: (loanerId, setId, patch) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === loanerId
+              ? {
+                  ...l,
+                  updatedAt: new Date().toISOString(),
+                  sets: l.sets.map((s) => (s.id === setId ? { ...s, ...patch } : s)),
+                }
+              : l,
+          ),
+        })),
+
+      deleteLoanerSet: (loanerId, setId) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === loanerId ? { ...l, sets: l.sets.filter((s) => s.id !== setId) } : l,
+          ),
+        })),
+
+      setLoanerSetStatus: (loanerId, setId, status) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) => {
+            if (l.id !== loanerId) return l;
+            const at = new Date().toISOString();
+            return {
+              ...l,
+              updatedAt: at,
+              sets: l.sets.map((s) =>
+                s.id === setId && s.status !== status
+                  ? { ...s, status, history: [...s.history, { status, at }] }
+                  : s,
+              ),
+            };
+          }),
+        })),
+
+      addLoanerSetPhotos: (loanerId, setId, photos) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === loanerId
+              ? {
+                  ...l,
+                  updatedAt: new Date().toISOString(),
+                  // Cap per set so localStorage stays healthy: 8 layers is
+                  // more than any real tray stack.
+                  sets: l.sets.map((s) =>
+                    s.id === setId ? { ...s, photos: [...s.photos, ...photos].slice(0, 8) } : s,
+                  ),
+                }
+              : l,
+          ),
+        })),
+
+      removeLoanerSetPhoto: (loanerId, setId, index) =>
+        update((st) => ({
+          ...st,
+          loaners: st.loaners.map((l) =>
+            l.id === loanerId
+              ? {
+                  ...l,
+                  sets: l.sets.map((s) =>
+                    s.id === setId ? { ...s, photos: s.photos.filter((_, i) => i !== index) } : s,
+                  ),
+                }
+              : l,
+          ),
+        })),
+
+      sendLoanerFile: async (loanerId) => {
+        const file = buildLoanerFile(state, loanerId, new Date().toISOString());
+        if (!file) return "downloaded";
+        return shareJsonFile(
+          `loaner-${slugName(file.loaner.description)}.orsync`,
+          file,
+          `Loaner trays: ${file.loaner.description}`,
+        );
+      },
 
       addCarts: (cardId, date, count) => {
         const now = new Date().toISOString();
@@ -689,7 +814,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       importCards: (json) => {
-        const bundle = asBundle(JSON.parse(json), new Date().toISOString());
+        const parsed = JSON.parse(json);
+
+        // A loaner request/update travels through the same door as cards, so
+        // tapping any .orsync file does the right thing for techs AND reps.
+        if (isLoanerFile(parsed)) {
+          const { state: next, outcome } = applyLoanerFile(state, parsed, new Date().toISOString());
+          setState(migrateLoaners(next));
+          return { added: 0, skipped: 0, carts: 0, loaners: 1, loanerOutcome: outcome };
+        }
+
+        const bundle = asBundle(parsed, new Date().toISOString());
         if (!bundle || !bundle.cards.length) throw new Error("No cards found in that file.");
         const { state: next, added, skipped, cardIds } = importBundle(state, bundle);
 
@@ -727,7 +862,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
 
         setState({ ...next, carts });
-        return { added, skipped, carts: cartsMade };
+        return { added, skipped, carts: cartsMade, loaners: 0 };
       },
 
       importCsv: (text) => {
@@ -758,7 +893,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       importAll: (json) => {
         const parsed = JSON.parse(json) as Partial<AppState>;
-        update((st) => ({
+        update((st) => migrateLoaners({
           facilities: parsed.facilities ?? st.facilities,
           locations: parsed.locations ?? st.locations,
           surgeons: parsed.surgeons ?? st.surgeons,
@@ -772,6 +907,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           carts: parsed.carts ?? st.carts,
         }));
       },
+
 
       resetDemo: () => setState(buildSeed()),
 
@@ -929,7 +1065,7 @@ export function casesOn(s: AppState, date: string): CaseEntry[] {
 /** Loaners tied to a card that aren't sterile/ready yet — the case-day worry. */
 export function pendingLoanersForCard(s: AppState, cardId: string): LoanerTray[] {
   return s.loaners.filter(
-    (l) => l.cardId === cardId && l.status !== "ready" && l.status !== "in-use" && l.status !== "returned",
+    (l) => l.cardId === cardId && loanerStatusIndex(l.status) < loanerStatusIndex("cooling"),
   );
 }
 
@@ -937,7 +1073,7 @@ export function pendingLoanersForCard(s: AppState, cardId: string): LoanerTray[]
 
 /** Active = not yet returned. */
 export function activeLoaners(s: AppState): LoanerTray[] {
-  return s.loaners.filter((l) => l.status !== "returned");
+  return s.loaners.filter((l) => l.status !== "checked-out");
 }
 
 /** Past its delivery deadline but still not delivered — the thing to chase. */
@@ -949,7 +1085,7 @@ export function isLoanerOverdue(l: LoanerTray): boolean {
 
 /** Case is within `days` and the tray isn't fully ready yet. */
 export function isLoanerSoon(l: LoanerTray, days = 3): boolean {
-  if (!l.caseDate || l.status === "returned") return false;
+  if (!l.caseDate || l.status === "checked-out") return false;
   const dt = new Date(l.caseDate).getTime() - Date.now();
   return dt >= 0 && dt <= days * 86400000;
 }
@@ -1134,6 +1270,40 @@ export function setPullerName(name: string) {
   } catch {
     /* private mode */
   }
+}
+
+// Vendor-rep mode: same app, rep's point of view. Flips the Loaners screen to
+// "my trays by facility", and frames the share button as "send the update
+// back to the clinic". A device-level setting, like the puller name.
+const REP_KEY = "orsync.repmode.v1";
+export function getRepMode(): boolean {
+  try {
+    return localStorage.getItem(REP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+export function setRepMode(on: boolean) {
+  try {
+    localStorage.setItem(REP_KEY, on ? "1" : "0");
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Loaners grouped by facility — the rep's "where are my trays right now"
+ *  view. Facility resolves from the local record or the imported name. */
+export function loanersByFacility(s: AppState): [string, LoanerTray[]][] {
+  const map = new Map<string, LoanerTray[]>();
+  for (const l of s.loaners) {
+    const name =
+      (l.facilityId ? s.facilities.find((f) => f.id === l.facilityId)?.name : undefined) ??
+      l.facilityName ?? "Facility not set";
+    const list = map.get(name) ?? [];
+    list.push(l);
+    map.set(name, list);
+  }
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
 /** Everything on the card that isn't pulled into the cart, snapshotted for the

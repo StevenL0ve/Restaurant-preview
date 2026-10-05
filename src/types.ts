@@ -105,28 +105,56 @@ export interface SetupState {
 
 // ---- Loaner trays ----------------------------------------------------------
 // Vendor loaner sets (ortho/spine implants, specialty trays) borrowed for a
-// specific case. The pain Casechek targets: trays arriving late or with no time
-// to sterilize. So each request tracks a delivery deadline and moves through a
-// clear pipeline with a timestamped history.
+// specific case, tracked the way Censis LoanerLink does it: the clinic sends
+// the rep a request (surgeon, facility, procedure, special considerations),
+// the rep confirms it with named sets, layer photos and an ETA, and every set
+// then moves through the full SPD pipeline with a timestamped history.
 
 export const LOANER_STATUSES = [
   { key: "requested", label: "Requested" },
-  { key: "confirmed", label: "Confirmed" },
-  { key: "delivered", label: "Delivered" },
-  { key: "ready", label: "Sterile / ready" },
-  { key: "in-use", label: "In use" },
-  { key: "returned", label: "Returned" },
+  { key: "confirmed", label: "Rep confirmed" },
+  { key: "in-transit", label: "In transit" },
+  { key: "delivered", label: "Checked in" },
+  { key: "decon", label: "Decon / washer" },
+  { key: "assembly", label: "Assembly" },
+  { key: "sterilizer", label: "Sterilizer" },
+  { key: "cooling", label: "Cooling" },
+  { key: "on-cart", label: "On case cart" },
+  { key: "in-room", label: "In room" },
+  { key: "checked-out", label: "Checked out" },
 ] as const;
 
 export type LoanerStatus = (typeof LOANER_STATUSES)[number]["key"];
 
+export function loanerStatusLabel(key: LoanerStatus): string {
+  return LOANER_STATUSES.find((s) => s.key === key)?.label ?? key;
+}
+
+/** Pipeline position (0-based). Useful for "furthest behind" rollups. */
+export function loanerStatusIndex(key: LoanerStatus): number {
+  const i = LOANER_STATUSES.findIndex((s) => s.key === key);
+  return i < 0 ? 0 : i;
+}
+
+/** One physical set/tray in a request. Reps name each set and photograph each
+ *  layer, so SPD can verify contents at check-in and assembly. */
+export interface LoanerSet {
+  id: ID;
+  name: string; // "Triathlon Primary, tray 2 of 4"
+  photos: string[]; // compressed JPEG data URLs, one per layer
+  status: LoanerStatus;
+  history: { status: LoanerStatus; at: string }[];
+}
+
 export interface LoanerTray {
   id: ID;
   description: string; // "Stryker Triathlon total knee set"
-  vendor?: string; // "Stryker"
+  vendor?: string; // company: "Stryker"
   repName?: string;
   repPhone?: string;
-  quantity?: number; // # of trays / sets
+  repEmail?: string;
+  altContact?: string; // alternate contact: "Sam K. +1 512 555 0177"
+  quantity?: number; // # of trays / sets expected
   poNumber?: string;
   facilityId?: ID;
   surgeonId?: ID;
@@ -134,8 +162,16 @@ export interface LoanerTray {
   procedure?: string;
   caseDate?: string; // ISO date/datetime of the surgery
   neededBy?: string; // ISO delivery deadline (leaves time to sterilize)
-  status: LoanerStatus;
-  notes?: string;
+  estimatedDelivery?: string; // rep's ETA for the sets
+  clinicContact?: string; // who the rep calls at the facility: "SPD desk +1 …"
+  requestedBy?: string; // who sent the request
+  // When a request arrives as a file (the other side of the exchange), these
+  // carry the context as plain text since ids don't cross devices.
+  surgeonName?: string;
+  facilityName?: string;
+  status: LoanerStatus; // request-level status (sets can be further along)
+  sets: LoanerSet[];
+  notes?: string; // special considerations for the rep
   createdAt: string;
   updatedAt: string;
   history: { status: LoanerStatus; at: string }[]; // status timeline

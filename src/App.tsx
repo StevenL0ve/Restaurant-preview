@@ -43,7 +43,13 @@ export default function App() {
   useEffect(() => {
     initNativeFileOpen((json) => {
       try {
-        const { added, skipped, carts } = importRef.current(json);
+        const { added, skipped, carts, loaners, loanerOutcome } = importRef.current(json);
+        if (loaners) {
+          setBanner(loanerOutcome === "merged" ? "Loaner update received: sets and statuses refreshed." : "Loaner request imported.");
+          navigate("/loaners");
+          setTimeout(() => setBanner(null), 4500);
+          return;
+        }
         const bits = [
           added ? `Imported ${added} card${added === 1 ? "" : "s"}` : "Card already in your library",
           carts ? `set up ${carts} cart${carts === 1 ? "" : "s"}` : "",

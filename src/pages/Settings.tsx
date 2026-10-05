@@ -1,11 +1,16 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useStore } from "../state/store";
+import { useStore, getRepMode, setRepMode } from "../state/store";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
 
-function importMessage(added: number, skipped: number, source: string, carts = 0): string {
+function importMessage(added: number, skipped: number, source: string, carts = 0, loaners = 0, loanerOutcome?: string): string {
+  if (loaners > 0) {
+    return loanerOutcome === "merged"
+      ? "Loaner update received. The request's sets, statuses, and rep info are refreshed on the Loaners tab."
+      : "Loaner request imported. It's waiting on the Loaners tab.";
+  }
   const cards = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
   const cartNote = carts > 0 ? ` Set up ${carts} case cart${carts === 1 ? "" : "s"}. See the Carts tab.` : "";
   if (added === 0 && skipped > 0) return `Already had all of it. Skipped ${cards(skipped)} you already have.${cartNote}`;
@@ -27,8 +32,8 @@ export function Settings() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const { added, skipped, carts } = importCards(String(reader.result));
-        setMsg(importMessage(added, skipped, "your library", carts));
+        const { added, skipped, carts, loaners, loanerOutcome } = importCards(String(reader.result));
+        setMsg(importMessage(added, skipped, "your library", carts, loaners, loanerOutcome));
       } catch {
         setMsg("That file didn’t look like an ORSync card file.");
       }
@@ -90,6 +95,24 @@ export function Settings() {
           )}
         </p>
         <Link className="btn" to="/upgrade">See what's in Pro →</Link>
+      </div>
+
+      <div className="card settings-card">
+        <h2>Vendor rep mode</h2>
+        <p>
+          For device and implant reps: the Loaner trays screen regroups to <strong>your sets by
+          facility</strong>, and sharing a request sends your update (sets, layer photos, ETA,
+          statuses) back to the clinic. When a clinic sends you a request file, just open it and
+          ORSync imports it.
+        </p>
+        <div className="toggle-row">
+          <span>I'm a vendor rep</span>
+          <input
+            type="checkbox"
+            defaultChecked={getRepMode()}
+            onChange={(e) => { setRepMode(e.target.checked); setMsg(e.target.checked ? "Rep mode on. Check the Loaner trays tab." : "Rep mode off."); setTimeout(() => setMsg(null), 3000); }}
+          />
+        </div>
       </div>
 
       <div className="card settings-card">
