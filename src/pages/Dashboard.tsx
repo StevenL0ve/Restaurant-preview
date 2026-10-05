@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { Mascot } from "../components/Mascot";
 import {
   useStore,
   surgeonOf,
@@ -45,6 +46,7 @@ export function Dashboard() {
   return (
     <div className="page">
       <div className="dash-hero">
+        <Mascot size={78} className="dash-mascot" />
         <div className="dash-hero-text">
           <h1>Ready for your next case</h1>
           <p>Your preference cards, your way. No hospital login, works offline.</p>

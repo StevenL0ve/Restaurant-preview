@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
+import { Mascot } from "./Mascot";
 
 // One-time welcome sheet — the first thing a new user (or TestFlight tester)
 // sees. Three beats, one button, never shown again.
@@ -17,7 +18,7 @@ export function Welcome() {
   return (
     <div className="welcome-scrim" role="dialog" aria-modal="true" aria-label="Welcome to ORSync">
       <div className="welcome-card">
-        <img className="welcome-logo" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="" width={72} height={72} />
+        <Mascot size={104} className="welcome-mascot" />
         <h1>Welcome to ORSync</h1>
         <p className="welcome-sub">Your preference cards. Yours alone.</p>
 

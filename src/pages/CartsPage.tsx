@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Mascot } from "../components/Mascot";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, cartsOn, cartProgress, openMissing, surgeonOf, localDay, missingForDay } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -98,6 +99,7 @@ export function CartsPage() {
 
       {carts.length === 0 && !adding ? (
         <div className="empty-state">
+          <Mascot size={104} />
           <p>No carts for {dayLabel(offset).toLowerCase()}. Tap <strong>New carts</strong> to start pulling.</p>
         </div>
       ) : (

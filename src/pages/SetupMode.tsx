@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Mascot } from "../components/Mascot";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
 import { accentStyle } from "../lib/accent";
@@ -189,7 +190,8 @@ export function SetupMode() {
 
       {ready && (
         <div className="ready-cta">
-          <p>Everything’s pulled.</p>
+          <Mascot size={104} />
+          <p>Everything’s pulled. Case ready.</p>
           <button className="btn btn-primary" onClick={() => navigate(`/cards/${card.id}`)}>Back to card</button>
         </div>
       )}

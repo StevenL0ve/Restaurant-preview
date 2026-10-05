@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { Mascot } from "../components/Mascot";
 import { Link } from "react-router-dom";
 import {
   useStore,
@@ -90,6 +91,7 @@ export function LoanersPage() {
 
       {loaners.length === 0 ? (
         <div className="empty-state">
+          <Mascot size={104} />
           <p>
             No loaner trays here.{" "}
             {repMode

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Mascot } from "../components/Mascot";
 import { useAuth } from "../state/auth";
 
 // Optional account gate. A personal tool shouldn't gate you behind anyone's
@@ -35,7 +36,7 @@ export function Login() {
   return (
     <div className="auth">
       <div className="auth-card">
-        <img className="auth-logo" src={`${import.meta.env.BASE_URL}brand/logo-mark.png`} alt="ORSync" width={64} height={64} />
+        <Mascot size={92} className="auth-mascot" />
         <h1 className="auth-title">ORSync</h1>
         <p className="auth-sub">Your surgical preference cards. Yours alone.</p>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Mascot } from "../components/Mascot";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, surgeonOf, totalItems } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -74,6 +75,7 @@ export function CardsPage() {
 
       {cards.length === 0 ? (
         <div className="empty-state">
+          <Mascot size={104} />
           <p>No cards yet. Start from a <strong>template</strong>, scan a printed card, or build from scratch.</p>
           <div className="form-actions" style={{ justifyContent: "center" }}>
             <button className="btn btn-primary" onClick={() => navigate("/cards/templates")}>Start from a template</button>
