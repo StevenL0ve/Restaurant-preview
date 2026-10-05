@@ -11,10 +11,13 @@ export type ID = string;
 
 /** A hospital / surgery center. Locations are scoped to a facility, so the same
  *  surgeon at two sites keeps two independent location sets — exactly what a
- *  traveling tech needs. */
+ *  traveling tech needs. Optional GPS coordinates let reps see how far their
+ *  storage sites are from each hospital. */
 export interface Facility {
   id: ID;
   name: string; // "Mercy General"
+  lat?: number;
+  lng?: number;
 }
 
 /** A storage location within a facility, split into a coarse `area` (the
@@ -281,6 +284,41 @@ export interface CaseCart {
   updatedAt: string;
 }
 
+// ---- Rep storage & stock ---------------------------------------------------
+// A rep's own world: where their sets live when they're not out on loan.
+// Warehouses, the company's distribution center, even the trunk stock in the
+// car. Each site can carry GPS coordinates (tagged on the spot with one tap),
+// so the rep sees how far every hospital is from the nearest stock.
+
+export const REP_LOCATION_KINDS = [
+  { key: "warehouse", label: "My storage" },
+  { key: "company", label: "Company warehouse" },
+  { key: "vehicle", label: "Vehicle / trunk stock" },
+  { key: "other", label: "Other" },
+] as const;
+
+export type RepLocationKind = (typeof REP_LOCATION_KINDS)[number]["key"];
+
+export interface RepLocation {
+  id: ID;
+  name: string; // "North Austin storage unit B14"
+  kind: RepLocationKind;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  notes?: string;
+}
+
+/** A count of one set type at one storage site: "Triathlon Primary ×4 at
+ *  North Austin storage". Totals roll up across sites per set name. */
+export interface RepStockItem {
+  id: ID;
+  name: string; // set type: "Triathlon Primary set"
+  locationId: ID; // RepLocation
+  qty: number;
+  notes?: string;
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
@@ -293,4 +331,6 @@ export interface AppState {
   onCallPeople: OnCallPerson[];
   onCallShifts: OnCallShift[];
   carts: CaseCart[];
+  repLocations: RepLocation[];
+  repStock: RepStockItem[];
 }

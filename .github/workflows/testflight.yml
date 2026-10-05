@@ -47,6 +47,13 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 
+      - name: Location permission (rep storage distances)
+        run: |
+          PLIST=ios/App/App/Info.plist
+          MSG="ORSync uses your location only when you tag a storage site or facility, so reps can see how far their sets are from each hospital."
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $MSG" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $MSG" "$PLIST"
+
       - name: Register the .orsync document type
         run: |
           PLIST=ios/App/App/Info.plist

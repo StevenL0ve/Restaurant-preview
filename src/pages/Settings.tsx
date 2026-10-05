@@ -113,6 +113,7 @@ export function Settings() {
             onChange={(e) => { setRepMode(e.target.checked); setMsg(e.target.checked ? "Rep mode on. Check the Loaner trays tab." : "Rep mode off."); setTimeout(() => setMsg(null), 3000); }}
           />
         </div>
+        <Link className="btn" to="/loaners/storage">Storage sites & stock counts →</Link>
       </div>
 
       <div className="card settings-card">

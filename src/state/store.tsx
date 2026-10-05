@@ -21,6 +21,8 @@ import type {
   OnCallPosition,
   OnCallShift,
   PrefCard,
+  RepLocation,
+  RepStockItem,
   SectionKey,
   Surgeon,
 } from "../types";
@@ -139,6 +141,8 @@ function migrateLegacy(old: any): AppState {
     onCallPeople: old.onCallPeople ?? [],
     onCallShifts: old.onCallShifts ?? [],
     carts: old.carts ?? [],
+    repLocations: old.repLocations ?? [],
+    repStock: old.repStock ?? [],
   };
 }
 
@@ -208,6 +212,14 @@ export interface Store {
   addLoanerSetPhotos: (loanerId: string, setId: string, photos: string[]) => void;
   removeLoanerSetPhoto: (loanerId: string, setId: string, index: number) => void;
   sendLoanerFile: (loanerId: string) => Promise<"shared" | "downloaded">;
+  // rep storage sites & stock counts
+  addRepLocation: (loc: Omit<RepLocation, "id">) => RepLocation;
+  updateRepLocation: (id: string, patch: Partial<RepLocation>) => void;
+  deleteRepLocation: (id: string) => void;
+  addRepStock: (name: string, locationId: string, qty: number) => void;
+  updateRepStock: (id: string, patch: Partial<RepStockItem>) => void;
+  deleteRepStock: (id: string) => void;
+  setFacilityCoords: (id: string, lat: number, lng: number) => void;
   // on-call schedule
   addOnCallPosition: (name: string, category: OnCallPosition["category"]) => OnCallPosition;
   updateOnCallPosition: (id: string, patch: Partial<Pick<OnCallPosition, "name" | "category">>) => void;
@@ -573,6 +585,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
 
+      // ---- Rep storage sites & stock ---------------------------------------
+      addRepLocation: (loc) => {
+        const created: RepLocation = { ...loc, id: uid("rloc") };
+        update((st) => ({ ...st, repLocations: [...st.repLocations, created] }));
+        return created;
+      },
+
+      updateRepLocation: (id, patch) =>
+        update((st) => ({
+          ...st,
+          repLocations: st.repLocations.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+        })),
+
+      deleteRepLocation: (id) =>
+        update((st) => ({
+          ...st,
+          repLocations: st.repLocations.filter((l) => l.id !== id),
+          repStock: st.repStock.filter((s) => s.locationId !== id),
+        })),
+
+      addRepStock: (name, locationId, qty) =>
+        update((st) => {
+          // Same set name at the same site: bump the count, don't duplicate.
+          const existing = st.repStock.find(
+            (s) => s.locationId === locationId && s.name.trim().toLowerCase() === name.trim().toLowerCase(),
+          );
+          if (existing) {
+            return {
+              ...st,
+              repStock: st.repStock.map((s) => (s.id === existing.id ? { ...s, qty: s.qty + qty } : s)),
+            };
+          }
+          return {
+            ...st,
+            repStock: [...st.repStock, { id: uid("stock"), name: name.trim(), locationId, qty }],
+          };
+        }),
+
+      updateRepStock: (id, patch) =>
+        update((st) => ({
+          ...st,
+          repStock: st.repStock
+            .map((s) => (s.id === id ? { ...s, ...patch } : s))
+            .filter((s) => s.qty > 0),
+        })),
+
+      deleteRepStock: (id) =>
+        update((st) => ({ ...st, repStock: st.repStock.filter((s) => s.id !== id) })),
+
+      setFacilityCoords: (id, lat, lng) =>
+        update((st) => ({
+          ...st,
+          facilities: st.facilities.map((f) => (f.id === id ? { ...f, lat, lng } : f)),
+        })),
+
       addCarts: (cardId, date, count) => {
         const now = new Date().toISOString();
         const n = Math.max(1, Math.min(20, Math.floor(count)));
@@ -905,6 +972,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           onCallPeople: parsed.onCallPeople ?? st.onCallPeople,
           onCallShifts: parsed.onCallShifts ?? st.onCallShifts,
           carts: parsed.carts ?? st.carts,
+          repLocations: parsed.repLocations ?? st.repLocations,
+          repStock: parsed.repStock ?? st.repStock,
         }));
       },
 
@@ -914,7 +983,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [],
         }),
     };
   }, [state]);

@@ -943,6 +943,28 @@ a { color: inherit; }
 .lightbox img { max-width: 100%; max-height: 82vh; border-radius: 10px; }
 .lightbox .muted { color: #cbd5e1; }
 
+/* Rep storage & stock: sites, counts, distances. */
+.stock-totals h2 { margin: 0 0 8px; font-size: 15px; }
+.stock-total-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13.5px; }
+.site-card { margin-bottom: 14px; }
+.geo-distances { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.geo-chip {
+  font-size: 12px; font-weight: 600; color: var(--brand); background: var(--brand-50);
+  border-radius: 99px; padding: 3px 10px;
+}
+.stock-rows { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.stock-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.stock-row:last-of-type { border-bottom: none; }
+.stock-name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
+.stock-qty-controls { display: flex; align-items: center; gap: 8px; }
+.stock-qty { min-width: 26px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stock-qty-input { width: 64px; border: 1px solid var(--line); border-radius: 9px; padding: 8px; font-size: 13.5px; font-family: inherit; background: var(--card); color: var(--ink); text-align: center; }
+.geo-facility-list { list-style: none; margin: 0; padding: 0; }
+.geo-facility-row { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.geo-facility-row .stock-name { flex: 1 1 auto; }
+.geo-facility-row .muted { flex: 1 1 100%; order: 3; }
+.geo-facility-row:last-child { border-bottom: none; }
+
 /* ============================================================
    Loaner trays
    ============================================================ */

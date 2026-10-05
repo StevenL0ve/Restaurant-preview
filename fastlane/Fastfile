@@ -43,6 +43,10 @@ platform :ios do
     plist = "../ios/App/App/Info.plist"
     sh(%(/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "#{plist}"))
 
+    # Location permission: reps tag storage sites/facilities to see distances.
+    loc_msg = "ORSync uses your location only when you tag a storage site or facility, so reps can see how far their sets are from each hospital."
+    sh(%(/usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string #{loc_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription #{loc_msg}" "#{plist}"))
+
     # Register the .orsync document type so tapped card files open in the app.
     [
       "Add :UTExportedTypeDeclarations array",

@@ -24,7 +24,7 @@ describe("portable card bundles", () => {
     const card = src.cards.find((c) => c.procedure.startsWith("Total Knee"))!;
     const bundle = bundleCards(src, [card.id], NOW);
 
-    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [] };
+    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [] };
     const { state, added } = importBundle(empty, bundle);
     expect(added).toBe(1);
     expect(state.cards).toHaveLength(1);
@@ -75,7 +75,7 @@ describe("portable card bundles", () => {
     bundle.pullRequest = { date: "2026-08-25", count: 3, requestedBy: "Steven" };
 
     // Import into an empty library: the id is the fresh copy's.
-    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [] };
+    const empty = { facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {}, onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [] };
     const fresh = importBundle(empty, bundle);
     expect(fresh.cardIds).toHaveLength(1);
     expect(fresh.state.cards[0].id).toBe(fresh.cardIds[0]);

@@ -585,7 +585,7 @@ export function buildSeed(): AppState {
 
   return {
     facilities, locations, surgeons, cards, loaners, cases, setups: {},
-    onCallPositions, onCallPeople, onCallShifts, carts,
+    onCallPositions, onCallPeople, onCallShifts, carts, repLocations: [], repStock: [],
   };
 }
 

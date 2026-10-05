@@ -65,6 +65,7 @@ export function LoanersPage() {
           </p>
         </div>
         <div className="head-actions">
+          {repMode && <Link className="btn" to="/loaners/storage">Storage & stock</Link>}
           <button className="btn btn-primary" onClick={() => { setEditing(null); setAdding((v) => !v); }}>
             {adding ? "Close" : "+ New request"}
           </button>

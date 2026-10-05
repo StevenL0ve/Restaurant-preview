@@ -5,7 +5,7 @@ import type { AppState, LoanerTray } from "../types";
 function emptyState(over: Partial<AppState> = {}): AppState {
   return {
     facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-    onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [],
+    onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [],
     ...over,
   };
 }

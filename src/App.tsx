@@ -20,6 +20,7 @@ import { SurgeonsPage } from "./pages/SurgeonsPage";
 import { SurgeonDetail } from "./pages/SurgeonDetail";
 import { FacilitiesPage } from "./pages/FacilitiesPage";
 import { LoanersPage } from "./pages/LoanersPage";
+import { RepStoragePage } from "./pages/RepStoragePage";
 import { CartsPage } from "./pages/CartsPage";
 import { CartPullPage } from "./pages/CartPullPage";
 import { MissingDayPage } from "./pages/MissingDayPage";
@@ -91,6 +92,7 @@ export default function App() {
             <Route path="/surgeons/:id" element={<SurgeonDetail />} />
             <Route path="/facilities" element={<FacilitiesPage />} />
             <Route path="/loaners" element={<LoanersPage />} />
+            <Route path="/loaners/storage" element={<RepStoragePage />} />
             <Route path="/carts" element={<CartsPage />} />
             <Route path="/carts/missing" element={<MissingDayPage />} />
             <Route path="/carts/send" element={<SendPullPage />} />
