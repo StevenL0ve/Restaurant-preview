@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mascot } from "../components/Mascot";
 import { useAuth } from "../state/auth";
+import { cloudEnabled } from "../lib/cloud";
 
 // Optional account gate. A personal tool shouldn't gate you behind anyone's
 // approval — so the most prominent action is "use it now, no account."
@@ -38,7 +39,11 @@ export function Login() {
       <div className="auth-card">
         <Mascot size={92} className="auth-mascot" />
         <h1 className="auth-title">ORSync</h1>
-        <p className="auth-sub">Your surgical preference cards. Yours alone.</p>
+        <p className="auth-sub">
+          {cloudEnabled()
+            ? "Sign in and your library follows you: live on every device."
+            : "Your surgical preference cards. Yours alone."}
+        </p>
 
         <button className="btn btn-primary auth-submit" onClick={continueAsGuest} type="button">
           Use it now, no account

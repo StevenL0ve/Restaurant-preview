@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { cloudEnabled, firebase, authErrorMessage } from "../lib/cloud";
 
 // Lightweight, optional accounts. ORSync is a *personal* tool, so the whole
 // point is that you never need anyone's permission to use it — there's a
@@ -25,10 +26,13 @@ export interface SessionUser {
   name: string;
   email: string;
   guest?: boolean;
+  /** Set when signed in to ORSync Cloud: the account whose library syncs live. */
+  uid?: string;
 }
 
 const ACCOUNTS_KEY = "orsync.accounts.v1";
 const SESSION_KEY = "orsync.session.v1";
+const CLOUD_SESSION_KEY = "orsync.cloudsession.v1";
 const BIO_KEY = "orsync.biometric.v1";
 const GUEST_KEY = "orsync.guest.v1";
 
@@ -83,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       if (localStorage.getItem(GUEST_KEY) === "1") return { name: "You", email: "", guest: true };
+      // A cached cloud session paints instantly; Firebase reconciles it below.
+      const cloud = localStorage.getItem(CLOUD_SESSION_KEY);
+      if (cloudEnabled() && cloud) return JSON.parse(cloud) as SessionUser;
       const email = localStorage.getItem(SESSION_KEY);
       if (email) {
         const acct = loadAccounts()[email];
@@ -101,6 +108,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     biometricAvailable().then(setBioAvailable);
   }, []);
 
+  // With the cloud on, Firebase owns the session: reconcile the cached copy
+  // (sign-outs elsewhere, profile changes) once its persistence hydrates.
+  useEffect(() => {
+    if (!cloudEnabled()) return;
+    let stop: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { auth } = await firebase();
+        const { onAuthStateChanged } = await import("firebase/auth");
+        stop = onAuthStateChanged(auth, (fbUser) => {
+          if (localStorage.getItem(GUEST_KEY) === "1") return; // guest is local-only
+          if (fbUser) {
+            const u: SessionUser = {
+              name: fbUser.displayName || fbUser.email || "You",
+              email: fbUser.email ?? "",
+              uid: fbUser.uid,
+            };
+            localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify(u));
+            setUser((prev) => (prev && prev.uid === u.uid && prev.name === u.name ? prev : u));
+          } else {
+            localStorage.removeItem(CLOUD_SESSION_KEY);
+            setUser((prev) => (prev?.uid ? null : prev));
+          }
+        });
+      } catch {
+        /* cloud unreachable: cached session keeps working offline */
+      }
+    })();
+    return () => stop?.();
+  }, []);
+
   const value: AuthContext = {
     user,
     ready,
@@ -112,6 +150,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!name.trim()) throw new Error("Please enter your name.");
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(key)) throw new Error("Enter a valid email.");
       if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+      if (cloudEnabled()) {
+        try {
+          const { auth } = await firebase();
+          const { createUserWithEmailAndPassword, updateProfile } = await import("firebase/auth");
+          const cred = await createUserWithEmailAndPassword(auth, key, password);
+          await updateProfile(cred.user, { displayName: name.trim() }).catch(() => undefined);
+          const u: SessionUser = { name: name.trim(), email: key, uid: cred.user.uid };
+          localStorage.removeItem(GUEST_KEY);
+          localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify(u));
+          setUser(u);
+          return;
+        } catch (e) {
+          throw new Error(authErrorMessage(e));
+        }
+      }
       const accounts = loadAccounts();
       if (accounts[key]) throw new Error("An account with that email already exists.");
       accounts[key] = {
@@ -128,6 +181,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     signIn: async (email, password) => {
       const key = email.trim().toLowerCase();
+      if (cloudEnabled()) {
+        try {
+          const { auth } = await firebase();
+          const { signInWithEmailAndPassword } = await import("firebase/auth");
+          const cred = await signInWithEmailAndPassword(auth, key, password);
+          const u: SessionUser = {
+            name: cred.user.displayName || key,
+            email: key,
+            uid: cred.user.uid,
+          };
+          localStorage.removeItem(GUEST_KEY);
+          localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify(u));
+          setUser(u);
+          return;
+        } catch (e) {
+          throw new Error(authErrorMessage(e));
+        }
+      }
       const acct = loadAccounts()[key];
       if (!acct || acct.passHash !== (await sha256(password))) {
         throw new Error("Incorrect email or password.");
@@ -145,6 +216,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut: () => {
       localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem(GUEST_KEY);
+      localStorage.removeItem(CLOUD_SESSION_KEY);
+      if (cloudEnabled()) {
+        void firebase().then(async ({ auth }) => {
+          const { signOut: fbSignOut } = await import("firebase/auth");
+          await fbSignOut(auth);
+        }).catch(() => undefined);
+      }
       setUser(null);
     },
 

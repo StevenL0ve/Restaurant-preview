@@ -3,9 +3,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "./auth";
+import { cloudEnabled } from "../lib/cloud";
+import { schedulePush, startCloudSync } from "./cloudSync";
 import type {
   AppState,
   CardItem,
@@ -277,6 +281,25 @@ function initials(name: string): string {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load);
+  const { user } = useAuth();
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // ORSync Cloud: with a signed-in account, the library's primary home is
+  // Firestore. Local storage stays as the instant-start cache; the engine
+  // streams other devices' changes in live and pushes local edits up.
+  useEffect(() => {
+    if (!cloudEnabled() || !user?.uid) return;
+    const stop = startCloudSync(user.uid, {
+      getState: () => stateRef.current,
+      applyRemote: (patch) => setState((s) => migrateLoaners({ ...s, ...patch } as AppState)),
+    });
+    return stop;
+  }, [user?.uid]);
+
+  useEffect(() => {
+    schedulePush();
+  }, [state]);
 
   useEffect(() => {
     try {

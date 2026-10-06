@@ -1,9 +1,50 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, getRepMode, setRepMode } from "../state/store";
+import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
+
+// ORSync Cloud status: where the library primarily lives once an account is
+// signed in, with live updates across devices.
+function CloudCard({ guest, signedIn }: { guest: boolean; signedIn: boolean }) {
+  const [status, setStatus] = useState<CloudStatus>(getCloudStatus());
+  useEffect(() => onCloudStatus(setStatus), []);
+
+  return (
+    <div className="card settings-card">
+      <h2>ORSync Cloud</h2>
+      {!cloudEnabled() ? (
+        <p className="muted">
+          Cloud sync is built and ships as soon as the project keys are connected. Until then your
+          library saves on this device, and Export / Import moves it between devices.
+        </p>
+      ) : guest || !signedIn ? (
+        <p>
+          You're using ORSync without an account, so everything stays on this device.{" "}
+          <strong>Create an account</strong> (Settings → Account → Switch) and your library's primary
+          home becomes ORSync Cloud: open the app on any device and see the same cards, carts, and
+          loaners, updating live.
+        </p>
+      ) : (
+        <>
+          <p>
+            Your library lives in <strong>ORSync Cloud</strong> and updates live on every device
+            you're signed in to. It still works fully offline; changes sync when you're back online.
+          </p>
+          <p className="muted small">
+            {status.state === "live" && `Live. Last synced ${new Date(status.lastSyncAt).toLocaleTimeString()}.`}
+            {status.state === "connecting" && "Connecting…"}
+            {status.state === "error" && `Sync issue: ${status.message} (your data is safe on this device; it retries automatically.)`}
+            {status.state === "signed-out" && "Waiting for sign-in."}
+          </p>
+          <p className="muted small">Tray layer photos stay on the device that took them for now.</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function importMessage(added: number, skipped: number, source: string, carts = 0, loaners = 0, loanerOutcome?: string): string {
   if (loaners > 0) {
@@ -82,6 +123,8 @@ export function Settings() {
           <button className="btn" onClick={signOut}>{user?.guest ? "Switch / create account" : "Sign out"}</button>
         </div>
       </div>
+
+      <CloudCard guest={!!user?.guest} signedIn={!!user?.uid} />
 
       <div className="card settings-card">
         <h2>Plan</h2>
