@@ -124,6 +124,10 @@ export function Cart() {
       <button className="btn btn-primary btn-block" onClick={checkout}>
         Place order · {money(total)}
       </button>
+      <p className="footnote">
+        Pay with Cash App after placing your order, or at the counter when you
+        pick up.
+      </p>
     </div>
   );
 }

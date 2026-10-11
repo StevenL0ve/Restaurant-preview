@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useStore } from "../state/store";
 import { orderStatus } from "../lib/orders";
 import { money, fullDate, time } from "../lib/format";
+import { cashAppUrl } from "../lib/payments";
 
 const statusLabel: Record<string, string> = {
   received: "Received",
@@ -42,7 +43,8 @@ export function Orders() {
 
       {justOrdered && (
         <div className="card success-banner">
-          🎉 Order placed! We'll have it ready shortly.
+          🎉 Order placed! We'll have it ready shortly — pay with Cash App
+          below, or at the counter.
         </div>
       )}
 
@@ -74,6 +76,16 @@ export function Orders() {
               </div>
               <div className="order-total">{money(o.total)}</div>
             </div>
+            {o.total > 0 && status !== "completed" && (
+              <a
+                className="btn btn-primary btn-block cashapp-btn"
+                href={cashAppUrl(o.total)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                💵 Pay {money(o.total)} with Cash App
+              </a>
+            )}
           </div>
           );
         })}

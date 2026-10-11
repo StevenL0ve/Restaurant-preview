@@ -822,3 +822,7 @@ input, textarea { font-family: inherit; }
 .puzzle-trophy { padding: 0; overflow: hidden; }
 .puzzle-trophy img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
 .puzzle-trophy-body { padding: 10px 12px 12px; }
+
+/* Cash App payment button on open orders */
+.cashapp-btn { margin-top: 12px; background: #00d632; border-color: #00d632; color: #0b2b10; text-align: center; }
+.cashapp-btn:hover { background: #00c02d; }
