@@ -18,6 +18,7 @@ export async function cardPdfBlob(
   surgeon?: Surgeon,
   facility?: Facility,
   locationName?: (id: string) => string | undefined,
+  dayConsiderations: string[] = [],
 ): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default;
@@ -78,11 +79,16 @@ export async function cardPdfBlob(
   }
 
   // Case meta block (label/value rows).
+  const considerations = [
+    card.specialConsiderations?.trim(),
+    ...dayConsiderations.map((t) => `Today only: ${t}`),
+  ].filter(Boolean).join("\n");
   const meta: [string, string | undefined][] = [
     ["Position", card.position],
     ["Skin prep", card.prep],
     ["Draping", card.draping],
     ["Notes", card.notes],
+    ["Special considerations", considerations || undefined],
   ];
   const metaRows = meta.filter(([, v]) => v?.trim()).map(([k, v]) => [k, v as string]);
   if (metaRows.length) {

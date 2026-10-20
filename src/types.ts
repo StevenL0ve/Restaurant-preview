@@ -90,6 +90,10 @@ export interface PrefCard {
   prep?: string; // "ChloraPrep, xiphoid to pubis"
   draping?: string; // "Laparotomy drape"
   notes?: string; // case-specific quirks / reminders
+  /** The surgeon's standing special requests and instructions: shown
+   *  prominently on the card, in setup, on carts, and on the PDF. One-day
+   *  requests live separately as DayConsideration entries. */
+  specialConsiderations?: string;
   instruments: CardItem[];
   sutures: CardItem[];
   supplies: CardItem[];
@@ -195,6 +199,20 @@ export interface CaseEntry {
   cardId: ID;
   room?: string; // "OR 4"
   notes?: string;
+}
+
+// ---- One-day special considerations ---------------------------------------
+// "Today only, Dr. Chen wants the smaller trials opened." A request for one
+// specific case day that must NOT permanently edit the card. Shown on the
+// card, in setup, and on that day's carts; days in the past stop showing.
+
+export interface DayConsideration {
+  id: ID;
+  cardId: ID;
+  date: string; // local day "2026-10-21"
+  text: string;
+  by?: string;
+  createdAt: string;
 }
 
 // ---- On-call schedule ------------------------------------------------------
@@ -346,4 +364,5 @@ export interface AppState {
   carts: CaseCart[];
   repLocations: RepLocation[];
   repStock: RepStockItem[];
+  dayNotes: DayConsideration[];
 }

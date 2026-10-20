@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { ConsiderationsBanner } from "../components/Considerations";
+import { localDay } from "../state/store";
 import { Mascot } from "../components/Mascot";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, setupProgress, groupByArea, locationLabelOf } from "../state/store";
@@ -124,6 +126,8 @@ export function SetupMode() {
           <p className="muted">{sg?.name} · Pull-list setup</p>
         </div>
       </div>
+
+      <ConsiderationsBanner card={card} date={localDay(0)} />
 
       <div className={"progress-card" + (ready ? " ready" : "")}>
         <div className="progress-top">

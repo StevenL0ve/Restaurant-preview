@@ -25,6 +25,7 @@ export function cardToText(
   ];
   for (const [label, val] of meta) if (val?.trim()) lines.push(`${label}: ${val}`);
   if (card.notes?.trim()) lines.push(`Notes: ${card.notes}`);
+  if (card.specialConsiderations?.trim()) lines.push(`Special considerations: ${card.specialConsiderations}`);
 
   for (const sec of SECTIONS) {
     const arr = card[sec.key as SectionKey];

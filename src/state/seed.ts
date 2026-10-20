@@ -586,6 +586,14 @@ export function buildSeed(): AppState {
   return {
     facilities, locations, surgeons, cards, loaners, cases, setups: {},
     onCallPositions, onCallPeople, onCallShifts, carts, repLocations: [], repStock: [],
+    dayNotes: [{
+      id: "daynote-seed-0",
+      cardId: cards[0].id,
+      date: localDay(0),
+      text: "Open the 5mm scope, not the 10mm. Rep dropping trials by 07:00.",
+      by: "Charge desk",
+      createdAt: new Date().toISOString(),
+    }],
   };
 }
 

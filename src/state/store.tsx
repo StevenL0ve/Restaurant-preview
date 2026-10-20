@@ -12,6 +12,7 @@ import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
 import type {
   AppState,
+  DayConsideration,
   CardItem,
   CaseCart,
   CaseEntry,
@@ -147,6 +148,7 @@ function migrateLegacy(old: any): AppState {
     carts: old.carts ?? [],
     repLocations: old.repLocations ?? [],
     repStock: old.repStock ?? [],
+    dayNotes: old.dayNotes ?? [],
   };
 }
 
@@ -168,6 +170,7 @@ export function emptyCard(surgeonId: string, specialty: string, facilityId?: str
     prep: "",
     draping: "",
     notes: "",
+    specialConsiderations: "",
     instruments: [],
     sutures: [],
     supplies: [],
@@ -193,6 +196,9 @@ export interface Store {
   deleteSurgeon: (id: string) => void;
   // cards
   saveCard: (card: PrefCard) => void;
+  // one-day special considerations ("today only" requests; never edit the card)
+  addDayNote: (cardId: string, date: string, text: string, by?: string) => void;
+  deleteDayNote: (id: string) => void;
   deleteCard: (id: string) => void;
   duplicateCard: (id: string) => PrefCard | null;
   toggleFavorite: (id: string) => void;
@@ -413,6 +419,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               : [stamped, ...st.cards],
           };
         }),
+
+      addDayNote: (cardId, date, text, by) =>
+        update((st) => ({
+          ...st,
+          dayNotes: [
+            {
+              id: uid("dn"), cardId, date,
+              text: text.trim(), by: by?.trim() || undefined,
+              createdAt: new Date().toISOString(),
+            },
+            ...st.dayNotes,
+          ],
+        })),
+
+      deleteDayNote: (id) =>
+        update((st) => ({ ...st, dayNotes: st.dayNotes.filter((n) => n.id !== id) })),
 
       deleteCard: (id) =>
         update((st) => {
@@ -1059,6 +1081,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           carts: parsed.carts ?? st.carts,
           repLocations: parsed.repLocations ?? st.repLocations,
           repStock: parsed.repStock ?? st.repStock,
+          dayNotes: parsed.dayNotes ?? st.dayNotes,
         }));
       },
 
@@ -1068,7 +1091,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [],
         }),
     };
   }, [state]);
@@ -1390,6 +1413,11 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
   return cartsOn(s, date)
     .map((cart) => ({ cart, card: s.cards.find((c) => c.id === cart.cardId), missing: openMissing(cart) }))
     .filter((x) => x.missing.length > 0);
+}
+
+/** One-day special considerations for a card on a given local day. */
+export function dayNotesFor(s: AppState, cardId: string, date: string): DayConsideration[] {
+  return s.dayNotes.filter((n) => n.cardId === cardId && n.date === date);
 }
 
 /** Plain-text rollup of a day's missing items, for ops to paste into an

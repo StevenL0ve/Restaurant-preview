@@ -113,6 +113,8 @@ function joinMeta(cards: PrefCard[], pick: (c: PrefCard) => string | undefined):
 
 export interface BuildOptions {
   procedure: string;
+  /** Resolve a surgeon id to a name, for cross-surgeon combo notes. */
+  surgeonNameOf?: (id: string) => string | undefined;
   /** Final count per dup key; keys not present keep the multiplied total. */
   qtyOverrides: Record<string, number>;
   oneCase: boolean;
@@ -140,9 +142,14 @@ export function buildCombinedCard(cards: PrefCard[], opts: BuildOptions): PrefCa
     });
   }
 
+  const crossSurgeon = new Set(cards.map((c) => c.surgeonId)).size > 1;
+  const sourceName = (c: PrefCard) =>
+    crossSurgeon && opts.surgeonNameOf?.(c.surgeonId)
+      ? `${c.procedure} (${opts.surgeonNameOf(c.surgeonId)})`
+      : c.procedure;
   const notes = [
     joinMeta(cards, (c) => c.notes),
-    `Combined from: ${cards.map((c) => c.procedure).join(" + ")}.`,
+    `Combined from: ${cards.map(sourceName).join(" + ")}.`,
   ].filter(Boolean).join("\n");
 
   return {
@@ -154,6 +161,7 @@ export function buildCombinedCard(cards: PrefCard[], opts: BuildOptions): PrefCa
     position: joinMeta(cards, (c) => c.position),
     prep: joinMeta(cards, (c) => c.prep),
     draping: joinMeta(cards, (c) => c.draping),
+    specialConsiderations: joinMeta(cards, (c) => c.specialConsiderations),
     notes,
     ...sections,
     favorite: false,

@@ -222,6 +222,15 @@ export function CardEdit() {
               placeholder="Anything that makes setup go smoothly…"
             />
           </label>
+          <label className="field field-wide">
+            <span>Special considerations (the surgeon's standing requests)</span>
+            <textarea
+              rows={2}
+              value={draft.specialConsiderations ?? ""}
+              onChange={(e) => set({ specialConsiderations: e.target.value })}
+              placeholder="Standing instructions that must never be missed. One-day requests are added from the card page."
+            />
+          </label>
         </div>
       </div>
 

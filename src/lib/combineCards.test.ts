@@ -77,6 +77,19 @@ describe("combining preference cards", () => {
     expect(combined.sutures.map((i) => i.detail).sort()).toEqual(["0", "2-0"]);
   });
 
+  it("names each surgeon's procedure when combining across surgeons", () => {
+    const a = card("Cysto", { surgeonId: "sg1", specialConsiderations: "No latex in the room" });
+    const b = card("Hernia", { surgeonId: "sg2", specialConsiderations: "Count sheet to the desk" });
+    const names: Record<string, string> = { sg1: "Dr. Patel", sg2: "Dr. Chen" };
+    const combined = buildCombinedCard([a, b], {
+      procedure: "Cysto + Hernia", qtyOverrides: {}, oneCase: false,
+      surgeonNameOf: (id) => names[id],
+    });
+    expect(combined.notes).toContain("Cysto (Dr. Patel) + Hernia (Dr. Chen)");
+    expect(combined.surgeonId).toBe("sg1"); // files under the first card's surgeon
+    expect(combined.specialConsiderations).toBe("No latex in the room / Count sheet to the desk");
+  });
+
   it("drops locations that belong to another facility and flags one-case combos", () => {
     const here = card("A", { facilityId: "f1", supplies: [item("Towels", { locationId: "loc-f1" })] });
     const there = card("B", { facilityId: "f2", supplies: [item("Gowns", { locationId: "loc-f2" })] });

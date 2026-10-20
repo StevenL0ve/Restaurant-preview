@@ -11,6 +11,7 @@ import {
   setPullerName,
 } from "../state/store";
 import { accentStyle } from "../lib/accent";
+import { ConsiderationsBanner } from "../components/Considerations";
 import { tapLight, tapMedium } from "../lib/haptics";
 import { SECTIONS, type CaseCart, type MissingEntry, type PrefCard } from "../types";
 
@@ -87,6 +88,8 @@ export function CartPullPage() {
           {cart.note && <p className="cart-note">Note: {cart.note}</p>}
         </div>
       </div>
+
+      <ConsiderationsBanner card={card} date={cart.date} />
 
       <div className="puller-row">
         {editingName ? (

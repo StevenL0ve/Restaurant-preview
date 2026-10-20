@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useStore, surgeonOf, locationLabelOf, facilityOf } from "../state/store";
+import { useStore, surgeonOf, locationLabelOf, facilityOf, dayNotesFor, localDay, getPullerName } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { shareBlobFile } from "../lib/share";
 import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
-import { SECTIONS, type SectionKey } from "../types";
+import { SECTIONS, type PrefCard, type SectionKey } from "../types";
 
 export function CardDetail() {
   const { id } = useParams();
@@ -38,7 +38,8 @@ export function CardDetail() {
     if (pdfBusy) return;
     setPdfBusy(true);
     try {
-      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId));
+      const todays = dayNotesFor(state, card!.id, localDay(0)).map((n) => n.text);
+      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId), todays);
       const r = await shareBlobFile(cardPdfFilename(card!.procedure), blob, `Preference card: ${card!.procedure}`, "application/pdf");
       setToast(r === "downloaded" ? "PDF downloaded. Open it to print, or attach it to a text or email." : null);
     } catch {
@@ -107,6 +108,8 @@ export function CardDetail() {
           </div>
         </div>
       )}
+
+      <ConsiderationsEditor card={card} />
 
       <div className="card detail-meta">
         {meta.filter(([, v]) => v?.trim()).map(([label, v]) => (
@@ -195,6 +198,69 @@ export function CardDetail() {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+// The surgeon's special requests: the standing text (edited with the card)
+// plus "today only" entries that never touch the card itself. Upcoming
+// entries show with their date; past days drop off on their own.
+function ConsiderationsEditor({ card }: { card: PrefCard }) {
+  const { state, addDayNote, deleteDayNote } = useStore();
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState("");
+  const [date, setDate] = useState(localDay(0));
+
+  const today = localDay(0);
+  const upcoming = state.dayNotes
+    .filter((n) => n.cardId === card.id && n.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const standing = card.specialConsiderations?.trim();
+
+  function add() {
+    if (!text.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    tapLight();
+    addDayNote(card.id, date, text, getPullerName() || undefined);
+    setText("");
+    setAdding(false);
+  }
+
+  if (!standing && upcoming.length === 0 && !adding) {
+    return (
+      <p className="considerations-add-hint">
+        <button className="link small" onClick={() => setAdding(true)}>+ Add a special consideration for one day</button>
+        <span className="muted small"> (standing requests are edited with the card)</span>
+      </p>
+    );
+  }
+
+  return (
+    <div className="considerations-banner">
+      <span className="considerations-title">Special considerations</span>
+      {standing && <p className="considerations-text">{standing}</p>}
+      {upcoming.map((n) => (
+        <p key={n.id} className="considerations-text today">
+          <span className="today-pill">{n.date === today ? "today only" : n.date}</span> {n.text}
+          {n.by ? <span className="muted small"> · {n.by}</span> : null}
+          <button className="info-del" aria-label="Remove this one-day note" onClick={() => deleteDayNote(n.id)}>✕</button>
+        </p>
+      ))}
+      {adding ? (
+        <div className="considerations-form">
+          <input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} aria-label="Which day" />
+          <input
+            value={text}
+            placeholder="Just for that case: open the smaller trials, rep bringing…"
+            autoFocus
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+          />
+          <button className="btn btn-sm btn-primary" disabled={!text.trim()} onClick={add}>Add</button>
+          <button className="btn btn-sm" onClick={() => setAdding(false)}>Cancel</button>
+        </div>
+      ) : (
+        <button className="link small" onClick={() => setAdding(true)}>+ Add one for a specific day</button>
+      )}
     </div>
   );
 }
