@@ -247,6 +247,14 @@ export interface Store {
   /** Reopen a done cart for more pulling (missing comments are kept). */
   resumeCartPull: (cartId: string) => void;
   setMissingComment: (cartId: string, itemId: string, comment: string) => void;
+  /** Mark/unmark one missing item as a turnover from another of the day's carts. */
+  setMissingTurnover: (cartId: string, itemId: string, fromCartId?: string) => void;
+  // quality control: verify a pulled cart item-by-item
+  toggleCartQc: (cartId: string, itemId: string, by: string) => void;
+  /** Sign off QC: anything pulled but unverified is unpulled and added to
+   *  the missing list with a "Not found at QC" note. */
+  finishCartQc: (cartId: string, by: string) => void;
+  reopenCartQc: (cartId: string) => void;
   /** The missing item finally landed in the cart — resolve + record the pull. */
   resolveMissing: (cartId: string, itemId: string, by: string) => void;
   unresolveMissing: (cartId: string, itemId: string) => void;
@@ -724,7 +732,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         update((st) => ({
           ...st,
           carts: st.carts.map((c) =>
-            c.id === cartId ? { ...c, donePulling: undefined, doneBy: undefined, updatedAt: new Date().toISOString() } : c,
+            c.id === cartId
+              // Reopening for pulling makes the QC sign-off stale, but each
+              // item's existing verification marks stay valid.
+              ? { ...c, donePulling: undefined, doneBy: undefined, qcDone: undefined, qcBy: undefined, updatedAt: new Date().toISOString() }
+              : c,
+          ),
+        })),
+
+      setMissingTurnover: (cartId, itemId, fromCartId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId
+              ? {
+                  ...c,
+                  missing: c.missing.map((m) =>
+                    m.itemId === itemId ? { ...m, turnoverFromCartId: fromCartId } : m,
+                  ),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        })),
+
+      toggleCartQc: (cartId, itemId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            if (!c.pulls[itemId]) return c; // only pulled items get verified
+            const qc = { ...(c.qc ?? {}) };
+            if (qc[itemId]) delete qc[itemId];
+            else qc[itemId] = { by: by.trim() || "Someone", at: new Date().toISOString() };
+            return { ...c, qc, updatedAt: new Date().toISOString() };
+          }),
+        })),
+
+      finishCartQc: (cartId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const card = st.cards.find((x) => x.id === c.cardId);
+            if (!card) return c;
+            return applyQcFinish(card, c, by.trim() || "Someone", new Date().toISOString());
+          }),
+        })),
+
+      reopenCartQc: (cartId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId ? { ...c, qcDone: undefined, qcBy: undefined, updatedAt: new Date().toISOString() } : c,
           ),
         })),
 
@@ -1332,19 +1392,40 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
     .filter((x) => x.missing.length > 0);
 }
 
-/** Plain-text rollup of a day's missing items — for ops to paste into an
- *  email/text to SPD, materials, or the board runner. */
+/** Plain-text rollup of a day's missing items, for ops to paste into an
+ *  email/text to SPD, materials, or the board runner. Turnovers (items
+ *  coming off another of the day's cases) get their own section so the
+ *  runner knows what to flip, not just what to find. */
 export function missingDayText(s: AppState, date: string): string {
   const groups = missingForDay(s, date);
   if (!groups.length) return `No open missing items for ${date}.`;
-  const lines: string[] = [`MISSING ITEMS — case carts, ${date}`, ""];
+  const cartName = (cartId: string) => {
+    const c = s.carts.find((x) => x.id === cartId);
+    const card = c ? s.cards.find((x) => x.id === c.cardId) : undefined;
+    return c ? `${card?.procedure ?? "another case"}${c.label ? ` (${c.label})` : ""}` : "another case";
+  };
+  const lines: string[] = [`MISSING ITEMS: case carts, ${date}`, ""];
+  const turnovers: string[] = [];
   for (const { cart, card, missing } of groups) {
     const sg = card ? s.surgeons.find((x) => x.id === card.surgeonId) : undefined;
-    lines.push(`${card?.procedure ?? "Unknown card"}${cart.label ? ` (${cart.label})` : ""}${sg ? ` · ${sg.name}` : ""}`);
-    for (const m of missing) {
-      lines.push(`  • ${m.name}${m.detail ? ` — ${m.detail}` : ""}${m.comment ? `  [${m.comment}]` : ""}`);
+    const shelf = missing.filter((m) => !m.turnoverFromCartId);
+    const flips = missing.filter((m) => m.turnoverFromCartId);
+    if (shelf.length) {
+      lines.push(`${card?.procedure ?? "Unknown card"}${cart.label ? ` (${cart.label})` : ""}${sg ? ` · ${sg.name}` : ""}`);
+      for (const m of shelf) {
+        lines.push(`  • ${m.name}${m.detail ? ` (${m.detail})` : ""}${m.comment ? `  [${m.comment}]` : ""}`);
+      }
+      lines.push("");
     }
-    lines.push("");
+    for (const m of flips) {
+      turnovers.push(
+        `  • ${m.name}${m.detail ? ` (${m.detail})` : ""}: from ${cartName(m.turnoverFromCartId!)} to ${card?.procedure ?? "?"}${cart.label ? ` (${cart.label})` : ""}${m.comment ? `  [${m.comment}]` : ""}`,
+      );
+    }
+  }
+  if (turnovers.length) {
+    lines.push(`TURNOVERS BETWEEN CASES (${turnovers.length})`);
+    lines.push(...turnovers, "");
   }
   lines.push("Sent from ORSync");
   return lines.join("\n");
@@ -1418,10 +1499,35 @@ export function buildMissingList(card: PrefCard, cart: CaseCart): MissingEntry[]
         detail: it.detail,
         sectionLabel: sec.label,
         comment: old?.comment,
+        turnoverFromCartId: old?.turnoverFromCartId,
         resolvedAt: old?.resolvedAt,
         resolvedBy: old?.resolvedBy,
       });
     }
   }
   return missing;
+}
+
+/** Sign off a cart's QC. Pulled items nobody verified are treated as not
+ *  actually in the cart: their pulls are removed and the missing list is
+ *  rebuilt so they land on the day's ops list with a "Not found at QC"
+ *  note (existing comments and turnover flags survive). Pure — tested. */
+export function applyQcFinish(card: PrefCard, cart: CaseCart, by: string, now: string): CaseCart {
+  const qc = cart.qc ?? {};
+  const failed = new Set(Object.keys(cart.pulls).filter((itemId) => !qc[itemId]));
+  const pulls: CaseCart["pulls"] = {};
+  for (const [itemId, rec] of Object.entries(cart.pulls)) {
+    if (!failed.has(itemId)) pulls[itemId] = rec;
+  }
+  const interim: CaseCart = { ...cart, pulls };
+  const missing = buildMissingList(card, interim).map((m) =>
+    failed.has(m.itemId) && !m.comment ? { ...m, comment: "Not found at QC" } : m,
+  );
+  return { ...cart, pulls, missing, qcDone: now, qcBy: by, updatedAt: now };
+}
+
+/** Where a cart stands in the day's flow, for badges and the ops view. */
+export function cartQcState(cart: CaseCart): "pulling" | "needs-qc" | "qcd" {
+  if (!cart.donePulling) return "pulling";
+  return cart.qcDone ? "qcd" : "needs-qc";
 }

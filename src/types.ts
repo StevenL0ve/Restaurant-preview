@@ -268,7 +268,10 @@ export interface MissingEntry {
   name: string;
   detail?: string;
   sectionLabel: string;
-  comment?: string; // "Waiting on rep — ETA 06:30", "In SPD", "On order", …
+  comment?: string; // "Waiting on rep, ETA 06:30", "In SPD", "On order", …
+  /** Not coming from a shelf: it turns over from another of the day's cases
+   *  (used there first, then washed/flipped for this one). */
+  turnoverFromCartId?: ID;
   resolvedAt?: string; // set when the item finally made it into the cart
   resolvedBy?: string;
 }
@@ -282,6 +285,13 @@ export interface CaseCart {
   pulls: Record<ID, CartPullRecord>; // itemId -> who/when
   donePulling?: string; // ISO when a puller marked the cart done
   doneBy?: string;
+  // Quality control: a second set of eyes verifies each pulled item is
+  // really in the cart. Marks carry attribution like pulls, so several
+  // people can share the QC. Finishing QC unpulls anything unverified and
+  // feeds it to the day's missing list automatically.
+  qc?: Record<ID, CartPullRecord>; // itemId -> who verified / when
+  qcDone?: string; // ISO when QC signed off
+  qcBy?: string;
   missing: MissingEntry[];
   createdAt: string;
   updatedAt: string;

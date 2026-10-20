@@ -5,13 +5,14 @@ import {
   surgeonOf,
   groupByArea,
   cartProgress,
+  cartsOn,
   openMissing,
   getPullerName,
   setPullerName,
 } from "../state/store";
 import { accentStyle } from "../lib/accent";
 import { tapLight, tapMedium } from "../lib/haptics";
-import type { CaseCart, MissingEntry } from "../types";
+import { SECTIONS, type CaseCart, type MissingEntry, type PrefCard } from "../types";
 
 const COMMENT_PRESETS = [
   "Waiting on rep delivery",
@@ -164,20 +165,31 @@ export function CartPullPage() {
           </div>
         </>
       ) : (
-        <DoneView cart={cart} me={me} onResume={() => resumeCartPull(cart.id)} />
+        <DoneView cart={cart} card={card} me={me} onResume={() => resumeCartPull(cart.id)} />
       )}
     </div>
   );
 }
 
-// After "done": the missing list with comments and resolve, or a clean bill.
-function DoneView({ cart, me, onResume }: { cart: CaseCart; me: string; onResume: () => void }) {
-  const { setMissingComment, resolveMissing, unresolveMissing } = useStore();
+// After "done": QC first (a second set of eyes verifies the cart), then the
+// missing list with comments, turnovers, and resolve.
+function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard; me: string; onResume: () => void }) {
+  const { state, setMissingComment, setMissingTurnover, resolveMissing, unresolveMissing } = useStore();
   const open = openMissing(cart);
   const resolved = cart.missing.filter((m) => m.resolvedAt);
 
+  // Other carts on the same day: the turnover sources to pick from.
+  const turnoverOptions = cartsOn(state, cart.date)
+    .filter((c) => c.id !== cart.id)
+    .map((c) => {
+      const otherCard = state.cards.find((x) => x.id === c.cardId);
+      return { id: c.id, label: `${otherCard?.procedure ?? "Case"}${c.label ? ` ${c.label}` : ""}` };
+    });
+
   return (
     <>
+      <QcPanel cart={cart} card={card} me={me} />
+
       <div className="card form-card">
         <div className="card-head">
           <h2>{open.length ? `Missing (${open.length})` : "✓ Nothing missing"}</h2>
@@ -190,6 +202,8 @@ function DoneView({ cart, me, onResume }: { cart: CaseCart; me: string; onResume
           <MissingRow
             key={m.itemId}
             entry={m}
+            turnoverOptions={turnoverOptions}
+            onTurnover={(fromId) => setMissingTurnover(cart.id, m.itemId, fromId)}
             onComment={(v) => setMissingComment(cart.id, m.itemId, v)}
             onResolve={() => { tapLight(); resolveMissing(cart.id, m.itemId, me); }}
           />
@@ -216,14 +230,103 @@ function DoneView({ cart, me, onResume }: { cart: CaseCart; me: string; onResume
   );
 }
 
+// The second-check pass: every pulled item gets a verify mark with the
+// checker's name. Finishing unpulls anything unverified and sends it to the
+// missing list, so the day's ops view updates automatically.
+function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: string }) {
+  const { toggleCartQc, finishCartQc, reopenCartQc } = useStore();
+  const [confirming, setConfirming] = useState(false);
+
+  const pulledItems = SECTIONS.flatMap((sec) =>
+    card[sec.key].filter((it) => cart.pulls[it.id]).map((it) => ({ item: it, section: sec.label })),
+  );
+  const verified = pulledItems.filter(({ item }) => cart.qc?.[item.id]).length;
+  const unverified = pulledItems.length - verified;
+
+  if (cart.qcDone) {
+    return (
+      <div className="card form-card qc-done">
+        <div className="card-head">
+          <h2>✓ QC complete</h2>
+          <span className="muted small">
+            by {cart.qcBy} · {timeShort(cart.qcDone)}
+          </span>
+        </div>
+        <p className="muted small">
+          Every item in this cart was verified by a second check.{" "}
+          <button className="link small" onClick={() => reopenCartQc(cart.id)}>Reopen QC</button>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card form-card">
+      <div className="card-head">
+        <h2>Quality control</h2>
+        <span className="pill">{verified}/{pulledItems.length} verified</span>
+      </div>
+      <p className="muted small">
+        Second set of eyes: confirm each item is actually in the cart. Your name goes on every
+        check, and several people can split the list.
+      </p>
+      <ul className="check-list">
+        {pulledItems.map(({ item, section }) => {
+          const q = cart.qc?.[item.id];
+          const p = cart.pulls[item.id];
+          return (
+            <li key={item.id} className={q ? "done" : ""}>
+              <label className="check-row">
+                <input type="checkbox" checked={!!q} onChange={() => { tapLight(); toggleCartQc(cart.id, item.id, me); }} />
+                <span className="check-main">
+                  <span className="check-line">
+                    <span className="check-name">{(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
+                    {item.detail && <span className="item-detail">{item.detail}</span>}
+                  </span>
+                  <span className="row-sub">
+                    {section} · pulled by {p.by}{q ? ` · verified by ${q.by} ${timeShort(q.at)}` : ""}
+                  </span>
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+      {pulledItems.length === 0 ? (
+        <p className="muted small">Nothing is marked pulled yet, so there's nothing to verify.</p>
+      ) : confirming ? (
+        <div className="confirm">
+          {unverified > 0
+            ? `${unverified} item${unverified === 1 ? " was" : "s were"} marked pulled but not verified. Finishing unpulls ${unverified === 1 ? "it" : "them"} and adds ${unverified === 1 ? "it" : "them"} to the missing list.`
+            : "Everything verified. Sign off?"}
+          <button className="btn btn-primary btn-sm" onClick={() => { tapMedium(); finishCartQc(cart.id, me); setConfirming(false); }}>
+            Finish QC
+          </button>
+          <button className="btn btn-sm" onClick={() => setConfirming(false)}>Cancel</button>
+        </div>
+      ) : (
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={() => setConfirming(true)}>
+            Finish QC {unverified > 0 ? `(${unverified} not verified)` : "(all verified)"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MissingRow({
   entry,
   onComment,
   onResolve,
+  turnoverOptions,
+  onTurnover,
 }: {
   entry: MissingEntry;
   onComment: (v: string) => void;
   onResolve: () => void;
+  turnoverOptions?: { id: string; label: string }[];
+  onTurnover?: (fromCartId: string | undefined) => void;
 }) {
   const [draft, setDraft] = useState(entry.comment ?? "");
   return (
@@ -231,6 +334,7 @@ export function MissingRow({
       <div className="missing-main">
         <span className="missing-name">{entry.name}{entry.detail && <span className="item-detail"> {entry.detail}</span>}</span>
         <span className="muted small">{entry.sectionLabel}</span>
+        {entry.turnoverFromCartId && <span className="turnover-chip" title="Coming off another of today's cases">turnover</span>}
       </div>
       <input
         className="missing-comment"
@@ -246,6 +350,17 @@ export function MissingRow({
             <button key={p} className="chip chip-sm" onClick={() => { setDraft(p); onComment(p); }}>{p}</button>
           ))}
         </span>
+        {onTurnover && turnoverOptions && turnoverOptions.length > 0 && (
+          <select
+            className="loc-select"
+            value={entry.turnoverFromCartId ?? ""}
+            onChange={(e) => onTurnover(e.target.value || undefined)}
+            title="This item comes off another of today's cases"
+          >
+            <option value="">Turnover from…</option>
+            {turnoverOptions.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        )}
         <button className="btn btn-sm btn-primary" onClick={onResolve} title="The item made it into the cart">
           ✓ In the cart
         </button>

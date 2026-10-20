@@ -130,11 +130,18 @@ function CartRow({ cart }: { cart: CaseCart }) {
           <span className="muted small">{sg?.name}{pullers.length ? ` · pulling: ${pullers.join(", ")}` : ""}</span>
         </div>
         {cart.donePulling ? (
-          missing.length > 0 ? (
-            <span className="cart-badge cart-badge-missing">{missing.length} missing</span>
-          ) : (
-            <span className="cart-badge cart-badge-done">✓ Complete</span>
-          )
+          <span className="cart-badges">
+            {missing.length > 0 ? (
+              <span className="cart-badge cart-badge-missing">{missing.length} missing</span>
+            ) : (
+              <span className="cart-badge cart-badge-done">✓ Complete</span>
+            )}
+            {cart.qcDone ? (
+              <span className="cart-badge cart-badge-qcd">✓ QC</span>
+            ) : (
+              <span className="cart-badge cart-badge-needqc">needs QC</span>
+            )}
+          </span>
         ) : (
           <span className="cart-badge">{pulled}/{total}</span>
         )}

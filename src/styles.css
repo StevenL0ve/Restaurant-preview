@@ -1601,6 +1601,23 @@ body {
 .cart-badge-missing { color: #b45309; }
 [data-theme="dark"] .cart-badge-missing { color: #fbbf24; }
 .cart-badge-done { color: var(--pos, #15803d); }
+.cart-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.cart-badge-qcd { color: var(--pos, #15803d); }
+.cart-badge-needqc { color: #7c3aed; }
+[data-theme="dark"] .cart-badge-needqc { color: #b79df7; }
+
+/* QC + turnovers */
+.qc-done { border-color: color-mix(in srgb, #15803d 35%, var(--line)); }
+.qc-done h2 { color: var(--pos, #15803d); }
+.turnover-chip {
+  display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 10.5px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: #0e7490; border: 1px solid currentColor; background: rgba(14, 116, 144, 0.07);
+}
+[data-theme="dark"] .turnover-chip { color: #67d6ee; }
+.turnover-row { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.turnover-row:last-child { border-bottom: none; }
+.turnover-card { border-left: 4px solid #0e7490; }
 .cart-track { height: 7px; }
 
 .puller-row { margin-bottom: 14px; }
