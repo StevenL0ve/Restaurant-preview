@@ -105,6 +105,19 @@ describe("loaner file round trip (clinic → rep → clinic)", () => {
     expect(merged.state.loaners[0].sets[0].status).toBe("assembly");
   });
 
+  it("a file without a sets array never wipes local sets", () => {
+    const local = emptyState({
+      loaners: [mkLoaner({
+        sets: [{ id: "s1", name: "Tray", photos: ["data:image/jpeg;base64,x"], status: "assembly", history: [] }],
+      })],
+    });
+    const file = buildLoanerFile(local, "loaner-1", NOW)!;
+    delete (file.loaner as Record<string, unknown>).sets; // older/hand-edited schema
+    const merged = applyLoanerFile(local, file, NOW);
+    expect(merged.state.loaners[0].sets).toHaveLength(1);
+    expect(merged.state.loaners[0].sets[0].status).toBe("assembly");
+  });
+
   it("normalizes loaners from the old 6-step pipeline", () => {
     const old = mkLoaner({
       status: "ready" as never,

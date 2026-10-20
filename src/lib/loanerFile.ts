@@ -76,6 +76,9 @@ const MERGE_FIELDS = [
 
 export function applyLoanerFile(state: AppState, file: LoanerFile, now: string): LoanerImportResult {
   const incoming = file.loaner;
+  // A file that doesn't carry a sets array (older schema, hand-edited) must
+  // never wipe the local sets; only a real array replaces them.
+  const hasSets = Array.isArray(incoming.sets);
   const sets = cleanSets(incoming.sets);
   const existing = state.loaners.find((l) => l.id === incoming.id);
 
@@ -99,10 +102,12 @@ export function applyLoanerFile(state: AppState, file: LoanerFile, now: string):
   merged.status = cleanStatus(merged.status);
   // Sets are owned by whoever sent the latest file: replace wholesale, but
   // keep local photos if the incoming copy stripped them (e.g. sent "light").
-  merged.sets = sets.map((s) => {
-    const local = existing.sets?.find((x) => x.id === s.id);
-    return s.photos.length || !local ? s : { ...s, photos: local.photos };
-  });
+  merged.sets = hasSets
+    ? sets.map((s) => {
+        const local = existing.sets?.find((x) => x.id === s.id);
+        return s.photos.length || !local ? s : { ...s, photos: local.photos };
+      })
+    : existing.sets ?? [];
   return {
     state: { ...state, loaners: state.loaners.map((l) => (l.id === existing.id ? merged : l)) },
     outcome: "merged",

@@ -174,7 +174,7 @@ function SiteCard({ loc, store, facilities }: { loc: RepLocation; store: Store; 
           <div key={s.id} className="stock-row">
             <span className="stock-name">{s.name}</span>
             <span className="stock-qty-controls">
-              <button className="btn btn-sm" aria-label={`One fewer ${s.name}`} onClick={() => updateRepStock(s.id, { qty: s.qty - 1 })}>−</button>
+              <button className="btn btn-sm" aria-label={`One fewer ${s.name}`} disabled={s.qty <= 1} onClick={() => updateRepStock(s.id, { qty: s.qty - 1 })}>−</button>
               <span className="stock-qty">{s.qty}</span>
               <button className="btn btn-sm" aria-label={`One more ${s.name}`} onClick={() => updateRepStock(s.id, { qty: s.qty + 1 })}>+</button>
             </span>

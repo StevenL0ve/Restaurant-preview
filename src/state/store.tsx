@@ -649,9 +649,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateRepStock: (id, patch) =>
         update((st) => ({
           ...st,
-          repStock: st.repStock
-            .map((s) => (s.id === id ? { ...s, ...patch } : s))
-            .filter((s) => s.qty > 0),
+          // Counts clamp at 1; removing a row is the explicit delete only,
+          // so a stray minus-tap can't silently erase stock.
+          repStock: st.repStock.map((s) =>
+            s.id === id ? { ...s, ...patch, qty: Math.max(1, patch.qty ?? s.qty) } : s,
+          ),
         })),
 
       deleteRepStock: (id) =>
@@ -1168,10 +1170,12 @@ export function activeLoaners(s: AppState): LoanerTray[] {
   return s.loaners.filter((l) => l.status !== "checked-out");
 }
 
-/** Past its delivery deadline but still not delivered — the thing to chase. */
+/** Past its delivery deadline but still not delivered — the thing to chase.
+ *  Anything before "delivered" in the pipeline (requested, rep confirmed,
+ *  in transit) counts as not here yet. */
 export function isLoanerOverdue(l: LoanerTray): boolean {
   if (!l.neededBy) return false;
-  const pending = l.status === "requested" || l.status === "confirmed";
+  const pending = loanerStatusIndex(l.status) < loanerStatusIndex("delivered");
   return pending && new Date(l.neededBy).getTime() < Date.now();
 }
 

@@ -30,6 +30,8 @@ describe("loaner trays", () => {
   it("flags an overdue tray (deadline passed, not yet delivered)", () => {
     const past = new Date(Date.now() - 86400000).toISOString();
     expect(isLoanerOverdue(mk({ neededBy: past, status: "confirmed" }))).toBe(true);
+    // In transit but late is still overdue: it hasn't arrived.
+    expect(isLoanerOverdue(mk({ neededBy: past, status: "in-transit" }))).toBe(true);
     // Delivered → no longer overdue even if the deadline passed.
     expect(isLoanerOverdue(mk({ neededBy: past, status: "delivered" }))).toBe(false);
   });

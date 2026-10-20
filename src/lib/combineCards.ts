@@ -12,9 +12,11 @@ function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Items match when the same section carries the same (case-blind) name. */
-export function dupKey(section: SectionKey, name: string): string {
-  return `${section}|${name.trim().toLowerCase().replace(/\s+/g, " ")}`;
+/** Items match when the same section carries the same (case-blind) name AND
+ *  the same detail: Vicryl 2-0 and Vicryl 0 are different things to pull. */
+export function dupKey(section: SectionKey, name: string, detail?: string): string {
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  return `${section}|${norm(name)}|${detail ? norm(detail) : ""}`;
 }
 
 export interface DupSource {
@@ -53,7 +55,7 @@ function collect(cards: PrefCard[], keepLocationsOf?: string): Map<string, Bucke
     const locOk = keepLocationsOf === undefined || card.facilityId === keepLocationsOf;
     for (const sec of SECTIONS) {
       for (const it of card[sec.key]) {
-        const key = dupKey(sec.key, it.name);
+        const key = dupKey(sec.key, it.name, it.detail);
         const qty = it.qty ?? 1;
         const b = buckets.get(key);
         if (!b) {

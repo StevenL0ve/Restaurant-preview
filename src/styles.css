@@ -1011,26 +1011,8 @@ a { color: inherit; }
 .loaner-meta .neg { font-weight: 600; }
 .loaner-notes { margin: 0; font-size: 13.5px; color: var(--muted); background: var(--bg); border-radius: 9px; padding: 9px 11px; }
 
-/* Status pipeline */
-.pipeline { display: flex; flex-wrap: wrap; gap: 6px; }
-.pipe-step {
-  display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line);
-  background: var(--card); color: var(--muted); border-radius: 999px; padding: 6px 11px;
-  font-size: 12px; font-weight: 600; transition: background 0.12s, color 0.12s, border 0.12s;
-}
-.pipe-step:hover { background: var(--brand-50); }
-.pipe-step.active { background: var(--brand); border-color: var(--brand); color: #fff; }
-[data-theme="dark"] .pipe-step.active { color: #06231f; }
-.pipe-label { white-space: nowrap; }
-
 .loaner-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .loaner-actions a.btn { text-decoration: none; display: inline-flex; align-items: center; }
-
-@media (max-width: 560px) {
-  /* On a phone, collapse pipeline labels to just the icons to save width. */
-  .pipe-label { display: none; }
-  .pipe-step { padding: 8px 10px; font-size: 14px; }
-}
 
 /* ============================================================
    Visual refresh — cohesive design pass
@@ -1140,9 +1122,6 @@ h1, h2, h3 { font-synthesis-weight: none; }
   .tab-label { font-size: 10px; letter-spacing: -0.01em; }
 }
 
-/* ---- Loaner pipeline: smoother ---- */
-.pipe-step { transition: background .14s, color .14s, border-color .14s, transform .04s; }
-.pipe-step.active { box-shadow: 0 1px 2px rgba(36,114,216,0.3), 0 6px 14px -6px rgba(36,114,216,0.5); }
 
 /* ---- Empty states ---- */
 .empty-state { padding: 52px 20px; }
@@ -1227,11 +1206,11 @@ body {
 }
 
 /* ---- Springy, tactile motion ---- */
-.stat-card, .pref-tile, .surgeon-tile, .pref-tile-body.simple, .btn, .chip, .pipe-step, .tab-icon {
+.stat-card, .pref-tile, .surgeon-tile, .pref-tile-body.simple, .btn, .chip, .tab-icon {
   transition-timing-function: cubic-bezier(0.32, 1.4, 0.55, 1);
 }
 .stat-card:active, .pref-tile:active, .surgeon-tile:active { transform: scale(0.985); }
-.btn:active, .chip:active, .pipe-step:active { transform: scale(0.97); }
+.btn:active, .chip:active { transform: scale(0.97); }
 .tab-icon { transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.16s, color 0.16s; }
 .tab:active .tab-icon { transform: scale(0.85); }
 .check-row input { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -1330,18 +1309,6 @@ body {
 .setup .card-head h2 { color: color-mix(in srgb, var(--accent) 35%, var(--ink)); }
 [data-theme="dark"] .setup .card-head h2 { color: color-mix(in srgb, var(--accent) 45%, var(--ink)); }
 
-/* ============================================================
-   Loaner pipeline — semantic stage colors when active
-   ============================================================ */
-.pipe-step.active[data-status="requested"] { background: #64748b; border-color: #64748b; }
-.pipe-step.active[data-status="confirmed"] { background: #2563eb; border-color: #2563eb; }
-.pipe-step.active[data-status="delivered"] { background: #d97706; border-color: #d97706; }
-.pipe-step.active[data-status="ready"]     { background: #059669; border-color: #059669; }
-.pipe-step.active[data-status="in-use"]    { background: #7c3aed; border-color: #7c3aed; }
-.pipe-step.active[data-status="returned"]  { background: #475569; border-color: #475569; }
-.pipe-step.active { color: #fff; }
-[data-theme="dark"] .pipe-step.active { color: #fff; }
-.pipe-step.active[data-status] { box-shadow: 0 1px 2px rgba(15,23,42,0.25), 0 6px 14px -6px currentColor; }
 
 /* ============================================================
    First-run welcome sheet

@@ -67,6 +67,16 @@ describe("combining preference cards", () => {
     expect(combined.instruments).toHaveLength(2);
   });
 
+  it("keeps same-name items with different details separate", () => {
+    const a = card("A", { sutures: [item("Vicryl", { detail: "2-0", qty: 2 })] });
+    const b = card("B", { sutures: [item("Vicryl", { detail: "0", qty: 3 })] });
+    const plan = planCombine([a, b]);
+    expect(plan.dups).toHaveLength(0); // different sizes are different items
+    const combined = buildCombinedCard([a, b], { procedure: "A + B", qtyOverrides: {}, oneCase: false });
+    expect(combined.sutures).toHaveLength(2);
+    expect(combined.sutures.map((i) => i.detail).sort()).toEqual(["0", "2-0"]);
+  });
+
   it("drops locations that belong to another facility and flags one-case combos", () => {
     const here = card("A", { facilityId: "f1", supplies: [item("Towels", { locationId: "loc-f1" })] });
     const there = card("B", { facilityId: "f2", supplies: [item("Gowns", { locationId: "loc-f2" })] });

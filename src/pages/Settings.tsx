@@ -184,7 +184,9 @@ export function Settings() {
           <button className="btn btn-primary" onClick={exportAll}>Export library</button>
           <button className="btn" onClick={() => fileRef.current?.click()}>Import cards…</button>
           <input ref={fileRef} type="file" accept="application/json,.json,.orsync" hidden onChange={onImportFile} />
-          <button className="btn" onClick={resetDemo}>Reset demo data</button>
+          {!(cloudEnabled() && user?.uid) && (
+            <button className="btn" onClick={resetDemo}>Reset demo data</button>
+          )}
         </div>
         {msg && <p className="muted small" style={{ marginTop: 10 }}>{msg}</p>}
       </div>
@@ -222,7 +224,13 @@ export function Settings() {
 
       <div className="card settings-card danger-zone">
         <h2>Wipe everything</h2>
-        <p>Remove all surgeons and cards from this device. This can’t be undone, so export first.</p>
+        <p>
+          Remove all surgeons and cards. This can’t be undone, so export first.
+          {cloudEnabled() && user?.uid && (
+            <> You’re signed in to ORSync Cloud, so this wipes your <strong>cloud library and every
+            signed-in device</strong>, not just this one.</>
+          )}
+        </p>
         {confirmWipe ? (
           <div className="confirm">
             Delete all your data?
