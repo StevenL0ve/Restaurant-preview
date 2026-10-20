@@ -56,7 +56,7 @@ describe("case cart quality control", () => {
       pulls: { i1: { by: "Marcus", at: NOW } }, // i2 and i3 were already missing
       qc: {},
       missing: buildMissingList(card(), cart({ pulls: { i1: { by: "Marcus", at: NOW } } })).map((m) =>
-        m.itemId === "i3" ? { ...m, comment: "coming off room 2", turnoverFromCartId: "cart-9" } : m,
+        m.itemId === "i3" ? { ...m, comment: "coming off room 2", turnoverFromCartId: "cart-9", qcCheckedAt: NOW, qcCheckedBy: "Jo" } : m,
       ),
     });
     const done = applyQcFinish(card(), c, "Jo", NOW);
@@ -66,6 +66,8 @@ describe("case cart quality control", () => {
     const i3 = done.missing.find((m) => m.itemId === "i3")!;
     expect(i3.turnoverFromCartId).toBe("cart-9");
     expect(i3.comment).toBe("coming off room 2");
+    expect(i3.qcCheckedAt).toBe(NOW); // QC's "confirmed missing" stamp survives
+    expect(i3.qcCheckedBy).toBe("Jo");
   });
 
   it("reports the cart's flow state for badges", () => {

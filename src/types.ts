@@ -288,8 +288,12 @@ export interface MissingEntry {
   sectionLabel: string;
   comment?: string; // "Waiting on rep, ETA 06:30", "In SPD", "On order", …
   /** Not coming from a shelf: it turns over from another of the day's cases
-   *  (used there first, then washed/flipped for this one). */
+   *  (used there first, then washed/flipped for this one). Only instrument
+   *  sets and peel-packed instruments turn over; supplies never do. */
   turnoverFromCartId?: ID;
+  /** QC looked at this missing item and confirmed it's genuinely absent. */
+  qcCheckedAt?: string;
+  qcCheckedBy?: string;
   resolvedAt?: string; // set when the item finally made it into the cart
   resolvedBy?: string;
 }

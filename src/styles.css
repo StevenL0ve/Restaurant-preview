@@ -1635,6 +1635,22 @@ body {
 .considerations-add-hint { margin: 0 0 14px; }
 
 /* QC + turnovers */
+.check-row-wrap { display: flex; align-items: center; gap: 8px; }
+.check-row-wrap .check-row { flex: 1; min-width: 0; }
+.flag-missing {
+  flex: none; border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  border-radius: 99px; font-size: 11px; font-weight: 700; padding: 3px 9px; cursor: pointer;
+  white-space: nowrap;
+}
+.flag-missing.on { border-color: #b45309; color: #b45309; background: rgba(180, 83, 9, 0.07); }
+[data-theme="dark"] .flag-missing.on { color: #fbbf24; border-color: #fbbf24; }
+.qc-flagged { border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 8px; }
+.qc-flagged h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #b45309; }
+[data-theme="dark"] .qc-flagged h3 { color: #fbbf24; }
+.qc-flagged-row { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.qc-flagged-row:last-child { border-bottom: none; }
+.qc-flagged-actions { display: flex; gap: 8px; }
+
 .qc-done { border-color: color-mix(in srgb, #15803d 35%, var(--line)); }
 .qc-done h2 { color: var(--pos, #15803d); }
 .turnover-chip {

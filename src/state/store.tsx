@@ -255,6 +255,15 @@ export interface Store {
   setMissingComment: (cartId: string, itemId: string, comment: string) => void;
   /** Mark/unmark one missing item as a turnover from another of the day's carts. */
   setMissingTurnover: (cartId: string, itemId: string, fromCartId?: string) => void;
+  /** While pulling: flag an item the cart doesn't have — it goes on the day's
+   *  missing list immediately, before the cart is finished. */
+  flagCartItemMissing: (cartId: string, itemId: string) => void;
+  unflagCartItemMissing: (cartId: string, itemId: string) => void;
+  /** QC confirms a flagged item is genuinely still absent. */
+  qcConfirmMissing: (cartId: string, itemId: string, by: string) => void;
+  /** QC finds the flagged item IS in the cart: resolve it, record the pull,
+   *  and count it as verified in one step. */
+  qcResolveMissing: (cartId: string, itemId: string, by: string) => void;
   // quality control: verify a pulled cart item-by-item
   toggleCartQc: (cartId: string, itemId: string, by: string) => void;
   /** Sign off QC: anything pulled but unverified is unpulled and added to
@@ -725,10 +734,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...st,
           carts: st.carts.map((c) => {
             if (c.id !== cartId) return c;
+            const now = new Date().toISOString();
+            const who = puller.trim() || "Someone";
             const pulls = { ...c.pulls };
-            if (pulls[itemId]) delete pulls[itemId];
-            else pulls[itemId] = { by: puller.trim() || "Someone", at: new Date().toISOString() };
-            return { ...c, pulls, updatedAt: new Date().toISOString() };
+            let missing = c.missing;
+            if (pulls[itemId]) {
+              delete pulls[itemId];
+              // Un-pulling reopens a flagged-then-found entry.
+              missing = missing.map((m) =>
+                m.itemId === itemId && m.resolvedAt ? { ...m, resolvedAt: undefined, resolvedBy: undefined } : m,
+              );
+            } else {
+              pulls[itemId] = { by: who, at: now };
+              // Pulling an item someone flagged missing resolves the flag.
+              missing = missing.map((m) =>
+                m.itemId === itemId && !m.resolvedAt ? { ...m, resolvedAt: now, resolvedBy: who } : m,
+              );
+            }
+            return { ...c, pulls, missing, updatedAt: now };
           }),
         })),
 
@@ -776,6 +799,80 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 }
               : c,
           ),
+        })),
+
+      flagCartItemMissing: (cartId, itemId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            if (c.missing.some((m) => m.itemId === itemId)) return c;
+            const card = st.cards.find((x) => x.id === c.cardId);
+            if (!card) return c;
+            for (const sec of SECTIONS) {
+              const it = card[sec.key as SectionKey].find((x) => x.id === itemId);
+              if (it) {
+                const entry: MissingEntry = {
+                  itemId, name: it.name, detail: it.detail, sectionLabel: sec.label,
+                };
+                return { ...c, missing: [...c.missing, entry], updatedAt: new Date().toISOString() };
+              }
+            }
+            return c;
+          }),
+        })),
+
+      unflagCartItemMissing: (cartId, itemId) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId
+              ? {
+                  ...c,
+                  missing: c.missing.filter((m) => m.itemId !== itemId || m.resolvedAt),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        })),
+
+      qcConfirmMissing: (cartId, itemId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId
+              ? {
+                  ...c,
+                  missing: c.missing.map((m) =>
+                    m.itemId === itemId
+                      ? { ...m, qcCheckedAt: new Date().toISOString(), qcCheckedBy: by.trim() || "Someone" }
+                      : m,
+                  ),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        })),
+
+      qcResolveMissing: (cartId, itemId, by) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) => {
+            if (c.id !== cartId) return c;
+            const now = new Date().toISOString();
+            const who = by.trim() || "Someone";
+            return {
+              ...c,
+              pulls: { ...c.pulls, [itemId]: { by: who, at: now } },
+              qc: { ...(c.qc ?? {}), [itemId]: { by: who, at: now } },
+              missing: c.missing.map((m) =>
+                m.itemId === itemId
+                  ? { ...m, resolvedAt: now, resolvedBy: who, qcCheckedAt: now, qcCheckedBy: who }
+                  : m,
+              ),
+              updatedAt: now,
+            };
+          }),
         })),
 
       toggleCartQc: (cartId, itemId, by) =>
@@ -1528,6 +1625,8 @@ export function buildMissingList(card: PrefCard, cart: CaseCart): MissingEntry[]
         sectionLabel: sec.label,
         comment: old?.comment,
         turnoverFromCartId: old?.turnoverFromCartId,
+        qcCheckedAt: old?.qcCheckedAt,
+        qcCheckedBy: old?.qcCheckedBy,
         resolvedAt: old?.resolvedAt,
         resolvedBy: old?.resolvedBy,
       });

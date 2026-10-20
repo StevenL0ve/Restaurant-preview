@@ -34,7 +34,7 @@ export function CartPullPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const store = useStore();
-  const { state, toggleCartPull, finishCartPull, resumeCartPull, deleteCart } = store;
+  const { state, toggleCartPull, finishCartPull, resumeCartPull, deleteCart, flagCartItemMissing, unflagCartItemMissing } = store;
   const [puller, setPuller] = useState(getPullerName());
   const [editingName, setEditingName] = useState(!getPullerName());
   const [confirmDel, setConfirmDel] = useState(false);
@@ -134,23 +134,46 @@ export function CartPullPage() {
               <ul className="check-list">
                 {g.rows.map(({ item }) => {
                   const rec = cart.pulls[item.id];
+                  const flagged = cart.missing.some((m) => m.itemId === item.id && !m.resolvedAt);
                   return (
                     <li key={item.id} className={rec ? "done" : ""}>
-                      <label className="check-row">
-                        <input
-                          type="checkbox"
-                          checked={!!rec}
-                          onChange={() => { tapLight(); toggleCartPull(cart.id, item.id, me); }}
-                        />
-                        <span className="check-main">
-                          <span className="check-line">
-                            <span className="check-name">{(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
-                            {item.detail && <span className="item-detail">{item.detail}</span>}
-                            {item.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
+                      <div className="check-row-wrap">
+                        <label className="check-row">
+                          <input
+                            type="checkbox"
+                            checked={!!rec}
+                            onChange={() => { tapLight(); toggleCartPull(cart.id, item.id, me); }}
+                          />
+                          <span className="check-main">
+                            <span className="check-line">
+                              <span className="check-name">{(item.qty ?? 1) > 1 && <span className="qty-chip">{item.qty}×</span>}{item.name}</span>
+                              {item.detail && <span className="item-detail">{item.detail}</span>}
+                              {item.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
+                            </span>
+                            {rec && <span className="pulled-by">pulled · {rec.by} {timeShort(rec.at)}</span>}
+                            {flagged && <span className="pulled-by neg">on the missing list</span>}
                           </span>
-                          {rec && <span className="pulled-by">pulled · {rec.by} {timeShort(rec.at)}</span>}
-                        </span>
-                      </label>
+                        </label>
+                        {!rec && (
+                          flagged ? (
+                            <button
+                              className="flag-missing on"
+                              title="Flagged missing. Tap to undo."
+                              onClick={() => { tapLight(); unflagCartItemMissing(cart.id, item.id); }}
+                            >
+                              undo
+                            </button>
+                          ) : (
+                            <button
+                              className="flag-missing"
+                              title="The cart doesn't have this; put it on the day's missing list now"
+                              onClick={() => { tapLight(); flagCartItemMissing(cart.id, item.id); }}
+                            >
+                              missing?
+                            </button>
+                          )
+                        )}
+                      </div>
                     </li>
                   );
                 })}
@@ -237,7 +260,7 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
 // checker's name. Finishing unpulls anything unverified and sends it to the
 // missing list, so the day's ops view updates automatically.
 function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: string }) {
-  const { toggleCartQc, finishCartQc, reopenCartQc } = useStore();
+  const { toggleCartQc, finishCartQc, reopenCartQc, qcConfirmMissing, qcResolveMissing } = useStore();
   const [confirming, setConfirming] = useState(false);
 
   const pulledItems = SECTIONS.flatMap((sec) =>
@@ -245,6 +268,8 @@ function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: strin
   );
   const verified = pulledItems.filter(({ item }) => cart.qc?.[item.id]).length;
   const unverified = pulledItems.length - verified;
+  // What the pullers flagged as absent: QC double-checks each one.
+  const flaggedOpen = cart.missing.filter((m) => !m.resolvedAt);
 
   if (cart.qcDone) {
     return (
@@ -295,6 +320,30 @@ function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: strin
           );
         })}
       </ul>
+      {flaggedOpen.length > 0 && (
+        <div className="qc-flagged">
+          <h3>Reported missing ({flaggedOpen.length})</h3>
+          <p className="muted small">The pullers couldn't find these. Confirm each one: is it genuinely missing, or did it make it in?</p>
+          {flaggedOpen.map((m) => (
+            <div className="qc-flagged-row" key={m.itemId}>
+              <span className="missing-name">
+                {m.name}{m.detail && <span className="item-detail"> {m.detail}</span>}
+                {m.qcCheckedAt && <span className="muted small"> · confirmed missing by {m.qcCheckedBy} {timeShort(m.qcCheckedAt)}</span>}
+              </span>
+              <span className="qc-flagged-actions">
+                {!m.qcCheckedAt && (
+                  <button className="btn btn-sm" onClick={() => { tapLight(); qcConfirmMissing(cart.id, m.itemId, me); }}>
+                    Still missing
+                  </button>
+                )}
+                <button className="btn btn-sm btn-primary" onClick={() => { tapLight(); qcResolveMissing(cart.id, m.itemId, me); }}>
+                  It's in the cart
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
       {pulledItems.length === 0 ? (
         <p className="muted small">Nothing is marked pulled yet, so there's nothing to verify.</p>
       ) : confirming ? (
@@ -332,12 +381,16 @@ export function MissingRow({
   onTurnover?: (fromCartId: string | undefined) => void;
 }) {
   const [draft, setDraft] = useState(entry.comment ?? "");
+  // Only instrument sets and peel-packed instruments turn over between
+  // cases; supplies and meds never do, so they don't get the picker.
+  const canTurnover = entry.sectionLabel === "Instruments & trays";
   return (
     <div className="missing-row">
       <div className="missing-main">
         <span className="missing-name">{entry.name}{entry.detail && <span className="item-detail"> {entry.detail}</span>}</span>
         <span className="muted small">{entry.sectionLabel}</span>
         {entry.turnoverFromCartId && <span className="turnover-chip" title="Coming off another of today's cases">turnover</span>}
+        {entry.qcCheckedAt && <span className="muted small">confirmed missing at QC · {entry.qcCheckedBy}</span>}
       </div>
       <input
         className="missing-comment"
@@ -353,7 +406,7 @@ export function MissingRow({
             <button key={p} className="chip chip-sm" onClick={() => { setDraft(p); onComment(p); }}>{p}</button>
           ))}
         </span>
-        {onTurnover && turnoverOptions && turnoverOptions.length > 0 && (
+        {canTurnover && onTurnover && turnoverOptions && turnoverOptions.length > 0 && (
           <select
             className="loc-select"
             value={entry.turnoverFromCartId ?? ""}
