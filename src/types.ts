@@ -96,6 +96,9 @@ export interface PrefCard {
   medications: CardItem[];
   equipment: CardItem[];
   favorite: boolean;
+  /** A combined card built for one day's back-to-back case and not meant to
+   *  live in the library forever; shown with a badge and an easy delete. */
+  oneCase?: boolean;
   updatedAt: string; // ISO
 }
 

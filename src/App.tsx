@@ -15,6 +15,7 @@ import { CardDetail } from "./pages/CardDetail";
 import { CardEdit } from "./pages/CardEdit";
 import { CardScan } from "./pages/CardScan";
 import { TemplatesPage } from "./pages/TemplatesPage";
+import { CombineCardsPage } from "./pages/CombineCardsPage";
 import { SetupMode } from "./pages/SetupMode";
 import { SurgeonsPage } from "./pages/SurgeonsPage";
 import { SurgeonDetail } from "./pages/SurgeonDetail";
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/scan" element={<CardScan />} />
             <Route path="/cards/templates" element={<TemplatesPage />} />
+            <Route path="/cards/combine" element={<CombineCardsPage />} />
             <Route path="/cards/:id" element={<CardDetail />} />
             <Route path="/cards/:id/edit" element={<CardEdit />} />
             <Route path="/cards/:id/setup" element={<SetupMode />} />

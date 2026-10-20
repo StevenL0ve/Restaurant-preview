@@ -47,6 +47,7 @@ export function CardsPage() {
           <p className="muted">{state.cards.length} preference cards across {specialties.length - 1} specialties.</p>
         </div>
         <div className="head-actions">
+          <button className="btn" onClick={() => navigate("/cards/combine")}>Combine</button>
           <button className="btn" onClick={() => navigate("/cards/templates")}>Templates</button>
           <button className="btn" onClick={() => navigate("/cards/scan")}>Scan / paste</button>
           <button className="btn btn-primary" onClick={() => navigate("/cards/new")}>+ New card</button>
@@ -111,7 +112,7 @@ function CardTile({ card, onFav }: { card: PrefCard; onFav: () => void }) {
         <div className="pref-tile-head">
           {sg && <Avatar surgeon={sg} size={34} />}
           <div className="pref-tile-meta">
-            <div className="pref-proc">{card.procedure}</div>
+            <div className="pref-proc">{card.procedure}{card.oneCase && <span className="onecase-pill">one case</span>}</div>
             <div className="pref-sub">{sg?.name ?? "Unassigned"} · {card.specialty}</div>
           </div>
         </div>

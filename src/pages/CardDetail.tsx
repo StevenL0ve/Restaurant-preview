@@ -81,6 +81,7 @@ export function CardDetail() {
               <Link className="link" to={`/surgeons/${sg.id}`}>{sg.name}</Link>
             ) : "Unassigned"}
             <span className="accent-pill">{card.specialty}</span>
+            {card.oneCase && <span className="onecase-pill" title="A combined card built for one day's case">one case</span>}
             {facility ? <span className="detail-facility">{facility.name}</span> : null}
           </p>
         </div>
@@ -176,6 +177,9 @@ export function CardDetail() {
                 <option key={f.id} value={f.id}>{f.name}</option>
               ))}
           </select>
+        )}
+        {card.oneCase && !confirmDel && (
+          <span className="muted small">One-case combo: delete it when the day's done.</span>
         )}
         {confirmDel ? (
           <span className="confirm">
