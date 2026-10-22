@@ -17,7 +17,7 @@ function dayLabel(offset: number): string {
 // place — editable comments, one-tap resolve when an item lands, and a
 // copyable text rollup to send to SPD / materials / the board runner.
 export function MissingDayPage() {
-  const { state, setMissingComment, setMissingTurnover, resolveMissing } = useStore();
+  const { state, setMissingComment, setMissingTurnover, setMissingFollowUp, resolveMissing } = useStore();
   const [offset, setOffset] = useState(0);
   const [copied, setCopied] = useState(false);
   const date = localDay(offset);
@@ -115,6 +115,7 @@ export function MissingDayPage() {
                   entry={m}
                   turnoverOptions={turnoverOptionsFor(cart.id)}
                   onTurnover={(fromId) => setMissingTurnover(cart.id, m.itemId, fromId)}
+                  onFollowUp={(patch) => setMissingFollowUp(cart.id, m.itemId, patch)}
                   onComment={(v) => setMissingComment(cart.id, m.itemId, v)}
                   onResolve={() => { tapLight(); resolveMissing(cart.id, m.itemId, me); }}
                 />

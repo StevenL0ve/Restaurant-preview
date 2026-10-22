@@ -52,7 +52,7 @@ export function CartsPage() {
       <div className="page-head">
         <div>
           <h1>Case carts</h1>
-          <p className="muted">Pull together, see who pulled what, and hand ops the missing list.</p>
+          <p className="muted">Pull together, see who pulled what, and hand ops the missing list. Carts and their QC records clear themselves after the surgical day.</p>
         </div>
         <div className="head-actions">
           <Link className="btn" to="/carts/send">Send to a puller</Link>

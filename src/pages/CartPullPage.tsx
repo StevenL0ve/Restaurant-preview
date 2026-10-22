@@ -12,6 +12,8 @@ import {
 } from "../state/store";
 import { accentStyle } from "../lib/accent";
 import { ConsiderationsBanner } from "../components/Considerations";
+import { cartVerificationBlob, verificationFilename } from "../lib/qcPdf";
+import { shareBlobFile } from "../lib/share";
 import { tapLight, tapMedium } from "../lib/haptics";
 import { SECTIONS, type CaseCart, type MissingEntry, type PrefCard } from "../types";
 
@@ -200,7 +202,7 @@ export function CartPullPage() {
 // After "done": QC first (a second set of eyes verifies the cart), then the
 // missing list with comments, turnovers, and resolve.
 function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard; me: string; onResume: () => void }) {
-  const { state, setMissingComment, setMissingTurnover, resolveMissing, unresolveMissing } = useStore();
+  const { state, setMissingComment, setMissingTurnover, setMissingFollowUp, resolveMissing, unresolveMissing } = useStore();
   const open = openMissing(cart);
   const resolved = cart.missing.filter((m) => m.resolvedAt);
 
@@ -230,6 +232,7 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
             entry={m}
             turnoverOptions={turnoverOptions}
             onTurnover={(fromId) => setMissingTurnover(cart.id, m.itemId, fromId)}
+            onFollowUp={(patch) => setMissingFollowUp(cart.id, m.itemId, patch)}
             onComment={(v) => setMissingComment(cart.id, m.itemId, v)}
             onResolve={() => { tapLight(); resolveMissing(cart.id, m.itemId, me); }}
           />
@@ -251,6 +254,7 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
       <div className="form-actions">
         <button className="btn" onClick={onResume}>← Resume pulling</button>
         <Link className="btn" to="/carts/missing">Day’s missing list (ops) →</Link>
+        <VerificationPdfButton cart={cart} card={card} />
       </div>
     </>
   );
@@ -373,12 +377,14 @@ export function MissingRow({
   onResolve,
   turnoverOptions,
   onTurnover,
+  onFollowUp,
 }: {
   entry: MissingEntry;
   onComment: (v: string) => void;
   onResolve: () => void;
   turnoverOptions?: { id: string; label: string }[];
   onTurnover?: (fromCartId: string | undefined) => void;
+  onFollowUp?: (patch: Partial<Pick<MissingEntry, "supplyTracking" | "surgeonNotifiedAt" | "orderedAt" | "alternateItem">>) => void;
 }) {
   const [draft, setDraft] = useState(entry.comment ?? "");
   // Only instrument sets and peel-packed instruments turn over between
@@ -421,6 +427,77 @@ export function MissingRow({
           ✓ In the cart
         </button>
       </div>
+      {onFollowUp && (
+        <details className="followup">
+          <summary>
+            Follow-up
+            {entry.supplyTracking && <span className="turnover-chip">supply tracking</span>}
+            {entry.surgeonNotifiedAt && <span className="turnover-chip">surgeon notified</span>}
+            {entry.orderedAt && <span className="turnover-chip">ordered</span>}
+            {entry.alternateItem && <span className="turnover-chip">alternate chosen</span>}
+          </summary>
+          <div className="followup-grid">
+            <label className="followup-check">
+              <input
+                type="checkbox"
+                checked={!!entry.supplyTracking}
+                onChange={(e) => onFollowUp({ supplyTracking: e.target.checked || undefined })}
+              />
+              Supply chain is tracking it
+            </label>
+            <label>
+              <span>Surgeon notified</span>
+              <input
+                type="date"
+                value={entry.surgeonNotifiedAt ?? ""}
+                onChange={(e) => onFollowUp({ surgeonNotifiedAt: e.target.value || undefined })}
+              />
+            </label>
+            <label>
+              <span>Ordered</span>
+              <input
+                type="date"
+                value={entry.orderedAt ?? ""}
+                onChange={(e) => onFollowUp({ orderedAt: e.target.value || undefined })}
+              />
+            </label>
+            <label className="followup-wide">
+              <span>Not obtained: alternate the surgeon chose</span>
+              <input
+                defaultValue={entry.alternateItem ?? ""}
+                placeholder="e.g. 0 Vicryl instead of 0 PDS"
+                onBlur={(e) => onFollowUp({ alternateItem: e.target.value.trim() || undefined })}
+              />
+            </label>
+          </div>
+        </details>
+      )}
     </div>
+  );
+}
+
+// One tap replaces the paper sheet: the filled-in Case Pull Verification,
+// ready to AirDrop or print. The data behind it clears after the day.
+function VerificationPdfButton({ cart, card }: { cart: CaseCart; card: PrefCard }) {
+  const { state } = useStore();
+  const [busy, setBusy] = useState(false);
+  async function share() {
+    setBusy(true);
+    try {
+      const blob = await cartVerificationBlob(card, cart, surgeonOf(state, card.surgeonId));
+      await shareBlobFile(
+        verificationFilename(card.procedure, cart.date),
+        blob,
+        `Case Pull Verification: ${card.procedure}`,
+        "application/pdf",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button className="btn" disabled={busy} onClick={share}>
+      {busy ? "Building…" : "Verification PDF"}
+    </button>
   );
 }

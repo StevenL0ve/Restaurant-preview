@@ -73,13 +73,26 @@ function migrateLoaners(s: AppState): AppState {
   return { ...s, loaners: (s.loaners ?? []).map(normalizeLoaner) };
 }
 
+/** Case carts (with their QC records) and one-day considerations are
+ *  day-of-surgery paperwork, not an archive: they clear themselves after
+ *  the surgical day. Yesterday survives one morning for reconciliation;
+ *  anything older goes. Pure — tested. */
+export function pruneEphemeral(s: AppState, today: string = localDay(0)): AppState {
+  const cutoff = new Date(new Date(`${today}T12:00:00`).getTime() - 86400000)
+    .toISOString().slice(0, 10); // yesterday
+  const carts = s.carts.filter((c) => c.date >= cutoff);
+  const dayNotes = s.dayNotes.filter((n) => n.date >= cutoff);
+  if (carts.length === s.carts.length && dayNotes.length === s.dayNotes.length) return s;
+  return { ...s, carts, dayNotes };
+}
+
 function load(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return migrateLoaners(
+      return pruneEphemeral(migrateLoaners(
         migrateOnCallNames({ ...buildSeed(), ...(JSON.parse(raw) as Partial<AppState>) } as AppState),
-      );
+      ));
     }
     // One-time migration from the pre-facility format.
     const legacy = localStorage.getItem(LEGACY_KEY);
@@ -261,6 +274,13 @@ export interface Store {
   unflagCartItemMissing: (cartId: string, itemId: string) => void;
   /** QC confirms a flagged item is genuinely still absent. */
   qcConfirmMissing: (cartId: string, itemId: string, by: string) => void;
+  /** Follow-up on a missing item, mirroring the paper verification form:
+   *  supply tracking, surgeon notified date, ordered date, alternate chosen. */
+  setMissingFollowUp: (
+    cartId: string,
+    itemId: string,
+    patch: Partial<Pick<MissingEntry, "supplyTracking" | "surgeonNotifiedAt" | "orderedAt" | "alternateItem">>,
+  ) => void;
   /** QC finds the flagged item IS in the cart: resolve it, record the pull,
    *  and count it as verified in one step. */
   qcResolveMissing: (cartId: string, itemId: string, by: string) => void;
@@ -830,6 +850,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ? {
                   ...c,
                   missing: c.missing.filter((m) => m.itemId !== itemId || m.resolvedAt),
+                  updatedAt: new Date().toISOString(),
+                }
+              : c,
+          ),
+        })),
+
+      setMissingFollowUp: (cartId, itemId, patch) =>
+        update((st) => ({
+          ...st,
+          carts: st.carts.map((c) =>
+            c.id === cartId
+              ? {
+                  ...c,
+                  missing: c.missing.map((m) => (m.itemId === itemId ? { ...m, ...patch } : m)),
                   updatedAt: new Date().toISOString(),
                 }
               : c,
@@ -1627,6 +1661,10 @@ export function buildMissingList(card: PrefCard, cart: CaseCart): MissingEntry[]
         turnoverFromCartId: old?.turnoverFromCartId,
         qcCheckedAt: old?.qcCheckedAt,
         qcCheckedBy: old?.qcCheckedBy,
+        supplyTracking: old?.supplyTracking,
+        surgeonNotifiedAt: old?.surgeonNotifiedAt,
+        orderedAt: old?.orderedAt,
+        alternateItem: old?.alternateItem,
         resolvedAt: old?.resolvedAt,
         resolvedBy: old?.resolvedBy,
       });

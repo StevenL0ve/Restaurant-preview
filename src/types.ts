@@ -294,6 +294,11 @@ export interface MissingEntry {
   /** QC looked at this missing item and confirmed it's genuinely absent. */
   qcCheckedAt?: string;
   qcCheckedBy?: string;
+  // Follow-up, mirroring the paper "Case Pull Verification" form:
+  supplyTracking?: boolean; // supply chain / materials is tracking it
+  surgeonNotifiedAt?: string; // date the surgeon was told (= surgeon tracking)
+  orderedAt?: string; // date it was ordered, when ordering was needed
+  alternateItem?: string; // what the surgeon chose instead, if not obtained
   resolvedAt?: string; // set when the item finally made it into the cart
   resolvedBy?: string;
 }
