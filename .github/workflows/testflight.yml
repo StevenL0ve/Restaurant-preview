@@ -47,6 +47,14 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 
+      - name: Document handling declaration (ITMS-90737)
+        run: |
+          PLIST=ios/App/App/Info.plist
+          # ORSync imports tapped .orsync files (copies them in); it does not
+          # edit documents in place, so this is declared NO per Apple's docs.
+          /usr/libexec/PlistBuddy -c "Add :LSSupportsOpeningDocumentsInPlace bool false" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :LSSupportsOpeningDocumentsInPlace false" "$PLIST"
+
       - name: Location permission (rep storage distances)
         run: |
           PLIST=ios/App/App/Info.plist
