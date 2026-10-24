@@ -1,4 +1,4 @@
-import type { AppState, LoanerTray } from "../types";
+import type { AppState, LoanerTray, PrefCard, CardItem } from "../types";
 import { firebase, setCloudStatus } from "../lib/cloud";
 
 // Live sync between the local store and Firestore. The shape is simple and
@@ -76,6 +76,45 @@ export function stripLoanerPhotos(l: LoanerTray): LoanerTray {
   return { ...l, sets: l.sets.map((s) => ({ ...s, photos: [] })) };
 }
 
+/** Card photos (item shots, Mayo stand, back table) follow the same rule as
+ *  tray photos: stripped on the way up, restored from local on the way down. */
+export function stripCardPhotos(c: PrefCard): PrefCard {
+  const strip = (arr: CardItem[]) => arr.map((it) => (it.photo ? { ...it, photo: undefined } : it));
+  return {
+    ...c,
+    mayoPhoto: undefined,
+    backTablePhoto: undefined,
+    instruments: strip(c.instruments),
+    sutures: strip(c.sutures),
+    supplies: strip(c.supplies),
+    medications: strip(c.medications),
+    equipment: strip(c.equipment),
+  };
+}
+
+export function mergeCardPhotos(remote: PrefCard[], local: PrefCard[]): PrefCard[] {
+  const localById = new Map(local.map((c) => [c.id, c]));
+  const mergeArr = (r: CardItem[], l?: CardItem[]) =>
+    r.map((it) => {
+      const mine = l?.find((x) => x.id === it.id);
+      return !it.photo && mine?.photo ? { ...it, photo: mine.photo } : it;
+    });
+  return remote.map((r) => {
+    const mine = localById.get(r.id);
+    if (!mine) return r;
+    return {
+      ...r,
+      mayoPhoto: r.mayoPhoto ?? mine.mayoPhoto,
+      backTablePhoto: r.backTablePhoto ?? mine.backTablePhoto,
+      instruments: mergeArr(r.instruments, mine.instruments),
+      sutures: mergeArr(r.sutures, mine.sutures),
+      supplies: mergeArr(r.supplies, mine.supplies),
+      medications: mergeArr(r.medications, mine.medications),
+      equipment: mergeArr(r.equipment, mine.equipment),
+    };
+  });
+}
+
 /** ...and restored from the local copy on the way down. */
 export function mergeLoanerPhotos(remote: LoanerTray[], local: LoanerTray[]): LoanerTray[] {
   const localById = new Map(local.map((l) => [l.id, l]));
@@ -124,7 +163,11 @@ interface ActiveSync {
 let active: ActiveSync | null = null;
 
 function prepareForCloud(key: SyncedKey, items: Item[]): Item[] {
-  const cleaned = key === "loaners" ? (items as unknown as LoanerTray[]).map(stripLoanerPhotos) : items;
+  const cleaned = key === "loaners"
+    ? (items as unknown as LoanerTray[]).map(stripLoanerPhotos)
+    : key === "cards"
+      ? ((items as unknown as PrefCard[]).map(stripCardPhotos) as unknown as Item[])
+      : items;
   return withOrd(cleaned as unknown as Item[]);
 }
 
@@ -167,6 +210,7 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
           for (const d of snaps[i].docs) sync.lastKnown[key].set(d.id, stableStringify(d.data()));
           let items = fromDocs(docs);
           if (key === "loaners") items = mergeLoanerPhotos(items as unknown as LoanerTray[], local.loaners) as unknown as Item[];
+          if (key === "cards") items = mergeCardPhotos(items as unknown as PrefCard[], local.cards) as unknown as Item[];
           if (!localIsForeign) {
             // Same owner on both sides: nothing local is thrown away.
             items = unionById(items, local[key] as unknown as Item[]);
@@ -191,6 +235,9 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
           const current = sync.hooks.getState()[key] as unknown as Item[];
           if (key === "loaners") {
             items = mergeLoanerPhotos(items as unknown as LoanerTray[], current as unknown as LoanerTray[]) as unknown as Item[];
+          }
+          if (key === "cards") {
+            items = mergeCardPhotos(items as unknown as PrefCard[], current as unknown as PrefCard[]) as unknown as Item[];
           }
           if (stableStringify(items) !== stableStringify(current)) {
             sync.hooks.applyRemote({ [key]: items } as Partial<AppState>);

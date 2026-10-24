@@ -1916,3 +1916,35 @@ html, body { overflow-x: hidden; }
 /* ---- Supply reference numbers ---- */
 .item-ref { max-width: 90px; }
 .ref-chip { font-variant-numeric: tabular-nums; color: var(--slate); }
+
+/* ---- Item + setup photos, lightbox ---- */
+.lightbox {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(10, 14, 24, 0.92);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px; padding: 24px; cursor: zoom-out;
+}
+.lightbox img { max-width: 100%; max-height: 82vh; border-radius: 10px; }
+.lightbox-caption { color: #e2e8f0; font-size: 0.9rem; text-align: center; }
+.lightbox-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 42px; height: 42px; border-radius: 999px; border: none;
+  background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 17px; cursor: pointer;
+}
+.item-photo-ctl { display: inline-flex; align-items: center; gap: 4px; }
+.item-thumb, .row-thumb {
+  border: 1px solid var(--line); background: none; padding: 0; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 8px; overflow: hidden; flex: none;
+}
+.item-thumb img, .row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ref-chip-btn { cursor: pointer; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font: inherit; font-size: 0.8rem; color: var(--brand-600); font-weight: 600; }
+.setup-photos { margin-bottom: 16px; }
+.setup-photo-grid { display: flex; gap: 14px; flex-wrap: wrap; }
+.setup-photo-slot { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.setup-photo-thumb { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; padding: 0; background: none; cursor: zoom-in; display: flex; flex-direction: column; }
+.setup-photo-thumb img { width: 132px; height: 92px; object-fit: cover; display: block; }
+.setup-photo-thumb span { font-size: 0.78rem; color: var(--slate); padding: 4px 8px; }
+.setup-photo-label { font-weight: 600; font-size: 0.85rem; }
+.setup-photo-actions { display: flex; gap: 10px; }
+.setup-photo-add { min-height: 56px; }
+.setup-photo-strip { display: flex; gap: 12px; margin-bottom: 14px; }

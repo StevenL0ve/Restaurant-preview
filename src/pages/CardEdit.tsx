@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { gateNewCard, gateNewFacility } from "../lib/tier";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../state/store";
 import { SECTIONS, locationLabel, type CardItem, type Location, type PrefCard, type SectionKey } from "../types";
 import { PhiNote } from "../components/PhiNote";
+import { fileToDataUrl } from "../lib/photos";
 
 // Create or edit a card. Local draft state; nothing is persisted until "Save"
 // — except newly-created facilities/locations, which are shared resources and
@@ -246,7 +247,8 @@ export function CardEdit() {
           hasFacility={!!draft.facilityId}
           onAddLocation={(area, spot) => addLocation(draft.facilityId!, area, spot)}
           onChange={(items) => set({ [sec.key]: items } as Partial<PrefCard>)}
-          withRef={sec.key === "supplies"}
+          withRef={sec.key === "supplies" || sec.key === "equipment"}
+          withPhoto={sec.key === "supplies" || sec.key === "equipment"}
         />
       ))}
 
@@ -268,6 +270,7 @@ function ItemEditor({
   onAddLocation,
   onChange,
   withRef,
+  withPhoto,
 }: {
   label: string;
   items: CardItem[];
@@ -278,6 +281,8 @@ function ItemEditor({
   onChange: (items: CardItem[]) => void;
   /** Show the supplier REF # field (supplies order by it). */
   withRef?: boolean;
+  /** Show the per-item photo control (supplies and equipment). */
+  withPhoto?: boolean;
 }) {
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
@@ -379,6 +384,14 @@ function ItemEditor({
                   }
                 />
               )}
+              {withPhoto && (
+                <ItemPhotoControl
+                  photo={it.photo}
+                  name={it.name}
+                  onPick={(p) => onChange(items.map((x) => (x.id === it.id ? { ...x, photo: p } : x)))}
+                  onClear={() => onChange(items.map((x) => (x.id === it.id ? { ...x, photo: undefined } : x)))}
+                />
+              )}
               {/* Like a hospital pick list, three ways to handle an item:
                   open (on the field), hold (pulled, unopened unless asked),
                   have available (in the room, grouped last in setup). */}
@@ -446,5 +459,42 @@ function ItemEditor({
         </div>
       )}
     </div>
+  );
+}
+
+// One tap to attach what the thing looks like: pick or shoot a photo, it's
+// compressed on-device. The thumbnail replaces on tap; ✕ removes it.
+function ItemPhotoControl({ photo, name, onPick, onClear }: {
+  photo?: string;
+  name: string;
+  onPick: (dataUrl: string) => void;
+  onClear: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <span className="item-photo-ctl">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          try { onPick(await fileToDataUrl(f)); } catch { /* unreadable file: keep as-is */ }
+        }}
+      />
+      {photo ? (
+        <>
+          <button type="button" className="item-thumb" title="Replace photo" onClick={() => inputRef.current?.click()}>
+            <img src={photo} alt={`${name} photo`} />
+          </button>
+          <button type="button" className="info-del" aria-label={`Remove ${name} photo`} onClick={onClear}>✕</button>
+        </>
+      ) : (
+        <button type="button" className="btn btn-sm" onClick={() => inputRef.current?.click()}>Photo</button>
+      )}
+    </span>
   );
 }

@@ -68,6 +68,9 @@ export interface CardItem {
   /** Supplier/catalog reference number ("REF 1234-56"), mostly for supplies:
    *  what materials management actually orders by. */
   ref?: string;
+  /** A compressed photo of the item (data URL), so a tapped REF shows what
+   *  the thing actually looks like. Stays on-device; never synced. */
+  photo?: string;
   /** "Have available": in the room but not pulled onto the field — grouped
    *  at the bottom of setup so the must-gather items come first. */
   haveAvailable?: boolean;
@@ -109,6 +112,10 @@ export interface PrefCard {
   /** A combined card built for one day's back-to-back case and not meant to
    *  live in the library forever; shown with a badge and an easy delete. */
   oneCase?: boolean;
+  /** Setup photos: how this surgeon's Mayo stand and back table should look.
+   *  Compressed data URLs; kept on-device, never synced. */
+  mayoPhoto?: string;
+  backTablePhoto?: string;
   updatedAt: string; // ISO
   updatedBy?: string; // full name of who last changed it; shown as "Last, F."
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, locationLabelOf, facilityOf, dayNotesFor, localDay, getPullerName } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -10,6 +10,8 @@ import { tapLight } from "../lib/haptics";
 import { SECTIONS, type PrefCard, type SectionKey } from "../types";
 import { stampLine } from "../lib/user";
 import { PhiNote } from "../components/PhiNote";
+import { Lightbox } from "../components/Lightbox";
+import { fileToDataUrl } from "../lib/photos";
 
 export function CardDetail() {
   const { id } = useParams();
@@ -17,6 +19,7 @@ export function CardDetail() {
   const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile, copyCardToFacility } = useStore();
   const [toast, setToast] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
   const card = state.cards.find((c) => c.id === id);
   if (!card) {
@@ -143,6 +146,8 @@ export function CardDetail() {
         )}
       </div>
 
+      <SetupPhotos card={card} onView={(src, alt) => setLightbox({ src, alt })} />
+
       {SECTIONS.map((sec) => {
         const arr = card[sec.key as SectionKey];
         if (!arr.length) return null;
@@ -159,7 +164,17 @@ export function CardDetail() {
                   <li key={it.id}>
                     <span className="item-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
                     {it.detail && <span className="item-detail">{it.detail}</span>}
-                    {it.ref && <span className="item-detail ref-chip">REF {it.ref}</span>}
+                    {it.photo ? (
+                      <button
+                        className="ref-chip ref-chip-btn"
+                        title="Tap to see the item"
+                        onClick={() => setLightbox({ src: it.photo!, alt: `${it.name}${it.ref ? ` · REF ${it.ref}` : ""}` })}
+                      >
+                        {it.ref ? `REF ${it.ref}` : "photo"}
+                      </button>
+                    ) : (
+                      it.ref && <span className="item-detail ref-chip">REF {it.ref}</span>
+                    )}
                     {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
                     {it.haveAvailable && <span className="hold-chip avail" title="In the room, not opened unless needed">have available</span>}
                     {where && <span className="item-location">{where}</span>}
@@ -220,6 +235,7 @@ export function CardDetail() {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
+      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
     </div>
   );
 }
@@ -286,6 +302,67 @@ function ConsiderationsEditor({ card }: { card: PrefCard }) {
       ) : (
         <button className="link small" onClick={() => setAdding(true)}>+ Add one for a specific day</button>
       )}
+    </div>
+  );
+}
+
+// How the room should look: Mayo stand and back table photos, added right
+// here with one tap. Tap a photo to see it full screen.
+function SetupPhotos({ card, onView }: { card: PrefCard; onView: (src: string, alt: string) => void }) {
+  const { saveCard } = useStore();
+  const mayoRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLInputElement>(null);
+
+  async function pick(e: React.ChangeEvent<HTMLInputElement>, key: "mayoPhoto" | "backTablePhoto") {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    try {
+      const data = await fileToDataUrl(f);
+      saveCard({ ...card, [key]: data });
+    } catch { /* unreadable file: nothing changes */ }
+  }
+
+  const slots: { key: "mayoPhoto" | "backTablePhoto"; label: string; ref: React.RefObject<HTMLInputElement> }[] = [
+    { key: "mayoPhoto", label: "Mayo stand", ref: mayoRef },
+    { key: "backTablePhoto", label: "Back table", ref: backRef },
+  ];
+  const any = card.mayoPhoto || card.backTablePhoto;
+
+  return (
+    <div className="card setup-photos">
+      <div className="card-head">
+        <h2>Setup photos</h2>
+      </div>
+      {!any && (
+        <p className="muted small" style={{ margin: "0 0 10px" }}>
+          Snap how this surgeon's Mayo stand and back table should look; they show here and in setup mode.
+        </p>
+      )}
+      <div className="setup-photo-grid">
+        {slots.map((s) => (
+          <div className="setup-photo-slot" key={s.key}>
+            <input ref={s.ref} type="file" accept="image/*" hidden onChange={(e) => pick(e, s.key)} />
+            {card[s.key] ? (
+              <>
+                <button className="setup-photo-thumb" onClick={() => onView(card[s.key]!, `${s.label} · ${card.procedure}`)}>
+                  <img src={card[s.key]} alt={`${s.label} setup`} />
+                </button>
+                <span className="setup-photo-label">{s.label}</span>
+                <span className="setup-photo-actions">
+                  <button className="link small" onClick={() => s.ref.current?.click()}>Replace</button>
+                  <button className="link small" onClick={() => saveCard({ ...card, [s.key]: undefined })}>Remove</button>
+                </span>
+              </>
+            ) : (
+              <button className="btn setup-photo-add" onClick={() => s.ref.current?.click()}>
+                + {s.label} photo
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <PhiNote />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ConsiderationsBanner } from "../components/Considerations";
+import { Lightbox } from "../components/Lightbox";
 import { localDay } from "../state/store";
 import { Mascot } from "../components/Mascot";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -56,6 +57,7 @@ export function SetupMode() {
   const navigate = useNavigate();
   const { state, toggleSetupItem, resetSetup } = useStore();
   const [mode, setMode] = useState<GroupMode>("section");
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
   const card = state.cards.find((c) => c.id === id);
 
@@ -109,6 +111,20 @@ export function SetupMode() {
               <span className="check-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
               {it.detail && <span className="item-detail">{it.detail}</span>}
               {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
+              {it.photo && (
+                <button
+                  type="button"
+                  className="row-thumb"
+                  title="See the item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setLightbox({ src: it.photo!, alt: `${it.name}${it.ref ? ` · REF ${it.ref}` : ""}` });
+                  }}
+                >
+                  <img src={it.photo} alt="" />
+                </button>
+              )}
             </span>
             {sub && <span className="row-sub">{sub}</span>}
             {where && mode === "section" && <span className="item-location">{where}</span>}
@@ -159,6 +175,23 @@ export function SetupMode() {
           {sg?.gloveSize && <div><strong>Gloves</strong> {sg.gloveSize}{sg.gloveType ? ` · ${sg.gloveType}` : ""}</div>}
           {card.position && <div><strong>Position</strong> {card.position}</div>}
           {card.prep && <div><strong>Prep</strong> {card.prep}</div>}
+        </div>
+      )}
+
+      {(card.mayoPhoto || card.backTablePhoto) && (
+        <div className="setup-photo-strip">
+          {card.mayoPhoto && (
+            <button className="setup-photo-thumb" onClick={() => setLightbox({ src: card.mayoPhoto!, alt: "Mayo stand" })}>
+              <img src={card.mayoPhoto} alt="Mayo stand setup" />
+              <span>Mayo stand</span>
+            </button>
+          )}
+          {card.backTablePhoto && (
+            <button className="setup-photo-thumb" onClick={() => setLightbox({ src: card.backTablePhoto!, alt: "Back table" })}>
+              <img src={card.backTablePhoto} alt="Back table setup" />
+              <span>Back table</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -224,6 +257,8 @@ export function SetupMode() {
           </div>
         );
       })()}
+
+      {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
 
       {ready && (
         <div className="ready-cta">
