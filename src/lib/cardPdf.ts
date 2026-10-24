@@ -20,6 +20,18 @@ export interface CardPdfLink {
   label?: string;
 }
 
+/** One card's worth of a (possibly multi-card) PDF. */
+export interface CardPdfEntry {
+  card: PrefCard;
+  surgeon?: Surgeon;
+  facility?: Facility;
+  locationName?: (id: string) => string | undefined;
+  dayConsiderations?: string[];
+  link?: CardPdfLink;
+  /** Printed above the title in day packets: "OR 1 · Case 2 · 07:30". */
+  caseLine?: string;
+}
+
 export async function cardPdfBlob(
   card: PrefCard,
   surgeon?: Surgeon,
@@ -28,15 +40,56 @@ export async function cardPdfBlob(
   dayConsiderations: string[] = [],
   link?: CardPdfLink,
 ): Promise<Blob> {
+  return cardsPdfBlob([{ card, surgeon, facility, locationName, dayConsiderations, link }]);
+}
+
+/** A whole day's cards (or any picked set) as ONE document, each card
+ *  starting on a fresh page, each with its own QR back to the live version. */
+export async function cardsPdfBlob(entries: CardPdfEntry[]): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default;
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
+  for (let i = 0; i < entries.length; i++) {
+    if (i > 0) doc.addPage();
+    await renderCard(doc, autoTable, entries[i]);
+  }
+
+  // Footer on every page.
+  const pageW = doc.internal.pageSize.getWidth();
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(136, 136, 136);
+    const h = doc.internal.pageSize.getHeight();
+    doc.text("Printed from ORSync. No patient information on this card.", MARGIN, h - 24);
+    if (pages > 1) doc.text(`Page ${i} of ${pages}`, pageW - MARGIN, h - 24, { align: "right" });
+  }
+
+  return doc.output("blob");
+}
+
+async function renderCard(
+  doc: import("jspdf").jsPDF,
+  autoTable: typeof import("jspdf-autotable").default,
+  entry: CardPdfEntry,
+): Promise<void> {
+  const { card, surgeon, facility, locationName, link, caseLine } = entry;
+  const dayConsiderations = entry.dayConsiderations ?? [];
   const pageW = doc.internal.pageSize.getWidth();
   const usable = pageW - MARGIN * 2;
 
   // Header: procedure title, surgeon line, brand + date on the right.
   let y = MARGIN + 8;
+  if (caseLine) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(BRAND.r, BRAND.g, BRAND.b);
+    doc.text(caseLine.toUpperCase(), MARGIN, y - 2);
+    y += 14;
+  }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(19);
   doc.setTextColor(INK.r, INK.g, INK.b);
@@ -161,22 +214,14 @@ export async function cardPdfBlob(
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
   }
 
-  // Footer on every page.
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(136, 136, 136);
-    const h = doc.internal.pageSize.getHeight();
-    doc.text("Printed from ORSync. No patient information on this card.", MARGIN, h - 24);
-    if (pages > 1) doc.text(`Page ${i} of ${pages}`, pageW - MARGIN, h - 24, { align: "right" });
-  }
-
-  return doc.output("blob");
 }
 
 export function cardPdfFilename(procedure: string): string {
   const slug = procedure.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
   return `${slug}-preference-card.pdf`;
+}
+
+export function cardsPdfFilename(tag: string): string {
+  const slug = tag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "cards";
+  return `preference-cards-${slug}.pdf`;
 }

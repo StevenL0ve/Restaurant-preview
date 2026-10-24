@@ -12,6 +12,8 @@ import {
   dayNotesFor,
   getPullerName,
   onCallPersonRole,
+  facilityOf,
+  locationLabelOf,
 } from "../state/store";
 import type { Store } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -19,6 +21,9 @@ import { Icon } from "../components/Icon";
 import { accentStyle } from "../lib/accent";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { stampLine } from "../lib/user";
+import { cardsPdfBlob, cardsPdfFilename, type CardPdfEntry } from "../lib/cardPdf";
+import { cartLink } from "../lib/links";
+import { shareBlobFile } from "../lib/share";
 import type { CaseEntry, TeamMember, TeamRole } from "../types";
 import { PhiNote } from "../components/PhiNote";
 
@@ -73,6 +78,7 @@ export function TodayPage() {
             {adding ? "Close" : "+ Add case"}
           </button>
           <Link className="btn" to="/case-log">My case log</Link>
+          {cases.length > 0 && <PrintDayButton date={date} />}
         </div>
       </div>
 
@@ -633,5 +639,59 @@ function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: Team
           : "New names are remembered for next time. Import a whole roster in Settings."}
       </p>
     </div>
+  );
+}
+
+// Print the whole day: every case's preference card as ONE document, in
+// room-and-case order, each page carrying a QR code that opens that exact
+// case's live cart. Tape them to the carts; scans stay current.
+function PrintDayButton({ date }: { date: string }) {
+  const store = useStore();
+  const { state, ensureCart } = store;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const entries: CardPdfEntry[] = [];
+      for (const g of casesByRoom(state, date)) {
+        g.cases.forEach((c, i) => {
+          const card = state.cards.find((k) => k.id === c.cardId);
+          if (!card) return;
+          const cart = cartForCase(state, card.id, c.date) ?? ensureCart(card.id, c.date);
+          entries.push({
+            card,
+            surgeon: surgeonOf(state, card.surgeonId),
+            facility: facilityOf(state, card.facilityId),
+            locationName: (id) => locationLabelOf(state, id),
+            dayConsiderations: dayNotesFor(state, card.id, date).map((n) => n.text),
+            link: { url: cartLink(cart.id), label: "Scan for this case's live cart" },
+            caseLine: `${g.room || "No room"} · Case ${i + 1}${c.time ? ` · ${c.time}` : i > 0 ? " · to follow" : ""}`,
+          });
+        });
+      }
+      if (!entries.length) return;
+      const blob = await cardsPdfBlob(entries);
+      await shareBlobFile(
+        cardsPdfFilename(date),
+        blob,
+        `Preference cards for ${date}: ${entries.length} ${entries.length === 1 ? "case" : "cases"}, in case order. Scan any page's code for that case's live cart.`,
+        "application/pdf",
+      );
+    } catch {
+      setErr("Couldn't build the PDF. Try again.");
+      setTimeout(() => setErr(null), 4000);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button className="btn" disabled={busy} onClick={go}>{busy ? "Building…" : "Print day"}</button>
+      {err && <span className="neg small">{err}</span>}
+    </>
   );
 }
