@@ -205,7 +205,7 @@ function TodayLineup() {
         const ready = total > 0 && done === total;
         return (
           <Link key={c.id} to="/today" className="resume-row">
-            <span className="case-time">{c.time ?? "—"}</span>
+            <span className="case-time">{c.time ?? "to follow"}</span>
             <span className="resume-title">{card.procedure}</span>
             <span className={"small " + (ready ? "pos" : "muted")}>
               {ready ? "Ready" : c.room ?? `${done}/${total}`}

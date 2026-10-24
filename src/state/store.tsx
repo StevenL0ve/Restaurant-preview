@@ -220,6 +220,8 @@ export interface Store {
   resetSetup: (cardId: string) => void;
   // case day
   addCase: (c: Omit<CaseEntry, "id">) => CaseEntry;
+  /** Reorder a "to follow" case within its room for the day. */
+  moveCase: (id: string, dir: -1 | 1) => void;
   updateCase: (id: string, patch: Partial<CaseEntry>) => void;
   deleteCase: (id: string) => void;
   // loaner trays
@@ -519,6 +521,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         update((st) => ({ ...st, cases: [...st.cases, entry] }));
         return entry;
       },
+
+      moveCase: (id, dir) =>
+        update((st) => ({ ...st, cases: reorderCase(st.cases, id, dir) })),
 
       updateCase: (id, patch) =>
         update((st) => ({
@@ -1368,6 +1373,46 @@ export function casesOn(s: AppState, date: string): CaseEntry[] {
   return s.cases
     .filter((c) => c.date === date)
     .sort((a, b) => (a.time ?? "99:99").localeCompare(b.time ?? "99:99"));
+}
+
+/** My day the way a board actually reads: grouped by room. The room's first
+ *  case carries the start time; the rest run in case order ("to follow"),
+ *  because turnover decides their times, not the clock. Rooms order by their
+ *  first start time; cases with no room trail as their own group. */
+export function casesByRoom(s: AppState, date: string): { room: string; cases: CaseEntry[] }[] {
+  const map = new Map<string, CaseEntry[]>();
+  for (const c of casesOn(s, date)) {
+    const key = c.room?.trim() ?? "";
+    const list = map.get(key) ?? [];
+    list.push(c); // casesOn sorts timed first; untimed keep board order
+    map.set(key, list);
+  }
+  const groups = [...map.entries()].map(([room, cases]) => ({ room, cases }));
+  groups.sort((a, b) => {
+    if (a.room === "" || b.room === "") return a.room === "" ? 1 : -1;
+    return (a.cases[0]?.time ?? "99:99").localeCompare(b.cases[0]?.time ?? "99:99") || a.room.localeCompare(b.room);
+  });
+  return groups;
+}
+
+/** Move an untimed ("to follow") case up or down among its room's untimed
+ *  cases for that day. Timed cases order by the clock, so they don't move.
+ *  Pure — tested. */
+export function reorderCase(cases: CaseEntry[], id: string, dir: -1 | 1): CaseEntry[] {
+  const me = cases.find((x) => x.id === id);
+  if (!me || me.time) return cases;
+  const key = me.room?.trim() ?? "";
+  const peers = cases.filter((x) => x.date === me.date && (x.room?.trim() ?? "") === key && !x.time);
+  const i = peers.findIndex((x) => x.id === id);
+  const j = i + dir;
+  if (j < 0 || j >= peers.length) return cases;
+  const other = peers[j];
+  const ai = cases.indexOf(me);
+  const bi = cases.indexOf(other);
+  const next = [...cases];
+  next[ai] = other;
+  next[bi] = me;
+  return next;
 }
 
 /** Loaners tied to a card that aren't sterile/ready yet — the case-day worry. */

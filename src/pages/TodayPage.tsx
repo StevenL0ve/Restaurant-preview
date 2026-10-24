@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   useStore,
   casesOn,
+  casesByRoom,
   localDay,
   surgeonOf,
   setupProgress,
@@ -75,18 +76,44 @@ export function TodayPage() {
           <p>Nothing on the board for {labelFor(date).toLowerCase()}. Tap <strong>Add case</strong> to build the lineup.</p>
         </div>
       ) : (
-        <div className="case-list">
-          {cases.map((c) => (
-            <CaseRow key={c.id} entry={c} store={store} onEdit={() => { setAdding(false); setEditing(c); }} />
-          ))}
-        </div>
+        casesByRoom(state, date).map((g) => {
+          const untimed = g.cases.filter((c) => !c.time);
+          return (
+            <section key={g.room || "no-room"} className="room-group">
+              <h2 className="room-head">
+                {g.room || "No room set"}
+                {g.cases[0]?.time && <span className="muted small"> · first case {g.cases[0].time}</span>}
+              </h2>
+              <div className="case-list">
+                {g.cases.map((c, i) => (
+                  <CaseRow
+                    key={c.id}
+                    entry={c}
+                    position={i}
+                    canUp={!c.time && untimed.indexOf(c) > 0}
+                    canDown={!c.time && untimed.indexOf(c) >= 0 && untimed.indexOf(c) < untimed.length - 1}
+                    store={store}
+                    onEdit={() => { setAdding(false); setEditing(c); }}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })
       )}
     </div>
   );
 }
 
-function CaseRow({ entry, store, onEdit }: { entry: CaseEntry; store: Store; onEdit: () => void }) {
-  const { state, deleteCase } = store;
+function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
+  entry: CaseEntry;
+  position: number;
+  canUp: boolean;
+  canDown: boolean;
+  store: Store;
+  onEdit: () => void;
+}) {
+  const { state, deleteCase, moveCase } = store;
   const navigate = useNavigate();
   const [confirmDel, setConfirmDel] = useState(false);
   const card = state.cards.find((c) => c.id === entry.cardId);
@@ -110,8 +137,14 @@ function CaseRow({ entry, store, onEdit }: { entry: CaseEntry; store: Store; onE
     <div className="card case-row" style={accentStyle(card.specialty)}>
       <div className="case-top">
         <div className="case-when">
-          <span className="case-time">{entry.time ?? "—"}</span>
-          {entry.room && <span className="case-room">{entry.room}</span>}
+          <span className="case-seq">{position + 1}</span>
+          <span className="case-time">{entry.time ?? (position === 0 ? "first case" : "to follow")}</span>
+          {(canUp || canDown) && (
+            <span className="case-reorder">
+              <button className="icon-btn" disabled={!canUp} aria-label="Move earlier" onClick={() => moveCase(entry.id, -1)}>↑</button>
+              <button className="icon-btn" disabled={!canDown} aria-label="Move later" onClick={() => moveCase(entry.id, 1)}>↓</button>
+            </span>
+          )}
         </div>
         {ready ? (
           <span className="status status-settled">Ready</span>
@@ -185,9 +218,13 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             })}
           </select>
         </label>
-        <label className="field"><span>Time</span>
+        <label className="field"><span>Start time (room's first case only)</span>
           <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
         </label>
+        <p className="muted small" style={{ gridColumn: "1 / -1", margin: 0 }}>
+          Only the room's first case needs a time. Later cases follow in order, since turnover sets
+          their start. Leave time empty and reorder them with the arrows.
+        </p>
         <label className="field"><span>Room</span>
           <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="OR 4" />
         </label>

@@ -440,6 +440,7 @@ export function buildSeed(): AppState {
   const cases: CaseEntry[] = [
     { id: "case-seed-0", date: localDay(0), time: "07:30", cardId: cards[0].id, room: "OR 2" },
     ...(tka ? [{ id: "case-seed-1", date: localDay(0), time: "10:15", cardId: tka.id, room: "OR 5", notes: "Rep bringing size 4 trials" }] : []),
+    ...(acl ? [{ id: "case-seed-3", date: localDay(0), cardId: acl.id, room: "OR 2", notes: "To follow the lap chole" }] : []),
     ...(csec ? [{ id: "case-seed-2", date: localDay(1), time: "08:00", cardId: csec.id, room: "L&D OR 1" }] : []),
   ];
 

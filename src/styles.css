@@ -1788,3 +1788,16 @@ html, body { overflow-x: hidden; }
 /* The button reset above re-specified display; keep the topbar's New card
    hidden on phones (the page provides it there). */
 @media (max-width: 880px) { .topbar-new { display: none; } }
+
+/* My day: board-style room groups, case order over clock times. */
+.room-group { margin-bottom: 20px; }
+.room-head { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 8px; }
+.case-seq {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: var(--brand-50); color: var(--brand); font-size: 12px; font-weight: 800;
+}
+.case-when { display: flex; align-items: center; gap: 8px; }
+.case-reorder { display: inline-flex; gap: 2px; }
+.case-reorder .icon-btn { width: 28px; height: 28px; font-size: 14px; }
+.case-reorder .icon-btn:disabled { opacity: 0.35; }

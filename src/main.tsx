@@ -19,6 +19,12 @@ import "./styles.css";
   document.documentElement.setAttribute("data-theme", theme);
 }
 
+// Open on My day: the 6 AM screen is the lineup, not the dashboard. Only on
+// a fresh launch (empty or root hash); deep links and later navigation win.
+if (!location.hash || location.hash === "#/") {
+  location.hash = "#/today";
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
