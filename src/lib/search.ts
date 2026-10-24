@@ -83,9 +83,9 @@ export function search(state: AppState, raw: string): SearchHit[] {
     for (const sec of SECTIONS) {
       for (const it of c[sec.key as SectionKey]) {
         const where = it.locationId ? locLabel.get(it.locationId) : undefined;
-        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(where ?? ""));
+        const sc = Math.max(score(it.name), score(it.detail ?? ""), score(it.ref ?? ""), score(where ?? ""));
         if (sc > 0 && sc >= best && !snippet) {
-          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${where ? ` · ${where}` : ""}`;
+          snippet = `${sec.label}: ${it.name}${it.detail ? ` (${it.detail})` : ""}${it.ref ? ` · REF ${it.ref}` : ""}${where ? ` · ${where}` : ""}`;
         }
         best = Math.max(best, sc);
       }

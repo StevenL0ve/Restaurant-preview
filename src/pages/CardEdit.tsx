@@ -246,6 +246,7 @@ export function CardEdit() {
           hasFacility={!!draft.facilityId}
           onAddLocation={(area, spot) => addLocation(draft.facilityId!, area, spot)}
           onChange={(items) => set({ [sec.key]: items } as Partial<PrefCard>)}
+          withRef={sec.key === "supplies"}
         />
       ))}
 
@@ -266,6 +267,7 @@ function ItemEditor({
   hasFacility,
   onAddLocation,
   onChange,
+  withRef,
 }: {
   label: string;
   items: CardItem[];
@@ -274,9 +276,12 @@ function ItemEditor({
   hasFacility: boolean;
   onAddLocation: (area: string, spot?: string) => Location;
   onChange: (items: CardItem[]) => void;
+  /** Show the supplier REF # field (supplies order by it). */
+  withRef?: boolean;
 }) {
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
+  const [refNum, setRefNum] = useState("");
   const [locId, setLocId] = useState("");
   // Inline "new location" creator (shared by this section's rows).
   const [newLoc, setNewLoc] = useState<{ open: boolean; area: string; spot: string; target: string }>(
@@ -286,9 +291,16 @@ function ItemEditor({
 
   function add() {
     if (!name.trim()) return;
-    onChange([...items, { id: uid("it"), name: name.trim(), detail: detail.trim() || undefined, locationId: locId || undefined }]);
+    onChange([...items, {
+      id: uid("it"),
+      name: name.trim(),
+      detail: detail.trim() || undefined,
+      ref: withRef ? refNum.trim() || undefined : undefined,
+      locationId: locId || undefined,
+    }]);
     setName("");
     setDetail("");
+    setRefNum("");
     setLocId("");
   }
   const setItemLoc = (itemId: string, value: string) =>
@@ -355,6 +367,18 @@ function ItemEditor({
                   onChange(items.map((x) => (x.id === it.id ? { ...x, detail: e.target.value || undefined } : x)))
                 }
               />
+              {withRef && (
+                <input
+                  className="inline-edit item-ref"
+                  value={it.ref ?? ""}
+                  placeholder="REF #"
+                  aria-label="Reference number"
+                  title="Supplier/catalog reference number"
+                  onChange={(e) =>
+                    onChange(items.map((x) => (x.id === it.id ? { ...x, ref: e.target.value || undefined } : x)))
+                  }
+                />
+              )}
               {/* Like a hospital pick list, three ways to handle an item:
                   open (on the field), hold (pulled, unopened unless asked),
                   have available (in the room, grouped last in setup). */}
@@ -394,6 +418,9 @@ function ItemEditor({
       <div className="item-add">
         <input placeholder="Add an item…" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
         <input placeholder="detail / size / qty (optional)" value={detail} onChange={(e) => setDetail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
+        {withRef && (
+          <input placeholder="REF # (optional)" value={refNum} onChange={(e) => setRefNum(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
+        )}
         <LocationSelect value={locId} onPick={setLocId} target="new" />
         <button className="btn btn-sm" onClick={add} disabled={!name.trim()}>Add</button>
       </div>

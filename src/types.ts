@@ -65,6 +65,9 @@ export interface CardItem {
   locationId?: ID;
   qty?: number;
   hold?: boolean;
+  /** Supplier/catalog reference number ("REF 1234-56"), mostly for supplies:
+   *  what materials management actually orders by. */
+  ref?: string;
   /** "Have available": in the room but not pulled onto the field — grouped
    *  at the bottom of setup so the must-gather items come first. */
   haveAvailable?: boolean;

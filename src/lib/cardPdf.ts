@@ -224,21 +224,32 @@ async function renderCard(
   for (const sec of printOrder) {
     const items = card[sec.key as SectionKey];
     if (!items.length) continue;
+    // Supplies (or any section) with reference numbers get a REF column, so
+    // materials can reorder straight off the printout.
+    const hasRef = items.some((it) => it.ref?.trim());
     autoTable(doc, {
       startY: y,
       margin: { left: MARGIN, right: MARGIN },
-      head: [[sec.label.toUpperCase(), "DETAIL", "LOCATION"]],
+      head: [hasRef
+        ? [sec.label.toUpperCase(), "DETAIL", "REF #", "LOCATION"]
+        : [sec.label.toUpperCase(), "DETAIL", "LOCATION"]],
       // Qty and hold render the way a hospital pick list prints them:
       // "2×" ahead of the name, "(hold)" after the detail.
-      body: items.map((it) => [
-        `${(it.qty ?? 1) > 1 ? `${it.qty}× ` : ""}${it.name}`,
-        [it.detail, it.hold ? "(hold)" : null].filter(Boolean).join(" "),
-        (it.locationId ? locationName?.(it.locationId) : "") ?? "",
-      ]),
+      body: items.map((it) => {
+        const base = [
+          `${(it.qty ?? 1) > 1 ? `${it.qty}× ` : ""}${it.name}`,
+          [it.detail, it.hold ? "(hold)" : null].filter(Boolean).join(" "),
+        ];
+        if (hasRef) base.push(it.ref ?? "");
+        base.push((it.locationId ? locationName?.(it.locationId) : "") ?? "");
+        return base;
+      }),
       theme: "plain",
       styles: { fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 0, right: 8 }, textColor: [17, 17, 17], lineColor: [230, 230, 230], lineWidth: { bottom: 0.6 } },
       headStyles: { fontStyle: "bold", fontSize: 8, textColor: [17, 17, 17], lineColor: [17, 17, 17], lineWidth: { bottom: 1.2 } },
-      columnStyles: { 0: { cellWidth: usable * 0.42 }, 1: { cellWidth: usable * 0.28 }, 2: { cellWidth: usable * 0.3 } },
+      columnStyles: hasRef
+        ? { 0: { cellWidth: usable * 0.36 }, 1: { cellWidth: usable * 0.22 }, 2: { cellWidth: usable * 0.16 }, 3: { cellWidth: usable * 0.26 } }
+        : { 0: { cellWidth: usable * 0.42 }, 1: { cellWidth: usable * 0.28 }, 2: { cellWidth: usable * 0.3 } },
       rowPageBreak: "avoid",
     });
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;

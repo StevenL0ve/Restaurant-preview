@@ -1912,3 +1912,7 @@ html, body { overflow-x: hidden; }
   content: "✓"; color: #fff; background: var(--brand); border-color: var(--brand);
   font-size: 15px; font-weight: 700; line-height: 22px; text-align: center;
 }
+
+/* ---- Supply reference numbers ---- */
+.item-ref { max-width: 90px; }
+.ref-chip { font-variant-numeric: tabular-nums; color: var(--slate); }

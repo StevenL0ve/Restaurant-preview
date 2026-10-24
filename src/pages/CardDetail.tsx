@@ -159,6 +159,7 @@ export function CardDetail() {
                   <li key={it.id}>
                     <span className="item-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
                     {it.detail && <span className="item-detail">{it.detail}</span>}
+                    {it.ref && <span className="item-detail ref-chip">REF {it.ref}</span>}
                     {it.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
                     {it.haveAvailable && <span className="hold-chip avail" title="In the room, not opened unless needed">have available</span>}
                     {where && <span className="item-location">{where}</span>}

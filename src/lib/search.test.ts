@@ -89,3 +89,20 @@ describe("scheduled case search", () => {
     if (hit && hit.kind === "case") expect(hit.snippet).toContain("Trainee II · Lee");
   });
 });
+
+describe("reference number search", () => {
+  it("finds a card by a supply REF number", () => {
+    const withRef = {
+      ...state,
+      cards: state.cards.map((c, i) =>
+        i === 0
+          ? { ...c, supplies: [{ id: "sup-ref", name: "Polypropylene mesh", ref: "PRO-4521", qty: 1 }, ...c.supplies] }
+          : c,
+      ),
+    };
+    const hits = search(withRef, "pro-4521");
+    const hit = hits.find((h) => h.kind === "card");
+    expect(hit).toBeTruthy();
+    if (hit && hit.kind === "card") expect(hit.snippet).toContain("REF PRO-4521");
+  });
+});
