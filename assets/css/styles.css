@@ -333,3 +333,47 @@ section { position: relative; }
   .hero h1 .line > span { transform: none; }
   html { scroll-behavior: auto; }
 }
+
+/* =========================================================
+   Polish pass — anchor offset, a11y, scrollspy, depth, back-to-top
+   ========================================================= */
+
+/* Fixed-nav anchor offset so section headings aren't hidden under the bar */
+#top, #about, #selection, #reel, #tastings, #visit, #follow, #why { scroll-margin-top: 88px; }
+
+/* Nicer heading line breaks (progressive enhancement) */
+h1, h2 { text-wrap: balance; }
+
+/* Branded text selection */
+::selection { background: var(--gold); color: var(--ink); }
+
+/* Visible keyboard focus */
+:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; border-radius: 4px; }
+.nav__links a:focus-visible, .btn:focus-visible { outline-offset: 5px; }
+
+/* Skip-to-content link */
+.skip { position: fixed; top: -70px; left: 1rem; z-index: 100; background: var(--gold); color: var(--ink);
+  padding: .7rem 1.15rem; border-radius: 6px; font-family: var(--sans); font-size: .78rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; transition: top .25s var(--ease); }
+.skip:focus { top: 1rem; }
+
+/* Active nav link (scrollspy) */
+.nav__links a.active:not(.btn) { opacity: 1; }
+.nav__links a.active:not(.btn)::after { width: 100%; }
+
+/* Hero vignette for depth and focus on the headline */
+.hero__grad { box-shadow: inset 0 0 180px 50px rgba(10,7,4,.7); }
+
+/* A little more lift on interactive cards */
+.card:hover, .stat:hover { box-shadow: 0 26px 52px -32px rgba(0,0,0,.7); }
+
+/* Back-to-top button (created by JS) */
+.totop { position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 70; width: 46px; height: 46px;
+  border-radius: 50%; border: 1px solid var(--line); background: rgba(20,15,10,.82);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--gold-bright);
+  display: grid; place-items: center; cursor: pointer; opacity: 0; transform: translateY(14px) scale(.9);
+  pointer-events: none; transition: opacity .35s var(--ease), transform .35s var(--bounce), background .3s, color .3s; }
+.totop.show { opacity: 1; transform: none; pointer-events: auto; }
+.totop:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); transform: translateY(-3px); }
+.totop svg { width: 20px; height: 20px; }
+@media (prefers-reduced-motion: reduce) { .totop { transition: opacity .2s; } }

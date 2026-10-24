@@ -152,6 +152,42 @@
     if (sources.length) sources[sources.length - 1].addEventListener("error", fail);
   });
 
+  /* Close the mobile menu on Escape */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && links.classList.contains("open")) { closeMenu(); toggle.focus(); }
+  });
+
+  /* Scrollspy — highlight the nav link for the section currently in view */
+  var spyLinks = Array.prototype.slice.call(links.querySelectorAll("a:not(.btn)"));
+  var spySections = spyLinks.map(function (a) {
+    var href = a.getAttribute("href") || "";
+    return href.charAt(0) === "#" ? document.querySelector(href) : null;
+  });
+  if ("IntersectionObserver" in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var idx = spySections.indexOf(e.target);
+        spyLinks.forEach(function (a, k) { a.classList.toggle("active", k === idx); });
+      });
+    }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+    spySections.forEach(function (s) { if (s) spy.observe(s); });
+  }
+
+  /* Back-to-top button */
+  var toTop = document.createElement("button");
+  toTop.className = "totop";
+  toTop.type = "button";
+  toTop.setAttribute("aria-label", "Back to top");
+  toTop.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  document.body.appendChild(toTop);
+  toTop.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  });
+  window.addEventListener("scroll", function () {
+    toTop.classList.toggle("show", window.scrollY > 640);
+  }, { passive: true });
+
   /* Footer year */
   var y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();
