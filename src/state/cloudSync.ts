@@ -1,4 +1,4 @@
-import type { AppState, LoanerTray, PrefCard, CardItem } from "../types";
+import type { AppState, LoanerTray, PrefCard, CardItem, CatalogItem } from "../types";
 import { firebase, setCloudStatus } from "../lib/cloud";
 
 // Live sync between the local store and Firestore. The shape is simple and
@@ -20,7 +20,7 @@ import { firebase, setCloudStatus } from "../lib/cloud";
 export const SYNCED_KEYS = [
   "facilities", "locations", "surgeons", "cards", "loaners", "cases",
   "onCallPositions", "onCallPeople", "onCallShifts", "carts",
-  "repLocations", "repStock", "dayNotes", "staff",
+  "repLocations", "repStock", "dayNotes", "staff", "catalog",
 ] as const;
 
 export type SyncedKey = (typeof SYNCED_KEYS)[number];
@@ -115,6 +115,15 @@ export function mergeCardPhotos(remote: PrefCard[], local: PrefCard[]): PrefCard
   });
 }
 
+export function stripCatalogPhotos(c: CatalogItem): CatalogItem {
+  return c.photo ? { ...c, photo: undefined } : c;
+}
+
+export function mergeCatalogPhotos(remote: CatalogItem[], local: CatalogItem[]): CatalogItem[] {
+  const localById = new Map(local.map((c) => [c.id, c]));
+  return remote.map((r) => (!r.photo && localById.get(r.id)?.photo ? { ...r, photo: localById.get(r.id)!.photo } : r));
+}
+
 /** ...and restored from the local copy on the way down. */
 export function mergeLoanerPhotos(remote: LoanerTray[], local: LoanerTray[]): LoanerTray[] {
   const localById = new Map(local.map((l) => [l.id, l]));
@@ -167,7 +176,9 @@ function prepareForCloud(key: SyncedKey, items: Item[]): Item[] {
     ? (items as unknown as LoanerTray[]).map(stripLoanerPhotos)
     : key === "cards"
       ? ((items as unknown as PrefCard[]).map(stripCardPhotos) as unknown as Item[])
-      : items;
+      : key === "catalog"
+        ? ((items as unknown as CatalogItem[]).map(stripCatalogPhotos) as unknown as Item[])
+        : items;
   return withOrd(cleaned as unknown as Item[]);
 }
 
@@ -211,6 +222,7 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
           let items = fromDocs(docs);
           if (key === "loaners") items = mergeLoanerPhotos(items as unknown as LoanerTray[], local.loaners) as unknown as Item[];
           if (key === "cards") items = mergeCardPhotos(items as unknown as PrefCard[], local.cards) as unknown as Item[];
+          if (key === "catalog") items = mergeCatalogPhotos(items as unknown as CatalogItem[], local.catalog) as unknown as Item[];
           if (!localIsForeign) {
             // Same owner on both sides: nothing local is thrown away.
             items = unionById(items, local[key] as unknown as Item[]);
@@ -238,6 +250,9 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
           }
           if (key === "cards") {
             items = mergeCardPhotos(items as unknown as PrefCard[], current as unknown as PrefCard[]) as unknown as Item[];
+          }
+          if (key === "catalog") {
+            items = mergeCatalogPhotos(items as unknown as CatalogItem[], current as unknown as CatalogItem[]) as unknown as Item[];
           }
           if (stableStringify(items) !== stableStringify(current)) {
             sync.hooks.applyRemote({ [key]: items } as Partial<AppState>);

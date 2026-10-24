@@ -1948,3 +1948,14 @@ html, body { overflow-x: hidden; }
 .setup-photo-actions { display: flex; gap: 10px; }
 .setup-photo-add { min-height: 56px; }
 .setup-photo-strip { display: flex; gap: 12px; margin-bottom: 14px; }
+
+/* ---- Supply catalog ---- */
+.catalog-add { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.catalog-add-fields { flex: 1 1 220px; min-width: 0; display: grid; gap: 10px; }
+.catalog-candidates { display: grid; gap: 6px; }
+.catalog-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 14px; }
+.catalog-thumb { width: 52px; height: 52px; }
+.catalog-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 160px; }
+.catalog-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.catalog-edit { flex: 1 1 200px; display: grid; gap: 8px; }
+.catalog-edit input { width: 100%; box-sizing: border-box; }

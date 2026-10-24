@@ -71,6 +71,9 @@ export interface CardItem {
   /** A compressed photo of the item (data URL), so a tapped REF shows what
    *  the thing actually looks like. Stays on-device; never synced. */
   photo?: string;
+  /** Links this item to the facility's supply catalog: when the supply
+   *  custodian updates the catalog entry, every linked item follows. */
+  catalogId?: ID;
   /** "Have available": in the room but not pulled onto the field — grouped
    *  at the bottom of setup so the must-gather items come first. */
   haveAvailable?: boolean;
@@ -419,6 +422,22 @@ export interface RepStockItem {
   notes?: string;
 }
 
+// ---- Supply catalog --------------------------------------------------------
+// The supply custodian's master list: one photo + official nomenclature +
+// reference number per item, per facility. Card editors pick from it, so the
+// same item never lives under five names, and a REF change here flows to
+// every preference card that uses it.
+
+export interface CatalogItem {
+  id: ID;
+  facilityId?: ID; // which hospital's catalog; undefined = shared
+  name: string; // official nomenclature
+  ref: string; // supplier/catalog reference number
+  photo?: string; // compressed data URL; stays on-device
+  updatedAt: string;
+  updatedBy?: string; // custodian's name; shown as "Last, F."
+}
+
 export interface AppState {
   facilities: Facility[];
   locations: Location[];
@@ -435,4 +454,5 @@ export interface AppState {
   repStock: RepStockItem[];
   dayNotes: DayConsideration[];
   staff: StaffMember[];
+  catalog: CatalogItem[];
 }

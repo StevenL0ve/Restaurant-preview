@@ -48,7 +48,7 @@ describe("loaner trays", () => {
     const soon = new Date(Date.now() + 86400000).toISOString();
     const state = {
       facilities: [], locations: [], surgeons: [], cards: [], cases: [], setups: {},
-      onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [],
+      onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [],
       loaners: [
         mk({ id: "ok", caseDate: new Date(Date.now() + 20 * 86400000).toISOString(), status: "confirmed" }),
         mk({ id: "late", neededBy: past, status: "requested" }),

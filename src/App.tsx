@@ -30,6 +30,7 @@ import { OnCallPage } from "./pages/OnCallPage";
 import { OnCallPeoplePage } from "./pages/OnCallPeoplePage";
 import { SearchPage } from "./pages/SearchPage";
 import { CaseLogPage } from "./pages/CaseLogPage";
+import { CatalogPage } from "./pages/CatalogPage";
 import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
 
@@ -87,6 +88,7 @@ export default function App() {
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/scan" element={<CardScan />} />
+            <Route path="/catalog" element={<CatalogPage />} />
             <Route path="/cards/templates" element={<TemplatesPage />} />
             <Route path="/cards/combine" element={<CombineCardsPage />} />
             <Route path="/cards/:id" element={<CardDetail />} />

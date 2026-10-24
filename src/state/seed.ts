@@ -596,6 +596,7 @@ export function buildSeed(): AppState {
       createdAt: new Date().toISOString(),
     }],
     staff: [],
+    catalog: [],
   };
 }
 

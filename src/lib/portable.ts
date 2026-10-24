@@ -64,7 +64,8 @@ export function asBundle(parsed: unknown, exportedAt: string): CardBundle | null
 // Photos live in the app only: a shared .orsync file stays a few KB of
 // text, not megabytes of images, so it still travels over a text message.
 function withoutPhotos(c: PrefCard): PrefCard {
-  const strip = (arr: PrefCard["supplies"]) => arr.map((it) => (it.photo ? { ...it, photo: undefined } : it));
+  const strip = (arr: PrefCard["supplies"]) =>
+    arr.map((it) => (it.photo || it.catalogId ? { ...it, photo: undefined, catalogId: undefined } : it));
   return {
     ...c,
     mayoPhoto: undefined,

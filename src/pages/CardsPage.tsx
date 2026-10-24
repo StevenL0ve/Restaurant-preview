@@ -75,6 +75,7 @@ export function CardsPage() {
             </>
           ) : (
             <>
+              <button className="btn" onClick={() => navigate("/catalog")}>Supply catalog</button>
               <button className="btn" onClick={() => { setSelecting(true); setSel([]); }}>Print several…</button>
               <button className="btn" onClick={() => navigate("/cards/combine")}>Combine</button>
               <button className="btn" onClick={() => navigate("/cards/templates")}>Templates</button>

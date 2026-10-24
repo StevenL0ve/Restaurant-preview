@@ -14,6 +14,7 @@ import type {
   AppState,
   DayConsideration,
   CardItem,
+  CatalogItem,
   CaseCart,
   CaseEntry,
   Facility,
@@ -167,6 +168,7 @@ function migrateLegacy(old: any): AppState {
     repStock: old.repStock ?? [],
     dayNotes: old.dayNotes ?? [],
     staff: old.staff ?? [],
+    catalog: old.catalog ?? [],
   };
 }
 
@@ -230,6 +232,12 @@ export interface Store {
   /** Bulk roster import; returns how many new people were added. */
   importStaff: (members: { name: string; role: TeamRole; level?: 1 | 2 | 3 }[]) => number;
   deleteStaff: (id: string) => void;
+  // supply catalog (the custodian's master list)
+  addCatalogItem: (p: { name: string; ref: string; facilityId?: string; photo?: string }) => CatalogItem;
+  /** Update a catalog entry; name/ref/photo flow to every linked card item. */
+  updateCatalogItem: (id: string, patch: Partial<Pick<CatalogItem, "name" | "ref" | "photo" | "facilityId">>) => void;
+  /** Remove a catalog entry; linked card items keep their values, unlinked. */
+  deleteCatalogItem: (id: string) => void;
   /** The pull queue follows the board: make sure a cart exists for this
    *  card+day (no-op if one is already queued). Returns the cart. */
   ensureCart: (cardId: string, date: string) => CaseCart;
@@ -587,6 +595,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       deleteStaff: (id) => update((st) => ({ ...st, staff: st.staff.filter((m) => m.id !== id) })),
+
+      addCatalogItem: (p) => {
+        const item: CatalogItem = {
+          id: uid("cat"),
+          facilityId: p.facilityId || undefined,
+          name: p.name.trim(),
+          ref: p.ref.trim(),
+          photo: p.photo,
+          updatedAt: new Date().toISOString(),
+          updatedBy: getPullerName() || undefined,
+        };
+        update((st) => ({ ...st, catalog: [item, ...st.catalog] }));
+        return item;
+      },
+
+      updateCatalogItem: (id, patch) =>
+        update((st) => applyCatalogUpdate(st, id, patch, new Date().toISOString(), getPullerName() || undefined)),
+
+      deleteCatalogItem: (id) =>
+        update((st) => {
+          const unlink = (arr: CardItem[]) =>
+            arr.some((it) => it.catalogId === id)
+              ? arr.map((it) => (it.catalogId === id ? { ...it, catalogId: undefined } : it))
+              : arr;
+          return {
+            ...st,
+            catalog: st.catalog.filter((c) => c.id !== id),
+            cards: st.cards.map((c) => ({
+              ...c,
+              instruments: unlink(c.instruments),
+              sutures: unlink(c.sutures),
+              supplies: unlink(c.supplies),
+              medications: unlink(c.medications),
+              equipment: unlink(c.equipment),
+            })),
+          };
+        }),
 
       ensureCart: (cardId, date) => {
         const found = state.carts.find((k) => k.cardId === cardId && k.date === date);
@@ -1315,6 +1360,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           repStock: parsed.repStock ?? st.repStock,
           dayNotes: parsed.dayNotes ?? st.dayNotes,
           staff: parsed.staff ?? st.staff,
+          catalog: parsed.catalog ?? st.catalog,
         }));
       },
 
@@ -1324,7 +1370,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [],
         }),
     };
   }, [state]);
@@ -1689,6 +1735,47 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+/** The custodian updated a catalog entry: stamp it, and flow the new
+ *  name/ref/photo into every card item linked to it. Cards without a link
+ *  are untouched (same reference), so sync stays quiet. (Pure.) */
+export function applyCatalogUpdate(
+  st: AppState,
+  id: string,
+  patch: Partial<Pick<CatalogItem, "name" | "ref" | "photo" | "facilityId">>,
+  now: string,
+  by?: string,
+): AppState {
+  const prev = st.catalog.find((c) => c.id === id);
+  if (!prev) return st;
+  const next: CatalogItem = { ...prev, ...patch, updatedAt: now, updatedBy: by };
+  const fix = (arr: CardItem[]) =>
+    arr.map((it) =>
+      it.catalogId === id ? { ...it, name: next.name, ref: next.ref, photo: next.photo ?? it.photo } : it,
+    );
+  const linked = (c: PrefCard) =>
+    ([c.instruments, c.sutures, c.supplies, c.medications, c.equipment] as CardItem[][]).some((arr) =>
+      arr.some((it) => it.catalogId === id),
+    );
+  return {
+    ...st,
+    catalog: st.catalog.map((c) => (c.id === id ? next : c)),
+    cards: st.cards.map((c) =>
+      linked(c)
+        ? {
+            ...c,
+            instruments: fix(c.instruments),
+            sutures: fix(c.sutures),
+            supplies: fix(c.supplies),
+            medications: fix(c.medications),
+            equipment: fix(c.equipment),
+            updatedAt: now,
+            updatedBy: by,
+          }
+        : c,
+    ),
+  };
+}
+
 /** Queue a cart for a card+day if none exists yet (pure; same ref when queued). */
 export function withQueuedCart(st: AppState, cardId: string, date: string, now = new Date().toISOString()): AppState {
   if (st.carts.some((c) => c.cardId === cardId && c.date === date)) return st;

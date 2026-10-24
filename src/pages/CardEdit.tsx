@@ -249,6 +249,7 @@ export function CardEdit() {
           onChange={(items) => set({ [sec.key]: items } as Partial<PrefCard>)}
           withRef={sec.key === "supplies" || sec.key === "equipment"}
           withPhoto={sec.key === "supplies" || sec.key === "equipment"}
+          facilityId={draft.facilityId}
         />
       ))}
 
@@ -271,6 +272,7 @@ function ItemEditor({
   onChange,
   withRef,
   withPhoto,
+  facilityId,
 }: {
   label: string;
   items: CardItem[];
@@ -283,11 +285,39 @@ function ItemEditor({
   withRef?: boolean;
   /** Show the per-item photo control (supplies and equipment). */
   withPhoto?: boolean;
+  facilityId?: string;
 }) {
+  const { state: appState } = useStore();
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
   const [refNum, setRefNum] = useState("");
   const [locId, setLocId] = useState("");
+
+  // Typing a supply name searches the custodian's catalog: pick the match
+  // and the official nomenclature, REF, and photo come with it (and the item
+  // stays linked, so catalog updates flow into this card).
+  const catQ = name.trim().toLowerCase();
+  const catalogMatches = withRef && catQ.length >= 2
+    ? appState.catalog
+        .filter((ci) => !ci.facilityId || !facilityId || ci.facilityId === facilityId)
+        .filter((ci) => ci.name.toLowerCase().includes(catQ) || ci.ref.toLowerCase().includes(catQ))
+        .slice(0, 5)
+    : [];
+
+  function addFromCatalog(ci: (typeof appState.catalog)[number]) {
+    onChange([...items, {
+      id: uid("it"),
+      name: ci.name,
+      ref: ci.ref,
+      photo: ci.photo,
+      catalogId: ci.id,
+      detail: detail.trim() || undefined,
+      locationId: locId || undefined,
+    }]);
+    setName("");
+    setDetail("");
+    setRefNum("");
+  }
   // Inline "new location" creator (shared by this section's rows).
   const [newLoc, setNewLoc] = useState<{ open: boolean; area: string; spot: string; target: string }>(
     { open: false, area: "", spot: "", target: "new" },
@@ -361,7 +391,7 @@ function ItemEditor({
                 className="inline-edit item-name"
                 value={it.name}
                 aria-label="Item name"
-                onChange={(e) => onChange(items.map((x) => (x.id === it.id ? { ...x, name: e.target.value } : x)))}
+                onChange={(e) => onChange(items.map((x) => (x.id === it.id ? { ...x, name: e.target.value, catalogId: undefined } : x)))}
               />
               <input
                 className="inline-edit item-detail"
@@ -380,7 +410,7 @@ function ItemEditor({
                   aria-label="Reference number"
                   title="Supplier/catalog reference number"
                   onChange={(e) =>
-                    onChange(items.map((x) => (x.id === it.id ? { ...x, ref: e.target.value || undefined } : x)))
+                    onChange(items.map((x) => (x.id === it.id ? { ...x, ref: e.target.value || undefined, catalogId: undefined } : x)))
                   }
                 />
               )}
@@ -437,6 +467,15 @@ function ItemEditor({
         <LocationSelect value={locId} onPick={setLocId} target="new" />
         <button className="btn btn-sm" onClick={add} disabled={!name.trim()}>Add</button>
       </div>
+      {catalogMatches.length > 0 && (
+        <div className="staff-suggest">
+          {catalogMatches.map((ci) => (
+            <button key={ci.id} type="button" className="chip chip-sm" onClick={() => addFromCatalog(ci)}>
+              + {ci.name} · REF {ci.ref}
+            </button>
+          ))}
+        </div>
+      )}
 
       {newLoc.open && (
         <div className="newloc-form">
