@@ -1893,3 +1893,7 @@ html, body { overflow-x: hidden; }
 
 /* ---- No-patient-info reminder ---- */
 .phi-note { margin: 6px 0 0; font-size: 0.76rem; color: var(--muted); grid-column: 1 / -1; }
+
+/* ---- "Go to today" on its own row under the day stepper ---- */
+.go-today { margin: 2px 0 10px; text-align: center; }
+.go-today .link { background: none; border: none; cursor: pointer; padding: 6px 10px; min-height: 42px; }

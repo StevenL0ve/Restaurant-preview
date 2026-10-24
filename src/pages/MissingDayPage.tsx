@@ -63,8 +63,12 @@ export function MissingDayPage() {
         <button className="btn btn-sm" onClick={() => setOffset((o) => o - 1)} aria-label="Previous day">←</button>
         <span className="day-label">{dayLabel(offset)} <span className="muted small">{date}</span></span>
         <button className="btn btn-sm" onClick={() => setOffset((o) => o + 1)} aria-label="Next day">→</button>
-        {offset !== 0 && <button className="link small" onClick={() => setOffset(0)}>today</button>}
       </div>
+      {offset !== 0 && (
+        <p className="go-today">
+          <button className="link" onClick={() => setOffset(0)}>Go to today</button>
+        </p>
+      )}
 
       {turnovers.length > 0 && (
         <div className="card form-card turnover-card">
