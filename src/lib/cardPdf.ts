@@ -20,6 +20,27 @@ export interface CardPdfLink {
   label?: string;
 }
 
+// The mascot rides next to the brand name in the header. Cached after the
+// first load; printing still works if the asset can't be fetched.
+let mascotData: string | null | undefined;
+async function loadMascot(): Promise<string | null> {
+  if (mascotData !== undefined) return mascotData;
+  try {
+    const res = await fetch("brand/mascot-sm.png");
+    if (!res.ok) throw new Error(String(res.status));
+    const blob = await res.blob();
+    mascotData = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = () => reject(new Error("read failed"));
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    mascotData = null;
+  }
+  return mascotData;
+}
+
 /** One card's worth of a (possibly multi-card) PDF. */
 export interface CardPdfEntry {
   card: PrefCard;
@@ -99,6 +120,11 @@ async function renderCard(
   doc.setFontSize(11);
   doc.setTextColor(BRAND.r, BRAND.g, BRAND.b);
   doc.text("ORSync", pageW - MARGIN, MARGIN + 2, { align: "right" });
+  const mascot = await loadMascot();
+  if (mascot) {
+    const tw = doc.getTextWidth("ORSync");
+    doc.addImage(mascot, "PNG", pageW - MARGIN - tw - 21, MARGIN - 10, 16, 16);
+  }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
@@ -190,8 +216,12 @@ async function renderCard(
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   }
 
-  // One table per section: Item / Detail / Location.
-  for (const sec of SECTIONS) {
+  // One table per section: Item / Detail / Location. Medications print
+  // first, right under the notes block; the rest keep library order.
+  const printOrder = [...SECTIONS].sort(
+    (a, b) => Number(b.key === "medications") - Number(a.key === "medications"),
+  );
+  for (const sec of printOrder) {
     const items = card[sec.key as SectionKey];
     if (!items.length) continue;
     autoTable(doc, {
