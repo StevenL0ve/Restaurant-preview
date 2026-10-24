@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useStore,
   casesOn,
@@ -16,7 +16,8 @@ import type { Store } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { accentStyle } from "../lib/accent";
-import type { CaseEntry } from "../types";
+import { TEAM_ROLES, teamMemberLabel } from "../types";
+import type { CaseEntry, TeamMember, TeamRole } from "../types";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -46,7 +47,12 @@ function shiftDay(date: string, delta: number): string {
 export function TodayPage() {
   const store = useStore();
   const { state } = store;
-  const [date, setDate] = useState(() => localDay(0));
+  // Search results land here with ?d=2026-10-26 to open that day's board.
+  const [params] = useSearchParams();
+  const paramDate = params.get("d");
+  const validParam = paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate) ? paramDate : null;
+  const [date, setDate] = useState(() => validParam ?? localDay(0));
+  useEffect(() => { if (validParam) setDate(validParam); }, [validParam]);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<CaseEntry | null>(null);
 
@@ -215,6 +221,14 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 
       {entry.notes && <p className="loaner-notes">{entry.notes}</p>}
 
+      {(entry.team?.length ?? 0) > 0 && (
+        <div className="case-team">
+          {entry.team!.map((m) => (
+            <span key={m.id} className="team-chip">{teamMemberLabel(m)}</span>
+          ))}
+        </div>
+      )}
+
       {caseNotes.length > 0 && (
         <div className="case-day-notes">
           {caseNotes.map((n) => (
@@ -251,12 +265,12 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
         <button className="btn btn-sm" onClick={() => setNoting((v) => !v)}>Team note</button>
         {confirmDel ? (
           <span className="confirm">
-            Remove?
-            <button className="btn btn-danger btn-sm" onClick={() => deleteCase(entry.id)}>Yes</button>
-            <button className="btn btn-sm" onClick={() => setConfirmDel(false)}>No</button>
+            Cancel this case?
+            <button className="btn btn-danger btn-sm" onClick={() => deleteCase(entry.id)}>Yes, cancel it</button>
+            <button className="btn btn-sm" onClick={() => setConfirmDel(false)}>Keep it</button>
           </span>
         ) : (
-          <button className="btn btn-sm" onClick={() => setConfirmDel(true)}>Remove</button>
+          <button className="btn btn-sm" onClick={() => setConfirmDel(true)}>Cancel case</button>
         )}
       </div>
 
@@ -292,8 +306,9 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 // is just an order: OR 1 Case 2, OR 1 Case 3. Followers can be slotted into
 // any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
-  const { state, addCase, updateCase, moveCase, ensureCart } = store;
+  const { state, addCase, updateCase, moveCase, ensureCart, deleteCart } = store;
   const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
+  const [caseDate, setCaseDate] = useState(existing?.date ?? date);
   const [time, setTime] = useState(existing?.time ?? "");
   // Rooms are "OR" + a number for almost everyone, so the form supplies the
   // "OR" and the user just types the number. Named rooms (Hybrid, Cysto)
@@ -302,9 +317,10 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
   const [namedRoom, setNamedRoom] = useState(initialRoom.named);
   const [roomVal, setRoomVal] = useState(initialRoom.value);
   const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [team, setTeam] = useState<TeamMember[]>(existing?.team ?? []);
   const [orderChoice, setOrderChoice] = useState<number | null>(null); // index among the room's followers
 
-  const theDate = existing?.date ?? date;
+  const theDate = /^\d{4}-\d{2}-\d{2}$/.test(caseDate) ? caseDate : (existing?.date ?? date);
   const roomKey = namedRoom ? roomVal.trim() : roomVal.trim() ? `OR ${roomVal.trim()}` : "";
   // The room's other cases for that day decide what we ask for.
   const roomCases = state.cases.filter(
@@ -337,12 +353,23 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
       cardId,
       room: roomKey || undefined,
       notes: notes.trim() || undefined,
+      team: team.length ? team : undefined,
     };
     let id: string;
     if (existing) {
       updateCase(existing.id, payload);
-      // Editing can move the case to another card or day; keep it queued.
+      // Rescheduling or switching cards keeps the queue honest: queue a cart
+      // for the new card+day, and drop the old one if it was never touched
+      // and no other case still needs it.
       ensureCart(cardId, theDate);
+      if (existing.date !== theDate || existing.cardId !== cardId) {
+        const old = state.carts.find((k) => k.cardId === existing.cardId && k.date === existing.date);
+        const othersUse = state.cases.some(
+          (c) => c.id !== existing.id && c.cardId === existing.cardId && c.date === existing.date,
+        );
+        const untouched = old && Object.keys(old.pulls).length === 0 && !old.donePulling && old.missing.length === 0;
+        if (old && untouched && !othersUse) deleteCart(old.id);
+      }
       id = existing.id;
     } else {
       id = addCase(payload).id;
@@ -367,6 +394,13 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
               return <option key={c.id} value={c.id}>{c.procedure} · {sg?.name ?? "?"}</option>;
             })}
           </select>
+        </label>
+        <label className="field"><span>{existing ? "Date (move to reschedule)" : "Date"}</span>
+          <input
+            type="date"
+            value={caseDate}
+            onChange={(e) => { setCaseDate(e.target.value); setOrderChoice(null); }}
+          />
         </label>
         <div className="field"><span>Room</span>
           {namedRoom ? (
@@ -420,10 +454,73 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
         <label className="field field-wide"><span>Notes</span>
           <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Rep bringing trials, patient latex allergy flag, etc." />
         </label>
+        <TeamEditor team={team} onChange={setTeam} />
       </div>
       <div className="form-actions">
         <button className="btn btn-primary" disabled={!cardId} onClick={save}>{existing ? "Save" : "Add to lineup"}</button>
         <button className="btn" onClick={onDone}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// The room team, filled in as assignments are known: surgeons, nurses,
+// techs, trainees (with a level), Phase II students, anesthesia.
+function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: TeamMember[]) => void }) {
+  const [role, setRole] = useState<TeamRole>("nurse");
+  const [level, setLevel] = useState<1 | 2 | 3>(1);
+  const [name, setName] = useState("");
+
+  function add() {
+    const n = name.trim();
+    if (!n) return;
+    onChange([
+      ...team,
+      {
+        id: `tm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        role,
+        name: n,
+        level: role === "trainee" ? level : undefined,
+      },
+    ]);
+    setName("");
+  }
+
+  return (
+    <div className="field field-wide"><span>Room team (when known)</span>
+      {team.length > 0 && (
+        <div className="team-chips">
+          {team.map((m) => (
+            <span key={m.id} className="team-chip">
+              {teamMemberLabel(m)}
+              <button
+                type="button"
+                className="chip-del"
+                aria-label={`Remove ${m.name}`}
+                onClick={() => onChange(team.filter((x) => x.id !== m.id))}
+              >✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="team-add">
+        <select value={role} onChange={(e) => setRole(e.target.value as TeamRole)} aria-label="Role">
+          {TEAM_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+        </select>
+        {role === "trainee" && (
+          <select value={level} onChange={(e) => setLevel(Number(e.target.value) as 1 | 2 | 3)} aria-label="Trainee level">
+            <option value={1}>Level I</option>
+            <option value={2}>Level II</option>
+            <option value={3}>Level III</option>
+          </select>
+        )}
+        <input
+          value={name}
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+        />
+        <button type="button" className="btn btn-sm" disabled={!name.trim()} onClick={add}>Add</button>
       </div>
     </div>
   );

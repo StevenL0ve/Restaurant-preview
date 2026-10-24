@@ -192,6 +192,31 @@ export interface LoanerTray {
 // preference card so the day view can show setup progress and loaner readiness
 // per case — the 6 AM "what am I walking into" screen.
 
+// Who's in the room for a case, when the assignment is known. Trainees carry
+// a level (I, II, III); everyone else is just a role and a name.
+export const TEAM_ROLES = [
+  { key: "surgeon", label: "Surgeon" },
+  { key: "nurse", label: "Nurse" },
+  { key: "tech", label: "Tech" },
+  { key: "trainee", label: "Trainee" },
+  { key: "phase2", label: "Phase II student" },
+  { key: "anesthesia", label: "Anesthesia" },
+] as const;
+export type TeamRole = (typeof TEAM_ROLES)[number]["key"];
+
+export interface TeamMember {
+  id: ID;
+  role: TeamRole;
+  name: string;
+  level?: 1 | 2 | 3; // trainees only
+}
+
+export function teamMemberLabel(m: TeamMember): string {
+  const role = TEAM_ROLES.find((r) => r.key === m.role)?.label ?? m.role;
+  const lvl = m.role === "trainee" && m.level ? ` ${["I", "II", "III"][m.level - 1]}` : "";
+  return `${role}${lvl} · ${m.name}`;
+}
+
 export interface CaseEntry {
   id: ID;
   date: string; // "2026-07-02" (local calendar day)
@@ -199,6 +224,8 @@ export interface CaseEntry {
   cardId: ID;
   room?: string; // "OR 4"
   notes?: string;
+  /** The room team, filled in as assignments become known. */
+  team?: TeamMember[];
 }
 
 // ---- One-day special considerations ---------------------------------------

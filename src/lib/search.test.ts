@@ -56,3 +56,36 @@ describe("global search", () => {
     expect(hits.some((h) => h.kind === "oncall" && h.title === "Kelly Osei")).toBe(true);
   });
 });
+
+describe("scheduled case search", () => {
+  const sched = {
+    ...state,
+    cases: [
+      {
+        id: "case-x", date: "2099-01-05", time: "07:30", room: "OR 3",
+        cardId: state.cards[0].id,
+        team: [{ id: "tm1", role: "trainee" as const, name: "Lee", level: 2 as const }],
+      },
+    ],
+  };
+
+  it("finds a case by the surgeon's name and points at that day's board", () => {
+    const surgeon = state.surgeons.find((s) => s.id === state.cards[0].surgeonId)!;
+    const hits = search(sched, surgeon.name.split(" ").pop()!.toLowerCase());
+    const hit = hits.find((h) => h.kind === "case");
+    expect(hit).toBeTruthy();
+    if (hit && hit.kind === "case") {
+      expect(hit.entry.date).toBe("2099-01-05");
+      expect(hit.subtitle).toContain("OR 3");
+    }
+  });
+
+  it("finds a case by procedure and by a team member's name", () => {
+    const byProc = search(sched, state.cards[0].procedure.slice(0, 8).toLowerCase());
+    expect(byProc.some((h) => h.kind === "case")).toBe(true);
+    const byTeam = search(sched, "lee");
+    const hit = byTeam.find((h) => h.kind === "case");
+    expect(hit).toBeTruthy();
+    if (hit && hit.kind === "case") expect(hit.snippet).toContain("Trainee II · Lee");
+  });
+});

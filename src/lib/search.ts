@@ -1,5 +1,5 @@
-import type { AppState, OnCallPerson, PrefCard, SectionKey, Surgeon } from "../types";
-import { SECTIONS, locationLabel } from "../types";
+import type { AppState, CaseEntry, OnCallPerson, PrefCard, SectionKey, Surgeon } from "../types";
+import { SECTIONS, locationLabel, teamMemberLabel } from "../types";
 
 // One global search across the whole library: surgeons, procedures, every item
 // on every card, and the on-call directory. Techs search by all of these —
@@ -9,7 +9,8 @@ import { SECTIONS, locationLabel } from "../types";
 export type SearchHit =
   | { kind: "surgeon"; id: string; title: string; subtitle: string; snippet?: string; surgeon: Surgeon }
   | { kind: "card"; id: string; title: string; subtitle: string; snippet?: string; card: PrefCard }
-  | { kind: "oncall"; id: string; title: string; subtitle: string; snippet?: string; person: OnCallPerson };
+  | { kind: "oncall"; id: string; title: string; subtitle: string; snippet?: string; person: OnCallPerson }
+  | { kind: "case"; id: string; title: string; subtitle: string; snippet?: string; entry: CaseEntry };
 
 export function search(state: AppState, raw: string): SearchHit[] {
   const q = raw.trim().toLowerCase();
@@ -105,5 +106,50 @@ export function search(state: AppState, raw: string): SearchHit[] {
     }
   }
 
+  // Scheduled cases: find a case by the doctor, the procedure, the room, or
+  // anyone on the room team. Today's board ranks first, upcoming days next.
+  const d0 = new Date();
+  const today = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, "0")}-${String(d0.getDate()).padStart(2, "0")}`;
+  for (const c of state.cases) {
+    const card = state.cards.find((k) => k.id === c.cardId);
+    const surgeon = card ? state.surgeons.find((s) => s.id === card.surgeonId) : undefined;
+    let best = Math.max(
+      score(card?.procedure ?? ""),
+      score(surgeon?.name ?? ""),
+      score(c.room ?? ""),
+      score(c.notes ?? ""),
+    );
+    let snippet: string | undefined;
+    for (const m of c.team ?? []) {
+      const sc = score(m.name);
+      if (sc > 0 && !snippet) snippet = `Team: ${teamMemberLabel(m)}`;
+      best = Math.max(best, sc);
+    }
+    if (best > 0) {
+      // Today's board ties with (never beats) a same-named surgeon profile;
+      // stable sort keeps the surgeon, the richer destination, first.
+      const boost = c.date === today ? 1 : c.date > today ? 0.5 : 0;
+      hits.push({
+        score: best + boost,
+        hit: {
+          kind: "case",
+          id: c.id,
+          title: card?.procedure ?? "Scheduled case",
+          subtitle: [fmtCaseDay(c.date), c.room, c.time, surgeon?.name].filter(Boolean).join(" · "),
+          snippet,
+          entry: c,
+        },
+      });
+    }
+  }
+
   return hits.sort((a, b) => b.score - a.score).map((h) => h.hit);
+}
+
+function fmtCaseDay(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+  return Number.isNaN(dt.getTime())
+    ? date
+    : dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
