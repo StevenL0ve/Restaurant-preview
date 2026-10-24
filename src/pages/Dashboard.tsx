@@ -6,7 +6,6 @@ import {
   totalItems,
   setupProgress,
   loanersSorted,
-  loanerStats,
   isLoanerOverdue,
   isLoanerSoon,
   casesOn,
@@ -16,7 +15,7 @@ import {
 } from "../state/store";
 import { formatPhone } from "../lib/oncall";
 import { Avatar } from "../components/Avatar";
-import { Icon, type IconName } from "../components/Icon";
+import { Icon } from "../components/Icon";
 import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
@@ -31,17 +30,9 @@ export function Dashboard() {
     .map((c) => ({ card: c, ...setupProgress(state, c) }))
     .filter((x) => x.done < x.total);
 
-  const lstats = loanerStats(state);
   const loanerWatch = loanersSorted(state)
     .filter((l) => isLoanerOverdue(l) || isLoanerSoon(l))
     .slice(0, 4);
-
-  const stats: { label: string; value: number; to: string; icon: IconName }[] = [
-    { label: "Cards", value: state.cards.length, to: "/cards", icon: "cards" },
-    { label: "Surgeons", value: state.surgeons.length, to: "/surgeons", icon: "surgeon" },
-    { label: "Loaners active", value: lstats.active, to: "/loaners", icon: "truck" },
-    { label: "Favorites", value: favorites.length, to: "/cards", icon: "star" },
-  ];
 
   return (
     <div className="page">
@@ -54,16 +45,6 @@ export function Dashboard() {
         <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
           <Icon name="plus" size={17} /> New card
         </button>
-      </div>
-
-      <div className="stat-grid">
-        {stats.map((s) => (
-          <Link key={s.label} to={s.to} className="stat-card">
-            <span className="stat-emoji" aria-hidden><Icon name={s.icon} size={20} /></span>
-            <span className="stat-value">{s.value}</span>
-            <span className="stat-label">{s.label}</span>
-          </Link>
-        ))}
       </div>
 
       <TodayLineup />
