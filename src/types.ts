@@ -65,6 +65,9 @@ export interface CardItem {
   locationId?: ID;
   qty?: number;
   hold?: boolean;
+  /** "Have available": in the room but not pulled onto the field — grouped
+   *  at the bottom of setup so the must-gather items come first. */
+  haveAvailable?: boolean;
 }
 
 /** The five checklist sections every card shares. Kept as a const tuple so the

@@ -353,16 +353,30 @@ function ItemEditor({
                   onChange(items.map((x) => (x.id === it.id ? { ...x, detail: e.target.value || undefined } : x)))
                 }
               />
-              {/* Open vs. hold, like a hospital pick list: hold = pull it but
-                  keep it unopened unless the surgeon asks for it. */}
+              {/* Like a hospital pick list, three ways to handle an item:
+                  open (on the field), hold (pulled, unopened unless asked),
+                  have available (in the room, grouped last in setup). */}
               <button
-                className={"hold-toggle" + (it.hold ? " on" : "")}
+                className={"hold-toggle" + (it.hold ? " on" : "") + (it.haveAvailable ? " avail" : "")}
                 type="button"
-                title={it.hold ? "Hold: pull it, keep it unopened unless asked" : "Open: opened for the case. Tap to make it a hold item."}
-                aria-pressed={!!it.hold}
-                onClick={() => onChange(items.map((x) => (x.id === it.id ? { ...x, hold: !x.hold || undefined } : x)))}
+                title={
+                  it.hold
+                    ? "Hold: pull it, keep it unopened unless asked. Tap for have-available."
+                    : it.haveAvailable
+                      ? "Have available: in the room, not pulled onto the field. Tap for open."
+                      : "Open: opened for the case. Tap to make it a hold item."
+                }
+                aria-pressed={!!(it.hold || it.haveAvailable)}
+                onClick={() =>
+                  onChange(items.map((x) => {
+                    if (x.id !== it.id) return x;
+                    if (!x.hold && !x.haveAvailable) return { ...x, hold: true };
+                    if (x.hold) return { ...x, hold: undefined, haveAvailable: true };
+                    return { ...x, haveAvailable: undefined };
+                  }))
+                }
               >
-                {it.hold ? "hold" : "open"}
+                {it.hold ? "hold" : it.haveAvailable ? "have avail" : "open"}
               </button>
               <LocationSelect value={it.locationId ?? ""} onPick={(v) => setItemLoc(it.id, v)} target={it.id} />
               <button className="info-del" aria-label={`Remove ${it.name}`} onClick={() => onChange(items.filter((x) => x.id !== it.id))}>✕</button>

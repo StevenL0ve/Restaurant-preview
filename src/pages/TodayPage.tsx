@@ -11,6 +11,7 @@ import {
   cartForCase,
   dayNotesFor,
   getPullerName,
+  onCallPersonRole,
 } from "../state/store";
 import type { Store } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -86,8 +87,8 @@ export function TodayPage() {
         </button>
       </div>
 
-      {(adding || editing) && (
-        <CaseForm store={store} date={date} existing={editing ?? undefined} onDone={() => { setAdding(false); setEditing(null); }} />
+      {adding && (
+        <CaseForm store={store} date={date} onDone={() => setAdding(false)} />
       )}
 
       {cases.length === 0 && !adding ? (
@@ -105,15 +106,21 @@ export function TodayPage() {
               </h2>
               <div className="case-list">
                 {g.cases.map((c, i) => (
-                  <CaseRow
-                    key={c.id}
-                    entry={c}
-                    position={i}
-                    canUp={!c.time && untimed.indexOf(c) > 0}
-                    canDown={!c.time && untimed.indexOf(c) >= 0 && untimed.indexOf(c) < untimed.length - 1}
-                    store={store}
-                    onEdit={() => { setAdding(false); setEditing(c); }}
-                  />
+                  // The edit form opens right where the case sits, so tapping
+                  // Edit visibly does something even mid-scroll.
+                  editing?.id === c.id ? (
+                    <CaseForm key={c.id} store={store} date={date} existing={editing} onDone={() => setEditing(null)} />
+                  ) : (
+                    <CaseRow
+                      key={c.id}
+                      entry={c}
+                      position={i}
+                      canUp={!c.time && untimed.indexOf(c) > 0}
+                      canDown={!c.time && untimed.indexOf(c) >= 0 && untimed.indexOf(c) < untimed.length - 1}
+                      store={store}
+                      onEdit={() => { setAdding(false); setEditing(c); }}
+                    />
+                  )
                 ))}
               </div>
             </section>
@@ -132,11 +139,12 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   store: Store;
   onEdit: () => void;
 }) {
-  const { state, deleteCase, moveCase, ensureCart, addDayNote, saveCard } = store;
+  const { state, deleteCase, moveCase, ensureCart, addDayNote, saveCard, updateCase } = store;
   const navigate = useNavigate();
   const [confirmDel, setConfirmDel] = useState(false);
   const [noting, setNoting] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [teamOpen, setTeamOpen] = useState(false);
   const card = state.cards.find((c) => c.id === entry.cardId);
   if (!card) {
     return (
@@ -266,6 +274,9 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           {ready ? "Review setup" : "Start setup"}
         </button>
         <button className="btn btn-sm" onClick={onEdit}>Edit</button>
+        <button className="btn btn-sm" onClick={() => setTeamOpen((v) => !v)}>
+          {teamOpen ? "Done with team" : "Team"}
+        </button>
         <button className="btn btn-sm" onClick={() => setNoting((v) => !v)}>Team note</button>
         {confirmDel ? (
           <span className="confirm">
@@ -277,6 +288,15 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           <button className="btn btn-sm" onClick={() => setConfirmDel(true)}>Cancel case</button>
         )}
       </div>
+
+      {teamOpen && (
+        <div className="case-note-form">
+          <TeamEditor
+            team={entry.team ?? []}
+            onChange={(t) => updateCase(entry.id, { team: t.length ? t : undefined })}
+          />
+        </div>
+      )}
 
       {noting && (
         <div className="case-note-form">
@@ -488,6 +508,40 @@ function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: Team
     .map((m) => m.name)
     .filter((n, i, arr) => arr.indexOf(n) === i);
 
+  // Live matches as the name is typed (datalist gets no UI on iOS, so the
+  // search has to be visible). Tapping one adds that person, with the role
+  // the directory knows them by.
+  const q = name.trim().toLowerCase();
+  const onTeam = new Set(team.map((t) => t.name.toLowerCase()));
+  // Everyone the app already knows: the staff directory plus the on-call
+  // people (their typed role, or one read from their "RN"/"CST" label).
+  const known = new Map<string, { name: string; role: TeamRole; level?: 1 | 2 | 3 }>();
+  for (const p of state.onCallPeople) {
+    const r = onCallPersonRole(p);
+    if (r) known.set(p.name.toLowerCase(), { name: p.name, role: r });
+  }
+  for (const m of state.staff) known.set(m.name.toLowerCase(), { name: m.name, role: m.role, level: m.level });
+  const matches = q
+    ? [...known.values()]
+        .filter((m) => m.name.toLowerCase().includes(q) && !onTeam.has(m.name.toLowerCase()))
+        .sort((a, b) => (a.role === role === (b.role === role) ? a.name.localeCompare(b.name) : a.role === role ? -1 : 1))
+        .slice(0, 6)
+    : [];
+
+  function addKnown(m: { name: string; role: TeamRole; level?: 1 | 2 | 3 }) {
+    onChange([
+      ...team,
+      {
+        id: `tm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        role: m.role,
+        name: m.name,
+        level: m.role === "trainee" ? m.level : undefined,
+      },
+    ]);
+    upsertStaff(m.name, m.role, m.role === "trainee" ? m.level : undefined);
+    setName("");
+  }
+
   function add() {
     const n = name.trim();
     if (!n) return;
@@ -546,8 +600,24 @@ function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: Team
         </datalist>
         <button type="button" className="btn btn-sm" disabled={!name.trim()} onClick={add}>Add</button>
       </div>
+      {matches.length > 0 && (
+        <div className="staff-suggest">
+          {matches.map((m) => (
+            <button
+              key={`${m.name}|${m.role}`}
+              type="button"
+              className="chip chip-sm"
+              onClick={() => addKnown(m)}
+            >
+              + {teamMemberLabel(m as TeamMember)}
+            </button>
+          ))}
+        </div>
+      )}
       <p className="muted small" style={{ margin: "6px 0 0" }}>
-        New names are remembered for next time. Import a whole roster in Settings.
+        {matches.length > 0
+          ? "Tap a match to add them, or finish typing for someone new."
+          : "New names are remembered for next time. Import a whole roster in Settings."}
       </p>
     </div>
   );

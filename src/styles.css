@@ -1884,3 +1884,9 @@ html, body { overflow-x: hidden; }
 .danger-zone-link .link { color: var(--muted); }
 .danger-zone { margin-top: 28px; border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line)); }
 .danger-zone h2 { color: var(--red); }
+
+/* ---- Have available + team typeahead ---- */
+.hold-toggle.avail { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
+.hold-chip.avail { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
+.avail-card { border-style: dashed; }
+.staff-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }

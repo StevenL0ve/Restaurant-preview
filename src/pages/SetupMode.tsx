@@ -41,13 +41,21 @@ function Confetti() {
 
 // Setup mode turns a card into a live pull-list: big tap targets, check items
 // off as you gather them, and a progress bar that hits "Case ready" at 100%.
-// Default view groups by **location area**, so you walk to one cart/cabinet and
-// grab everything there at once. Toggle to "By section" for the classic view.
+// Default view is by section, equipment first (it gets positioned before the
+// field opens), then instrument sets, with "have available" items grouped at
+// the very bottom. Toggle to "By location" to walk cart-to-cabinet instead.
+
+// Equipment first, then instruments & trays, then the rest in library order.
+const SETUP_SECTIONS = [...SECTIONS].sort((a, b) => {
+  const rank = (k: string) => (k === "equipment" ? 0 : k === "instruments" ? 1 : 2);
+  return rank(a.key) - rank(b.key) || SECTIONS.findIndex((s) => s.key === a.key) - SECTIONS.findIndex((s) => s.key === b.key);
+});
+
 export function SetupMode() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { state, toggleSetupItem, resetSetup } = useStore();
-  const [mode, setMode] = useState<GroupMode>("location");
+  const [mode, setMode] = useState<GroupMode>("section");
 
   const card = state.cards.find((c) => c.id === id);
 
@@ -138,11 +146,11 @@ export function SetupMode() {
       </div>
 
       <div className="seg">
-        <button className={"seg-btn" + (mode === "location" ? " active" : "")} onClick={() => setMode("location")}>
-          By location
-        </button>
         <button className={"seg-btn" + (mode === "section" ? " active" : "")} onClick={() => setMode("section")}>
           By section
+        </button>
+        <button className={"seg-btn" + (mode === "location" ? " active" : "")} onClick={() => setMode("location")}>
+          By location
         </button>
       </div>
 
@@ -156,17 +164,20 @@ export function SetupMode() {
 
       {mode === "location"
         ? areaGroups.map((g) => {
-            const groupDone = g.rows.filter((r) => checked.has(r.item.id)).length;
+            // "Have available" items live in their own group at the bottom.
+            const rows = g.rows.filter((r) => !r.item.haveAvailable);
+            if (!rows.length) return null;
+            const groupDone = rows.filter((r) => checked.has(r.item.id)).length;
             return (
               <div className="card section-card" key={g.area || "__none"}>
                 <div className="card-head">
                   <h2>
                     {g.area || "No location set"}
                   </h2>
-                  <span className="pill">{groupDone}/{g.rows.length}</span>
+                  <span className="pill">{groupDone}/{rows.length}</span>
                 </div>
                 <ul className="check-list">
-                  {g.rows.map((r) => (
+                  {rows.map((r) => (
                     <Row
                       key={r.item.id}
                       it={r.item}
@@ -177,8 +188,8 @@ export function SetupMode() {
               </div>
             );
           })
-        : SECTIONS.map((sec) => {
-            const arr = card[sec.key as SectionKey];
+        : SETUP_SECTIONS.map((sec) => {
+            const arr = card[sec.key as SectionKey].filter((it) => !it.haveAvailable);
             if (!arr.length) return null;
             return (
               <div className="card section-card" key={sec.key}>
@@ -191,6 +202,28 @@ export function SetupMode() {
               </div>
             );
           })}
+
+      {(() => {
+        const avail = SECTIONS.flatMap((sec) =>
+          card[sec.key as SectionKey].filter((it) => it.haveAvailable).map((it) => ({ it, sec: sec.label })),
+        );
+        if (!avail.length) return null;
+        const availDone = avail.filter((r) => checked.has(r.it.id)).length;
+        return (
+          <div className="card section-card avail-card">
+            <div className="card-head">
+              <h2>Have available</h2>
+              <span className="pill">{availDone}/{avail.length}</span>
+            </div>
+            <p className="muted small" style={{ margin: "0 0 4px" }}>
+              In the room, not opened: ready if the surgeon asks.
+            </p>
+            <ul className="check-list">
+              {avail.map((r) => <Row key={r.it.id} it={r.it} sub={r.sec} />)}
+            </ul>
+          </div>
+        );
+      })()}
 
       {ready && (
         <div className="ready-cta">
