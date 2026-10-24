@@ -144,7 +144,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   const [confirmDel, setConfirmDel] = useState(false);
   const [noting, setNoting] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamDraft, setTeamDraft] = useState<TeamMember[] | null>(null); // null = panel closed
   const card = state.cards.find((c) => c.id === entry.cardId);
   if (!card) {
     return (
@@ -274,9 +274,9 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           {ready ? "Review setup" : "Start setup"}
         </button>
         <button className="btn btn-sm" onClick={onEdit}>Edit</button>
-        <button className="btn btn-sm" onClick={() => setTeamOpen((v) => !v)}>
-          {teamOpen ? "Done with team" : "Team"}
-        </button>
+        {teamDraft === null && (
+          <button className="btn btn-sm" onClick={() => setTeamDraft(entry.team ?? [])}>Team</button>
+        )}
         <button className="btn btn-sm" onClick={() => setNoting((v) => !v)}>Team note</button>
         {confirmDel ? (
           <span className="confirm">
@@ -289,12 +289,22 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
         )}
       </div>
 
-      {teamOpen && (
+      {teamDraft !== null && (
         <div className="case-note-form">
-          <TeamEditor
-            team={entry.team ?? []}
-            onChange={(t) => updateCase(entry.id, { team: t.length ? t : undefined })}
-          />
+          {/* Edits stay a draft until saved, so changing your mind is free. */}
+          <TeamEditor team={teamDraft} onChange={setTeamDraft} />
+          <div className="form-actions">
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => {
+                updateCase(entry.id, { team: teamDraft.length ? teamDraft : undefined });
+                setTeamDraft(null);
+              }}
+            >
+              Save team
+            </button>
+            <button className="btn btn-sm" onClick={() => setTeamDraft(null)}>Cancel</button>
+          </div>
         </div>
       )}
 
