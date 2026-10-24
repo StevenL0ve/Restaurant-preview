@@ -35,6 +35,27 @@ function parseRole(raw: string): { role: TeamRole; level?: 1 | 2 | 3 } | null {
   return { role, level };
 }
 
+/** Best-effort role from free text: a person's "RN, Charge" label, a
+ *  position's name ("Tech 2", "On-call Ortho Surgeon"). Null when no role
+ *  can be read out of it. Order matters: "surgical tech" is a tech. */
+export function guessRole(raw?: string): TeamRole | null {
+  if (!raw?.trim()) return null;
+  const t = raw.toLowerCase().replace(/\./g, "");
+  const direct = parseRole(t);
+  if (direct) return direct.role;
+  for (const tok of t.split(/[,/()&]|\band\b|\bor\b/)) {
+    const r = parseRole(tok.trim());
+    if (r) return r.role;
+  }
+  if (/anesthes|crna/.test(t)) return "anesthesia";
+  if (/tech|cst|scrub/.test(t)) return "tech";
+  if (/nurse|\brn\b|charge|circulat|\blpn\b/.test(t)) return "nurse";
+  if (/phase\s*(ii|2)/.test(t)) return "phase2";
+  if (/trainee|student|resident/.test(t)) return "trainee";
+  if (/surgeon|\bmd\b|\bdo\b|\bdr\b/.test(t)) return "surgeon";
+  return null;
+}
+
 export function parseStaffList(text: string): { members: ParsedStaff[]; errors: string[] } {
   const members: ParsedStaff[] = [];
   const errors: string[] = [];

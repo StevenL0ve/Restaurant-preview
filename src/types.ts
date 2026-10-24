@@ -274,6 +274,9 @@ export interface OnCallPosition {
   id: ID;
   name: string; // "On-call OR Tech", "On-call Ortho Surgeon"
   category: OnCallCategory;
+  /** Which staff role fills this position; inferred from the name when unset,
+   *  so "Tech 2" only offers surgical techs. */
+  roleNeeded?: TeamRole;
 }
 
 /** Someone who can take call. `positionIds` is the pool they belong to. */
@@ -281,7 +284,10 @@ export interface OnCallPerson {
   id: ID;
   name: string;
   phone?: string; // digits for a tel: link — one tap to call
-  role?: string; // "CST", "RN", "MD", "CRNA" — a short label
+  role?: string; // "CST", "RN", "MD", "CRNA" — a short display label
+  /** Typed role for filtering (who shows up for a tech call); usually
+   *  inferred from `role` text, set explicitly when that can't be read. */
+  staffRole?: TeamRole;
   positionIds: ID[]; // positions this person is in the pool for
   notes?: string;
   color: string;

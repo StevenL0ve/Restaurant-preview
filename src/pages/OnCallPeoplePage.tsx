@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useStore, onCallPositionOf, telHref } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
-import { ON_CALL_CATEGORIES, type OnCallCategory, type OnCallPerson, type OnCallPosition } from "../types";
+import { ON_CALL_CATEGORIES, TEAM_ROLES, type OnCallCategory, type OnCallPerson, type OnCallPosition, type TeamRole } from "../types";
+import { guessRole } from "../lib/staffImport";
 
 // Manage the on-call directory: the positions your OR covers and the pool of
 // people who can take call for each. Kept separate from the board so the board
@@ -87,15 +88,27 @@ function PositionRow({ position }: { position: OnCallPosition }) {
   const { updateOnCallPosition, deleteOnCallPosition, state } = useStore();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(position.name);
+  const [roleNeeded, setRoleNeeded] = useState<TeamRole | "">(position.roleNeeded ?? "");
   const [confirmDel, setConfirmDel] = useState(false);
   const poolCount = state.onCallPeople.filter((p) => p.positionIds.includes(position.id)).length;
+  const autoRole = guessRole(position.name);
 
   if (editing) {
     return (
-      <li className="pos-row">
+      <li className="pos-row pos-row-edit">
         <input value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn btn-sm btn-primary" onClick={() => { updateOnCallPosition(position.id, { name }); setEditing(false); }}>Save</button>
-        <button className="btn btn-sm" onClick={() => { setName(position.name); setEditing(false); }}>Cancel</button>
+        <select
+          value={roleNeeded}
+          onChange={(e) => setRoleNeeded(e.target.value as TeamRole | "")}
+          title="Which staff role fills this position"
+        >
+          <option value="">
+            {autoRole ? `Auto (${TEAM_ROLES.find((r) => r.key === autoRole)?.label})` : "Anyone"}
+          </option>
+          {TEAM_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}s only</option>)}
+        </select>
+        <button className="btn btn-sm btn-primary" onClick={() => { updateOnCallPosition(position.id, { name, roleNeeded: roleNeeded || undefined }); setEditing(false); }}>Save</button>
+        <button className="btn btn-sm" onClick={() => { setName(position.name); setRoleNeeded(position.roleNeeded ?? ""); setEditing(false); }}>Cancel</button>
       </li>
     );
   }
@@ -157,6 +170,11 @@ function PersonForm({ existing, onDone }: { existing?: OnCallPerson; onDone: () 
   const [name, setName] = useState(existing?.name ?? "");
   const [phone, setPhone] = useState(existing?.phone ?? "");
   const [role, setRole] = useState(existing?.role ?? "");
+  // The typed role drives who shows up when filling a call position
+  // (a tech call only offers techs). Read from the label when possible.
+  const [staffRole, setStaffRole] = useState<TeamRole | "">(
+    existing?.staffRole ?? guessRole(existing?.role) ?? "",
+  );
   const [positionIds, setPositionIds] = useState<string[]>(existing?.positionIds ?? []);
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
@@ -165,7 +183,15 @@ function PersonForm({ existing, onDone }: { existing?: OnCallPerson; onDone: () 
 
   function save() {
     if (!name.trim()) return;
-    const payload = { name: name.trim(), phone: phone.trim() || undefined, role: role.trim() || undefined, positionIds, notes: notes.trim() || undefined };
+    const roleLabel = staffRole ? TEAM_ROLES.find((r) => r.key === staffRole)?.label : undefined;
+    const payload = {
+      name: name.trim(),
+      phone: phone.trim() || undefined,
+      role: role.trim() || roleLabel,
+      staffRole: staffRole || undefined,
+      positionIds,
+      notes: notes.trim() || undefined,
+    };
     if (existing) updateOnCallPerson(existing.id, payload);
     else addOnCallPerson(payload);
     onDone();
@@ -178,8 +204,20 @@ function PersonForm({ existing, onDone }: { existing?: OnCallPerson; onDone: () 
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" autoFocus /></label>
         <label className="field"><span>Phone</span>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 512 555 0199" inputMode="tel" /></label>
-        <label className="field"><span>Role (optional)</span>
-          <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="CST, RN, MD, CRNA…" /></label>
+        <label className="field"><span>Role</span>
+          <select
+            value={staffRole}
+            onChange={(e) => {
+              const v = e.target.value as TeamRole | "";
+              setStaffRole(v);
+            }}
+          >
+            <option value="">Not set</option>
+            {TEAM_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+          </select>
+        </label>
+        <label className="field"><span>Label shown (optional)</span>
+          <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="RN Charge, CST II, CRNA…" /></label>
       </div>
       <div className="person-pos-pick">
         <span className="assign-when-label">In the pool for:</span>

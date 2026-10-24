@@ -6,9 +6,12 @@ import {
   poolForPosition,
   upcomingShifts,
   onCallPersonOf,
+  onCallPersonRole,
+  positionRoleNeeded,
   positionsByCategory,
   telHref,
 } from "../state/store";
+import { TEAM_ROLES } from "../types";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { tapLight } from "../lib/haptics";
@@ -186,15 +189,24 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [showAllRoles, setShowAllRoles] = useState(false);
 
-  const results = useMemo(() => {
+  // A tech position only offers surgical techs; a nurse position only
+  // nurses. People whose role can't be read stay hidden until "show
+  // everyone", so the list is the right people, not the whole directory.
+  const needed = positionRoleNeeded(position);
+  const neededLabel = needed ? TEAM_ROLES.find((r) => r.key === needed)?.label : null;
+
+  const { results, hiddenCount } = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const inPool = (p: OnCallPerson) => p.positionIds.includes(position.id);
-    return [...state.onCallPeople]
+    const all = [...state.onCallPeople]
       .filter((p) => !needle || p.name.toLowerCase().includes(needle) || (p.role ?? "").toLowerCase().includes(needle))
-      .sort((a, b) => Number(inPool(b)) - Number(inPool(a)) || a.name.localeCompare(b.name))
-      .slice(0, 8);
-  }, [q, state.onCallPeople, position.id]);
+      .sort((a, b) => Number(inPool(b)) - Number(inPool(a)) || a.name.localeCompare(b.name));
+    if (!needed || showAllRoles) return { results: all.slice(0, 8), hiddenCount: 0 };
+    const matching = all.filter((p) => onCallPersonRole(p) === needed);
+    return { results: matching.slice(0, 8), hiddenCount: all.length - matching.length };
+  }, [q, state.onCallPeople, position.id, needed, showAllRoles]);
 
   const chosen = onCallPersonOf(state, personId);
 
@@ -209,7 +221,14 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
   function save() {
     let id = personId;
     if (addingNew && newName.trim()) {
-      const p = addOnCallPerson({ name: newName.trim(), phone: newPhone.trim() || undefined, positionIds: [position.id] });
+      const p = addOnCallPerson({
+        name: newName.trim(),
+        phone: newPhone.trim() || undefined,
+        positionIds: [position.id],
+        // A person added straight onto a tech call IS a tech; remember it.
+        staffRole: needed ?? undefined,
+        role: needed ? TEAM_ROLES.find((r) => r.key === needed)?.label : undefined,
+      });
       id = p.id;
     }
     if (!id) return;
@@ -247,10 +266,25 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
               </button>
             </li>
           ))}
+          {needed && !showAllRoles && (
+            <li className="assign-role-note">
+              <span className="muted small">
+                Showing {neededLabel?.toLowerCase()}s only.
+                {hiddenCount > 0 && (
+                  <>
+                    {" "}
+                    <button className="link small" onClick={() => setShowAllRoles(true)}>
+                      Show everyone ({hiddenCount} more)
+                    </button>
+                  </>
+                )}
+              </span>
+            </li>
+          )}
           <li>
             <button className="assign-pick assign-add-new" onClick={() => { setAddingNew(true); setNewName(q); }}>
               <span className="assign-plus"><Icon name="plus" size={16} /></span>
-              <span>Add “{q || "someone new"}” to the pool</span>
+              <span>Add “{q || "someone new"}”{neededLabel ? ` (${neededLabel.toLowerCase()})` : ""} to the pool</span>
             </button>
           </li>
         </ul>

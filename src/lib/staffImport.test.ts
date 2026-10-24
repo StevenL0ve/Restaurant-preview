@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseStaffList } from "./staffImport";
+import { parseStaffList, guessRole } from "./staffImport";
 
 describe("staff roster import", () => {
   it("parses names with loose role spellings", () => {
@@ -26,5 +26,26 @@ describe("staff roster import", () => {
     const { members, errors } = parseStaffList("JustAName\nKim Park, RN\nKim Park, nurse\nPat Q, astronaut");
     expect(members).toHaveLength(1);
     expect(errors).toHaveLength(2);
+  });
+});
+
+describe("role guessing for on-call filtering", () => {
+  it("reads typed roles out of free-text labels", () => {
+    expect(guessRole("RN, Charge")).toBe("nurse");
+    expect(guessRole("CST")).toBe("tech");
+    expect(guessRole("Surgical Tech")).toBe("tech");
+    expect(guessRole("Anesthesiology")).toBe("anesthesia");
+    expect(guessRole("CRNA")).toBe("anesthesia");
+    expect(guessRole("MD")).toBe("surgeon");
+    expect(guessRole("Resident")).toBe("trainee");
+    expect(guessRole("Honeywell")).toBeNull();
+    expect(guessRole(undefined)).toBeNull();
+  });
+
+  it("reads position names like Tech 2 and Charge RN", () => {
+    expect(guessRole("Tech 2")).toBe("tech");
+    expect(guessRole("On-call OR Tech")).toBe("tech");
+    expect(guessRole("Charge RN")).toBe("nurse");
+    expect(guessRole("Ortho Surgeon")).toBe("surgeon");
   });
 });

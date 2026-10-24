@@ -34,6 +34,7 @@ import type {
   TeamRole,
 } from "../types";
 import { ON_CALL_CATEGORIES, SECTIONS, loanerStatusIndex, locationLabel } from "../types";
+import { guessRole } from "../lib/staffImport";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from "../lib/loanerFile";
@@ -259,7 +260,7 @@ export interface Store {
   setFacilityCoords: (id: string, lat: number, lng: number) => void;
   // on-call schedule
   addOnCallPosition: (name: string, category: OnCallPosition["category"]) => OnCallPosition;
-  updateOnCallPosition: (id: string, patch: Partial<Pick<OnCallPosition, "name" | "category">>) => void;
+  updateOnCallPosition: (id: string, patch: Partial<Pick<OnCallPosition, "name" | "category" | "roleNeeded">>) => void;
   deleteOnCallPosition: (id: string) => void;
   addOnCallPerson: (p: Omit<OnCallPerson, "id" | "color" | "initials">) => OnCallPerson;
   updateOnCallPerson: (id: string, patch: Partial<Omit<OnCallPerson, "id" | "color" | "initials">>) => void;
@@ -1696,6 +1697,23 @@ export function withQueuedCart(st: AppState, cardId: string, date: string, now =
       { id: uid("cart"), cardId, date, pulls: {}, missing: [], createdAt: now, updatedAt: now },
     ],
   };
+}
+
+/** The typed role behind an on-call person: the explicit one, else read from
+ *  their free-text label ("RN, Charge" -> nurse). */
+export function onCallPersonRole(p: OnCallPerson): TeamRole | null {
+  return p.staffRole ?? guessRole(p.role);
+}
+
+/** Which staff role a position needs: explicit, else read from its name
+ *  ("Tech 2" -> tech), else from its category. Null means anyone. */
+export function positionRoleNeeded(pos: OnCallPosition): TeamRole | null {
+  if (pos.roleNeeded) return pos.roleNeeded;
+  const byName = guessRole(pos.name);
+  if (byName) return byName;
+  if (pos.category === "Surgeons") return "surgeon";
+  if (pos.category === "Anesthesia") return "anesthesia";
+  return null;
 }
 
 /** Every case where this person is on the room team, newest day first.
