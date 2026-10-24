@@ -24,6 +24,7 @@ import {
 import { formatDate, daysUntil } from "../lib/format";
 import { filesToDataUrls } from "../lib/photos";
 import { tapLight, tapMedium } from "../lib/haptics";
+import { PhiNote } from "../components/PhiNote";
 
 // Loaner-tray tracking, LoanerLink style: the clinic requests sets from a rep
 // (with the case context the rep needs), the rep confirms with named sets,
@@ -470,6 +471,7 @@ function LoanerForm({ store, existing, onDone }: { store: Store; existing?: Loan
         </label>
         <label className="field field-wide"><span>Special considerations</span>
           <textarea rows={2} value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Implant sizes to confirm, count sheets, dock time limits…" />
+          <PhiNote />
         </label>
       </div>
       <div className="form-actions">

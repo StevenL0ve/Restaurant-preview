@@ -9,6 +9,7 @@ import {
   areasForFacility,
 } from "../state/store";
 import { SECTIONS, locationLabel, type CardItem, type Location, type PrefCard, type SectionKey } from "../types";
+import { PhiNote } from "../components/PhiNote";
 
 // Create or edit a card. Local draft state; nothing is persisted until "Save"
 // — except newly-created facilities/locations, which are shared resources and
@@ -230,6 +231,7 @@ export function CardEdit() {
               onChange={(e) => set({ specialConsiderations: e.target.value })}
               placeholder="Standing instructions that must never be missed. One-day requests are added from the card page."
             />
+            <PhiNote />
           </label>
         </div>
       </div>

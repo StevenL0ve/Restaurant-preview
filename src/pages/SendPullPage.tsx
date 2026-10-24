@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useStore, surgeonOf, localDay, getPullerName } from "../state/store";
+import { PhiNote } from "../components/PhiNote";
 
 // Send a preference card to someone so THEY can pull the case cart(s).
 // The card travels as a small file (share sheet → AirDrop / text / email);
@@ -90,7 +91,8 @@ export function SendPullPage() {
 
           <label className="field field-wide">
             <span>Note for the puller (optional)</span>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. staged by 06:30, OR 5 (no patient info)" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. staged by 06:30, OR 5" />
+            <PhiNote />
           </label>
 
           <label className="field">

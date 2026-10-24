@@ -1890,3 +1890,6 @@ html, body { overflow-x: hidden; }
 .hold-chip.avail { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
 .avail-card { border-style: dashed; }
 .staff-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* ---- No-patient-info reminder ---- */
+.phi-note { margin: 6px 0 0; font-size: 0.76rem; color: var(--muted); grid-column: 1 / -1; }

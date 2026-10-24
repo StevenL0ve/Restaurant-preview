@@ -20,6 +20,7 @@ import { accentStyle } from "../lib/accent";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { stampLine } from "../lib/user";
 import type { CaseEntry, TeamMember, TeamRole } from "../types";
+import { PhiNote } from "../components/PhiNote";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -329,6 +330,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           <p className="muted small" style={{ margin: 0 }}>
             "This case only" shows on the cart and setup just for {labelFor(entry.date).toLowerCase()}. "Going forward" adds it to the preference card's special considerations.
           </p>
+          <PhiNote />
         </div>
       )}
     </div>
@@ -486,7 +488,8 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             : `${roomKey || "This room"} already has a first start. This case just takes its place in line; turnover sets its time.`}
         </p>
         <label className="field field-wide"><span>Notes</span>
-          <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Rep bringing trials, patient latex allergy flag, etc." />
+          <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Rep bringing trials, latex-free setup, etc." />
+          <PhiNote />
         </label>
         <TeamEditor team={team} onChange={setTeam} />
       </div>

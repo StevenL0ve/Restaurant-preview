@@ -8,6 +8,7 @@ import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import { SECTIONS, type PrefCard, type SectionKey } from "../types";
 import { stampLine } from "../lib/user";
+import { PhiNote } from "../components/PhiNote";
 
 export function CardDetail() {
   const { id } = useParams();
@@ -275,6 +276,7 @@ function ConsiderationsEditor({ card }: { card: PrefCard }) {
           <button className="btn btn-sm btn-primary" disabled={!text.trim() || pastDate} onClick={add}>Add</button>
           {pastDate && <span className="neg small">That day already happened; pick today or later.</span>}
           <button className="btn btn-sm" onClick={() => setAdding(false)}>Cancel</button>
+          <PhiNote />
         </div>
       ) : (
         <button className="link small" onClick={() => setAdding(true)}>+ Add one for a specific day</button>
