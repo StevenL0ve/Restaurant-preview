@@ -143,8 +143,7 @@ export function CardDetail() {
         )}
       </div>
 
-      {/* Medications read first, right under the notes; rest in library order. */}
-      {[...SECTIONS].sort((a, b) => Number(b.key === "medications") - Number(a.key === "medications")).map((sec) => {
+      {SECTIONS.map((sec) => {
         const arr = card[sec.key as SectionKey];
         if (!arr.length) return null;
         return (
