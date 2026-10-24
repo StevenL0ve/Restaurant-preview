@@ -61,8 +61,24 @@ export function asBundle(parsed: unknown, exportedAt: string): CardBundle | null
 
 /** Build a shareable bundle from a set of card ids, pulling in only the
  *  surgeons, facilities, and locations those cards actually use. */
+// Photos live in the app only: a shared .orsync file stays a few KB of
+// text, not megabytes of images, so it still travels over a text message.
+function withoutPhotos(c: PrefCard): PrefCard {
+  const strip = (arr: PrefCard["supplies"]) => arr.map((it) => (it.photo ? { ...it, photo: undefined } : it));
+  return {
+    ...c,
+    mayoPhoto: undefined,
+    backTablePhoto: undefined,
+    instruments: strip(c.instruments),
+    sutures: strip(c.sutures),
+    supplies: strip(c.supplies),
+    medications: strip(c.medications),
+    equipment: strip(c.equipment),
+  };
+}
+
 export function bundleCards(state: AppState, cardIds: string[], exportedAt: string): CardBundle {
-  const cards = state.cards.filter((c) => cardIds.includes(c.id));
+  const cards = state.cards.filter((c) => cardIds.includes(c.id)).map(withoutPhotos);
   const surgeonIds = new Set(cards.map((c) => c.surgeonId));
   const facilityIds = new Set(cards.map((c) => c.facilityId).filter(Boolean) as string[]);
   const locationIds = new Set<string>();

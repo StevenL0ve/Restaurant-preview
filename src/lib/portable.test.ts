@@ -98,3 +98,20 @@ describe("portable card bundles", () => {
     expect(asBundle({ nope: true }, NOW)).toBeNull();
   });
 });
+
+describe("shared bundles stay photo-free", () => {
+  it("strips item and setup photos from a card bundle", () => {
+    const src = buildSeed();
+    const card = {
+      ...src.cards[0],
+      mayoPhoto: "data:image/jpeg;base64,AAAA",
+      supplies: src.cards[0].supplies.map((it, i) => (i === 0 ? { ...it, photo: "data:image/jpeg;base64,BBBB" } : it)),
+    };
+    const state = { ...src, cards: [card, ...src.cards.slice(1)] };
+    const bundle = bundleCards(state, [card.id], "2026-10-24T00:00:00Z");
+    const out = bundle.cards[0];
+    expect(out.mayoPhoto).toBeUndefined();
+    expect(out.supplies.every((it) => !it.photo)).toBe(true);
+    expect(JSON.stringify(bundle)).not.toContain("BBBB");
+  });
+});
