@@ -1714,3 +1714,77 @@ body {
 html, body { overflow-x: hidden; }
 .oncall-up-item { white-space: normal; }
 .oncall-phone { word-break: keep-all; }
+
+/* ============================================================
+   Design pass 3 — calm, airy, consistent (on-device feedback).
+   Appended last so it wins by source order.
+   ============================================================ */
+
+/* Softer elevation; one radius language. */
+:root {
+  --radius: 16px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+[data-theme="dark"] {
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Page heads breathe. On phones they stack instead of squeezing the title
+   into a one-word-per-line column next to overflowing buttons. */
+.page-head { align-items: flex-start; }
+.page-head h1 { font-size: 27px; line-height: 1.12; }
+.page-head p { font-size: 13.5px; line-height: 1.5; }
+@media (max-width: 680px) {
+  .page-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .head-actions { flex-wrap: wrap; }
+  .head-actions .btn { flex: 1 1 auto; }
+}
+
+/* Buttons: one height, centered content, quieter secondaries so primaries
+   actually lead. (Hero and danger buttons keep their own look.) */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 42px; padding: 9px 16px; border-radius: 12px; font-size: 14px;
+}
+.btn-sm { min-height: 34px; padding: 5px 12px; border-radius: 10px; font-size: 12.5px; }
+.btn:not(.btn-primary):not(.btn-danger):not(.dash-hero-btn) {
+  background: transparent; border-color: var(--line); color: var(--ink);
+}
+.btn:not(.btn-primary):not(.btn-danger):not(.dash-hero-btn):hover { background: var(--bg); }
+.btn-primary { box-shadow: 0 2px 12px -3px color-mix(in srgb, var(--brand) 50%, transparent); }
+
+/* Item-count pills on card tiles: neutral, not specialty-alarm colored. */
+.pref-tile .pill { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+
+/* Inputs: one radius, one calm focus ring, everywhere. */
+.page input:not([type="checkbox"]):not([type="radio"]), .page select, .page textarea { border-radius: 11px; }
+.page input:focus-visible, .page select:focus-visible, .page textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 40%, transparent);
+  outline-offset: 1px;
+}
+
+/* Checklists: comfortable tap targets and clearer separation. */
+.check-list li { border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.check-list li:last-child { border-bottom: none; }
+.check-row { padding: 10px 0; }
+.check-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--brand); }
+
+/* Section cards: headers that read as headers. */
+.section-card .card-head h2 { font-size: 15.5px; letter-spacing: -0.01em; }
+.section-card { padding: 16px 18px; }
+
+/* Empty states: softer, roomier. */
+.empty-state { padding: 48px 20px; }
+.empty-state p { color: var(--muted); }
+
+/* Day stepper: one quiet control instead of three loose buttons. */
+.day-stepper {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 8px; box-shadow: var(--shadow-sm); margin-bottom: 16px;
+}
+.day-stepper .btn { min-height: 30px; padding: 2px 10px; border: none; background: transparent; }
+.day-label { font-weight: 700; font-size: 14px; }
+/* The button reset above re-specified display; keep the topbar's New card
+   hidden on phones (the page provides it there). */
+@media (max-width: 880px) { .topbar-new { display: none; } }
