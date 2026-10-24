@@ -137,8 +137,10 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
     <div className="card case-row" style={accentStyle(card.specialty)}>
       <div className="case-top">
         <div className="case-when">
-          <span className="case-seq">{position + 1}</span>
-          <span className="case-time">{entry.time ?? (position === 0 ? "first case" : "to follow")}</span>
+          <span className="case-time">
+            {`Case ${position + 1}`}
+            {entry.time ? ` · ${entry.time}` : position > 0 ? " · to follow" : ""}
+          </span>
           {(canUp || canDown) && (
             <span className="case-reorder">
               <button className="icon-btn" disabled={!canUp} aria-label="Move earlier" onClick={() => moveCase(entry.id, -1)}>↑</button>
@@ -192,18 +194,60 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   );
 }
 
+// Add/edit a case the way the board thinks: pick the room, and the app asks
+// for a start TIME only when this is the room's first case. Everything else
+// is just an order: OR 1 Case 2, OR 1 Case 3. Followers can be slotted into
+// any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
-  const { state, addCase, updateCase } = store;
+  const { state, addCase, updateCase, moveCase } = store;
   const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
   const [time, setTime] = useState(existing?.time ?? "");
   const [room, setRoom] = useState(existing?.room ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
+  const [orderChoice, setOrderChoice] = useState<number | null>(null); // index among the room's followers
+
+  const theDate = existing?.date ?? date;
+  const roomKey = room.trim();
+  // The room's other cases for that day decide what we ask for.
+  const roomCases = state.cases.filter(
+    (c) => c.date === theDate && (c.room?.trim() ?? "") === roomKey && c.id !== existing?.id,
+  );
+  const timedCount = roomCases.filter((c) => c.time).length;
+  const untimed = roomCases.filter((c) => !c.time);
+  const isFirstCase = roomCases.length === 0 || (!!existing?.time && timedCount === 0);
+  const dayRooms = [...new Set(state.cases.filter((c) => c.date === theDate && c.room?.trim()).map((c) => c.room!.trim()))];
+
+  // Where this case currently sits among the room's followers (array order),
+  // when editing one; a new case defaults to the end of the line.
+  const currentIdx = existing && !existing.time && existing.room?.trim() === roomKey
+    ? untimed.filter((c) => state.cases.indexOf(c) < state.cases.indexOf(existing)).length
+    : untimed.length;
+  const followerIdx = Math.min(orderChoice ?? currentIdx, untimed.length);
 
   function save() {
     if (!cardId) return;
-    const payload = { date: existing?.date ?? date, time: time || undefined, cardId, room: room.trim() || undefined, notes: notes.trim() || undefined };
-    if (existing) updateCase(existing.id, payload);
-    else addCase(payload);
+    const first = isFirstCase;
+    const payload = {
+      date: theDate,
+      time: first ? (time || undefined) : undefined,
+      cardId,
+      room: roomKey || undefined,
+      notes: notes.trim() || undefined,
+    };
+    let id: string;
+    if (existing) {
+      updateCase(existing.id, payload);
+      id = existing.id;
+    } else {
+      id = addCase(payload).id;
+    }
+    // A follower lands at its current (or last) slot; walk it to the chosen one.
+    if (!first) {
+      const from = existing && !existing.time ? currentIdx : untimed.length;
+      const steps = from - followerIdx;
+      for (let i = 0; i < steps; i++) moveCase(id, -1);
+      for (let i = 0; i < -steps; i++) moveCase(id, 1);
+    }
     onDone();
   }
 
@@ -218,16 +262,30 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             })}
           </select>
         </label>
-        <label className="field"><span>Start time (room's first case only)</span>
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-        </label>
-        <p className="muted small" style={{ gridColumn: "1 / -1", margin: 0 }}>
-          Only the room's first case needs a time. Later cases follow in order, since turnover sets
-          their start. Leave time empty and reorder them with the arrows.
-        </p>
         <label className="field"><span>Room</span>
-          <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="OR 4" />
+          <input value={room} onChange={(e) => { setRoom(e.target.value); setOrderChoice(null); }} placeholder="OR 4" list="day-rooms" />
+          <datalist id="day-rooms">
+            {dayRooms.map((r) => <option key={r} value={r} />)}
+          </datalist>
         </label>
+        {isFirstCase ? (
+          <label className="field"><span>First case start time</span>
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </label>
+        ) : (
+          <label className="field"><span>Case order</span>
+            <select value={followerIdx} onChange={(e) => setOrderChoice(Number(e.target.value))}>
+              {Array.from({ length: untimed.length + 1 }, (_, j) => (
+                <option key={j} value={j}>{`${roomKey || "Room"} Case ${timedCount + j + 1}`}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <p className="muted small" style={{ gridColumn: "1 / -1", margin: 0 }}>
+          {isFirstCase
+            ? "This is the room's first case, so it gets the start time."
+            : `${roomKey || "This room"} already has a first start. This case just takes its place in line; turnover sets its time.`}
+        </p>
         <label className="field field-wide"><span>Notes</span>
           <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Rep bringing trials, patient latex allergy flag, etc." />
         </label>

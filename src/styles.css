@@ -1801,3 +1801,8 @@ html, body { overflow-x: hidden; }
 .case-reorder { display: inline-flex; gap: 2px; }
 .case-reorder .icon-btn { width: 28px; height: 28px; font-size: 14px; }
 .case-reorder .icon-btn:disabled { opacity: 0.35; }
+
+/* Form fields can never force the page wider than the screen: selects with
+   long option text otherwise blow out the grid (seen on My day's add form). */
+.form-grid .field { min-width: 0; }
+.field > input, .field > select, .field > textarea { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
