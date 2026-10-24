@@ -124,13 +124,15 @@ export async function shareBlobFile(
   mime: string,
 ): Promise<"shared" | "downloaded"> {
   const nav = navigator as Navigator & {
-    share?: (d: { files?: File[]; title?: string }) => Promise<void>;
+    share?: (d: { files?: File[]; title?: string; text?: string }) => Promise<void>;
     canShare?: (d: { files?: File[] }) => boolean;
   };
   try {
     const file = new File([blob], filename, { type: mime });
     if (nav.share && nav.canShare?.({ files: [file] })) {
-      await nav.share({ files: [file], title });
+      // title AND text: Messages and Mail keep `text` as the message body,
+      // which is where "Preference card: X · Dr. Y" needs to land.
+      await nav.share({ files: [file], title, text: title });
       return "shared";
     }
   } catch {

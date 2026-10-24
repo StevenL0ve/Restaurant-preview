@@ -1182,12 +1182,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       exportCardFile: (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
+        const sg = state.surgeons.find((s) => s.id === card?.surgeonId);
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
         // Share sheet on phones (text it, AirDrop it, mail it); download on desktop.
         void shareJsonFile(
           `${slugName(card?.procedure ?? "card")}.orsync`,
           bundle,
-          `Preference card: ${card?.procedure ?? ""}`,
+          `Preference card: ${card?.procedure ?? ""}${sg ? ` · ${sg.name}` : ""}. ORSync import file: open it in ORSync to add the card. For a readable copy, use Share on the card instead.`,
         );
       },
 
@@ -1210,10 +1211,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           note: note?.trim() || undefined,
           requestedBy: requestedBy?.trim() || undefined,
         };
+        const sg = state.surgeons.find((s) => s.id === card?.surgeonId);
         return shareJsonFile(
           `pull-${slugName(card?.procedure ?? "card")}.orsync`,
           bundle,
-          `Pull request: ${card?.procedure ?? "preference card"}`,
+          `Pull request: ${card?.procedure ?? "preference card"}${sg ? ` · ${sg.name}` : ""} (open in ORSync)`,
         );
       },
 

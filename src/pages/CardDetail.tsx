@@ -41,7 +41,12 @@ export function CardDetail() {
     try {
       const todays = dayNotesFor(state, card!.id, localDay(0)).map((n) => n.text);
       const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId), todays);
-      const r = await shareBlobFile(cardPdfFilename(card!.procedure), blob, `Preference card: ${card!.procedure}`, "application/pdf");
+      const r = await shareBlobFile(
+        cardPdfFilename(card!.procedure),
+        blob,
+        `Preference card: ${card!.procedure}${sg ? ` · ${sg.name}` : ""}`,
+        "application/pdf",
+      );
       setToast(r === "downloaded" ? "PDF downloaded. Open it to print, or attach it to a text or email." : null);
     } catch {
       setToast("Couldn’t build the PDF.");
@@ -165,7 +170,13 @@ export function CardDetail() {
           {pdfBusy ? "Building PDF…" : "Share"}
         </button>
         <button className="btn" onClick={() => navigate("/carts/send", { state: { cardId: card.id } })}>Send to pull</button>
-        <button className="btn" onClick={() => exportCardFile(card.id)}>Share import file</button>
+        <button
+          className="btn"
+          title="Sends the .orsync data file another ORSync user taps to add this card to their library. For a readable copy, use Share."
+          onClick={() => exportCardFile(card.id)}
+        >
+          Send app copy
+        </button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (
           <select
