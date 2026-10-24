@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, getRepMode, setRepMode } from "../state/store";
+import { parseStaffList } from "../lib/staffImport";
+import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
@@ -222,6 +224,8 @@ export function Settings() {
         </div>
       </div>
 
+      <StaffRosterCard />
+
       <div className="card settings-card danger-zone">
         <h2>Wipe everything</h2>
         <p>
@@ -251,6 +255,79 @@ export function Settings() {
         </p>
         <p className="muted small">ORSync v{APP_VERSION}</p>
       </div>
+    </div>
+  );
+}
+
+// The staff roster behind room-team autocomplete: see who's known, paste or
+// upload a whole list at once ("Name, role" per line), prune old names.
+function StaffRosterCard() {
+  const { state, importStaff, deleteStaff } = useStore();
+  const [text, setText] = useState("");
+  const [result, setResult] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function runImport(raw: string) {
+    const { members, errors } = parseStaffList(raw);
+    const added = members.length ? importStaff(members) : 0;
+    const bits = [
+      added > 0 ? `${added} added` : null,
+      members.length - added > 0 ? `${members.length - added} already known` : null,
+      ...errors.slice(0, 3),
+    ].filter(Boolean);
+    setResult(bits.join(" · ") || "Nothing imported.");
+    if (added > 0) setText("");
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) runImport(await f.text());
+  }
+
+  const roster = [...state.staff].sort((a, b) => a.name.localeCompare(b.name));
+  const shown = showAll ? roster : roster.slice(0, 8);
+
+  return (
+    <div className="card settings-card">
+      <h2>Staff roster</h2>
+      <p>
+        Names you can pick when building a case's room team. Anyone typed into a team is added
+        automatically; paste or upload a whole roster here, one person per line:{" "}
+        <code>Kim Park, nurse</code> · <code>Lee, trainee 2</code> · <code>Dr. Osei, anesthesia</code>.
+        Roles: {TEAM_ROLES.map((r) => r.label.toLowerCase()).join(", ")} (RN, CST, CRNA work too).
+      </p>
+      <textarea
+        rows={3}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={"Kim Park, nurse\nMarcus Cole, tech\nJalen Lee, trainee 2"}
+      />
+      <div className="form-actions">
+        <button className="btn btn-primary" disabled={!text.trim()} onClick={() => runImport(text)}>Import pasted list</button>
+        <button className="btn" onClick={() => fileRef.current?.click()}>Import file…</button>
+        <input ref={fileRef} type="file" accept=".csv,.txt,text/csv,text/plain" hidden onChange={onFile} />
+      </div>
+      {result && <p className="muted small">{result}</p>}
+      {roster.length > 0 && (
+        <>
+          <p className="muted small" style={{ marginBottom: 6 }}>{roster.length} on the roster:</p>
+          <div className="team-chips">
+            {shown.map((m) => (
+              <span key={m.id} className="team-chip">
+                {teamMemberLabel(m)}
+                <button className="chip-del" aria-label={`Remove ${m.name}`} onClick={() => deleteStaff(m.id)}>✕</button>
+              </span>
+            ))}
+            {roster.length > 8 && (
+              <button className="link small" onClick={() => setShowAll((v) => !v)}>
+                {showAll ? "show fewer" : `show all ${roster.length}`}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -119,24 +119,26 @@ export function search(state: AppState, raw: string): SearchHit[] {
       score(c.room ?? ""),
       score(c.notes ?? ""),
     );
-    let snippet: string | undefined;
+    let teamMatch: string | undefined;
     for (const m of c.team ?? []) {
       const sc = score(m.name);
-      if (sc > 0 && !snippet) snippet = `Team: ${teamMemberLabel(m)}`;
+      if (sc > 0 && !teamMatch) teamMatch = teamMemberLabel(m);
       best = Math.max(best, sc);
     }
     if (best > 0) {
       // Today's board ties with (never beats) a same-named surgeon profile;
       // stable sort keeps the surgeon, the richer destination, first.
       const boost = c.date === today ? 1 : c.date > today ? 0.5 : 0;
+      const when = [fmtCaseDay(c.date), c.room, c.time, surgeon?.name].filter(Boolean).join(" · ");
       hits.push({
         score: best + boost,
         hit: {
           kind: "case",
           id: c.id,
           title: card?.procedure ?? "Scheduled case",
-          subtitle: [fmtCaseDay(c.date), c.room, c.time, surgeon?.name].filter(Boolean).join(" · "),
-          snippet,
+          subtitle: when,
+          // The date always shows, even when the hit was a team member.
+          snippet: teamMatch ? `${when} · ${teamMatch}` : undefined,
           entry: c,
         },
       });

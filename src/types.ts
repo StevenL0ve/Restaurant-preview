@@ -104,6 +104,7 @@ export interface PrefCard {
    *  live in the library forever; shown with a badge and an easy delete. */
   oneCase?: boolean;
   updatedAt: string; // ISO
+  updatedBy?: string; // full name of who last changed it; shown as "Last, F."
 }
 
 /** Live "pull list" progress while setting up a room. Keyed by card id and kept
@@ -217,6 +218,15 @@ export function teamMemberLabel(m: TeamMember): string {
   return `${role}${lvl} · ${m.name}`;
 }
 
+/** A known staff member: typed once (or imported in bulk), then picked from
+ *  autocomplete when building a room team. */
+export interface StaffMember {
+  id: ID;
+  name: string;
+  role: TeamRole;
+  level?: 1 | 2 | 3; // trainees only
+}
+
 export interface CaseEntry {
   id: ID;
   date: string; // "2026-07-02" (local calendar day)
@@ -226,6 +236,8 @@ export interface CaseEntry {
   notes?: string;
   /** The room team, filled in as assignments become known. */
   team?: TeamMember[];
+  updatedAt?: string;
+  updatedBy?: string; // full name; shown as "Last, F."
 }
 
 // ---- One-day special considerations ---------------------------------------
@@ -314,6 +326,8 @@ export interface MissingEntry {
   detail?: string;
   sectionLabel: string;
   comment?: string; // "Waiting on rep, ETA 06:30", "In SPD", "On order", …
+  commentAt?: string; // when the comment was last edited
+  commentBy?: string; // who edited it (full name; shown as "Last, F.")
   /** Not coming from a shelf: it turns over from another of the day's cases
    *  (used there first, then washed/flipped for this one). Only instrument
    *  sets and peel-packed instruments turn over; supplies never do. */
@@ -401,4 +415,5 @@ export interface AppState {
   repLocations: RepLocation[];
   repStock: RepStockItem[];
   dayNotes: DayConsideration[];
+  staff: StaffMember[];
 }

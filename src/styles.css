@@ -1868,3 +1868,13 @@ html, body { overflow-x: hidden; }
 .team-add { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .team-add select { flex: 0 1 auto; min-width: 0; }
 .team-add input { flex: 1 1 120px; min-width: 0; }
+
+/* ---- Case log rows ---- */
+.log-row {
+  display: flex; gap: 14px; align-items: center;
+  padding: 12px 14px; text-decoration: none; color: inherit;
+}
+.log-when { display: flex; flex-direction: column; min-width: 118px; gap: 2px; }
+.log-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.log-proc { font-weight: 600; color: var(--ink); }
+.settings-card textarea { width: 100%; max-width: 100%; box-sizing: border-box; margin-bottom: 10px; }

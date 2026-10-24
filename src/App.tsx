@@ -29,6 +29,7 @@ import { SendPullPage } from "./pages/SendPullPage";
 import { OnCallPage } from "./pages/OnCallPage";
 import { OnCallPeoplePage } from "./pages/OnCallPeoplePage";
 import { SearchPage } from "./pages/SearchPage";
+import { CaseLogPage } from "./pages/CaseLogPage";
 import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
 
@@ -82,6 +83,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/today" element={<TodayPage />} />
+            <Route path="/case-log" element={<CaseLogPage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/scan" element={<CardScan />} />

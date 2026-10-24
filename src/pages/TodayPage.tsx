@@ -17,6 +17,7 @@ import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { accentStyle } from "../lib/accent";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
+import { stampLine } from "../lib/user";
 import type { CaseEntry, TeamMember, TeamRole } from "../types";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
@@ -69,6 +70,7 @@ export function TodayPage() {
           <button className="btn btn-primary" onClick={() => { setEditing(null); setAdding((v) => !v); }}>
             {adding ? "Close" : "+ Add case"}
           </button>
+          <Link className="btn" to="/case-log">My case log</Link>
         </div>
       </div>
 
@@ -181,7 +183,9 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
     if (!t) return;
     if (permanent) {
       const prev = card!.specialConsiderations?.trim();
-      saveCard({ ...card!, specialConsiderations: prev ? `${prev}\n${t}` : t });
+      const stamp = stampLine(getPullerName() || undefined, new Date().toISOString());
+      const line = stamp ? `${t} (${stamp})` : t;
+      saveCard({ ...card!, specialConsiderations: prev ? `${prev}\n${line}` : line });
     } else {
       addDayNote(card!.id, entry.date, t, getPullerName() || undefined);
     }
@@ -234,7 +238,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           {caseNotes.map((n) => (
             <p key={n.id} className="case-day-note">
               <span className="today-pill">this case</span> {n.text}
-              {n.by ? <span className="muted small"> · {n.by}</span> : null}
+              <span className="muted small"> · {stampLine(n.by, n.createdAt) || "unsigned"}</span>
             </p>
           ))}
         </div>
@@ -460,6 +464,11 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
         <button className="btn btn-primary" disabled={!cardId} onClick={save}>{existing ? "Save" : "Add to lineup"}</button>
         <button className="btn" onClick={onDone}>Cancel</button>
       </div>
+      {existing?.updatedBy && (
+        <p className="muted small" style={{ margin: "8px 0 0" }}>
+          Last changed: {stampLine(existing.updatedBy, existing.updatedAt)}
+        </p>
+      )}
     </div>
   );
 }
@@ -467,22 +476,33 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
 // The room team, filled in as assignments are known: surgeons, nurses,
 // techs, trainees (with a level), Phase II students, anesthesia.
 function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: TeamMember[]) => void }) {
+  const { state, upsertStaff } = useStore();
   const [role, setRole] = useState<TeamRole>("nurse");
   const [level, setLevel] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState("");
 
+  // Known staff for this role first, then everyone else: pick from the list
+  // or free-type a new person, who joins the directory for next time.
+  const suggestions = [...state.staff]
+    .sort((a, b) => (a.role === role === (b.role === role) ? a.name.localeCompare(b.name) : a.role === role ? -1 : 1))
+    .map((m) => m.name)
+    .filter((n, i, arr) => arr.indexOf(n) === i);
+
   function add() {
     const n = name.trim();
     if (!n) return;
+    const known = state.staff.find((m) => m.name.toLowerCase() === n.toLowerCase() && m.role === "trainee");
+    const lvl = role === "trainee" ? (known?.level ?? level) : undefined;
     onChange([
       ...team,
       {
         id: `tm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
         role,
         name: n,
-        level: role === "trainee" ? level : undefined,
+        level: lvl,
       },
     ]);
+    upsertStaff(n, role, lvl);
     setName("");
   }
 
@@ -517,11 +537,18 @@ function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: Team
         <input
           value={name}
           placeholder="Name"
+          list="staff-names"
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
         />
+        <datalist id="staff-names">
+          {suggestions.map((n) => <option key={n} value={n} />)}
+        </datalist>
         <button type="button" className="btn btn-sm" disabled={!name.trim()} onClick={add}>Add</button>
       </div>
+      <p className="muted small" style={{ margin: "6px 0 0" }}>
+        New names are remembered for next time. Import a whole roster in Settings.
+      </p>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   setPullerName,
 } from "../state/store";
 import { accentStyle } from "../lib/accent";
+import { stampLine } from "../lib/user";
 import { ConsiderationsBanner } from "../components/Considerations";
 import { cartVerificationBlob, verificationFilename } from "../lib/qcPdf";
 import { shareBlobFile } from "../lib/share";
@@ -404,6 +405,9 @@ export function MissingRow({
         onBlur={() => draft.trim() !== (entry.comment ?? "") && onComment(draft)}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
       />
+      {entry.comment && entry.commentBy && (
+        <span className="muted small">{stampLine(entry.commentBy, entry.commentAt)}</span>
+      )}
       <div className="missing-actions">
         <span className="chips chips-tight">
           {COMMENT_PRESETS.map((p) => (

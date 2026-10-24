@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useStore, cardsForSurgeon } from "../state/store";
+import { useStore, cardsForSurgeon, localDay } from "../state/store";
 import { Avatar } from "../components/Avatar";
 import { totalItems, type Store } from "../state/store";
 import type { Surgeon } from "../types";
@@ -86,6 +86,8 @@ export function SurgeonDetail() {
         </div>
       )}
 
+      <SurgeonSchedule sgId={sg.id} />
+
       <div className="detail-actions" style={{ marginTop: 24 }}>
         {confirmDel ? (
           <span className="confirm">
@@ -138,5 +140,57 @@ function SurgeonForm({ surgeon, store, onDone }: { surgeon: Surgeon; store: Stor
         <button className="btn" onClick={onDone}>Cancel</button>
       </div>
     </div>
+  );
+}
+
+// This doctor's spot on the schedule: cases coming up, and recent past ones,
+// pulled from the My day board wherever one of their cards is booked.
+function SurgeonSchedule({ sgId }: { sgId: string }) {
+  const { state } = useStore();
+  const today = localDay(0);
+  const cardIds = new Set(state.cards.filter((c) => c.surgeonId === sgId).map((c) => c.id));
+  const theirs = state.cases
+    .filter((c) => cardIds.has(c.cardId))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "99").localeCompare(b.time ?? "99"));
+  const upcoming = theirs.filter((c) => c.date >= today);
+  const past = theirs.filter((c) => c.date < today).reverse().slice(0, 20);
+  if (upcoming.length === 0 && past.length === 0) return null;
+
+  const fmt = (date: string) => {
+    const [y, m, d] = date.split("-").map(Number);
+    return new Date(y, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  };
+  const row = (c: (typeof theirs)[number]) => {
+    const card = state.cards.find((k) => k.id === c.cardId);
+    return (
+      <Link key={c.id} className="card log-row" to={`/today?d=${c.date}`}>
+        <span className="log-when">
+          <strong>{fmt(c.date)}</strong>
+          <span className="muted small">{[c.room, c.time ?? "to follow"].filter(Boolean).join(" · ")}</span>
+        </span>
+        <span className="log-what"><span className="log-proc">{card?.procedure ?? "Case"}</span></span>
+      </Link>
+    );
+  };
+
+  return (
+    <>
+      {upcoming.length > 0 && (
+        <>
+          <div className="page-head" style={{ marginTop: 26, marginBottom: 14 }}>
+            <h2 style={{ fontSize: 17 }}>On the schedule ({upcoming.length})</h2>
+          </div>
+          <div className="case-list">{upcoming.map(row)}</div>
+        </>
+      )}
+      {past.length > 0 && (
+        <>
+          <div className="page-head" style={{ marginTop: 26, marginBottom: 14 }}>
+            <h2 style={{ fontSize: 17 }}>Recent cases</h2>
+          </div>
+          <div className="case-list">{past.map(row)}</div>
+        </>
+      )}
+    </>
   );
 }

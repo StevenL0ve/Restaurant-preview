@@ -29,7 +29,9 @@ import type {
   RepLocation,
   RepStockItem,
   SectionKey,
+  StaffMember,
   Surgeon,
+  TeamRole,
 } from "../types";
 import { ON_CALL_CATEGORIES, SECTIONS, loanerStatusIndex, locationLabel } from "../types";
 import { buildSeed, splitLocation } from "./seed";
@@ -163,6 +165,7 @@ function migrateLegacy(old: any): AppState {
     repLocations: old.repLocations ?? [],
     repStock: old.repStock ?? [],
     dayNotes: old.dayNotes ?? [],
+    staff: old.staff ?? [],
   };
 }
 
@@ -221,6 +224,11 @@ export interface Store {
   resetSetup: (cardId: string) => void;
   // case day
   addCase: (c: Omit<CaseEntry, "id">) => CaseEntry;
+  // staff directory: autocomplete for room teams, built as people are typed
+  upsertStaff: (name: string, role: TeamRole, level?: 1 | 2 | 3) => void;
+  /** Bulk roster import; returns how many new people were added. */
+  importStaff: (members: { name: string; role: TeamRole; level?: 1 | 2 | 3 }[]) => number;
+  deleteStaff: (id: string) => void;
   /** The pull queue follows the board: make sure a cart exists for this
    *  card+day (no-op if one is already queued). Returns the cart. */
   ensureCart: (cardId: string, date: string) => CaseCart;
@@ -453,7 +461,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       saveCard: (card) =>
         update((st) => {
-          const stamped = { ...card, updatedAt: new Date().toISOString() };
+          const stamped = { ...card, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined };
           const exists = st.cards.some((c) => c.id === card.id);
           return {
             ...st,
@@ -529,7 +537,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
 
       addCase: (c) => {
-        const entry: CaseEntry = { ...c, id: uid("case") };
+        const entry: CaseEntry = {
+          ...c,
+          id: uid("case"),
+          updatedAt: new Date().toISOString(),
+          updatedBy: getPullerName() || undefined,
+        };
         // Booking a case queues its cart for pulling, unless one's already there.
         update((st) => {
           const queued = withQueuedCart(st, entry.cardId, entry.date);
@@ -537,6 +550,42 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         });
         return entry;
       },
+
+      upsertStaff: (name, role, level) =>
+        update((st) => {
+          const n = name.trim();
+          if (!n) return st;
+          const existing = st.staff.find((m) => m.name.toLowerCase() === n.toLowerCase() && m.role === role);
+          if (existing) {
+            if (role === "trainee" && level && existing.level !== level) {
+              return { ...st, staff: st.staff.map((m) => (m.id === existing.id ? { ...m, level } : m)) };
+            }
+            return st;
+          }
+          const member: StaffMember = { id: uid("staff"), name: n, role, level: role === "trainee" ? level : undefined };
+          return { ...st, staff: [...st.staff, member] };
+        }),
+
+      importStaff: (members) => {
+        const have = new Set(state.staff.map((m) => `${m.name.toLowerCase()}|${m.role}`));
+        const fresh: StaffMember[] = [];
+        for (const m of members) {
+          const n = m.name.trim();
+          const key = `${n.toLowerCase()}|${m.role}`;
+          if (!n || have.has(key)) continue;
+          have.add(key);
+          fresh.push({ id: uid("staff"), name: n, role: m.role, level: m.role === "trainee" ? m.level : undefined });
+        }
+        if (fresh.length) {
+          update((st) => {
+            const existing = new Set(st.staff.map((m) => `${m.name.toLowerCase()}|${m.role}`));
+            return { ...st, staff: [...st.staff, ...fresh.filter((m) => !existing.has(`${m.name.toLowerCase()}|${m.role}`))] };
+          });
+        }
+        return fresh.length;
+      },
+
+      deleteStaff: (id) => update((st) => ({ ...st, staff: st.staff.filter((m) => m.id !== id) })),
 
       ensureCart: (cardId, date) => {
         const found = state.carts.find((k) => k.cardId === cardId && k.date === date);
@@ -559,7 +608,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateCase: (id, patch) =>
         update((st) => ({
           ...st,
-          cases: st.cases.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+          cases: st.cases.map((c) =>
+            c.id === id
+              ? { ...c, ...patch, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined }
+              : c,
+          ),
         })),
 
       deleteCase: (id) =>
@@ -984,7 +1037,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             c.id === cartId
               ? {
                   ...c,
-                  missing: c.missing.map((m) => (m.itemId === itemId ? { ...m, comment: comment.trim() || undefined } : m)),
+                  missing: c.missing.map((m) =>
+                    m.itemId === itemId
+                      ? {
+                          ...m,
+                          comment: comment.trim() || undefined,
+                          commentAt: comment.trim() ? new Date().toISOString() : undefined,
+                          commentBy: comment.trim() ? getPullerName() || undefined : undefined,
+                        }
+                      : m,
+                  ),
                   updatedAt: new Date().toISOString(),
                 }
               : c,
@@ -1249,6 +1311,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           repLocations: parsed.repLocations ?? st.repLocations,
           repStock: parsed.repStock ?? st.repStock,
           dayNotes: parsed.dayNotes ?? st.dayNotes,
+          staff: parsed.staff ?? st.staff,
         }));
       },
 
@@ -1258,7 +1321,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [],
         }),
     };
   }, [state]);
@@ -1633,6 +1696,17 @@ export function withQueuedCart(st: AppState, cardId: string, date: string, now =
       { id: uid("cart"), cardId, date, pulls: {}, missing: [], createdAt: now, updatedAt: now },
     ],
   };
+}
+
+/** Every case where this person is on the room team, newest day first.
+ *  Matches loosely (case-insensitive substring), so "Steven" finds
+ *  "Steven Nelson" on a team. */
+export function casesForPerson(s: AppState, name: string): CaseEntry[] {
+  const q = name.trim().toLowerCase();
+  if (!q) return [];
+  return [...s.cases]
+    .filter((c) => (c.team ?? []).some((m) => m.name.toLowerCase().includes(q)))
+    .sort((a, b) => b.date.localeCompare(a.date) || (a.time ?? "99").localeCompare(b.time ?? "99"));
 }
 
 /** The pull-queue cart backing a case on the board (first cart for card+day). */

@@ -7,6 +7,7 @@ import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import { SECTIONS, type PrefCard, type SectionKey } from "../types";
+import { stampLine } from "../lib/user";
 
 export function CardDetail() {
   const { id } = useParams();
@@ -127,6 +128,9 @@ export function CardDetail() {
         {meta.every(([, v]) => !v?.trim()) && !card.notes?.trim() && (
           <p className="muted small" style={{ margin: 0 }}>No position / prep / notes recorded yet.</p>
         )}
+        {card.updatedBy && (
+          <p className="muted small" style={{ margin: "8px 0 0" }}>Last changed: {stampLine(card.updatedBy, card.updatedAt)}</p>
+        )}
       </div>
 
       {SECTIONS.map((sec) => {
@@ -242,7 +246,7 @@ function ConsiderationsEditor({ card }: { card: PrefCard }) {
       {upcoming.map((n) => (
         <p key={n.id} className="considerations-text today">
           <span className="today-pill">{n.date === today ? "today only" : n.date}</span> {n.text}
-          {n.by ? <span className="muted small"> · {n.by}</span> : null}
+          <span className="muted small"> · {stampLine(n.by, n.createdAt) || "unsigned"}</span>
           <button className="info-del" aria-label="Remove this one-day note" onClick={() => deleteDayNote(n.id)}>✕</button>
         </p>
       ))}

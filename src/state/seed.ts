@@ -595,6 +595,7 @@ export function buildSeed(): AppState {
       by: "Charge desk",
       createdAt: new Date().toISOString(),
     }],
+    staff: [],
   };
 }
 

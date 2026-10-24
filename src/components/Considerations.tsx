@@ -1,4 +1,5 @@
 import { useStore, dayNotesFor } from "../state/store";
+import { stampLine } from "../lib/user";
 import type { PrefCard } from "../types";
 
 // The surgeon's special requests, surfaced wherever the card is worked:
@@ -15,7 +16,8 @@ export function ConsiderationsBanner({ card, date }: { card: PrefCard; date: str
       {standing && <p className="considerations-text">{standing}</p>}
       {todays.map((n) => (
         <p key={n.id} className="considerations-text today">
-          <span className="today-pill">today only</span> {n.text}{n.by ? <span className="muted small"> · {n.by}</span> : null}
+          <span className="today-pill">today only</span> {n.text}
+          <span className="muted small"> · {stampLine(n.by, n.createdAt) || "unsigned"}</span>
         </p>
       ))}
     </div>

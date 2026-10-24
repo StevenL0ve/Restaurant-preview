@@ -1,0 +1,65 @@
+import type { TeamRole } from "../types";
+
+// Mass-import the staff roster: one person per line, "Name, role" (comma or
+// tab separated), with an optional trainee level. Role spellings are loose:
+// RN, CST, scrub, CRNA and friends all land on the right role.
+
+export interface ParsedStaff {
+  name: string;
+  role: TeamRole;
+  level?: 1 | 2 | 3;
+}
+
+const ROLE_ALIASES: Record<string, TeamRole> = {
+  surgeon: "surgeon", md: "surgeon", do: "surgeon", doctor: "surgeon", attending: "surgeon",
+  nurse: "nurse", rn: "nurse", circulator: "nurse", "circulating nurse": "nurse", lpn: "nurse",
+  tech: "tech", cst: "tech", scrub: "tech", "scrub tech": "tech", "surgical tech": "tech", "st": "tech",
+  trainee: "trainee", student: "trainee", resident: "trainee",
+  phase2: "phase2", "phase ii": "phase2", "phase 2": "phase2", "phase ii student": "phase2", "phase 2 student": "phase2",
+  anesthesia: "anesthesia", crna: "anesthesia", anesthesiologist: "anesthesia", "anesthesia provider": "anesthesia",
+};
+
+function parseRole(raw: string): { role: TeamRole; level?: 1 | 2 | 3 } | null {
+  const t = raw.trim().toLowerCase().replace(/\./g, "");
+  if (!t) return null;
+  // "trainee 2", "trainee ii", "resident lvl 3", "trainee level I"
+  const lvl = /(?:^|\s)(?:lvl|level)?\s*(1|2|3|i{1,3})$/i.exec(t);
+  const base = lvl ? t.slice(0, lvl.index).trim().replace(/\s*(?:lvl|level)\s*$/i, "").trim() : t;
+  const role = ROLE_ALIASES[base] ?? ROLE_ALIASES[t];
+  if (!role) return null;
+  let level: 1 | 2 | 3 | undefined;
+  if (role === "trainee" && lvl) {
+    const v = lvl[1].toLowerCase();
+    level = v === "i" ? 1 : v === "ii" ? 2 : v === "iii" ? 3 : (Number(v) as 1 | 2 | 3);
+  }
+  return { role, level };
+}
+
+export function parseStaffList(text: string): { members: ParsedStaff[]; errors: string[] } {
+  const members: ParsedStaff[] = [];
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const parts = line.split(/\t|,/).map((p) => p.trim()).filter(Boolean);
+    if (parts.length < 2) {
+      errors.push(`"${line}": needs a name and a role, like "Kim Park, nurse"`);
+      continue;
+    }
+    // "Last, First, role" also works: the role is always the LAST part.
+    const roleRaw = parts[parts.length - 1];
+    const parsed = parseRole(roleRaw);
+    if (!parsed) {
+      errors.push(`"${line}": unknown role "${roleRaw}"`);
+      continue;
+    }
+    const name = parts.slice(0, -1).join(", ");
+    const key = `${name.toLowerCase()}|${parsed.role}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    members.push({ name, role: parsed.role, level: parsed.level });
+  }
+  if (members.length === 0 && errors.length === 0) errors.push("Nothing to import.");
+  return { members, errors };
+}
