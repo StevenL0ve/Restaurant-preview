@@ -25,6 +25,19 @@ describe("card PDF", () => {
     expect(head).toBe("%PDF-");
   });
 
+  it("embeds a QR code pointing at the live version when given a link", async () => {
+    const s = buildSeed();
+    const card = s.cards[0];
+    const plain = await cardPdfBlob(card, undefined, undefined, undefined, []);
+    const withQr = await cardPdfBlob(card, undefined, undefined, undefined, [], {
+      url: "https://stevenl0ve.github.io/Restaurant-preview/#/carts/cart-1",
+      label: "Scan for this case's live cart",
+    });
+    expect(withQr.type).toBe("application/pdf");
+    // The embedded QR image makes the document meaningfully bigger.
+    expect(withQr.size).toBeGreaterThan(plain.size + 300);
+  });
+
   it("names the file after the procedure", () => {
     expect(cardPdfFilename("Laparoscopic Cholecystectomy")).toBe("laparoscopic-cholecystectomy-preference-card.pdf");
   });

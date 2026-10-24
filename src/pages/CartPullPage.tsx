@@ -3,6 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   useStore,
   surgeonOf,
+  facilityOf,
+  dayNotesFor,
+  locationLabelOf,
   groupByArea,
   cartProgress,
   cartsOn,
@@ -11,6 +14,8 @@ import {
   getPullerName,
   setPullerName,
 } from "../state/store";
+import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
+import { cartLink } from "../lib/links";
 import { accentStyle } from "../lib/accent";
 import { stampLine } from "../lib/user";
 import { ConsiderationsBanner } from "../components/Considerations";
@@ -126,6 +131,14 @@ export function CartPullPage() {
         </div>
         <div className="progress-track"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
       </div>
+
+      {/* A paper copy for the cart: the card as a PDF whose QR code opens
+          this exact cart live, so the printout never goes stale. */}
+      {!cart.donePulling && (
+        <div className="form-actions" style={{ marginBottom: 4 }}>
+          <CartCardPdfButton cart={cart} card={card} />
+        </div>
+      )}
 
       {!cart.donePulling ? (
         <>
@@ -253,6 +266,7 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
       <div className="form-actions">
         <button className="btn" onClick={onResume}>← Resume pulling</button>
         <Link className="btn" to="/carts/missing">Day’s missing list (ops) →</Link>
+        <CartCardPdfButton cart={cart} card={card} />
         <VerificationPdfButton cart={cart} card={card} />
       </div>
     </>
@@ -480,6 +494,49 @@ export function MissingRow({
 
 // One tap replaces the paper sheet: the filled-in Case Pull Verification,
 // ready to AirDrop or print. The data behind it clears after the day.
+// The paper copy for the cart itself: the preference card as a PDF with a QR
+// code up top that opens THIS cart (this card, this case, this day) live, so
+// the old-school printout and the digital record never drift apart.
+function CartCardPdfButton({ cart, card }: { cart: CaseCart; card: PrefCard }) {
+  const { state } = useStore();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function share() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const notes = dayNotesFor(state, card.id, cart.date).map((n) => n.text);
+      const blob = await cardPdfBlob(
+        card,
+        surgeonOf(state, card.surgeonId),
+        facilityOf(state, card.facilityId),
+        (locId) => locationLabelOf(state, locId),
+        notes,
+        { url: cartLink(cart.id), label: "Scan for this case's live cart: pulls, missing items, updates" },
+      );
+      await shareBlobFile(
+        cardPdfFilename(card.procedure),
+        blob,
+        `Preference card: ${card.procedure}${surgeonOf(state, card.surgeonId) ? ` · ${surgeonOf(state, card.surgeonId)!.name}` : ""} (print for the cart; scan the code for live updates)`,
+        "application/pdf",
+      );
+    } catch {
+      setErr("Couldn't build the PDF. Try again.");
+      setTimeout(() => setErr(null), 4000);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <button className="btn" disabled={busy} onClick={share}>
+        {busy ? "Building…" : "Print card"}
+      </button>
+      {err && <span className="neg small">{err}</span>}
+    </>
+  );
+}
+
 function VerificationPdfButton({ cart, card }: { cart: CaseCart; card: PrefCard }) {
   const { state } = useStore();
   const [busy, setBusy] = useState(false);

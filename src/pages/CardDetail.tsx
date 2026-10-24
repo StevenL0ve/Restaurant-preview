@@ -4,6 +4,7 @@ import { useStore, surgeonOf, locationLabelOf, facilityOf, dayNotesFor, localDay
 import { Avatar } from "../components/Avatar";
 import { shareBlobFile } from "../lib/share";
 import { cardPdfBlob, cardPdfFilename } from "../lib/cardPdf";
+import { cardLink } from "../lib/links";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
 import { SECTIONS, type PrefCard, type SectionKey } from "../types";
@@ -41,7 +42,10 @@ export function CardDetail() {
     setPdfBusy(true);
     try {
       const todays = dayNotesFor(state, card!.id, localDay(0)).map((n) => n.text);
-      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId), todays);
+      const blob = await cardPdfBlob(card!, sg, facility, (locId) => locationLabelOf(state, locId), todays, {
+        url: cardLink(card!.id),
+        label: "Scan for the live card in ORSync",
+      });
       const r = await shareBlobFile(
         cardPdfFilename(card!.procedure),
         blob,

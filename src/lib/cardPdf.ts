@@ -13,12 +13,20 @@ const BRAND = { r: 36, g: 114, b: 216 };
 const INK = { r: 17, g: 17, b: 17 };
 const MUTED = { r: 102, g: 102, b: 102 };
 
+/** A QR code printed top-right that points at the live digital version:
+ *  the card itself, or one case's cart for one day. */
+export interface CardPdfLink {
+  url: string;
+  label?: string;
+}
+
 export async function cardPdfBlob(
   card: PrefCard,
   surgeon?: Surgeon,
   facility?: Facility,
   locationName?: (id: string) => string | undefined,
   dayConsiderations: string[] = [],
+  link?: CardPdfLink,
 ): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default;
@@ -32,7 +40,7 @@ export async function cardPdfBlob(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(19);
   doc.setTextColor(INK.r, INK.g, INK.b);
-  const titleLines = doc.splitTextToSize(card.procedure, usable - 90);
+  const titleLines = doc.splitTextToSize(card.procedure, usable - (link ? 118 : 90));
   doc.text(titleLines, MARGIN, y);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -44,6 +52,30 @@ export async function cardPdfBlob(
   const updated = new Date(card.updatedAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   doc.text(`Updated ${updated}`, pageW - MARGIN, MARGIN + 14, { align: "right" });
   y += titleLines.length * 20;
+
+  // The way back from paper to the live version: scan the code, see the
+  // current card (or that case's live cart) with every update since printing.
+  if (link?.url) {
+    const QRCode = (await import("qrcode")).default;
+    const qrData = await QRCode.toDataURL(link.url, {
+      margin: 0,
+      width: 252,
+      color: { dark: "#111111", light: "#ffffff" },
+    });
+    const size = 84;
+    const qx = pageW - MARGIN - size;
+    const qy = MARGIN + 24;
+    doc.addImage(qrData, "PNG", qx, qy, size, size);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
+    doc.text(link.label ?? "Scan for the live digital card", qx + size / 2, qy + size + 10, {
+      align: "center",
+      maxWidth: size + 30,
+    });
+    // Keep the body clear of the code.
+    y = Math.max(y, qy + size + 22);
+  }
 
   doc.setFontSize(10.5);
   doc.setTextColor(51, 51, 51);
