@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 86" role="img" aria-label="Corktown Wine &amp; Spirits">
+  <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wine glass forming the 'C' -->
+    <path d="M44 14 a26 26 0 1 0 0 44" />
+    <path d="M44 14 v44" />
+    <path d="M30 60 h28" />
+  </g>
+  <text x="74" y="46" font-family="'Cormorant Garamond', Georgia, serif" font-size="40" letter-spacing="2.5" fill="currentColor" font-weight="600">ORKTOWN</text>
+  <text x="76" y="68" font-family="'Jost', Arial, sans-serif" font-size="12.5" letter-spacing="7" fill="currentColor" opacity="0.78">WINE &#183; SPIRITS</text>
+</svg>
