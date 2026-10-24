@@ -11,6 +11,7 @@ import {
 import { SECTIONS, locationLabel, type CardItem, type Location, type PrefCard, type SectionKey } from "../types";
 import { PhiNote } from "../components/PhiNote";
 import { fileToDataUrl } from "../lib/photos";
+import { Lightbox } from "../components/Lightbox";
 
 // Create or edit a card. Local draft state; nothing is persisted until "Save"
 // — except newly-created facilities/locations, which are shared resources and
@@ -288,6 +289,7 @@ function ItemEditor({
   facilityId?: string;
 }) {
   const { state: appState } = useStore();
+  const [peek, setPeek] = useState<{ src: string; alt: string } | null>(null);
   const [name, setName] = useState("");
   const [detail, setDetail] = useState("");
   const [refNum, setRefNum] = useState("");
@@ -468,12 +470,30 @@ function ItemEditor({
         <button className="btn btn-sm" onClick={add} disabled={!name.trim()}>Add</button>
       </div>
       {catalogMatches.length > 0 && (
-        <div className="staff-suggest">
+        <div className="catalog-suggest">
+          <span className="muted small">From the supply catalog; tap the photo to confirm it's the right item:</span>
           {catalogMatches.map((ci) => (
-            <button key={ci.id} type="button" className="chip chip-sm" onClick={() => addFromCatalog(ci)}>
-              + {ci.name} · REF {ci.ref}
-            </button>
+            <div key={ci.id} className="catalog-suggest-row">
+              {ci.photo ? (
+                <button
+                  type="button"
+                  className="item-thumb"
+                  title="See the item full screen"
+                  onClick={() => setPeek({ src: ci.photo!, alt: `${ci.name} · REF ${ci.ref}` })}
+                >
+                  <img src={ci.photo} alt={`${ci.name} photo`} />
+                </button>
+              ) : (
+                <span className="item-thumb item-thumb-empty" aria-hidden>·</span>
+              )}
+              <button type="button" className="catalog-suggest-pick" onClick={() => addFromCatalog(ci)}>
+                <span className="suggest-name">{ci.name}</span>
+                <span className="muted small">REF {ci.ref}{ci.photo ? "" : " · no photo yet"}</span>
+              </button>
+              <span className="suggest-add" aria-hidden>+ Add</span>
+            </div>
           ))}
+          {peek && <Lightbox src={peek.src} alt={peek.alt} onClose={() => setPeek(null)} />}
         </div>
       )}
 
