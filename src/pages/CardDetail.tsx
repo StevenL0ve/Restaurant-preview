@@ -217,8 +217,9 @@ function ConsiderationsEditor({ card }: { card: PrefCard }) {
     .sort((a, b) => a.date.localeCompare(b.date));
   const standing = card.specialConsiderations?.trim();
 
+  const pastDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today;
   function add() {
-    if (!text.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    if (!text.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date) || pastDate) return;
     tapLight();
     addDayNote(card.id, date, text, getPullerName() || undefined);
     setText("");
@@ -255,7 +256,8 @@ function ConsiderationsEditor({ card }: { card: PrefCard }) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
           />
-          <button className="btn btn-sm btn-primary" disabled={!text.trim()} onClick={add}>Add</button>
+          <button className="btn btn-sm btn-primary" disabled={!text.trim() || pastDate} onClick={add}>Add</button>
+          {pastDate && <span className="neg small">That day already happened; pick today or later.</span>}
           <button className="btn btn-sm" onClick={() => setAdding(false)}>Cancel</button>
         </div>
       ) : (

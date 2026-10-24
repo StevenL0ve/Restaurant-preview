@@ -6,6 +6,7 @@ import {
   groupByArea,
   cartProgress,
   cartsOn,
+  cartDisplayName,
   openMissing,
   getPullerName,
   setPullerName,
@@ -209,10 +210,7 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
   // Other carts on the same day: the turnover sources to pick from.
   const turnoverOptions = cartsOn(state, cart.date)
     .filter((c) => c.id !== cart.id)
-    .map((c) => {
-      const otherCard = state.cards.find((x) => x.id === c.cardId);
-      return { id: c.id, label: `${otherCard?.procedure ?? "Case"}${c.label ? ` ${c.label}` : ""}` };
-    });
+    .map((c) => ({ id: c.id, label: cartDisplayName(state, c.id) }));
 
   return (
     <>
@@ -481,8 +479,10 @@ export function MissingRow({
 function VerificationPdfButton({ cart, card }: { cart: CaseCart; card: PrefCard }) {
   const { state } = useStore();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   async function share() {
     setBusy(true);
+    setErr(null);
     try {
       const blob = await cartVerificationBlob(card, cart, surgeonOf(state, card.surgeonId));
       await shareBlobFile(
@@ -491,13 +491,19 @@ function VerificationPdfButton({ cart, card }: { cart: CaseCart; card: PrefCard 
         `Case Pull Verification: ${card.procedure}`,
         "application/pdf",
       );
+    } catch {
+      setErr("Couldn't build the PDF. Try again.");
+      setTimeout(() => setErr(null), 4000);
     } finally {
       setBusy(false);
     }
   }
   return (
-    <button className="btn" disabled={busy} onClick={share}>
-      {busy ? "Building…" : "Verification PDF"}
-    </button>
+    <>
+      <button className="btn" disabled={busy} onClick={share}>
+        {busy ? "Building…" : "Verification PDF"}
+      </button>
+      {err && <span className="neg small">{err}</span>}
+    </>
   );
 }

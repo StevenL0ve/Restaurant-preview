@@ -51,13 +51,23 @@ export async function cartVerificationBlob(
   doc.text(caseLine, pageW / 2, y, { align: "center" });
   y += 24;
 
+  const pageH = doc.internal.pageSize.getHeight();
+  const ensureRoom = (need: number) => {
+    if (y + need > pageH - 60) {
+      doc.addPage();
+      y = MARGIN;
+    }
+  };
   const line = (label: string, value: string) => {
-    doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
+    doc.setFont("helvetica", "bold");
+    const lw = doc.getTextWidth(label) + 6;
+    doc.setFont("helvetica", "normal");
+    const wrapped = doc.splitTextToSize(value || " ", usable - lw);
+    ensureRoom(wrapped.length * 14 + 10);
+    doc.setFont("helvetica", "bold");
     doc.text(label, MARGIN, y);
     doc.setFont("helvetica", "normal");
-    const lw = doc.getTextWidth(label) + 6;
-    const wrapped = doc.splitTextToSize(value || " ", usable - lw);
     doc.text(wrapped, MARGIN + lw, y);
     y += Math.max(1, wrapped.length) * 14 + 4;
   };

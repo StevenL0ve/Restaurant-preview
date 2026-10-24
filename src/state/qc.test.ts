@@ -75,6 +75,24 @@ describe("case cart quality control", () => {
     expect(i3.alternateItem).toBe("0 Vicryl");
   });
 
+  it("reopens a resolved entry when the item fails QC again", () => {
+    // Flagged missing while pulling, then someone marked it found (resolved),
+    // then QC couldn't find it in the cart: it must come back as OPEN missing,
+    // not vanish as a resolved ghost.
+    const c = cart({
+      qc: { i1: { by: "Priya", at: NOW }, i3: { by: "Priya", at: NOW } }, // i2 unverified
+      missing: [{
+        itemId: "i2", name: "Maryland dissector", sectionLabel: "Instruments & trays",
+        comment: "shelf was empty", resolvedAt: "2026-10-20T06:08:00Z", resolvedBy: "Dana",
+      }],
+    });
+    const done = applyQcFinish(card(), c, "Priya", NOW);
+    const m = done.missing.find((x) => x.itemId === "i2")!;
+    expect(m.resolvedAt).toBeUndefined();
+    expect(m.resolvedBy).toBeUndefined();
+    expect(m.comment).toBe("shelf was empty"); // original note survives
+  });
+
   it("reports the cart's flow state for badges", () => {
     expect(cartQcState(cart({ donePulling: undefined }))).toBe("pulling");
     expect(cartQcState(cart())).toBe("needs-qc");

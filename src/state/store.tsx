@@ -78,8 +78,9 @@ function migrateLoaners(s: AppState): AppState {
  *  the surgical day. Yesterday survives one morning for reconciliation;
  *  anything older goes. Pure — tested. */
 export function pruneEphemeral(s: AppState, today: string = localDay(0)): AppState {
-  const cutoff = new Date(new Date(`${today}T12:00:00`).getTime() - 86400000)
-    .toISOString().slice(0, 10); // yesterday
+  const [yy, mm, dd] = today.split("-").map(Number);
+  const y1 = new Date(yy, (mm ?? 1) - 1, (dd ?? 1) - 1); // local, no UTC round-trip
+  const cutoff = `${y1.getFullYear()}-${String(y1.getMonth() + 1).padStart(2, "0")}-${String(y1.getDate()).padStart(2, "0")}`;
   const carts = s.carts.filter((c) => c.date >= cutoff);
   const dayNotes = s.dayNotes.filter((n) => n.date >= cutoff);
   if (carts.length === s.carts.length && dayNotes.length === s.dayNotes.length) return s;
@@ -345,6 +346,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     schedulePush();
   }, [state]);
+
+  // A device left running past midnight still clears the old day's carts
+  // and notes (pruneEphemeral returns the same object when nothing changed,
+  // so this is free on every other tick).
+  useEffect(() => {
+    const t = setInterval(() => setState((s) => pruneEphemeral(s)), 10 * 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1591,6 +1600,14 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
     .filter((x) => x.missing.length > 0);
 }
 
+/** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+export function cartDisplayName(s: AppState, cartId: string): string {
+  const c = s.carts.find((x) => x.id === cartId);
+  if (!c) return "another case";
+  const card = s.cards.find((x) => x.id === c.cardId);
+  return `${card?.procedure ?? "Case"}${c.label ? ` ${c.label}` : ""}`;
+}
+
 /** One-day special considerations for a card on a given local day. */
 export function dayNotesFor(s: AppState, cardId: string, date: string): DayConsideration[] {
   return s.dayNotes.filter((n) => n.cardId === cardId && n.date === date);
@@ -1603,11 +1620,7 @@ export function dayNotesFor(s: AppState, cardId: string, date: string): DayConsi
 export function missingDayText(s: AppState, date: string): string {
   const groups = missingForDay(s, date);
   if (!groups.length) return `No open missing items for ${date}.`;
-  const cartName = (cartId: string) => {
-    const c = s.carts.find((x) => x.id === cartId);
-    const card = c ? s.cards.find((x) => x.id === c.cardId) : undefined;
-    return c ? `${card?.procedure ?? "another case"}${c.label ? ` (${c.label})` : ""}` : "another case";
-  };
+  const cartName = (cartId: string) => cartDisplayName(s, cartId);
   const lines: string[] = [`MISSING ITEMS: case carts, ${date}`, ""];
   const turnovers: string[] = [];
   for (const { cart, card, missing } of groups) {
@@ -1730,8 +1743,12 @@ export function applyQcFinish(card: PrefCard, cart: CaseCart, by: string, now: s
     if (!failed.has(itemId)) pulls[itemId] = rec;
   }
   const interim: CaseCart = { ...cart, pulls };
+  // A failed item reopens even if it was once marked resolved: it is not in
+  // the cart, so it must land back on the day's missing list.
   const missing = buildMissingList(card, interim).map((m) =>
-    failed.has(m.itemId) && !m.comment ? { ...m, comment: "Not found at QC" } : m,
+    failed.has(m.itemId)
+      ? { ...m, comment: m.comment ?? "Not found at QC", resolvedAt: undefined, resolvedBy: undefined }
+      : m,
   );
   return { ...cart, pulls, missing, qcDone: now, qcBy: by, updatedAt: now };
 }

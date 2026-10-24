@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useStore, missingForDay, missingDayText, localDay, surgeonOf, getPullerName } from "../state/store";
+import { useStore, missingForDay, missingDayText, localDay, surgeonOf, getPullerName, cartDisplayName } from "../state/store";
 import { copyText } from "../lib/share";
 import { MissingRow } from "./CartPullPage";
 import { tapLight } from "../lib/haptics";
@@ -26,11 +26,7 @@ export function MissingDayPage() {
 
   // Items coming off another of today's cases, across every cart: the
   // runner's flip list for the day.
-  const cartLabel = (cartId: string) => {
-    const c = state.carts.find((x) => x.id === cartId);
-    const card = c ? state.cards.find((x) => x.id === c.cardId) : undefined;
-    return c ? `${card?.procedure ?? "Case"}${c.label ? ` ${c.label}` : ""}` : "another case";
-  };
+  const cartLabel = (cartId: string) => cartDisplayName(state, cartId);
   const turnovers = groups.flatMap(({ cart, card, missing }) =>
     missing
       .filter((m) => m.turnoverFromCartId)

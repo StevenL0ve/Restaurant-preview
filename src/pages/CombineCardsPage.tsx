@@ -19,7 +19,7 @@ export function CombineCardsPage() {
   );
   const [surgeonId, setSurgeonId] = useState(surgeonsWithCards[0]?.id ?? "");
   const [crossSurgeons, setCrossSurgeons] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<string[]>([]); // in pick order
   const [overrides, setOverrides] = useState<Record<string, number>>({});
   const [nameEdited, setNameEdited] = useState(false);
   const [name, setName] = useState("");
@@ -33,7 +33,10 @@ export function CombineCardsPage() {
         return an === bn ? a.procedure.localeCompare(b.procedure) : an.localeCompare(bn);
       })
     : state.cards.filter((c) => c.surgeonId === surgeonId);
-  const chosen = surgeonCards.filter((c) => selected.has(c.id));
+  // Pick order matters: the FIRST card picked is the combo's base/surgeon.
+  const chosen = selected
+    .map((id) => surgeonCards.find((c) => c.id === id))
+    .filter((c): c is NonNullable<typeof c> => !!c);
   const chosenSurgeons = [...new Set(chosen.map((c) => c.surgeonId))];
   const plan = useMemo(() => (chosen.length >= 2 ? planCombine(chosen) : null), [chosen]);
   const autoName = chosen.map((c) => c.procedure).join(" + ");
@@ -43,12 +46,7 @@ export function CombineCardsPage() {
 
   function toggle(id: string) {
     tapLight();
-    setSelected((s) => {
-      const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
     setOverrides({});
   }
 
@@ -88,7 +86,7 @@ export function CombineCardsPage() {
             {!crossSurgeons && surgeonsWithCards.length > 0 && (
               <select
                 value={surgeonId}
-                onChange={(e) => { setSurgeonId(e.target.value); setSelected(new Set()); setOverrides({}); }}
+                onChange={(e) => { setSurgeonId(e.target.value); setSelected([]); setOverrides({}); }}
               >
                 {surgeonsWithCards.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.specialty}</option>)}
               </select>
@@ -98,14 +96,14 @@ export function CombineCardsPage() {
               <input
                 type="checkbox"
                 checked={crossSurgeons}
-                onChange={(e) => { setCrossSurgeons(e.target.checked); setSelected(new Set()); setOverrides({}); }}
+                onChange={(e) => { setCrossSurgeons(e.target.checked); setSelected([]); setOverrides({}); }}
               />
             </label>
             <p className="muted small" style={{ margin: "10px 0 6px" }}>Pick the procedures being done together (2 or more):</p>
             <div className="combine-pick">
               {surgeonCards.map((c) => (
-                <label key={c.id} className={"combine-card-row" + (selected.has(c.id) ? " on" : "")}>
-                  <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} />
+                <label key={c.id} className={"combine-card-row" + (selected.includes(c.id) ? " on" : "")}>
+                  <input type="checkbox" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
                   <span className="combine-proc">{c.procedure}</span>
                   <span className="muted small">
                     {crossSurgeons ? (surgeonOf(state, c.surgeonId)?.name ?? "Unassigned") : (facilityOf(state, c.facilityId)?.name ?? "")}

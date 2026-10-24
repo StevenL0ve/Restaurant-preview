@@ -214,13 +214,19 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
   );
   const timedCount = roomCases.filter((c) => c.time).length;
   const untimed = roomCases.filter((c) => !c.time);
-  const isFirstCase = roomCases.length === 0 || (!!existing?.time && timedCount === 0);
+  // This case may carry the time when the room has no other timed case
+  // (covers an empty room AND a room whose first case was cancelled), or
+  // when it already holds a time itself (editing never strips it silently).
+  const isFirstCase = timedCount === 0 || !!existing?.time;
   const dayRooms = [...new Set(state.cases.filter((c) => c.date === theDate && c.room?.trim()).map((c) => c.room!.trim()))];
 
   // Where this case currently sits among the room's followers (array order),
   // when editing one; a new case defaults to the end of the line.
-  const currentIdx = existing && !existing.time && existing.room?.trim() === roomKey
-    ? untimed.filter((c) => state.cases.indexOf(c) < state.cases.indexOf(existing)).length
+  // Array position decides where it sits among the (possibly new) room's
+  // followers after save, so moving rooms still honors the chosen slot.
+  const arrayIdx = existing ? state.cases.findIndex((c) => c.id === existing.id) : Number.POSITIVE_INFINITY;
+  const currentIdx = existing && !existing.time
+    ? untimed.filter((c) => state.cases.indexOf(c) < arrayIdx).length
     : untimed.length;
   const followerIdx = Math.min(orderChoice ?? currentIdx, untimed.length);
 

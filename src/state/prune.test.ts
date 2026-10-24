@@ -24,6 +24,16 @@ describe("end-of-day cleanup", () => {
     expect(out.dayNotes.map((n) => n.id)).toEqual(["n1"]);
   });
 
+  it("computes yesterday across a month boundary with local date math", () => {
+    const s: AppState = {
+      ...buildSeed(),
+      carts: [cart("keep", "2026-02-28"), cart("drop", "2026-02-27")],
+      dayNotes: [],
+    };
+    const out = pruneEphemeral(s, "2026-03-01");
+    expect(out.carts.map((c) => c.id)).toEqual(["keep"]);
+  });
+
   it("returns the same state object when there is nothing to prune", () => {
     const today = localDay(0);
     const s: AppState = { ...buildSeed(), carts: [cart("a", today)], dayNotes: [] };
