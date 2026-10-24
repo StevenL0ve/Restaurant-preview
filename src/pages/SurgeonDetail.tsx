@@ -11,7 +11,6 @@ export function SurgeonDetail() {
   const store = useStore();
   const { state, deleteSurgeon } = store;
   const [editing, setEditing] = useState(false);
-  const [confirmDel, setConfirmDel] = useState(false);
 
   const sg = state.surgeons.find((s) => s.id === id);
   if (!sg) {
@@ -88,16 +87,55 @@ export function SurgeonDetail() {
 
       <SurgeonSchedule sgId={sg.id} />
 
-      <div className="detail-actions" style={{ marginTop: 24 }}>
-        {confirmDel ? (
-          <span className="confirm">
-            Delete {sg.name} and all {cards.length} of their cards?
-            <button className="btn btn-danger btn-sm" onClick={() => { deleteSurgeon(sg.id); navigate("/surgeons"); }}>Delete</button>
-            <button className="btn btn-sm" onClick={() => setConfirmDel(false)}>Cancel</button>
-          </span>
-        ) : (
-          <button className="btn btn-danger" onClick={() => setConfirmDel(true)}>Delete surgeon</button>
-        )}
+      <DeleteSurgeonZone
+        sg={sg}
+        cardCount={cards.length}
+        onDelete={() => { deleteSurgeon(sg.id); navigate("/surgeons"); }}
+      />
+    </div>
+  );
+}
+
+// Deleting a surgeon erases their profile AND every preference card under
+// them, so it is deliberately not a one-tap red button: it hides behind a
+// quiet link and only arms after the surgeon's last name is typed back.
+function DeleteSurgeonZone({ sg, cardCount, onDelete }: { sg: Surgeon; cardCount: number; onDelete: () => void }) {
+  const { state } = useStore();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+
+  const lastName = sg.name.trim().split(/\s+/).pop() ?? sg.name;
+  const armed = typed.trim().toLowerCase() === lastName.toLowerCase();
+  const cardIds = new Set(state.cards.filter((c) => c.surgeonId === sg.id).map((c) => c.id));
+  const bookedCases = state.cases.filter((c) => cardIds.has(c.cardId)).length;
+
+  if (!open) {
+    return (
+      <p className="danger-zone-link">
+        <button className="link small" onClick={() => { setTyped(""); setOpen(true); }}>
+          Delete this surgeon…
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <div className="card danger-zone">
+      <h2>Delete {sg.name}?</h2>
+      <p className="muted small">
+        This permanently erases their profile and all {cardCount} of their preference
+        {cardCount === 1 ? " card" : " cards"}
+        {bookedCases > 0 ? `, and leaves ${bookedCases} scheduled ${bookedCases === 1 ? "case" : "cases"} on the board without a card` : ""}.
+        There is no undo. To keep the cards, reassign them to another surgeon first (open a card, Edit, change the surgeon).
+      </p>
+      <label className="field field-wide"><span>Type the last name "{lastName}" to confirm</span>
+        <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={lastName} autoFocus />
+      </label>
+      <div className="form-actions">
+        <button className="btn btn-danger" disabled={!armed} onClick={onDelete}>
+          Permanently delete
+        </button>
+        <button className="btn" onClick={() => setOpen(false)}>Keep {sg.name}</button>
       </div>
     </div>
   );
