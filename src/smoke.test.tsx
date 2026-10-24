@@ -40,7 +40,9 @@ describe("app smoke test", () => {
   it("renders the dashboard in guest mode with seeded cards", () => {
     asGuest();
     const html = renderAt("/");
-    expect(html).toContain("Ready for your next case");
+    expect(html).toContain("Today at a glance");
+    // The mascot hero lives at the top of the Cards page now.
+    expect(renderAt("/cards")).toContain("Ready for your next case");
     // A seeded favorite card should appear on the dashboard.
     expect(html).toContain("Laparoscopic Cholecystectomy");
     // The on-call strip shows who's reachable, with the unfilled position first.

@@ -1,5 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Mascot } from "../components/Mascot";
+import { Link } from "react-router-dom";
 import {
   useStore,
   surgeonOf,
@@ -15,12 +14,10 @@ import {
 } from "../state/store";
 import { formatPhone } from "../lib/oncall";
 import { Avatar } from "../components/Avatar";
-import { Icon } from "../components/Icon";
 import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
   const { state } = useStore();
-  const navigate = useNavigate();
 
   const favorites = state.cards.filter((c) => c.favorite);
   const recent = [...state.cards].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
@@ -36,15 +33,11 @@ export function Dashboard() {
 
   return (
     <div className="page">
-      <div className="dash-hero">
-        <Mascot size={78} className="dash-mascot" />
-        <div className="dash-hero-text">
-          <h1>Ready for your next case</h1>
-          <p>Your preference cards, your way. No hospital login, works offline.</p>
+      <div className="page-head">
+        <div>
+          <h1>Home</h1>
+          <p className="muted">Today at a glance: the lineup, who's on call, and what needs a push.</p>
         </div>
-        <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
-          <Icon name="plus" size={17} /> New card
-        </button>
       </div>
 
       <TodayLineup />

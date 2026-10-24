@@ -3,6 +3,7 @@ import { Mascot } from "../components/Mascot";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, surgeonOf, totalItems } from "../state/store";
 import { Avatar } from "../components/Avatar";
+import { Icon } from "../components/Icon";
 import { relativeTime } from "../lib/format";
 import { accentStyle } from "../lib/accent";
 import { tapLight } from "../lib/haptics";
@@ -41,16 +42,25 @@ export function CardsPage() {
 
   return (
     <div className="page">
+      <div className="dash-hero">
+        <Mascot size={78} className="dash-mascot" />
+        <div className="dash-hero-text">
+          <h1>Ready for your next case</h1>
+          <p>Your preference cards, your way. No hospital login, works offline.</p>
+        </div>
+        <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
+          <Icon name="plus" size={17} /> New card
+        </button>
+      </div>
+
       <div className="page-head">
         <div>
-          <h1>Cards</h1>
           <p className="muted">{state.cards.length} preference cards across {specialties.length - 1} specialties.</p>
         </div>
         <div className="head-actions">
           <button className="btn" onClick={() => navigate("/cards/combine")}>Combine</button>
           <button className="btn" onClick={() => navigate("/cards/templates")}>Templates</button>
           <button className="btn" onClick={() => navigate("/cards/scan")}>Scan / paste</button>
-          <button className="btn btn-primary" onClick={() => navigate("/cards/new")}>+ New card</button>
         </div>
       </div>
 
