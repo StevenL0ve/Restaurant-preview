@@ -1806,3 +1806,48 @@ html, body { overflow-x: hidden; }
    long option text otherwise blow out the grid (seen on My day's add form). */
 .form-grid .field { min-width: 0; }
 .field > input, .field > select, .field > textarea { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+
+/* ---- My day: cart pipeline status + team notes + OR-prefix room field ---- */
+.cart-status {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  margin: 10px 0 2px; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: transparent; cursor: pointer; text-align: left;
+  font: inherit; color: var(--slate);
+  min-height: 42px;
+}
+.cart-status:active { transform: scale(0.99); }
+.cart-status .cart-chip { font-weight: 600; font-size: 0.86rem; }
+.cart-status.cs-queue .cart-chip, .cart-status.cs-queued .cart-chip { color: var(--muted); }
+.cart-status.cs-pulling .cart-chip { color: var(--brand-600); }
+.cart-status.cs-needs-qc .cart-chip { color: var(--amber); }
+.cart-status.cs-qcd .cart-chip { color: var(--green); }
+.cart-status.cs-pulling { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+.cart-status.cs-needs-qc { border-color: color-mix(in srgb, var(--amber) 40%, var(--line)); background: var(--amber-bg); }
+.cart-status.cs-qcd { border-color: color-mix(in srgb, var(--green) 35%, var(--line)); }
+.cart-missing {
+  margin-left: auto; font-weight: 700; font-size: 0.82rem; color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  border-radius: 999px; padding: 2px 10px; white-space: nowrap;
+}
+.cart-status .muted.small { margin-left: auto; }
+.cart-status .cart-missing + .muted.small { margin-left: 0; }
+
+.case-day-notes { margin: 8px 0 0; display: grid; gap: 4px; }
+.case-day-note { margin: 0; font-size: 0.88rem; color: var(--slate); }
+
+.case-note-form { margin-top: 10px; display: grid; gap: 8px; }
+.case-note-form textarea { width: 100%; max-width: 100%; box-sizing: border-box; }
+
+.prefix-input { display: flex; align-items: stretch; min-width: 0; }
+.prefix-input .input-prefix {
+  display: flex; align-items: center; padding: 0 12px;
+  border: 1px solid var(--line); border-right: none;
+  border-radius: 10px 0 0 10px; background: var(--bg);
+  font-weight: 700; color: var(--muted); user-select: none;
+}
+.prefix-input input {
+  flex: 1; min-width: 0;
+  border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;
+}
+.room-mode-toggle { justify-self: start; margin-top: 4px; background: none; border: none; padding: 0; cursor: pointer; }

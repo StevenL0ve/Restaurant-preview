@@ -8,6 +8,9 @@ import {
   surgeonOf,
   setupProgress,
   pendingLoanersForCard,
+  cartForCase,
+  dayNotesFor,
+  getPullerName,
 } from "../state/store";
 import type { Store } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -24,6 +27,14 @@ function labelFor(date: string): string {
   if (date === localDay(-1)) return "Yesterday";
   const [y, m, d] = date.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+}
+
+// "OR 4" → the numeric field holding "4"; "Hybrid" → the named field.
+export function parseRoomInput(room?: string): { named: boolean; value: string } {
+  const t = (room ?? "").trim();
+  if (!t) return { named: false, value: "" };
+  const m = /^OR\s*(\d+[A-Za-z]?)$/i.exec(t);
+  return m ? { named: false, value: m[1] } : { named: true, value: t };
 }
 
 function shiftDay(date: string, delta: number): string {
@@ -113,9 +124,11 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   store: Store;
   onEdit: () => void;
 }) {
-  const { state, deleteCase, moveCase } = store;
+  const { state, deleteCase, moveCase, ensureCart, addDayNote, saveCard } = store;
   const navigate = useNavigate();
   const [confirmDel, setConfirmDel] = useState(false);
+  const [noting, setNoting] = useState(false);
+  const [noteText, setNoteText] = useState("");
   const card = state.cards.find((c) => c.id === entry.cardId);
   if (!card) {
     return (
@@ -132,6 +145,43 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   const ready = total > 0 && done === total;
   const pendingLoaners = pendingLoanersForCard(state, card.id);
+
+  // Where this case's cart stands in the day's pull pipeline.
+  const cart = cartForCase(state, card.id, entry.date);
+  const pulledCount = cart ? Object.keys(cart.pulls).length : 0;
+  const openMissing = cart ? cart.missing.filter((m) => !m.resolvedAt).length : 0;
+  const cartStage: "queue" | "queued" | "pulling" | "needs-qc" | "qcd" =
+    !cart ? "queue"
+    : cart.qcDone ? "qcd"
+    : cart.donePulling ? "needs-qc"
+    : pulledCount > 0 ? "pulling"
+    : "queued";
+  const cartText = {
+    queue: "Not in pull queue",
+    queued: "In pull queue, not pulled",
+    pulling: "Cart being pulled",
+    "needs-qc": "Cart pulled, needs QC",
+    qcd: "Cart QC'd",
+  }[cartStage];
+  const cartBtn = { queue: "Pull cart", queued: "Pull cart", pulling: "Keep pulling", "needs-qc": "QC cart", qcd: "View cart" }[cartStage];
+  function openCart() {
+    const k = cart ?? ensureCart(card!.id, entry.date);
+    navigate(`/carts/${k.id}`);
+  }
+
+  const caseNotes = dayNotesFor(state, card.id, entry.date);
+  function saveNote(permanent: boolean) {
+    const t = noteText.trim();
+    if (!t) return;
+    if (permanent) {
+      const prev = card!.specialConsiderations?.trim();
+      saveCard({ ...card!, specialConsiderations: prev ? `${prev}\n${t}` : t });
+    } else {
+      addDayNote(card!.id, entry.date, t, getPullerName() || undefined);
+    }
+    setNoteText("");
+    setNoting(false);
+  }
 
   return (
     <div className="card case-row" style={accentStyle(card.specialty)}>
@@ -165,6 +215,23 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 
       {entry.notes && <p className="loaner-notes">{entry.notes}</p>}
 
+      {caseNotes.length > 0 && (
+        <div className="case-day-notes">
+          {caseNotes.map((n) => (
+            <p key={n.id} className="case-day-note">
+              <span className="today-pill">this case</span> {n.text}
+              {n.by ? <span className="muted small"> · {n.by}</span> : null}
+            </p>
+          ))}
+        </div>
+      )}
+
+      <button className={`cart-status cs-${cartStage}`} onClick={openCart} title="Open this case's cart">
+        <span className="cart-chip">{cartText}</span>
+        {openMissing > 0 && <span className="cart-missing">{openMissing} missing</span>}
+        {cartStage === "pulling" && <span className="muted small">{pulledCount} pulled</span>}
+      </button>
+
       {pendingLoaners.length > 0 && (
         <Link to="/loaners" className="case-loaner-flag">
           <Icon name="truck" size={15} /> {pendingLoaners.length === 1
@@ -176,10 +243,12 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
       <div className="progress-track case-progress"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
 
       <div className="loaner-actions">
-        <button className="btn btn-sm btn-primary" onClick={() => navigate(`/cards/${card.id}/setup`)}>
+        <button className="btn btn-sm btn-primary" onClick={openCart}>{cartBtn}</button>
+        <button className="btn btn-sm" onClick={() => navigate(`/cards/${card.id}/setup`)}>
           {ready ? "Review setup" : "Start setup"}
         </button>
         <button className="btn btn-sm" onClick={onEdit}>Edit</button>
+        <button className="btn btn-sm" onClick={() => setNoting((v) => !v)}>Team note</button>
         {confirmDel ? (
           <span className="confirm">
             Remove?
@@ -190,6 +259,30 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           <button className="btn btn-sm" onClick={() => setConfirmDel(true)}>Remove</button>
         )}
       </div>
+
+      {noting && (
+        <div className="case-note-form">
+          <textarea
+            rows={2}
+            value={noteText}
+            autoFocus
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="For the puller or the room team: open the smaller trials, extra Raytecs up, rep bringing…"
+          />
+          <div className="form-actions">
+            <button className="btn btn-sm btn-primary" disabled={!noteText.trim()} onClick={() => saveNote(false)}>
+              This case only
+            </button>
+            <button className="btn btn-sm" disabled={!noteText.trim()} onClick={() => saveNote(true)}>
+              On the card going forward
+            </button>
+            <button className="btn btn-sm" onClick={() => { setNoting(false); setNoteText(""); }}>Cancel</button>
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>
+            "This case only" shows on the cart and setup just for {labelFor(entry.date).toLowerCase()}. "Going forward" adds it to the preference card's special considerations.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -199,15 +292,20 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 // is just an order: OR 1 Case 2, OR 1 Case 3. Followers can be slotted into
 // any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
-  const { state, addCase, updateCase, moveCase } = store;
+  const { state, addCase, updateCase, moveCase, ensureCart } = store;
   const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
   const [time, setTime] = useState(existing?.time ?? "");
-  const [room, setRoom] = useState(existing?.room ?? "");
+  // Rooms are "OR" + a number for almost everyone, so the form supplies the
+  // "OR" and the user just types the number. Named rooms (Hybrid, Cysto)
+  // flip to a free-text field.
+  const initialRoom = parseRoomInput(existing?.room);
+  const [namedRoom, setNamedRoom] = useState(initialRoom.named);
+  const [roomVal, setRoomVal] = useState(initialRoom.value);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [orderChoice, setOrderChoice] = useState<number | null>(null); // index among the room's followers
 
   const theDate = existing?.date ?? date;
-  const roomKey = room.trim();
+  const roomKey = namedRoom ? roomVal.trim() : roomVal.trim() ? `OR ${roomVal.trim()}` : "";
   // The room's other cases for that day decide what we ask for.
   const roomCases = state.cases.filter(
     (c) => c.date === theDate && (c.room?.trim() ?? "") === roomKey && c.id !== existing?.id,
@@ -243,6 +341,8 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
     let id: string;
     if (existing) {
       updateCase(existing.id, payload);
+      // Editing can move the case to another card or day; keep it queued.
+      ensureCart(cardId, theDate);
       id = existing.id;
     } else {
       id = addCase(payload).id;
@@ -268,12 +368,37 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             })}
           </select>
         </label>
-        <label className="field"><span>Room</span>
-          <input value={room} onChange={(e) => { setRoom(e.target.value); setOrderChoice(null); }} placeholder="OR 4" list="day-rooms" />
+        <div className="field"><span>Room</span>
+          {namedRoom ? (
+            <input
+              value={roomVal}
+              onChange={(e) => { setRoomVal(e.target.value); setOrderChoice(null); }}
+              placeholder="Hybrid, Cysto, …"
+              list="day-rooms"
+            />
+          ) : (
+            <span className="prefix-input">
+              <span className="input-prefix">OR</span>
+              <input
+                value={roomVal}
+                inputMode="numeric"
+                onChange={(e) => { setRoomVal(e.target.value); setOrderChoice(null); }}
+                placeholder="1"
+                aria-label="OR number"
+              />
+            </span>
+          )}
+          <button
+            type="button"
+            className="link small room-mode-toggle"
+            onClick={() => { setNamedRoom((v) => !v); setRoomVal(""); setOrderChoice(null); }}
+          >
+            {namedRoom ? "It's a numbered OR" : "Room has a name (Hybrid, Cysto…)"}
+          </button>
           <datalist id="day-rooms">
             {dayRooms.map((r) => <option key={r} value={r} />)}
           </datalist>
-        </label>
+        </div>
         {isFirstCase ? (
           <label className="field"><span>First case start time</span>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />

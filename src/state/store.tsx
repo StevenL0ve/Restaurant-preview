@@ -221,6 +221,9 @@ export interface Store {
   resetSetup: (cardId: string) => void;
   // case day
   addCase: (c: Omit<CaseEntry, "id">) => CaseEntry;
+  /** The pull queue follows the board: make sure a cart exists for this
+   *  card+day (no-op if one is already queued). Returns the cart. */
+  ensureCart: (cardId: string, date: string) => CaseCart;
   /** Reorder a "to follow" case within its room for the day. */
   moveCase: (id: string, dir: -1 | 1) => void;
   updateCase: (id: string, patch: Partial<CaseEntry>) => void;
@@ -527,8 +530,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addCase: (c) => {
         const entry: CaseEntry = { ...c, id: uid("case") };
-        update((st) => ({ ...st, cases: [...st.cases, entry] }));
+        // Booking a case queues its cart for pulling, unless one's already there.
+        update((st) => {
+          const queued = withQueuedCart(st, entry.cardId, entry.date);
+          return { ...queued, cases: [...queued.cases, entry] };
+        });
         return entry;
+      },
+
+      ensureCart: (cardId, date) => {
+        const found = state.carts.find((k) => k.cardId === cardId && k.date === date);
+        if (found) return found;
+        const now = new Date().toISOString();
+        const cart: CaseCart = {
+          id: uid("cart"), cardId, date, pulls: {}, missing: [], createdAt: now, updatedAt: now,
+        };
+        update((st) =>
+          st.carts.some((k) => k.cardId === cardId && k.date === date)
+            ? st
+            : { ...st, carts: [...st.carts, cart] },
+        );
+        return cart;
       },
 
       moveCase: (id, dir) =>
@@ -1601,6 +1623,23 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+/** Queue a cart for a card+day if none exists yet (pure; same ref when queued). */
+export function withQueuedCart(st: AppState, cardId: string, date: string, now = new Date().toISOString()): AppState {
+  if (st.carts.some((c) => c.cardId === cardId && c.date === date)) return st;
+  return {
+    ...st,
+    carts: [
+      ...st.carts,
+      { id: uid("cart"), cardId, date, pulls: {}, missing: [], createdAt: now, updatedAt: now },
+    ],
+  };
+}
+
+/** The pull-queue cart backing a case on the board (first cart for card+day). */
+export function cartForCase(s: AppState, cardId: string, date: string): CaseCart | undefined {
+  return s.carts.find((c) => c.cardId === cardId && c.date === date);
+}
+
 export function cartDisplayName(s: AppState, cartId: string): string {
   const c = s.carts.find((x) => x.id === cartId);
   if (!c) return "another case";
