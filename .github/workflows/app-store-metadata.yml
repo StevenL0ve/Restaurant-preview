@@ -16,7 +16,7 @@ on:
   # one also runs whenever the listing files change on the release branch.
   push:
     branches: ["claude/prefcard-app-rebuild-47hgvc"]
-    paths: ["fastlane/metadata/**", "fastlane/screenshots/**", "fastlane/rating.json", ".github/workflows/app-store-metadata.yml"]
+    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", ".github/workflows/app-store-metadata.yml"]
 
 jobs:
   metadata:
@@ -43,22 +43,11 @@ jobs:
             echo "$ASC_KEY_CONTENT" | base64 --decode > "$HOME/asc/AuthKey.p8"
           fi
 
-      - name: Review contact phone
-        env:
-          PHONE: ${{ secrets.ASC_CONTACT_PHONE }}
-        run: |
-          if [ -n "$PHONE" ]; then
-            printf '%s' "$PHONE" > fastlane/metadata/review_information/phone_number.txt
-          else
-            echo "::warning::No ASC_CONTACT_PHONE secret: skipping App Review contact + demo account (add the secret and rerun, or fill it in the console)."
-            rm -rf fastlane/metadata/review_information
-          fi
-
-      - name: Upload listing, screenshots, categories, rating
+      - name: Verify the draft and fill in App Store Connect
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_CONTACT_PHONE: ${{ secrets.ASC_CONTACT_PHONE }}
           FASTLANE_SKIP_UPDATE_CHECK: "1"
-        run: fastlane ios metadata
+        run: ruby fastlane/asc_prepare.rb
