@@ -6,7 +6,7 @@ import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
 import {
   facilityId, forgetFacility, getFacilities, getFacilityNotice, getWorkspace, onWorkspaceChange,
-  setFacilityNotice, setWorkspace, type JoinedWorkspace,
+  setFacilityNotice, setWorkspace, type JoinedWorkspace, type MemberRole,
 } from "../lib/workspace";
 import { checkPendingFacilities, facilityInfo, myMembership, workspaceMemberCount } from "../state/cloudSync";
 import { FacilityAdmin } from "../components/FacilityAdmin";
@@ -407,7 +407,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
   // Membership as the cloud sees it: member count for the blurb, and your
   // role (an admin promoted since you joined sees the admin tools).
   const [members, setMembers] = useState<number | null>(null);
-  const [role, setRole] = useState<"admin" | "member" | null>(joined?.role ?? null);
+  const [role, setRole] = useState<MemberRole | null>(joined?.role ?? null);
   useEffect(() => {
     if (!joined) { setMembers(null); setRole(null); return; }
     let on = true;

@@ -21,6 +21,7 @@ const ROLE_ALIASES: Record<string, TeamRole> = {
   anesthesia: "anesthesia", "anesthesia provider": "anesthesia", crna: "crna", anesthesiologist: "anesthesiologist",
   "or admin": "oradmin", admin: "oradmin", administrator: "oradmin", "or manager": "oradmin", manager: "oradmin", director: "oradmin",
   scheduler: "scheduler", scheduling: "scheduler",
+  rep: "rep", "vendor rep": "rep", "sales rep": "rep", vendor: "rep", "device rep": "rep",
   spd: "spd", "spd tech": "spd", "sterile processing": "spd", "sterile processing tech": "spd", "cs tech": "spd",
 };
 
@@ -56,6 +57,7 @@ export function guessRole(raw?: string): TeamRole | null {
   if (/anesthesiologist/.test(t)) return "anesthesiologist";
   if (/anesthes/.test(t)) return "anesthesia";
   if (/\bspd\b|sterile proc/.test(t)) return "spd";
+  if (/\brep\b|vendor/.test(t)) return "rep";
   if (/schedul/.test(t)) return "scheduler";
   if (/\badmin|manager|director/.test(t)) return "oradmin";
   if (/resident|fellow|\bpgy/.test(t)) return "resident";

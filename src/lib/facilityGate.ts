@@ -31,6 +31,8 @@ export function setDemo(on: boolean): void {
 export interface FacilityAccess {
   /** Synced with a facility: the full app. */
   joined: boolean;
+  /** Linked as a vendor rep: set requests only. */
+  rep: boolean;
   /** Trying the facility screens with sample data, nothing synced. */
   demo: boolean;
   /** joined || demo */
@@ -39,9 +41,11 @@ export interface FacilityAccess {
 
 export function useFacilityAccess(): FacilityAccess {
   const read = (): FacilityAccess => {
-    const joined = !!getWorkspace();
+    const ws = getWorkspace();
+    const joined = !!ws;
+    const rep = ws?.role === "rep";
     const demo = !joined && isDemo();
-    return { joined, demo, open: joined || demo };
+    return { joined, rep, demo, open: joined || demo };
   };
   const [a, setA] = useState(read);
   useEffect(() => {

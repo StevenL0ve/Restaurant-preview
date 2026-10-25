@@ -186,6 +186,10 @@ export interface LoanerTray {
   facilityId?: ID;
   surgeonId?: ID;
   cardId?: ID; // optional link to the preference card it's for
+  caseId?: ID; // the scheduled case this request was made from
+  /** The rep's ORSync account, when the request was assigned to a rep who has
+   *  one: they see and update only requests carrying their uid. */
+  repUid?: string;
   procedure?: string;
   caseDate?: string; // ISO date/datetime of the surgery
   neededBy?: string; // ISO delivery deadline (leaves time to sterilize)
@@ -224,6 +228,7 @@ export const TEAM_ROLES = [
   { key: "oradmin", label: "OR admin" },
   { key: "scheduler", label: "Scheduler" },
   { key: "spd", label: "SPD technician" },
+  { key: "rep", label: "Vendor rep" },
 ] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number]["key"];
 

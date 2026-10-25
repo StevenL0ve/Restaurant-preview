@@ -4,6 +4,7 @@ import { rememberFacility, setWorkspace } from "../lib/workspace";
 import { createFacility, joinFacility } from "../state/cloudSync";
 import { isOrsyncOwner } from "../lib/owner";
 import { getProfile, roleLabel } from "../lib/profile";
+import { setRepMode } from "../state/store";
 
 // Join a hospital's shared library with its facility name and password.
 // Shared by onboarding and Settings → Facility. A wrong password can't
@@ -26,7 +27,7 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
   const [err, setErr] = useState<string | null>(null);
   const [offerCreate, setOfferCreate] = useState<string | null>(null);
   const prof = getProfile(uid);
-  const me = { uid, name: userName, email, phone: prof?.phone, position: roleLabel(prof?.role, prof?.level) || undefined, photo: prof?.photo };
+  const me = { uid, name: userName, email, phone: prof?.phone, position: roleLabel(prof?.role, prof?.level) || undefined, photo: prof?.photo, rep: prof?.role === "rep" };
 
   async function join() {
     setErr(null);
@@ -46,6 +47,7 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
         onJoined?.(name.trim(), "pending");
       } else {
         setWorkspace({ id: r.id, name: name.trim(), role: r.role });
+        if (r.role === "rep") setRepMode(true);
         setPw("");
         onJoined?.(name.trim(), "joined");
       }

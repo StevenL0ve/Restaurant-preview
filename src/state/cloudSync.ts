@@ -221,7 +221,14 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
       if (sync.stopped) return;
       // Shared data follows the root; a person's own setup checklists stay theirs.
       const [r0, ...rRest] = sync.root;
-      const colRef = (key: string) => fs.collection(db, r0, ...rRest, key);
+      // A vendor rep's link to a facility is for set requests only: the one
+      // collection they can read, filtered to requests assigned to them.
+      const repOnly = workspace?.role === "rep";
+      const keys: readonly SyncedKey[] = repOnly ? ["loaners"] : SYNCED_KEYS;
+      const colRef = (key: string) =>
+        repOnly && key === "loaners"
+          ? fs.query(fs.collection(db, r0, ...rRest, key), fs.where("repUid", "==", uid))
+          : fs.collection(db, r0, ...rRest, key);
       const docRef = (key: string, id: string) => fs.doc(db, r0, ...rRest, key, id);
       const setupsRef = fs.doc(db, "users", uid, "meta", "setups");
 
@@ -237,7 +244,7 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
 
       // Bootstrap: read what the cloud has. "Empty" is judged by entity
       // docs only, never by the meta doc.
-      const snaps = await Promise.all(SYNCED_KEYS.map((k) => fs.getDocs(colRef(k))));
+      const snaps = await Promise.all(keys.map((k) => fs.getDocs(colRef(k))));
       const setupsSnap = await fs.getDoc(setupsRef);
       if (sync.stopped) return;
       const entityCount = snaps.reduce((n, s) => n + s.size, 0);
@@ -249,7 +256,7 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
         await pushAll(sync, fs, db, docRef);
       } else {
         const patch: Partial<AppState> = {};
-        SYNCED_KEYS.forEach((key, i) => {
+        keys.forEach((key, i) => {
           const docs = snaps[i].docs.map((d) => d.data() as Item);
           for (const d of snaps[i].docs) sync.lastKnown[key].set(d.id, stableStringify(d.data()));
           let items = fromDocs(docs);
@@ -272,12 +279,20 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
       setSyncedUid(rootId);
 
       // Live listeners: other devices' edits land here within a second.
-      for (const key of SYNCED_KEYS) {
+      for (const key of keys) {
         const stop = fs.onSnapshot(colRef(key), (snap) => {
           if (sync.stopped) return;
           sync.lastKnown[key] = new Map(snap.docs.map((d) => [d.id, stableStringify(d.data())]));
           let items = fromDocs(snap.docs.map((d) => d.data() as Item));
-          const current = sync.hooks.getState()[key] as unknown as Item[];
+          let current = sync.hooks.getState()[key] as unknown as Item[];
+          if (repOnly) {
+            // Only the rep's own requests travel; anything else local stays as is.
+            const mine = (x: Item) => (x as { repUid?: string }).repUid === uid;
+            const others = current.filter((x) => !mine(x));
+            current = current.filter(mine);
+            items = [...items, ...others];
+            current = [...current, ...others];
+          }
           if (key === "loaners") {
             items = mergeLoanerPhotos(items as unknown as LoanerTray[], current as unknown as LoanerTray[]) as unknown as Item[];
           }
@@ -371,8 +386,12 @@ async function pushNow(sync: ActiveSync) {
     };
 
     let setupsJsonToRecord: string | null = null;
-    for (const key of SYNCED_KEYS) {
-      const desired = prepareForCloud(key, state[key] as unknown as Item[]);
+    const repOnly = sync.workspace?.role === "rep";
+    for (const key of (repOnly ? (["loaners"] as const) : SYNCED_KEYS)) {
+      const source = repOnly
+        ? (state[key] as unknown as Item[]).filter((x) => (x as { repUid?: string }).repUid === sync.uid)
+        : (state[key] as unknown as Item[]);
+      const desired = prepareForCloud(key, source);
       const { changed, removedIds } = diffDocs(sync.lastKnown[key], desired);
       for (const it of changed) {
         await op((b) => b.set(fs.doc(db, sync.root[0], ...sync.root.slice(1), key, it.id), it));
@@ -418,8 +437,12 @@ async function pushAll(
   let batch = fs.writeBatch(db);
   let ops = 0;
   const applied: [SyncedKey, string, string][] = [];
-  for (const key of SYNCED_KEYS) {
-    for (const it of prepareForCloud(key, state[key] as unknown as Item[])) {
+  const repOnly = sync.workspace?.role === "rep";
+  for (const key of (repOnly ? (["loaners"] as const) : SYNCED_KEYS)) {
+    const source = repOnly
+      ? (state[key] as unknown as Item[]).filter((x) => (x as { repUid?: string }).repUid === sync.uid)
+      : (state[key] as unknown as Item[]);
+    for (const it of prepareForCloud(key, source)) {
       batch.set(docRef(key, it.id), it);
       applied.push([key, it.id, stableStringify(it)]);
       if (++ops >= 400) { await batch.commit(); batch = fs.writeBatch(db); ops = 0; }
@@ -467,7 +490,7 @@ export interface BlockedEntry {
   blockedAt?: string;
 }
 
-type Me = { uid: string; name: string; email: string; phone?: string; position?: string; photo?: string };
+type Me = { uid: string; name: string; email: string; phone?: string; position?: string; photo?: string; rep?: boolean };
 
 function memberFields(m: Me) {
   return {
@@ -523,7 +546,7 @@ export async function joinFacility(name: string, password: string, me: Me): Prom
   try {
     await fs.setDoc(memberRef, creator
       ? { ...memberFields(me), role: "admin", status: "active", joinedAt: now, proof }
-      : { ...memberFields(me), role: "member", status: "pending", requestedAt: now, proof });
+      : { ...memberFields(me), role: me.rep ? "rep" : "member", status: "pending", requestedAt: now, proof });
   } catch (e) {
     if (isDeniedErr(e)) return { result: "denied", id };
     throw e;

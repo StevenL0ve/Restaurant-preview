@@ -40,6 +40,14 @@ service cloud.firestore {
     function isAdmin(ws) {
       return isActiveMember(ws) && get(memberPath(ws)).data.role == 'admin';
     }
+    // OR staff (admins and members). Vendor reps are active members too,
+    // but linked for set-request tracking only: they never see the library.
+    function isStaff(ws) {
+      return isActiveMember(ws) && memberData(ws).role != 'rep';
+    }
+    function isRep(ws) {
+      return isActiveMember(ws) && memberData(ws).role == 'rep';
+    }
     function facilityProof(ws) {
       return get(/databases/$(db)/documents/workspaces/$(ws)/private/auth).data.proof;
     }
@@ -86,7 +94,7 @@ service cloud.firestore {
           && request.resource.data.email == myEmail()
           && !isBlockedEmail(ws)
           && request.resource.data.proof == facilityProof(ws)
-          && ((request.resource.data.role == 'member' && request.resource.data.status == 'pending')
+          && (((request.resource.data.role == 'member' || request.resource.data.role == 'rep') && request.resource.data.status == 'pending')
               || (request.resource.data.role == 'admin' && request.resource.data.status == 'active'
                   && wsDoc(ws).data.createdBy == request.auth.uid));
         // You keep your own name/phone/position current (and drop the proof
@@ -111,9 +119,20 @@ service cloud.firestore {
         allow read, write: if isAdmin(ws) || isOwner();
       }
 
+      // Set requests: staff see and edit all; a rep sees and updates only
+      // the ones assigned to their account (their queries filter on repUid),
+      // and only the fields a rep owns (status, sets, ETA, contact).
+      match /data/library/loaners/{id} {
+        allow read: if isStaff(ws) || (isRep(ws) && resource.data.repUid == request.auth.uid);
+        allow create, delete: if isStaff(ws);
+        allow update: if isStaff(ws)
+          || (isRep(ws) && resource.data.repUid == request.auth.uid
+              && request.resource.data.repUid == request.auth.uid
+              && changedOnly(['status', 'sets', 'history', 'estimatedDelivery', 'repName', 'repPhone', 'repEmail', 'altContact', 'updatedAt', '_ord']));
+      }
       // The shared library: cards, carts, pulls, QC, schedule, on-call, notes.
       match /data/{document=**} {
-        allow read, write: if isActiveMember(ws);
+        allow read, write: if isStaff(ws);
       }
     }
   }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type React from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "./state/auth";
 import { useStore } from "./state/store";
 import { initNativeFileOpen } from "./lib/nativeFileOpen";
@@ -50,6 +50,21 @@ import { JoinLinkPage } from "./pages/JoinLinkPage";
 // page explains and offers the facility login.
 function Gated({ children }: { children: React.ReactNode }) {
   const access = useFacilityAccess();
+  const { pathname } = useLocation();
+  if (access.joined && access.rep && !pathname.startsWith("/loaners")) {
+    return (
+      <div className="page gate">
+        <div className="card gate-card">
+          <h2>Rep link</h2>
+          <p className="muted">
+            Your account is linked to this facility as a vendor rep, for set requests only. Your
+            requests, their status, and check-in live on the Loaners tab.
+          </p>
+          <Link className="btn btn-primary" to="/loaners">Open my set requests</Link>
+        </div>
+      </div>
+    );
+  }
   if (access.joined) return <>{children}</>;
   if (access.demo) return <><DemoBanner />{children}</>;
   return <FacilityRequired />;

@@ -2121,3 +2121,8 @@ html, body { overflow-x: hidden; }
 .settings-profile { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
 .settings-profile-text { display: grid; gap: 2px; min-width: 0; }
 .settings-profile-text h1 { margin: 0; font-size: 22px; }
+
+/* ---- Rep set requests on a case ---- */
+.rep-draft { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.rep-draft .muted.small { flex-basis: 100%; font-weight: 400; }
+.rep-form { display: grid; gap: 8px; margin: 6px 0; }

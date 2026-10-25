@@ -13,7 +13,9 @@
 //    An admin blocking someone flips that status (and remembers their
 //    email), and their device is shut out immediately, password or not.
 
-export type MemberRole = "admin" | "member";
+/** admin: runs the facility. member: OR staff, full shared library.
+ *  rep: a vendor rep, linked for set-request tracking only. */
+export type MemberRole = "admin" | "member" | "rep";
 
 export interface JoinedWorkspace {
   /** The facility's cloud address (SHA-256 of its normalized name). */

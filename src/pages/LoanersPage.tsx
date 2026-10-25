@@ -1,3 +1,4 @@
+import { printSetLabels } from "../lib/labels";
 import { useMemo, useRef, useState } from "react";
 import { Mascot } from "../components/Mascot";
 import { Link } from "react-router-dom";
@@ -214,6 +215,7 @@ function LoanerCard({ loaner: l, store, repMode, onEdit }: { loaner: LoanerTray;
       <div className="loaner-status-row">
         <span className="muted small">Request status</span>
         {statusSelect(l.status, (s) => setLoanerStatus(l.id, s), "Request status")}
+        <button className="btn btn-sm" type="button" onClick={() => void printSetLabels(l)}>Print set labels</button>
       </div>
 
       <SetList loaner={l} store={store} />

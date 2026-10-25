@@ -19,3 +19,7 @@ export const facilityJoinLink = (name: string, password: string) =>
 /** Same, as the native app's own scheme (opens ORSync directly when installed). */
 export const facilityJoinAppLink = (name: string, password: string) =>
   `orsync://join?f=${encodeURIComponent(name)}&p=${encodeURIComponent(password)}`;
+
+/** A loaner request and one of its sets: what the printed set label's QR
+ *  points at, so a scan opens the live request. */
+export const loanerSetLink = (loanerId: string, setId: string) => `${WEB_APP_URL}/#/loaners?req=${loanerId}&set=${setId}`;

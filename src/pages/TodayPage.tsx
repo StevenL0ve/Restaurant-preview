@@ -11,6 +11,7 @@ import {
   cartForCase,
   dayNotesFor,
   getPullerName,
+  uid,
   onCallPersonRole,
   facilityOf,
   locationLabelOf,
@@ -22,6 +23,8 @@ import { accentStyle } from "../lib/accent";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { stampLine } from "../lib/user";
 import { RecentChanges } from "../components/RecentChanges";
+import { useFacilityReps } from "../lib/reps";
+import { loanerStatusLabel } from "../types";
 import { cardsPdfBlob, cardsPdfFilename, type CardPdfEntry } from "../lib/cardPdf";
 import { cartLink } from "../lib/links";
 import { shareBlobFile } from "../lib/share";
@@ -351,8 +354,23 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 // is just an order: OR 1 Case 2, OR 1 Case 3. Followers can be slotted into
 // any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
-  const { state, addCase, updateCase, moveCase, ensureCart, deleteCart } = store;
+  const { state, addCase, updateCase, moveCase, ensureCart, deleteCart, addLoaner } = store;
   const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
+  // Rep set requests: company, rep, and the sets/implants/supplies needed.
+  // Each becomes a loaner request linked to this case, tracked on Loaners.
+  const reps = useFacilityReps();
+  const [repDrafts, setRepDrafts] = useState<{ company: string; rep: string; items: string }[]>([]);
+  const [repOpen, setRepOpen] = useState(false);
+  const [repCompany, setRepCompany] = useState("");
+  const [repWho, setRepWho] = useState("");
+  const [repItems, setRepItems] = useState("");
+  const knownVendors = [...new Set([...state.loaners.map((l) => l.vendor).filter(Boolean) as string[], ...reps.map((r) => r.position?.replace(/^vendor rep\s*/i, "") ?? "").filter(Boolean)])];
+  const existingRequests = existing ? state.loaners.filter((l) => l.caseId === existing.id) : [];
+  function addRepDraft() {
+    if (!repCompany.trim()) return;
+    setRepDrafts((d) => [...d, { company: repCompany.trim(), rep: repWho.trim(), items: repItems.trim() }]);
+    setRepCompany(""); setRepWho(""); setRepItems(""); setRepOpen(false);
+  }
   const [caseDate, setCaseDate] = useState(existing?.date ?? date);
   const [time, setTime] = useState(existing?.time ?? "");
   // Rooms are "OR" + a number for almost everyone, so the form supplies the
@@ -418,6 +436,28 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
       id = existing.id;
     } else {
       id = addCase(payload).id;
+    }
+    // Each rep set request becomes a loaner request tied to this case, so
+    // the rep (when they have an account) sees it and the OR tracks it.
+    const card = state.cards.find((c) => c.id === cardId);
+    for (const d of repDrafts) {
+      const rep = reps.find((r) => r.uid === d.rep || r.name === d.rep);
+      const now = new Date().toISOString();
+      addLoaner({
+        description: `${d.company} sets for ${card?.procedure ?? "case"}`,
+        vendor: d.company,
+        repName: rep?.name ?? (d.rep || undefined),
+        repPhone: rep?.phone ?? undefined,
+        repEmail: rep?.email ?? undefined,
+        repUid: rep?.uid,
+        caseId: id,
+        cardId,
+        surgeonId: card?.surgeonId,
+        procedure: card?.procedure,
+        caseDate: theDate,
+        requestedBy: getPullerName() || undefined,
+        sets: d.items.split(/\n+/).map((t) => t.trim()).filter(Boolean).map((name) => ({ id: uid("set"), name, photos: [], status: "requested" as const, history: [{ status: "requested" as const, at: now }] })),
+      });
     }
     // A follower lands at its current (or last) slot; walk it to the chosen one.
     if (!first) {
@@ -502,6 +542,47 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
         </label>
         <TeamEditor team={team} onChange={setTeam} />
       </div>
+    <div className="field field-wide"><span>Rep sets needed (optional)</span>
+        {existingRequests.map((l) => (
+          <div key={l.id} className="rep-draft">
+            <strong>{l.vendor ?? l.description}</strong>{l.repName ? ` · ${l.repName}` : ""} · {loanerStatusLabel(l.status)}
+            {l.sets.length > 0 && <div className="muted small">{l.sets.map((x) => x.name).join(", ")}</div>}
+            <Link className="link small" to="/loaners">Track</Link>
+          </div>
+        ))}
+        {repDrafts.map((d, i) => (
+          <div key={i} className="rep-draft">
+            <strong>{d.company}</strong>{d.rep ? ` · ${reps.find((r) => r.uid === d.rep)?.name ?? d.rep}` : ""}
+            {d.items && <div className="muted small">{d.items.split(/\n+/).filter(Boolean).join(", ")}</div>}
+            <button type="button" className="link small" onClick={() => setRepDrafts((x) => x.filter((_, j) => j !== i))}>Remove</button>
+          </div>
+        ))}
+        {repOpen ? (
+          <div className="rep-form">
+            <input value={repCompany} onChange={(e) => setRepCompany(e.target.value)} placeholder="Company (Stryker, Zimmer, Arthrex…)" list="rep-vendors" autoCapitalize="words" />
+            <datalist id="rep-vendors">{knownVendors.map((v) => <option key={v} value={v} />)}</datalist>
+            {reps.length > 0 ? (
+              <select value={repWho} onChange={(e) => setRepWho(e.target.value)}>
+                <option value="">Rep (optional)</option>
+                {reps.map((r) => <option key={r.uid} value={r.uid}>{r.name}{r.position ? ` · ${r.position}` : ""}</option>)}
+                <option value="__other">Someone else…</option>
+              </select>
+            ) : null}
+            {(reps.length === 0 || repWho === "__other") && (
+              <input value={repWho === "__other" ? "" : repWho} onChange={(e) => setRepWho(e.target.value)} placeholder="Rep's name (optional)" autoCapitalize="words" />
+            )}
+            <textarea value={repItems} onChange={(e) => setRepItems(e.target.value)} rows={3} placeholder={"Sets, implants, supplies, or equipment, one per line\nTriathlon primary set\nTibial trials"} />
+            <div className="form-actions">
+              <button type="button" className="btn btn-sm btn-primary" disabled={!repCompany.trim()} onClick={addRepDraft}>Add request</button>
+              <button type="button" className="btn btn-sm" onClick={() => setRepOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="form-actions"><button type="button" className="btn btn-sm" onClick={() => setRepOpen(true)}>+ Rep set request</button></div>
+        )}
+        <span className="muted small">Each request shows on Loaners with its status. A rep with an ORSync account linked to this facility sees it on their phone.</span>
+        </div>
+
       <div className="form-actions">
         <button className="btn btn-primary" disabled={!cardId} onClick={save}>{existing ? "Save" : "Add to lineup"}</button>
         <button className="btn" onClick={onDone}>Cancel</button>

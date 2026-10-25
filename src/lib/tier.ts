@@ -35,6 +35,7 @@ export function hasPersonalCloud(): boolean {
 export const FACILITY_PRICE_MONTHLY = "$199";
 export const FACILITY_PRICE_ANNUAL = "$1,990";
 export const FACILITY_SEATS = 30;
+export const REP_PRICE_MONTHLY = "$29";
 
 export const FREE_PERKS = [
   "Preference cards, stored on this phone",

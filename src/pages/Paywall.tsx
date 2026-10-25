@@ -12,6 +12,7 @@ import {
   FACILITY_PERKS,
   FACILITY_PRICE_MONTHLY,
   FACILITY_PRICE_ANNUAL,
+  REP_PRICE_MONTHLY,
   hasPersonalCloud,
   grantProLocally,
 } from "../lib/tier";
@@ -106,6 +107,11 @@ export function Paywall() {
         <p className="muted small">
           Members don't need Pro: everything they keep in the facility's library is stored and synced
           under the facility's package. Their own phone keeps its copy too.
+        </p>
+        <p className="plan-price-line"><strong>Vendor reps:</strong> {REP_PRICE_MONTHLY}/month per facility link</p>
+        <p className="muted small">
+          A rep's link shows only the set requests assigned to them at that facility, with status,
+          check-in, and printable set labels. Never the library.
         </p>
         <a className="btn" href={`mailto:${SALES_EMAIL}?subject=${encodeURIComponent("ORSync facility account")}`}>Email {SALES_EMAIL}</a>
       </div>
