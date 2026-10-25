@@ -13,6 +13,7 @@ import { FacilityAdmin } from "../components/FacilityAdmin";
 import { isOrsyncOwner } from "../lib/owner";
 import { RekeyReminder } from "../components/RekeyReminder";
 import { AccountSecurity } from "../components/AccountSecurity";
+import { SettingsProfileHeader } from "../components/SettingsProfileHeader";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { ProfileForm } from "../components/ProfileForm";
 import { roleLabel, useProfile } from "../lib/profile";
@@ -128,7 +129,7 @@ export function Settings() {
 
   return (
     <div className="page page-narrow">
-      <div className="page-head"><h1>Settings</h1></div>
+      <SettingsProfileHeader />
 
       <div className="card settings-card">
         <h2>Account</h2>

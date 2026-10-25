@@ -94,7 +94,7 @@ service cloud.firestore {
         // re-key deadline. Admins change status (approve, deny, block,
         // allow) and set re-key deadlines. Owners change anything (roles).
         allow update: if (signedIn() && uid == request.auth.uid
-              && changedOnly(['name', 'phone', 'position', 'updatedAt', 'proof'])
+              && changedOnly(['name', 'phone', 'position', 'photo', 'updatedAt', 'proof'])
               && !('proof' in request.resource.data))
           || (signedIn() && uid == request.auth.uid
               && changedOnly(['rekeyBy', 'rekeyedAt', 'updatedAt', 'proof'])

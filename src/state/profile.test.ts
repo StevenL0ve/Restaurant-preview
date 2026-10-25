@@ -30,6 +30,13 @@ describe("account profile links to the OR's people records", () => {
     expect(out.onCallPeople[0]).toMatchObject({ id: "oc1", uid: "u1", name: "Steven Nelson", phone: "+12285550100", positionIds: ["pos1"] });
   });
 
+  it("carries the profile photo onto the roster entry and removes it when cleared", () => {
+    const withPhoto = applyProfileToRoster(base(), { ...steven, photo: "data:image/jpeg;base64,abc" });
+    expect(withPhoto.onCallPeople[0].photo).toBe("data:image/jpeg;base64,abc");
+    const cleared = applyProfileToRoster(withPhoto, { ...steven, photo: undefined });
+    expect(cleared.onCallPeople[0].photo).toBeUndefined();
+  });
+
   it("ignores an empty name and leaves the roster alone without a position", () => {
     const s = base();
     expect(applyProfileToRoster(s, { ...steven, name: "  " })).toBe(s);

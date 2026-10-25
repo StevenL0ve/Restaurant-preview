@@ -32,3 +32,22 @@ export async function filesToDataUrls(files: FileList | File[]): Promise<string[
   }
   return out;
 }
+
+// Profile photos: a small square (256px) so a face is recognizable in a
+// mask-filled OR, but tiny enough (~15-30KB) to live in the person's
+// facility record and on every teammate's phone.
+const AVATAR_DIM = 256;
+export async function fileToAvatarDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const sx = Math.round((bitmap.width - side) / 2);
+  const sy = Math.round((bitmap.height - side) / 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = AVATAR_DIM;
+  canvas.height = AVATAR_DIM;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("no canvas");
+  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, AVATAR_DIM, AVATAR_DIM);
+  bitmap.close?.();
+  return canvas.toDataURL("image/jpeg", 0.8);
+}

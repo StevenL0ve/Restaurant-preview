@@ -2107,3 +2107,17 @@ html, body { overflow-x: hidden; }
 .change-list li:last-child { border-bottom: 0; }
 .change-text { font-size: 14px; }
 .oncall-stamp { margin-top: 2px; }
+
+/* ---- Profile photo ---- */
+.avatar-photo { border-radius: 999px; object-fit: cover; display: inline-block; flex: none; box-shadow: 0 2px 8px -2px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25); }
+.profile-photo { display: flex; align-items: center; gap: 14px; }
+.profile-photo.compact { gap: 8px; }
+.profile-photo-btn { position: relative; border: 0; padding: 0; border-radius: 999px; background: linear-gradient(135deg, var(--brand), #1e40af); color: #fff; display: grid; place-items: center; overflow: hidden; cursor: pointer; flex: none; box-shadow: var(--shadow); }
+.profile-photo-btn img { object-fit: cover; display: block; }
+.profile-photo-initials { font-weight: 700; }
+.profile-photo-edit { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 0 4px; text-align: center; }
+.profile-photo-text { display: grid; gap: 4px; text-align: left; }
+.profile-photo-text .muted.small { font-weight: 400; }
+.settings-profile { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+.settings-profile-text { display: grid; gap: 2px; min-width: 0; }
+.settings-profile-text h1 { margin: 0; font-size: 22px; }

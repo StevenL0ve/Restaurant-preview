@@ -446,6 +446,7 @@ export interface FacilityMember {
   email: string;
   phone?: string | null;
   position?: string | null;
+  photo?: string | null;
   role: MemberRole;
   status: MemberStatus;
   joinedAt?: string;
@@ -466,7 +467,7 @@ export interface BlockedEntry {
   blockedAt?: string;
 }
 
-type Me = { uid: string; name: string; email: string; phone?: string; position?: string };
+type Me = { uid: string; name: string; email: string; phone?: string; position?: string; photo?: string };
 
 function memberFields(m: Me) {
   return {
@@ -475,6 +476,7 @@ function memberFields(m: Me) {
     email: m.email.trim().toLowerCase(),
     phone: m.phone ?? null,
     position: m.position ?? null,
+    photo: m.photo ?? null,
   };
 }
 
@@ -718,12 +720,12 @@ export async function refreshFacilities(uid: string): Promise<void> {
 }
 
 /** Mirror a person's profile into the facility's member list. */
-export async function writeWorkspaceMember(id: string, m: { uid: string; name: string; email: string; phone?: string; position?: string }): Promise<void> {
+export async function writeWorkspaceMember(id: string, m: { uid: string; name: string; email: string; phone?: string; position?: string; photo?: string }): Promise<void> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
   await fs.setDoc(
     fs.doc(db, "workspaces", id, "members", m.uid),
-    { name: m.name, phone: m.phone ?? null, position: m.position ?? null, updatedAt: new Date().toISOString() },
+    { name: m.name, phone: m.phone ?? null, position: m.position ?? null, photo: m.photo ?? null, updatedAt: new Date().toISOString() },
     { merge: true },
   );
 }

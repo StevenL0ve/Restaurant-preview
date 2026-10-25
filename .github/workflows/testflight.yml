@@ -62,6 +62,16 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $MSG" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $MSG" "$PLIST"
 
+      - name: Photo library and camera permissions (item, setup, and profile photos)
+        run: |
+          PLIST=ios/App/App/Info.plist
+          PH="ORSync uses your photos only when you choose to add a picture to an item, a setup, or your profile."
+          CAM="ORSync uses the camera only when you choose to take a picture of an item, a setup, or yourself for your profile."
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string $PH" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription $PH" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string $CAM" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription $CAM" "$PLIST"
+
       - name: Face ID permission (app lock)
         run: |
           PLIST=ios/App/App/Info.plist

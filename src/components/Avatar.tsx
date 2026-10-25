@@ -1,12 +1,27 @@
-/** Colored initials chip for a surgeon or on-call person — soft gradient +
- *  ring for depth. Accepts any record with a name, color, and initials. */
+/** Who someone is, at a glance: their profile photo when they added one,
+ *  else a colored initials chip (soft gradient + ring). Accepts any record
+ *  with a name, color, initials, and optional photo. */
 export function Avatar({
   surgeon,
   size = 36,
 }: {
-  surgeon: { name: string; color: string; initials: string };
+  surgeon: { name: string; color: string; initials: string; photo?: string };
   size?: number;
 }) {
+  if (surgeon.photo) {
+    return (
+      <img
+        className="avatar avatar-photo"
+        src={surgeon.photo}
+        alt=""
+        title={surgeon.name}
+        aria-hidden
+        width={size}
+        height={size}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <span
       className="avatar"

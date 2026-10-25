@@ -7,6 +7,7 @@ import {
 } from "../state/cloudSync";
 import { relativeTime } from "../lib/format";
 import { formatPhone } from "../lib/oncall";
+import { Avatar } from "./Avatar";
 import { facilityJoinAppLink, facilityJoinLink } from "../lib/links";
 
 // Facility admin tools: who's in, who's out, and the password. Shown to a
@@ -80,6 +81,7 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
                 {pending.map((m) => (
                   <div key={m.uid} className="member-row member-pending">
                     <div className="member-main">
+                      <Avatar surgeon={{ name: m.name, color: "#64748b", initials: initialsOf(m.name), photo: m.photo ?? undefined }} size={32} />
                       <strong>{m.name}</strong>
                       {m.position && <span className="pill">{m.position}</span>}
                       <div className="muted small">
@@ -102,6 +104,7 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
             {active.map((m) => (
               <div key={m.uid} className="member-row">
                 <div className="member-main">
+                  <Avatar surgeon={{ name: m.name, color: "#64748b", initials: initialsOf(m.name), photo: m.photo ?? undefined }} size={32} />
                   <strong>{m.name}</strong>
                   {m.role === "admin" && <span className="pill pill-brand">Admin</span>}
                   {m.uid === meUid && <span className="pill">You</span>}
@@ -313,4 +316,8 @@ function ChangePassword({ facilityId, facilityName, meUid, members }: { facility
       </div>
     </div>
   );
+}
+
+function initialsOf(name: string): string {
+  return name.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 2) || "?";
 }

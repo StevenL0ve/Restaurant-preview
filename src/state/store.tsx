@@ -650,7 +650,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const ws = getWorkspace();
         if (ws) {
           void writeWorkspaceMember(ws.id, {
-            uid: p.uid, name: p.name, email: p.email, phone: p.phone, position: roleLabel(p.role, p.level) || undefined,
+            uid: p.uid, name: p.name, email: p.email, phone: p.phone, position: roleLabel(p.role, p.level) || undefined, photo: p.photo,
           }).catch(() => undefined);
         }
       },
@@ -1927,6 +1927,7 @@ export function applyProfileToRoster(st: AppState, p: UserProfile): AppState {
             phone: p.phone ?? o.phone,
             staffRole: p.role ?? o.staffRole,
             role: label ?? o.role,
+            photo: p.photo,
           }
         : o,
     );
@@ -1936,7 +1937,7 @@ export function applyProfileToRoster(st: AppState, p: UserProfile): AppState {
       {
         id: uid("oc"), uid: p.uid, name, initials: initials(name),
         color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
-        phone: p.phone, staffRole: p.role, role: label, positionIds: [],
+        phone: p.phone, staffRole: p.role, role: label, positionIds: [], photo: p.photo,
       },
     ];
   }

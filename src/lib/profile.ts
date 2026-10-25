@@ -14,7 +14,9 @@ export interface UserProfile {
   email: string;
   phone?: string;
   role?: TeamRole;
-  level?: 1 | 2 | 3; // trainees only
+  level?: 1 | 2 | 3;
+  /** Optional profile photo (small JPEG data URL) so teammates recognize you behind a mask. */
+  photo?: string; // trainees only
   completedAt?: string; // onboarding finished (or skipped) on this device
 }
 

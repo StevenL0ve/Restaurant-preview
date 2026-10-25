@@ -50,6 +50,10 @@ platform :ios do
     # Location permission: reps tag storage sites/facilities to see distances.
     loc_msg = "ORSync uses your location only when you tag a storage site or facility, so reps can see how far their sets are from each hospital."
     sh(%(/usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string #{loc_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription #{loc_msg}" "#{plist}"))
+    ph_msg = "ORSync uses your photos only when you choose to add a picture to an item, a setup, or your profile."
+    sh(%(/usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string #{ph_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription #{ph_msg}" "#{plist}"))
+    cam_msg = "ORSync uses the camera only when you choose to take a picture of an item, a setup, or yourself for your profile."
+    sh(%(/usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string #{cam_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription #{cam_msg}" "#{plist}"))
     face_msg = "ORSync uses Face ID to unlock the app, so only you can open your preference cards."
     sh(%(/usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string #{face_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSFaceIDUsageDescription #{face_msg}" "#{plist}"))
 

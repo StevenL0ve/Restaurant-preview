@@ -326,6 +326,8 @@ export interface OnCallPerson {
   staffRole?: TeamRole;
   /** Linked ORSync account: profile changes (name, phone, position) flow here. */
   uid?: string;
+  /** Profile photo from their account (small JPEG data URL), if they added one. */
+  photo?: string;
   positionIds: ID[]; // positions this person is in the pool for
   notes?: string;
   color: string;

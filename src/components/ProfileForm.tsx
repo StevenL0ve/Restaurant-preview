@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TEAM_ROLES, type TeamRole } from "../types";
 import { normalizePhone, type UserProfile } from "../lib/profile";
+import { ProfilePhotoPicker } from "./ProfilePhoto";
 
 // Name, phone, position: the three things the rest of the OR needs to know
 // about you. Used by onboarding and by Settings → Account → Edit profile.
@@ -15,6 +16,7 @@ export function ProfileForm({ initial, submitLabel, onSave, onCancel, busy }: {
   const [phone, setPhone] = useState(initial.phone ?? "");
   const [role, setRole] = useState<TeamRole | "">(initial.role ?? "");
   const [level, setLevel] = useState<1 | 2 | 3>(initial.level ?? 1);
+  const [photo, setPhoto] = useState<string | undefined>(initial.photo);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,11 +27,15 @@ export function ProfileForm({ initial, submitLabel, onSave, onCancel, busy }: {
       phone: normalizePhone(phone) || undefined,
       role: role || undefined,
       level: role === "trainee" ? level : undefined,
+      photo,
     });
   }
 
   return (
     <form className="form-grid profile-form" onSubmit={submit}>
+      <div className="field field-wide">
+        <ProfilePhotoPicker value={photo} name={name} onChange={setPhoto} />
+      </div>
       <label className="field field-wide"><span>Your name</span>
         <input name="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" autoCapitalize="words" placeholder="Steven Nelson" />
         <span className="muted small">Shown on everything you pull, QC, and change, as last name + first initial.</span>

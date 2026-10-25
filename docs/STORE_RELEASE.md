@@ -38,7 +38,8 @@ API too, so the console work is three clicks.
    Connect → ORSync → App Privacy declare, all "linked to the user", not
    used for tracking:
    - Contact info: name, email, phone number (optional)
-   - User content: other user content (preference cards and OR records)
+   - User content: photos (optional profile photo), other user content
+     (preference cards and OR records)
    - Identifiers: user ID
 3. **1.0 Prepare for Submission**: pick the latest TestFlight build under
    Build, check the listing the workflow filled in, and Submit.
@@ -78,7 +79,7 @@ API too, so the console work is three clicks.
 4. Play Console → ORSync → **Testing → Internal testing → Create release** →
    upload the AAB → add tester emails → roll out. Testers get a link.
 5. Fill the store listing (copy from `STORE_LISTING.md`), the **Data safety**
-   form (collects name, email, phone optional, app content; encrypted in
+   form (collects name, email, phone optional, optional profile photo, app content; encrypted in
    transit; users can request deletion; no sharing with third parties), the
    content rating questionnaire, and the target audience (18+).
 6. Optional but worth it: a Play **service account** so the workflow uploads

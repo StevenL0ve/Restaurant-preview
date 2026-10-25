@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { rememberFacility, setWorkspace } from "../lib/workspace";
 import { createFacility, joinFacility } from "../state/cloudSync";
 import { isOrsyncOwner } from "../lib/owner";
+import { getProfile, roleLabel } from "../lib/profile";
 
 // Join a hospital's shared library with its facility name and password.
 // Shared by onboarding and Settings → Facility. A wrong password can't
@@ -24,7 +25,8 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [offerCreate, setOfferCreate] = useState<string | null>(null);
-  const me = { uid, name: userName, email };
+  const prof = getProfile(uid);
+  const me = { uid, name: userName, email, phone: prof?.phone, position: roleLabel(prof?.role, prof?.level) || undefined, photo: prof?.photo };
 
   async function join() {
     setErr(null);
