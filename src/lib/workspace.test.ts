@@ -6,7 +6,7 @@ describe("facility addresses", () => {
     const a = await facilityId("Mercy General OR");
     expect(a).toMatch(/^[0-9a-f]{64}$/);
     expect(await facilityId("  mercy   general or ")).toBe(a);
-    expect(await facilityId("Mercy General OR")).not.toBe(a);
+    expect(await facilityId("St. Luke's OR")).not.toBe(a);
   });
 
   it("the address never reveals the proof (different derivations)", async () => {
