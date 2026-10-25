@@ -84,7 +84,7 @@ function importMessage(added: number, skipped: number, source: string, carts = 0
 }
 
 export function Settings() {
-  const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll } = useStore();
+  const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll, removeExampleData } = useStore();
   const { user, signOut, bioAvailable, bioLabel, bioEnabled, setBioEnabled } = useAuth();
   const [bioMsg, setBioMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -239,6 +239,11 @@ export function Settings() {
           <button className="btn btn-primary" onClick={exportAll}>Export library</button>
           <button className="btn" onClick={() => fileRef.current?.click()}>Import cards…</button>
           <input ref={fileRef} type="file" accept="application/json,.json,.orsync" hidden onChange={onImportFile} />
+          <button className="btn" onClick={() => {
+            const n = removeExampleData();
+            setMsg(n ? `Removed ${n} example item${n === 1 ? "" : "s"}. Everything you made is still here.` : "No example data left to remove.");
+            setTimeout(() => setMsg(null), 4000);
+          }}>Remove example data</button>
           {!(cloudEnabled() && user?.uid) && (
             <button className="btn" onClick={resetDemo}>Reset demo data</button>
           )}

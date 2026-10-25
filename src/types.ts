@@ -121,6 +121,11 @@ export interface PrefCard {
   backTablePhoto?: string;
   updatedAt: string; // ISO
   updatedBy?: string; // full name of who last changed it; shown as "Last, F."
+  /** Set when the card came from a photo/scan: when it was uploaded. Until
+   *  someone edits it in the app, the card shows "Uploaded" with this date. */
+  uploadedAt?: string;
+  /** The paper card's own "Last updated" date (YYYY-MM-DD), if it had one. */
+  sourceUpdated?: string;
 }
 
 /** Live "pull list" progress while setting up a room. Keyed by card id and kept

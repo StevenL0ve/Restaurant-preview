@@ -450,11 +450,13 @@ async function pushAll(
   let ops = 0;
   const applied: [SyncedKey, string, string][] = [];
   const repOnly = sync.workspace?.role === "rep";
+  // Seeding an empty cloud library (a new facility, or a first sign-in):
+  // the example data a fresh install comes with never goes up.
   for (const key of (repOnly ? (["loaners"] as const) : SYNCED_KEYS)) {
     const source = repOnly
       ? (state[key] as unknown as Item[]).filter((x) => (x as { repUid?: string }).repUid === sync.uid)
       : (state[key] as unknown as Item[]);
-    for (const it of prepareForCloud(key, source)) {
+    for (const it of prepareForCloud(key, source.filter((x) => !SEED_IDS.has(x.id)))) {
       batch.set(docRef(key, it.id), it);
       applied.push([key, it.id, stableStringify(it)]);
       if (++ops >= 400) { await batch.commit(); batch = fs.writeBatch(db); ops = 0; }

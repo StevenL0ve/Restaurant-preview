@@ -146,7 +146,12 @@ export function CardDetail() {
           <p className="muted small" style={{ margin: 0 }}>No position / prep / notes recorded yet.</p>
         )}
         {card.updatedBy && (
-          <p className="muted small" style={{ margin: "8px 0 0" }}>Last changed: {stampLine(card.updatedBy, card.updatedAt)}</p>
+          <p className="muted small" style={{ margin: "8px 0 0" }}>
+            {card.uploadedAt && card.uploadedAt !== "pending" && card.uploadedAt === card.updatedAt
+              ? <>Uploaded: {stampLine(card.updatedBy, card.uploadedAt)}</>
+              : <>Last updated: {stampLine(card.updatedBy, card.updatedAt)}</>}
+            {card.sourceUpdated && <> · Paper card last updated {card.sourceUpdated}</>}
+          </p>
         )}
       </div>
 

@@ -32,6 +32,12 @@ export interface ParsedCard {
   prep?: string;
   draping?: string;
   notes?: string;
+  /** "7.5" from "Gloves: 7.5 Biogel, latex-free". */
+  gloveSize?: string;
+  /** "Biogel, latex-free" from the same line. */
+  gloveType?: string;
+  /** The paper card's own "Last updated" date, as an ISO day (YYYY-MM-DD). */
+  sourceUpdated?: string;
   sections: Record<SectionKey, ParsedItem[]>;
   itemCount: number;
 }
@@ -72,7 +78,7 @@ const SECTION_ALIASES: Record<string, SectionKey> = {
 const NOTES_HEADER_RE = /^notes?\s*[/&]?\s*(special\s*)?(instructions?)?$|^special\s*instructions?$|^comments?$/i;
 
 // Labeled header fields. `key` is where the value lands; "ignore" drops it.
-const FIELD_LABELS: { key: keyof ParsedCard | "notes+" | "ignore"; re: RegExp; strip?: RegExp }[] = [
+const FIELD_LABELS: { key: keyof ParsedCard | "notes+" | "ignore" | "gloves" | "updated"; re: RegExp; strip?: RegExp }[] = [
   // "PREF CARD: 4138 - Osteotomy, Lefort I…" — the best title; strip the card number.
   { key: "procedure", re: /^pref\.?\s*card\b/i, strip: /^[#\d]+\s*[-–—]\s*/ },
   { key: "procedure", re: /^(procedures?|procs?|cases?|surger(?:y|ies)|operations?)\b/i, strip: /^\d+\s*[-–—]\s*/ },
@@ -81,9 +87,10 @@ const FIELD_LABELS: { key: keyof ParsedCard | "notes+" | "ignore"; re: RegExp; s
   { key: "position", re: /^(position|positioning)\b/i },
   { key: "prep", re: /^(skin\s*prep|prep|prepping)\b/i },
   { key: "draping", re: /^(draping|drape|drapes)\b/i },
-  { key: "notes+", re: /^(gloves?)\b/i }, // surgeon's gloves → keep visible in notes
+  { key: "gloves", re: /^(glove\s*size|gloves?)\b/i },
   { key: "notes+", re: /^(notes?|comments?|quirks?|reminders?|special\s*instructions?)\b/i },
-  { key: "ignore", re: /^(last\s*update|update\s*by|pull\s*by|pull\s*date|page|printed|updated)\b/i },
+  { key: "updated", re: /^(last\s*updated?|last\s*revised|revised|rev(?:ision)?\s*date|date\s*updated|updated(?:\s*on)?)\b/i },
+  { key: "ignore", re: /^(update\s*by|updated\s*by|pull\s*by|pull\s*date|page|printed)\b/i },
 ];
 
 // Lines that are print/screen junk, not card content.
@@ -248,6 +255,21 @@ export function parseCardText(text: string): ParsedCard {
       const value = label.strip ? rawValue.replace(label.strip, "") : rawValue;
       dropProcList = label.key === "procedure";
       if (label.key === "ignore") continue;
+      if (label.key === "gloves") {
+        // The full line stays in notes (double-gloving, per-person sizes);
+        // size and brand fill their own fields only when unambiguous.
+        if (rawValue) notesParts.push(`Gloves: ${rawValue}`);
+        const sizes = rawValue.match(/(?:^|[^\d.])(?:5|6|7|8|9)(?:\.5)?(?![\d.])/g) ?? [];
+        const g = parseGloves(rawValue);
+        if (sizes.length === 1 && g.size && !out.gloveSize) out.gloveSize = g.size;
+        if (sizes.length <= 1 && g.type && !/\d|\b(dr|over|under)\b/i.test(g.type) && g.type.length <= 40 && !out.gloveType) out.gloveType = g.type;
+        continue;
+      }
+      if (label.key === "updated") {
+        const d = parseLooseDate(rawValue);
+        if (d && !out.sourceUpdated) out.sourceUpdated = d;
+        continue;
+      }
       if (label.key === "notes+") {
         if (rawValue) {
           const labelWord = line.match(label.re)?.[0] ?? "Note";
@@ -358,6 +380,34 @@ export function parseCardText(text: string): ParsedCard {
 
 /** A short, human summary of what was recognized — shown live under the text
  *  box so the tech can see the parse working before they commit. */
+/** "7.5 Biogel, latex-free" -> size 7.5, type "Biogel, latex-free". */
+export function parseGloves(raw: string): { size?: string; type?: string } {
+  const t = raw.trim();
+  const m = t.match(/(?:^|\s|size\s*)(5(?:\.5)?|6(?:\.5)?|7(?:\.5)?|8(?:\.5)?|9)(?![\d.])/i);
+  const size = m ? m[1] : undefined;
+  const type = (m ? t.replace(m[0], " ") : t).replace(/\bsize\b/i, "").replace(/^[\s,;:\-–—]+|[\s,;:\-–—]+$/g, "").replace(/\s{2,}/g, " ");
+  return { size, type: type || undefined };
+}
+
+/** A date as printed on a card ("10/12/2025", "2025-10-12", "Oct 12, 2025",
+ *  "12 Oct 2025") as YYYY-MM-DD, or undefined. Times are ignored. */
+export function parseLooseDate(raw: string): string | undefined {
+  const t = raw.trim();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const ok = (y: number, mo: number, d: number) =>
+    y >= 1990 && y <= 2100 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? `${y}-${pad(mo)}-${pad(d)}` : undefined;
+  let m = t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return ok(+m[1], +m[2], +m[3]);
+  m = t.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/);
+  if (m) { const y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; return ok(y, +m[1], +m[2]); }
+  const months = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  m = t.match(/([a-z]{3})[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})/i);
+  if (m && months.includes(m[1].toLowerCase())) return ok(+m[3], months.indexOf(m[1].toLowerCase()) + 1, +m[2]);
+  m = t.match(/(\d{1,2})\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})/i);
+  if (m && months.includes(m[2].toLowerCase())) return ok(+m[3], months.indexOf(m[2].toLowerCase()) + 1, +m[1]);
+  return undefined;
+}
+
 export function summarizeParse(parsed: ParsedCard): string {
   const bits: string[] = [];
   if (parsed.procedure) bits.push(`“${parsed.procedure}”`);

@@ -238,6 +238,9 @@ export interface Store {
   /** Bulk roster import; returns how many new people were added. */
   importStaff: (members: { name: string; role: TeamRole; level?: 1 | 2 | 3 }[]) => number;
   deleteStaff: (id: string) => void;
+  /** Remove the example cards, surgeons, carts, and the rest a fresh
+   *  install starts with, keeping everything the user made. */
+  removeExampleData: () => number;
   /** Save who you are: staff directory, on-call roster entry (name/phone/
    *  position), puller name, and the facility member list all follow. */
   saveProfile: (p: UserProfile) => void;
@@ -520,7 +523,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       saveCard: (card) =>
         update((st) => {
-          const stamped = { ...card, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined };
+          const now = new Date().toISOString();
+          const stamped = { ...card, updatedAt: now, updatedBy: getPullerName() || undefined };
+          // A scanned card's first save is its upload; later saves are edits.
+          if (card.uploadedAt === "pending") stamped.uploadedAt = now;
           const exists = st.cards.some((c) => c.id === card.id);
           return {
             ...st,
@@ -646,6 +652,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       deleteStaff: (id) => update((st) => ({ ...st, staff: st.staff.filter((m) => m.id !== id) })),
+
+      removeExampleData: () => {
+        const ids = exampleIds();
+        let removed = 0;
+        update((st) => {
+          const out = { ...st } as unknown as Record<string, unknown>;
+          for (const [k, v] of Object.entries(st)) {
+            if (!Array.isArray(v)) continue;
+            const kept = v.filter((x) => !(x && typeof x === "object" && "id" in x && ids.has(String((x as { id: unknown }).id))));
+            removed += v.length - kept.length;
+            out[k] = kept;
+          }
+          const setups = { ...st.setups };
+          for (const id of Object.keys(setups)) if (ids.has(id)) delete setups[id];
+          out.setups = setups;
+          return out as unknown as AppState;
+        });
+        return removed;
+      },
 
       saveProfile: (p) => {
         setProfile(p);
@@ -1854,6 +1879,15 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+/** Ids of everything a fresh install starts with (they're fixed). */
+export function exampleIds(): Set<string> {
+  const ids = new Set<string>();
+  for (const v of Object.values(buildSeed() as unknown as Record<string, unknown>)) {
+    if (Array.isArray(v)) for (const x of v) if (x && typeof x === "object" && "id" in x) ids.add(String((x as { id: unknown }).id));
+  }
+  return ids;
+}
+
 const CHANGE_LOG_CAP = 300;
 
 /** Record who changed what, when (pure). Newest first, capped. */
