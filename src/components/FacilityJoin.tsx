@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "./Icon";
 import { rememberFacility, setWorkspace } from "../lib/workspace";
 import { createFacility, joinFacility } from "../state/cloudSync";
+import { isOrsyncOwner } from "../lib/owner";
 
 // Join a hospital's shared library with its facility name and password.
 // Shared by onboarding and Settings → Facility. A wrong password can't
@@ -150,7 +151,20 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
 export function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : "";
   if (/permission|insufficient/i.test(msg)) {
-    return "ORSync Cloud isn't set up for facilities yet (the Firestore rules need the workspaces section). Ask whoever manages the Firebase project.";
+    // Users get a plain line; ORSync owners get the real cause.
+    return isOrsyncOwner(sessionEmail())
+      ? "Firestore refused this write: the published rules are out of date. Publish firestore.rules (Firebase console → Firestore → Rules, or the Firestore rules workflow)."
+      : "Facilities aren't available right now. Try again in a little while, or check with ORSync support.";
   }
-  return msg || "Couldn't reach ORSync Cloud. Try again.";
+  if (/network|offline|unavailable/i.test(msg)) return "No connection. Try again when you're back online.";
+  return "Couldn't reach ORSync Cloud. Try again.";
+}
+
+function sessionEmail(): string | null {
+  try {
+    const raw = localStorage.getItem("orsync.cloudsession.v1");
+    return raw ? (JSON.parse(raw) as { email?: string }).email ?? null : null;
+  } catch {
+    return null;
+  }
 }

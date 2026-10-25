@@ -19,6 +19,10 @@ dormant; these steps create the project and drop in its keys.
    mode** → pick a US location → Enable.
 5. Still in Firestore: **Rules** tab → replace everything with the
    contents of `firestore.rules` (repo root; copied below) → Publish.
+   Or, once: Project settings → Service accounts → Generate new private
+   key, save the JSON as the GitHub secret `FIREBASE_SERVICE_ACCOUNT`, and
+   the **Firestore rules** workflow publishes every change to the file
+   automatically.
 
    What the rules enforce: each account can only touch its own data. A
    facility's shared library is readable and writable only by that

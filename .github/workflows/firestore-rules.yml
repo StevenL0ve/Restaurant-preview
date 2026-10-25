@@ -1,0 +1,34 @@
+# Publishes firestore.rules to the ORSync Firebase project, so rule changes
+# ship without opening the Firebase console.
+#
+# Secret: FIREBASE_SERVICE_ACCOUNT, the JSON key of a service account on
+# the project (Firebase console → gear → Project settings → Service accounts
+# → Generate new private key). Paste the whole file as the secret value.
+name: Firestore rules
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/prefcard-app-rebuild-47hgvc"]
+    paths: ["firestore.rules", "firebase.json", ".firebaserc"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Publish rules
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA_JSON" ]; then
+            echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret (service-account JSON) to publish rules from here."
+            exit 1
+          fi
+          printf '%s' "$SA_JSON" > "$HOME/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:rules --project orsync-8f84a --non-interactive
