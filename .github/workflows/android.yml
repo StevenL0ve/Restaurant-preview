@@ -24,6 +24,9 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Step conditions can't read secrets directly; a job-level flag can.
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -164,7 +167,7 @@ jobs:
             keys/upload.jks.b64
 
       - name: Upload to Google Play (Internal testing)
-        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: env.HAS_PLAY == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
