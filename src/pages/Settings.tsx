@@ -509,7 +509,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
         {pendingBlock}
         {othersBlock}
         {(role === "admin" || isOwner) && (
-          <FacilityAdmin facilityId={joined.id} facilityName={joined.name} meUid={uid} canAssignAdmins={isOwner} />
+          <FacilityAdmin facilityId={joined.id} facilityName={joined.name} meUid={uid} canAssignAdmins />
         )}
       </div>
     );

@@ -279,6 +279,8 @@ export interface CaseEntry {
   team?: TeamMember[];
   updatedAt?: string;
   updatedBy?: string; // full name; shown as "Last, F."
+  /** At a facility, non-admins' additions and cancellations wait here. */
+  approval?: { kind: "add" | "cancel"; by?: string; at: string };
 }
 
 // ---- One-day special considerations ---------------------------------------
@@ -384,6 +386,8 @@ export interface CartPullRecord {
   at: string; // ISO
   /** The account that did it, when signed in; links pulls/QC to a person. */
   byUid?: string;
+  /** Their position at the time, so QC knows when a trainee pulled it. */
+  byRole?: TeamRole;
 }
 
 /** An item that wasn't in the cart when pulling finished. Name/section are

@@ -17,13 +17,13 @@ export function SettingsProfileHeader() {
       {user?.uid ? (
         <ProfilePhotoPicker
           compact
-          size={72}
+          size={96}
           value={profile?.photo}
           name={name}
           onChange={(photo) => saveProfile({ ...(profile ?? { uid: user.uid!, name, email: user.email }), photo, completedAt: profile?.completedAt ?? new Date().toISOString() })}
         />
       ) : (
-        <span className="profile-photo-btn" style={{ width: 72, height: 72, cursor: "default" }}>
+        <span className="profile-photo-btn" style={{ width: 96, height: 96, cursor: "default" }}>
           <span className="profile-photo-initials" style={{ fontSize: 24 }}>{name.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 2) || "?"}</span>
         </span>
       )}

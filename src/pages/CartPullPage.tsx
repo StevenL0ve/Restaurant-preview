@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "../state/auth";
+import { usePermissions } from "../lib/permissions";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   useStore,
@@ -167,7 +169,7 @@ export function CartPullPage() {
                               {item.detail && <span className="item-detail">{item.detail}</span>}
                               {item.hold && <span className="hold-chip" title="Pull it, keep it unopened unless asked">hold</span>}
                             </span>
-                            {rec && <span className="pulled-by">pulled · {rec.by} {timeShort(rec.at)}</span>}
+                            {rec && <span className="pulled-by">pulled · {rec.by}{rec.byRole === "trainee" ? " (trainee)" : rec.byRole === "phase2" ? " (Phase II)" : ""} {timeShort(rec.at)}</span>}
                             {flagged && <span className="pulled-by neg">on the missing list</span>}
                           </span>
                         </label>
@@ -278,7 +280,20 @@ function DoneView({ cart, card, me, onResume }: { cart: CaseCart; card: PrefCard
 // missing list, so the day's ops view updates automatically.
 function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: string }) {
   const { toggleCartQc, finishCartQc, reopenCartQc, qcConfirmMissing, qcResolveMissing } = useStore();
+  const { user } = useAuth();
+  const perms = usePermissions(user?.uid, user?.email);
   const [confirming, setConfirming] = useState(false);
+  // QC is a second set of eyes from a tech or nurse. Trainees and Phase II
+  // students pull; they don't sign off. And QC should know when they pulled.
+  const traineePulls = [...new Set(Object.values(cart.pulls).filter((p) => p.byRole === "trainee" || p.byRole === "phase2").map((p) => p.by))];
+  if (!perms.canQc) {
+    return (
+      <div className="card form-card">
+        <div className="card-head"><h2>Quality check</h2></div>
+        <p className="muted small">QC is signed off by a surgical technologist or nurse. Your pulls are marked with your name and position so they know to check them.</p>
+      </div>
+    );
+  }
 
   const pulledItems = SECTIONS.flatMap((sec) =>
     card[sec.key].filter((it) => cart.pulls[it.id]).map((it) => ({ item: it, section: sec.label })),
@@ -329,7 +344,7 @@ function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: strin
                     {item.detail && <span className="item-detail">{item.detail}</span>}
                   </span>
                   <span className="row-sub">
-                    {section} · pulled by {p.by}{q ? ` · verified by ${q.by} ${timeShort(q.at)}` : ""}
+                    {section} · pulled by {p.by}{p.byRole === "trainee" ? " (trainee)" : p.byRole === "phase2" ? " (Phase II)" : ""}{q ? ` · verified by ${q.by} ${timeShort(q.at)}` : ""}
                   </span>
                 </span>
               </label>
@@ -359,6 +374,11 @@ function QcPanel({ cart, card, me }: { cart: CaseCart; card: PrefCard; me: strin
               </span>
             </div>
           ))}
+        </div>
+      )}
+      {traineePulls.length > 0 && (
+        <div className="demo-banner" style={{ margin: "0 0 10px" }}>
+          <span><strong>Pulled in part by a trainee or Phase II student</strong> ({traineePulls.join(", ")}). Check those items carefully.</span>
         </div>
       )}
       {pulledItems.length === 0 ? (

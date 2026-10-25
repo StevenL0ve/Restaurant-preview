@@ -2126,3 +2126,22 @@ html, body { overflow-x: hidden; }
 .rep-draft { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
 .rep-draft .muted.small { flex-basis: 100%; font-weight: 400; }
 .rep-form { display: grid; gap: 8px; margin: 6px 0; }
+
+/* ---- Portrait form overflow: iOS date/time inputs carry an intrinsic
+   width wider than a narrow column; let every field shrink to its cell. */
+.form-grid > *, .field { min-width: 0; }
+.field input, .field select, .field textarea { width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+.field input[type="date"], .field input[type="time"], .field input[type="datetime-local"] { -webkit-appearance: none; appearance: none; display: block; min-height: 44px; text-align: left; }
+@media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* ---- Photo cropper ---- */
+.cropper-scrim { position: fixed; inset: 0; background: rgba(8,12,24,0.6); display: grid; place-items: center; z-index: 1000; padding: 16px; }
+.cropper-card { background: var(--card, #fff); border-radius: 20px; padding: 18px; width: min(340px, 100%); text-align: center; box-shadow: var(--shadow-lg); }
+.cropper-card h3 { margin: 0 0 2px; }
+.cropper-view { position: relative; width: 260px; height: 260px; margin: 10px auto; border-radius: 16px; overflow: hidden; background: #0b1220; touch-action: none; }
+.cropper-view canvas { display: block; cursor: grab; }
+.cropper-ring { position: absolute; inset: 0; border-radius: 999px; box-shadow: 0 0 0 999px rgba(0,0,0,0.45); pointer-events: none; }
+.cropper-zoom { display: flex; align-items: center; gap: 10px; margin: 6px 0 12px; }
+.cropper-zoom input { flex: 1; }
+.admin-confirm { align-items: flex-start; }
+.admin-powers { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; }

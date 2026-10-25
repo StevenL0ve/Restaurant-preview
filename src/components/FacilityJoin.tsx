@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { rememberFacility, setWorkspace } from "../lib/workspace";
 import { createFacility, joinFacility } from "../state/cloudSync";
 import { isOrsyncOwner } from "../lib/owner";
+import { SALES_EMAIL } from "../lib/facilityGate";
 import { getProfile, roleLabel } from "../lib/profile";
 import { setRepMode } from "../state/store";
 
@@ -37,7 +38,8 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
     try {
       const r = await joinFacility(name, pw, me);
       if (r.result === "not-found") {
-        setOfferCreate(name.trim());
+        if (isOrsyncOwner(email)) setOfferCreate(name.trim());
+        else setErr(`No facility named "${name.trim()}" on ORSync. Check the spelling with your charge desk. Facilities are set up by ORSync; to get yours started, email ${SALES_EMAIL}.`);
       } else if (r.result === "denied") {
         setErr(`That password isn't right for ${name.trim()}, or this account's access to it was turned down. Check with the charge desk or a facility admin.`);
       } else if (r.result === "pending") {
@@ -126,9 +128,9 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
           <strong>No facility named "{offerCreate}" yet.</strong>
           <span>
             Joining one that already exists? Check the spelling and try again. Setting
-            up <strong>{offerCreate}</strong> for the first time? Create it now: your library on
-            this device becomes its starting point, you become its first admin, and everyone who
-            enters this name + password waits for your approval.
+            up <strong>{offerCreate}</strong> for the first time (ORSync owners only)? Create it
+            now: your library on this device becomes its starting point, you become its first admin,
+            and everyone who enters this name + password waits for approval.
           </span>
           <div className="form-actions">
             <button className="btn btn-primary" type="button" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate}`}</button>

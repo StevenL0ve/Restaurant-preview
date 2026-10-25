@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { fileToAvatarDataUrl } from "../lib/photos";
+import { PhotoCropper } from "./PhotoCropper";
 
 // Optional profile photo: a clear shot of your face so teammates know who
 // you are behind a mask. Picked from the photo library (or the camera via
@@ -15,25 +15,24 @@ export function ProfilePhotoPicker({ value, name, onChange, size = 96, compact }
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const initials = name.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 2) || "?";
 
-  async function pick(file: File | undefined) {
-    if (!file) return;
+  function pick(f: File | undefined) {
+    if (!f) return;
     setErr(null);
-    try {
-      onChange(await fileToAvatarDataUrl(file));
-    } catch {
-      setErr("That image couldn't be read. Try another photo.");
-    }
+    if (!f.type.startsWith("image/")) { setErr("Pick an image."); return; }
+    setFile(f);
   }
 
   return (
     <div className={"profile-photo" + (compact ? " compact" : "")}>
+      {file && <PhotoCropper file={file} onDone={(url) => { onChange(url); setFile(null); }} onCancel={() => setFile(null)} />}
       <button type="button" className="profile-photo-btn" onClick={() => input.current?.click()} aria-label={value ? "Change profile photo" : "Add profile photo"} style={{ width: size, height: size }}>
         {value ? <img src={value} alt="" style={{ width: size, height: size }} /> : <span className="profile-photo-initials" style={{ fontSize: size * 0.34 }}>{initials}</span>}
         <span className="profile-photo-edit">{value ? "Change" : "Add"}</span>
       </button>
-      <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
+      <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ""; }} />
       {!compact && (
         <div className="profile-photo-text">
           <strong>Profile photo (optional)</strong>

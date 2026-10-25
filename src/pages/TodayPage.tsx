@@ -30,6 +30,8 @@ import { cartLink } from "../lib/links";
 import { shareBlobFile } from "../lib/share";
 import type { CaseEntry, TeamMember, TeamRole } from "../types";
 import { PhiNote } from "../components/PhiNote";
+import { useAuth } from "../state/auth";
+import { usePermissions } from "../lib/permissions";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -57,8 +59,10 @@ function shiftDay(date: string, delta: number): string {
 }
 
 export function TodayPage() {
+  const { user: me } = useAuth();
+  const perms = usePermissions(me?.uid, me?.email);
   const store = useStore();
-  const { state } = store;
+  const { state, updateCase, deleteCase, ensureCart } = store;
   // Search results land here with ?d=2026-10-26 to open that day's board.
   const [params] = useSearchParams();
   const paramDate = params.get("d");
@@ -70,6 +74,7 @@ export function TodayPage() {
 
   const cases = casesOn(state, date);
 
+  const pendingApprovals = state.cases.filter((c) => c.approval);
   return (
     <div className="page page-narrow">
       <div className="page-head">
@@ -78,13 +83,42 @@ export function TodayPage() {
           <p className="muted">{cases.length === 0 ? "No cases scheduled." : `${cases.length} ${cases.length === 1 ? "case" : "cases"} lined up.`}</p>
         </div>
         <div className="head-actions">
-          <button className="btn btn-primary" onClick={() => { setEditing(null); setAdding((v) => !v); }}>
-            {adding ? "Close" : "+ Add case"}
-          </button>
+          {perms.canAddCase && (
+            <button className="btn btn-primary" onClick={() => { setEditing(null); setAdding((v) => !v); }}>
+              {adding ? "Close" : perms.needsApproval ? "+ Request a case" : "+ Add case"}
+            </button>
+          )}
           <Link className="btn" to="/case-log">My case log</Link>
           {cases.length > 0 && <PrintDayButton date={date} />}
         </div>
       </div>
+
+      {perms.isAdmin && pendingApprovals.length > 0 && (
+        <div className="card form-card approvals-tile">
+          <div className="card-head"><h2>Awaiting your approval ({pendingApprovals.length})</h2></div>
+          {pendingApprovals.map((c) => {
+            const card = state.cards.find((k) => k.id === c.cardId);
+            return (
+              <div key={c.id} className="member-row">
+                <div className="member-main">
+                  <strong>{c.approval!.kind === "add" ? "Add" : "Cancel"}: {card?.procedure ?? "case"}</strong>
+                  <div className="muted small">{c.date}{c.time ? ` ${c.time}` : ""}{c.room ? ` · ${c.room}` : ""} · asked by {c.approval!.by ?? "someone"}</div>
+                </div>
+                <div className="member-actions">
+                  <button className="btn btn-sm btn-primary" onClick={() => {
+                    if (c.approval!.kind === "add") { updateCase(c.id, { approval: undefined }); ensureCart(c.cardId, c.date); }
+                    else deleteCase(c.id);
+                  }}>Approve</button>
+                  <button className="btn btn-sm" onClick={() => {
+                    if (c.approval!.kind === "add") deleteCase(c.id);
+                    else updateCase(c.id, { approval: undefined });
+                  }}>Reject</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="day-nav">
         <button className="icon-btn" onClick={() => setDate((d) => shiftDay(d, -1))} aria-label="Previous day">
@@ -152,9 +186,12 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   store: Store;
   onEdit: () => void;
 }) {
-  const { state, deleteCase, moveCase, ensureCart, addDayNote, saveCard, updateCase } = store;
+  const { state, deleteCase, moveCase, ensureCart, addDayNote, saveCard, updateCase, deleteCart, moveCart } = store;
   const navigate = useNavigate();
+  const { user: me } = useAuth();
+  const perms = usePermissions(me?.uid, me?.email);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [resched, setResched] = useState<string | null>(null); // new date while the panel is open
   const [noting, setNoting] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [teamDraft, setTeamDraft] = useState<TeamMember[] | null>(null); // null = panel closed
@@ -192,6 +229,9 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
     "needs-qc": "Cart pulled, needs QC",
     qcd: "Cart QC'd",
   }[cartStage];
+  // Is the cart pulled, and does another case that day still need it?
+  const cartPulled = !!cart && (pulledCount > 0 || !!cart.donePulling || !!cart.qcDone);
+  const cartShared = state.cases.some((c) => c.id !== entry.id && c.cardId === entry.cardId && c.date === entry.date);
   const cartBtn = { queue: "Pull cart", queued: "Pull cart", pulling: "Keep pulling", "needs-qc": "QC cart", qcd: "View cart" }[cartStage];
   function openCart() {
     const k = cart ?? ensureCart(card!.id, entry.date);
@@ -291,16 +331,71 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           <button className="btn btn-sm" onClick={() => setTeamDraft(entry.team ?? [])}>Team</button>
         )}
         <button className="btn btn-sm" onClick={() => setNoting((v) => !v)}>Team note</button>
-        {confirmDel ? (
+        {perms.canAddCase && !entry.approval && resched === null && (
+          <button className="btn btn-sm" onClick={() => setResched(entry.date)}>Reschedule</button>
+        )}
+        {perms.canCancelCase && !entry.approval && (confirmDel ? (
           <span className="confirm">
-            Cancel this case?
-            <button className="btn btn-danger btn-sm" onClick={() => deleteCase(entry.id)}>Yes, cancel it</button>
+            {perms.needsApproval ? "Ask an admin to cancel this case?" : "Cancel this case?"}
+            {perms.needsApproval ? (
+              <button className="btn btn-danger btn-sm" onClick={() => { updateCase(entry.id, { approval: { kind: "cancel", by: getPullerName() || undefined, at: new Date().toISOString() } }); setConfirmDel(false); }}>Send request</button>
+            ) : cartPulled && !cartShared ? (
+              <>
+                <button className="btn btn-danger btn-sm" onClick={() => { deleteCase(entry.id); deleteCart(cart!.id); }}>Cancel, put cart away</button>
+                <button className="btn btn-sm" onClick={() => deleteCase(entry.id)}>Cancel, keep pulled cart</button>
+              </>
+            ) : (
+              <button className="btn btn-danger btn-sm" onClick={() => { deleteCase(entry.id); if (cart && !cartShared) deleteCart(cart.id); }}>Yes, cancel it</button>
+            )}
             <button className="btn btn-sm" onClick={() => setConfirmDel(false)}>Keep it</button>
           </span>
         ) : (
           <button className="btn btn-sm" onClick={() => setConfirmDel(true)}>Cancel case</button>
-        )}
+        ))}
       </div>
+
+      {entry.approval && (
+        <p className="muted small" style={{ margin: "6px 0 0" }}>
+          {entry.approval.kind === "add" ? "Requested, waiting for an admin to approve." : "Cancellation requested, waiting for an admin."}
+        </p>
+      )}
+
+      {resched !== null && (
+        <div className="case-note-form">
+          <label className="field"><span>New date</span>
+            <input type="date" value={resched} onChange={(e) => setResched(e.target.value)} />
+          </label>
+          {cartPulled ? (
+            <>
+              <p className="muted small" style={{ margin: "4px 0" }}>This case's cart is already pulled. What happens to it?</p>
+              <div className="form-actions">
+                <button className="btn btn-sm btn-primary" disabled={!resched || resched === entry.date} onClick={() => {
+                  updateCase(entry.id, { date: resched! });
+                  if (cart && !cartShared) moveCart(cart.id, resched!); else ensureCart(card.id, resched!);
+                  setResched(null);
+                }}>Keep the pulled cart for the new date</button>
+                <button className="btn btn-sm" disabled={!resched || resched === entry.date} onClick={() => {
+                  updateCase(entry.id, { date: resched! });
+                  if (cart && !cartShared) deleteCart(cart.id);
+                  ensureCart(card.id, resched!);
+                  setResched(null);
+                }}>Put it away, repull later</button>
+                <button className="btn btn-sm" onClick={() => setResched(null)}>Never mind</button>
+              </div>
+            </>
+          ) : (
+            <div className="form-actions">
+              <button className="btn btn-sm btn-primary" disabled={!resched || resched === entry.date} onClick={() => {
+                updateCase(entry.id, { date: resched! });
+                if (cart && !cartShared) deleteCart(cart.id);
+                ensureCart(card.id, resched!);
+                setResched(null);
+              }}>Move case</button>
+              <button className="btn btn-sm" onClick={() => setResched(null)}>Never mind</button>
+            </div>
+          )}
+        </div>
+      )}
 
       {teamDraft !== null && (
         <div className="case-note-form">
@@ -355,6 +450,11 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 // any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
   const { state, addCase, updateCase, moveCase, ensureCart, deleteCart, addLoaner } = store;
+  const { user: me } = useAuth();
+  const perms = usePermissions(me?.uid, me?.email);
+  // Booking the same card on a day whose cart is already pulled (say, a
+  // cancelled case being rebooked): ask before reusing it.
+  const [reusePrompt, setReusePrompt] = useState<null | "ask" | "reuse" | "fresh">(null);
   const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
   // Rep set requests: company, rep, and the sets/implants/supplies needed.
   // Each becomes a loaner request linked to this case, tracked on Loaners.
@@ -407,8 +507,18 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
     : untimed.length;
   const followerIdx = Math.min(orderChoice ?? currentIdx, untimed.length);
 
-  function save() {
+  function save(choice?: "reuse" | "fresh") {
     if (!cardId) return;
+    if (!existing && !choice) {
+      const leftover = state.carts.find((k) => k.cardId === cardId && k.date === theDate);
+      const inUse = state.cases.some((c) => c.cardId === cardId && c.date === theDate);
+      const pulled = leftover && (Object.keys(leftover.pulls).length > 0 || leftover.donePulling || leftover.qcDone);
+      if (leftover && pulled && !inUse) { setReusePrompt("ask"); return; }
+    }
+    if (choice === "fresh") {
+      const leftover = state.carts.find((k) => k.cardId === cardId && k.date === theDate);
+      if (leftover) deleteCart(leftover.id);
+    }
     const first = isFirstCase;
     const payload = {
       date: theDate,
@@ -435,7 +545,9 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
       }
       id = existing.id;
     } else {
-      id = addCase(payload).id;
+      id = addCase(perms.needsApproval
+        ? { ...payload, approval: { kind: "add" as const, by: getPullerName() || undefined, at: new Date().toISOString() } }
+        : payload).id;
     }
     // Each rep set request becomes a loaner request tied to this case, so
     // the rep (when they have an account) sees it and the OR tracks it.
@@ -584,7 +696,15 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
         </div>
 
       <div className="form-actions">
-        <button className="btn btn-primary" disabled={!cardId} onClick={save}>{existing ? "Save" : "Add to lineup"}</button>
+        {reusePrompt === "ask" ? (
+          <span className="confirm">
+            A cart for this card on this day was already pulled. Reuse it?
+            <button className="btn btn-primary btn-sm" onClick={() => { setReusePrompt(null); save("reuse"); }}>Reuse the pulled cart</button>
+            <button className="btn btn-sm" onClick={() => { setReusePrompt(null); save("fresh"); }}>Start a fresh cart</button>
+          </span>
+        ) : (
+          <button className="btn btn-primary" disabled={!cardId} onClick={() => save()}>{existing ? "Save" : perms.needsApproval ? "Send for approval" : "Add to lineup"}</button>
+        )}
         <button className="btn" onClick={onDone}>Cancel</button>
       </div>
       {existing?.updatedBy && (

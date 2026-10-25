@@ -8,6 +8,7 @@ import {
 import { relativeTime } from "../lib/format";
 import { formatPhone } from "../lib/oncall";
 import { Avatar } from "./Avatar";
+import { ADMIN_POWERS } from "../lib/permissions";
 import { facilityJoinAppLink, facilityJoinLink } from "../lib/links";
 
 // Facility admin tools: who's in, who's out, and the password. Shown to a
@@ -26,6 +27,7 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [confirmAdmin, setConfirmAdmin] = useState<string | null>(null);
 
   async function load() {
     setErr(null);
@@ -51,6 +53,7 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
     } finally {
       setBusy(null);
       setConfirm(null);
+      setConfirmAdmin(null);
     }
   }
 
@@ -116,14 +119,25 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
                 </div>
                 {m.uid !== meUid && (
                   <div className="member-actions">
-                    {canAssignAdmins && (
-                      <button
-                        className="btn btn-sm"
-                        disabled={busy !== null}
-                        onClick={() => run("role:" + m.uid, () => setMemberRole(facilityId, m.uid, m.role === "admin" ? "member" : "admin"))}
-                      >
-                        {m.role === "admin" ? "Remove admin" : "Make admin"}
-                      </button>
+                    {canAssignAdmins && m.role !== "rep" && (
+                      confirmAdmin === m.uid ? (
+                        <span className="confirm admin-confirm">
+                          <span>
+                            <strong>Make {m.name} an admin?</strong> Admins can:
+                            <ul className="admin-powers">{ADMIN_POWERS.map((x) => <li key={x}>{x}</li>)}</ul>
+                          </span>
+                          <button className="btn btn-primary btn-sm" disabled={busy !== null} onClick={() => run("role:" + m.uid, () => setMemberRole(facilityId, m.uid, "admin"))}>Yes, make admin</button>
+                          <button className="btn btn-sm" onClick={() => setConfirmAdmin(null)}>Not now</button>
+                        </span>
+                      ) : (
+                        <button
+                          className="btn btn-sm"
+                          disabled={busy !== null}
+                          onClick={() => m.role === "admin" ? void run("role:" + m.uid, () => setMemberRole(facilityId, m.uid, "member")) : setConfirmAdmin(m.uid)}
+                        >
+                          {m.role === "admin" ? "Remove admin" : "Make admin"}
+                        </button>
+                      )
                     )}
                     {confirm === m.uid ? (
                       <span className="confirm">

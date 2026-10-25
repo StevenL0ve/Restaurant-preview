@@ -71,7 +71,7 @@ write(iconsDir, "apple-touch-icon-180.png", render(tileSvg(1024), 180), 180);
 write(iconsDir, "favicon-32.png", render(tileSvg(1024), 32), 32);
 
 // In-app logo mark (CSS rounds the corners where needed).
-write(brandDir, "logo-mark.png", render(tileSvg(1024), 256), 256);
+// logo-mark.png is cut from assets/icon-only.png (Jolie), not regenerated here.
 write(brandDir, "splash-512.png", render(splashSvg(1024, SPLASH_DARK), 512), 512);
 
 // Native icon/splash SOURCES for `npx capacitor-assets generate`.

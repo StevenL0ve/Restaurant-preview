@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { useAuth } from "../state/auth";
+import { usePermissions } from "../lib/permissions";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, surgeonOf, locationLabelOf, facilityOf, dayNotesFor, localDay, getPullerName } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -14,6 +16,8 @@ import { Lightbox } from "../components/Lightbox";
 import { fileToDataUrl } from "../lib/photos";
 
 export function CardDetail() {
+  const { user: me } = useAuth();
+  const perms = usePermissions(me?.uid, me?.email);
   const { id } = useParams();
   const navigate = useNavigate();
   const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile, copyCardToFacility } = useStore();
@@ -104,7 +108,7 @@ export function CardDetail() {
           <button className="btn btn-primary" onClick={() => navigate(`/cards/${card.id}/setup`)}>
             Start setup
           </button>
-          <button className="btn" onClick={() => navigate(`/cards/${card.id}/edit`)}>Edit</button>
+          {perms.canEditCards && <button className="btn" onClick={() => navigate(`/cards/${card.id}/edit`)}>Edit</button>}
         </div>
       </div>
 

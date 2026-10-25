@@ -102,7 +102,9 @@ service cloud.firestore {
       // tell "no such facility" from "wrong password"); never list them.
       allow get: if signedIn();
       allow list: if false;
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      // Facilities are set up by ORSync (owners) only; the owner who creates
+      // one is its first admin and assigns the rest.
+      allow create: if isOwner() && request.resource.data.createdBy == request.auth.uid;
       allow update: if isAdmin(ws) || isOwner();
       allow delete: if false;
 
@@ -143,6 +145,8 @@ service cloud.firestore {
               && !('rekeyBy' in request.resource.data)
               && request.resource.data.proof == facilityProof(ws))
           || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy', 'approvedAt', 'approvedBy', 'deniedAt', 'rekeyBy', 'rekeyedAt']))
+          || (isAdmin(ws) && uid != request.auth.uid && changedOnly(['role', 'updatedAt'])
+              && request.resource.data.role in ['admin', 'member'])
           || isOwner();
         // Admins remove people; anyone can delete their own membership
         // (leaving, or deleting their account).

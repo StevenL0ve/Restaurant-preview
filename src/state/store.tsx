@@ -13,7 +13,7 @@ import { schedulePush, startCloudSync } from "./cloudSync";
 import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, setWorkspace, type JoinedWorkspace } from "../lib/workspace";
 import { writeWorkspaceMember } from "./cloudSync";
 import { hasPersonalCloud } from "../lib/tier";
-import { setProfile, roleLabel, type UserProfile } from "../lib/profile";
+import { setProfile, roleLabel, useProfile, type UserProfile } from "../lib/profile";
 import type { ChangeEntry, ChangeKind } from "../types";
 import type {
   AppState,
@@ -290,6 +290,8 @@ export interface Store {
   /** Create `count` carts for a card on a date — five cataracts = five carts. */
   addCarts: (cardId: string, date: string, count: number) => CaseCart[];
   deleteCart: (id: string) => void;
+  /** Reschedule: carry a pulled cart to the case's new day. */
+  moveCart: (id: string, date: string) => void;
   updateCartLabel: (id: string, label: string) => void;
   /** Check/uncheck an item, recording who pulled it (so co-pullers can see). */
   toggleCartPull: (cartId: string, itemId: string, puller: string) => void;
@@ -364,6 +366,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Firestore. Local storage stays as the instant-start cache; the engine
   // streams other devices' changes in live and pushes local edits up.
   useEffect(() => { setCurrentUid(user?.uid ?? null); }, [user?.uid]);
+  const myProfile = useProfile(user?.uid);
+  useEffect(() => { setCurrentRole(myProfile?.role ?? null); }, [myProfile?.role]);
 
   // The joined facility workspace (shared library), if any. Joining or
   // leaving restarts sync against the new root.
@@ -600,7 +604,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         // Booking a case queues its cart for pulling, unless one's already there.
         update((st) => {
-          const queued = withQueuedCart(st, entry.cardId, entry.date);
+          const queued = entry.approval ? st : withQueuedCart(st, entry.cardId, entry.date);
           const next = { ...queued, cases: [...queued.cases, entry] };
           return logChange(next, "schedule", `Schedule: added ${describeCase(next, entry)}`);
         });
@@ -953,6 +957,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       deleteCart: (id) => update((st) => ({ ...st, carts: st.carts.filter((c) => c.id !== id) })),
+      moveCart: (id, date) =>
+        update((st) => ({ ...st, carts: st.carts.map((c) => (c.id === id ? { ...c, date, updatedAt: new Date().toISOString() } : c)) })),
 
       updateCartLabel: (id, label) =>
         update((st) => ({
@@ -976,7 +982,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 m.itemId === itemId && m.resolvedAt ? { ...m, resolvedAt: undefined, resolvedBy: undefined } : m,
               );
             } else {
-              pulls[itemId] = { by: who, at: now, byUid: currentUid ?? undefined };
+              pulls[itemId] = { by: who, at: now, byUid: currentUid ?? undefined, byRole: currentRole ?? undefined };
               // Pulling an item someone flagged missing resolves the flag.
               missing = missing.map((m) =>
                 m.itemId === itemId && !m.resolvedAt ? { ...m, resolvedAt: now, resolvedBy: who } : m,
@@ -2095,6 +2101,8 @@ export function getPullerName(): string {
 // well as a name. Set by the StoreProvider from the auth session.
 let currentUid: string | null = null;
 export function setCurrentUid(uid: string | null) { currentUid = uid; }
+let currentRole: TeamRole | null = null;
+export function setCurrentRole(role: TeamRole | null) { currentRole = role; }
 
 export function setPullerName(name: string) {
   try {
