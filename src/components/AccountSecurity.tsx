@@ -33,7 +33,7 @@ export function AccountSecurity({ email }: { email: string }) {
         setMode(null);
       } else if (mode === "email") {
         await requestEmailChange(current, a);
-        setMsg({ ok: true, text: `Check ${a.trim()} for a verification link. Your email changes when you open it; until then ${email} keeps working.` });
+        setMsg({ ok: true, text: `Check ${a.trim()} for a verification link. Your email changes only when you open it; until then ${email} keeps working. ${email} also gets a message with a one-tap undo, in case this wasn't you.` });
         setMode(null);
       } else if (mode === "delete") {
         if (a.trim().toLowerCase() !== email.toLowerCase()) throw new Error("Type your email exactly to confirm.");
@@ -92,7 +92,11 @@ export function AccountSecurity({ email }: { email: string }) {
           {mode === "email" && (
             <label className="field"><span>New email</span>
               <input type="email" value={a} onChange={(e) => setA(e.target.value)} autoComplete="email" autoCapitalize="none" inputMode="email" />
-              <span className="muted small">We send a verification link to the new address; the change takes effect when you open it.</span>
+              <span className="muted small">
+                Three checks: your current password, a verified current email (a link goes there first
+                if it isn't), and a link to the new address. The change happens only when that last
+                link is opened, and your current address gets a one-tap undo.
+              </span>
             </label>
           )}
           {mode === "delete" && (

@@ -95,7 +95,7 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
     <div className="facility-join">
       <div className="form-grid facility-join">
         <label className="field"><span>Facility name</span>
-          <input value={name} onChange={(e) => { setName(e.target.value); setOfferCreate(null); }} placeholder="Keesler AFB OR" autoCapitalize="words" autoComplete="organization" />
+          <input value={name} onChange={(e) => { setName(e.target.value); setOfferCreate(null); }} placeholder="Mercy General OR" autoCapitalize="words" autoComplete="organization" />
         </label>
         <label className="field"><span>Facility password</span>
           <span className="pw-wrap">

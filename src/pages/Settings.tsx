@@ -555,7 +555,7 @@ function OwnerConsole({ uid }: { uid: string }) {
       </p>
       <div className="form-grid">
         <label className="field field-wide"><span>Facility name</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Keesler AFB OR" autoCapitalize="words" onKeyDown={(e) => e.key === "Enter" && void open()} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mercy General OR" autoCapitalize="words" onKeyDown={(e) => e.key === "Enter" && void open()} />
         </label>
       </div>
       {err && <p className="neg small">{err}</p>}

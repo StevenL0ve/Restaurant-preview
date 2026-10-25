@@ -3,39 +3,39 @@ import { deriveWorkspaceKey, facilityId, isForeignRoot, normalizeFacilityName, s
 
 describe("facility addresses", () => {
   it("the address comes from the name alone, so a password change never moves the data", async () => {
-    const a = await facilityId("Keesler AFB OR");
+    const a = await facilityId("Mercy General OR");
     expect(a).toMatch(/^[0-9a-f]{64}$/);
-    expect(await facilityId("  keesler   afb or ")).toBe(a);
+    expect(await facilityId("  mercy   general or ")).toBe(a);
     expect(await facilityId("Mercy General OR")).not.toBe(a);
   });
 
   it("the address never reveals the proof (different derivations)", async () => {
-    expect(await facilityId("Keesler AFB OR")).not.toBe(await deriveWorkspaceKey("Keesler AFB OR", "Keeslerorflight"));
+    expect(await facilityId("Mercy General OR")).not.toBe(await deriveWorkspaceKey("Mercy General OR", "mercygeneral1"));
   });
 });
 
 describe("facility password proofs", () => {
   it("derives the same 64-hex proof on every device for the same name + password", async () => {
-    const a = await deriveWorkspaceKey("Keesler AFB OR", "Keeslerorflight");
-    const b = await deriveWorkspaceKey("  keesler   afb or ", "Keeslerorflight"); // spacing/case of the NAME don't matter
+    const a = await deriveWorkspaceKey("Mercy General OR", "mercygeneral1");
+    const b = await deriveWorkspaceKey("  mercy   general or ", "mercygeneral1"); // spacing/case of the NAME don't matter
     expect(a).toMatch(/^[0-9a-f]{64}$/);
     expect(b).toBe(a);
   });
 
   it("a different password or facility is a different address", async () => {
-    const base = await deriveWorkspaceKey("Keesler AFB OR", "Keeslerorflight");
-    expect(await deriveWorkspaceKey("Keesler AFB OR", "keeslerorflight")).not.toBe(base); // password is case-sensitive
-    expect(await deriveWorkspaceKey("Mercy General OR", "Keeslerorflight")).not.toBe(base);
+    const base = await deriveWorkspaceKey("Mercy General OR", "mercygeneral1");
+    expect(await deriveWorkspaceKey("Mercy General OR", "Mercygeneral1")).not.toBe(base); // password is case-sensitive
+    expect(await deriveWorkspaceKey("St. Luke's OR", "mercygeneral1")).not.toBe(base);
   });
 
   it("normalizes facility names", () => {
-    expect(normalizeFacilityName("  Keesler   AFB  OR ")).toBe("keesler afb or");
+    expect(normalizeFacilityName("  Mercy   General  OR ")).toBe("mercy general or");
   });
 });
 
 describe("sync root switching", () => {
   const uid = "uid-steven";
-  const ws = { id: "a".repeat(64), name: "Keesler AFB OR" };
+  const ws = { id: "a".repeat(64), name: "Mercy General OR" };
 
   it("roots at the user, or at the facility once joined", () => {
     expect(syncRootId(uid, null)).toBe(uid);

@@ -29,12 +29,27 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
-/** Sends a verification link to the NEW address; the email changes only
- *  when that link is opened. Until then the old email keeps working. */
+/** Changing the email is the one change that can lock the real owner out,
+ *  so it takes three proofs: the current password, the CURRENT inbox
+ *  (the address on the account must be verified; if it isn't, a link goes
+ *  there first), and the NEW inbox (a link goes there; the address changes
+ *  only when it's opened). Firebase also mails the old address a one-tap
+ *  "undo this change and reset the password" link whenever an email
+ *  changes, so a hijack can be reversed from the original inbox. */
 export async function requestEmailChange(currentPassword: string, newEmail: string): Promise<void> {
   const key = newEmail.trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(key)) throw new Error("Enter a valid email.");
   const { user, fa } = await reauth(currentPassword);
+  if (key === (user.email ?? "").toLowerCase()) throw new Error("That's already the email on this account.");
+  await user.reload().catch(() => undefined);
+  if (!user.emailVerified) {
+    try {
+      await fa.sendEmailVerification(user);
+    } catch (e) {
+      throw new Error(authErrorMessage(e));
+    }
+    throw new Error(`First confirm you own ${user.email}: we just sent a link there. Open it, then try the email change again.`);
+  }
   try {
     await fa.verifyBeforeUpdateEmail(user, key);
   } catch (e) {
