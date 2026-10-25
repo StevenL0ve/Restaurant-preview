@@ -15,4 +15,11 @@ export interface CloudConfig {
   appId: string;
 }
 
-export const CLOUD_CONFIG: CloudConfig | null = null;
+export const CLOUD_CONFIG: CloudConfig | null = {
+  apiKey: "AIzaSyBYuQo508yrUl8pRvnG6EVhc2k_oVwHrDc",
+  authDomain: "orsync-8f84a.firebaseapp.com",
+  projectId: "orsync-8f84a",
+  storageBucket: "orsync-8f84a.firebasestorage.app",
+  messagingSenderId: "608797386852",
+  appId: "1:608797386852:web:30a5b2dbe2849a0a471771",
+};
