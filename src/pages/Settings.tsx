@@ -19,13 +19,15 @@ import { roleLabel, useProfile } from "../lib/profile";
 import { formatPhone } from "../lib/oncall";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
-import { BETA_UNLOCKED, hasPro } from "../lib/tier";
+import { BETA_UNLOCKED, hasPersonalCloud, hasPro } from "../lib/tier";
 
 // ORSync Cloud status: where the library primarily lives once an account is
 // signed in, with live updates across devices.
 function CloudCard({ guest, signedIn }: { guest: boolean; signedIn: boolean }) {
   const [status, setStatus] = useState<CloudStatus>(getCloudStatus());
   useEffect(() => onCloudStatus(setStatus), []);
+  const [joinedFacility, setJoinedFacility] = useState(getWorkspace());
+  useEffect(() => onWorkspaceChange(() => setJoinedFacility(getWorkspace())), []);
 
   return (
     <div className="card settings-card">
@@ -38,15 +40,21 @@ function CloudCard({ guest, signedIn }: { guest: boolean; signedIn: boolean }) {
       ) : guest || !signedIn ? (
         <p>
           You're using ORSync without an account, so everything stays on this device.{" "}
-          <strong>Create an account</strong> (Settings → Account → Switch) and your library's primary
-          home becomes ORSync Cloud: open the app on any device and see the same cards, carts, and
-          loaners, updating live.
+          <strong>Create an account</strong> (Settings → Account → Switch) to join your facility and
+          put your name on what you pull. Your cards still stay on this phone.
+        </p>
+      ) : !joinedFacility && !hasPersonalCloud() ? (
+        <p>
+          Your library is <strong>on this phone</strong>. Join your facility and its shared library
+          syncs live to every member under the facility's package. Want your own cards backed up and
+          on every device too? That's <Link to="/upgrade">Pro</Link>.
         </p>
       ) : (
         <>
           <p>
-            Your library lives in <strong>ORSync Cloud</strong> and updates live on every device
-            you're signed in to. It still works fully offline; changes sync when you're back online.
+            {joinedFacility
+              ? <>Synced with <strong>{joinedFacility.name}</strong>: the shared library updates live on every member's device, and this phone keeps its own copy. It works fully offline; changes sync when you're back online.</>
+              : <>Your library lives in <strong>ORSync Cloud</strong> (Pro) and updates live on every device you're signed in to. It still works fully offline; changes sync when you're back online.</>}
           </p>
           <p className="muted small">
             {status.state === "live" && `Live. Last synced ${new Date(status.lastSyncAt).toLocaleTimeString()}.`}
@@ -173,15 +181,17 @@ export function Settings() {
       <div className="card settings-card">
         <h2>Plan</h2>
         <p>
-          {BETA_UNLOCKED ? (
-            <>You're on the <strong>beta</strong>: every Pro feature is unlocked, free, while we polish ORSync together.</>
+          {hasPersonalCloud() ? (
+            <>You're on <strong>ORSync Pro</strong>: your library in the cloud, on every device.</>
+          ) : BETA_UNLOCKED ? (
+            <>You're on the <strong>free plan</strong>, with beta limits lifted. Your cards stay on this phone; a facility's package covers its shared library.</>
           ) : hasPro() ? (
-            <>You're on <strong>ORSync Pro</strong>: unlimited cards, facilities, and everything else.</>
+            <>You're on <strong>ORSync Pro</strong>.</>
           ) : (
-            <>You're on the <strong>free plan</strong>: 10 cards, 1 facility.</>
+            <>You're on the <strong>free plan</strong>: cards on this phone, 10 cards, 1 facility.</>
           )}
         </p>
-        <Link className="btn" to="/upgrade">See what's in Pro →</Link>
+        <Link className="btn" to="/upgrade">See plans →</Link>
       </div>
 
       <div className="card settings-card">
@@ -480,7 +490,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
         </p>
         {confirmLeave ? (
           <span className="confirm">
-            Leave {joined.name}? This device goes back to your personal library; nothing at the facility is deleted.
+            Leave {joined.name}? Your cards stay on this phone; the facility's carts, roster, loaners, and notes are removed from it. Nothing at the facility is deleted.
             <button className="btn btn-danger btn-sm" onClick={() => { forgetFacility(joined.id); setConfirmLeave(false); }}>Leave</button>
             <button className="btn btn-sm" onClick={() => setConfirmLeave(false)}>Stay</button>
           </span>

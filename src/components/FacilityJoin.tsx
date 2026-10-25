@@ -140,8 +140,9 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
       )}
       {!compact && (
         <p className="muted small" style={{ margin: "8px 0 0" }}>
-          Joining merges this device's library into the facility's. Your personal cloud copy stays as
-          it was, and Leave facility brings it back.
+          Joining merges this device's cards into the facility's shared library, stored under the
+          facility's package. Leaving keeps your cards on this phone and drops the facility's carts,
+          roster, and notes from it.
         </p>
       )}
     </div>

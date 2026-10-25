@@ -82,7 +82,7 @@ describe("app smoke test", () => {
     ["/facilities", "Add a facility"],
     ["/search", "Search"],
     ["/settings", "Your data"],
-    ["/upgrade", "ORSync Pro"],
+    ["/upgrade", "Pay only for storage beyond it"],
   ])("renders %s without crashing", (path, marker) => {
     asGuest();
     const html = renderAt(path);

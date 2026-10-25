@@ -24,6 +24,32 @@ export function hasPro(): boolean {
   return BETA_UNLOCKED || localStorage.getItem(PRO_KEY) === "1";
 }
 
+/** Off-device storage for a PERSONAL library (your cards in ORSync Cloud,
+ *  on every device you sign in to). Never free, beta included: storage
+ *  costs real money per person. A facility's package covers its members'
+ *  shared library instead; see the store's sync gate. */
+export function hasPersonalCloud(): boolean {
+  try { return localStorage.getItem(PRO_KEY) === "1"; } catch { return false; }
+}
+
+export const FACILITY_PRICE_MONTHLY = "$199";
+export const FACILITY_PRICE_ANNUAL = "$1,990";
+export const FACILITY_SEATS = 30;
+
+export const FREE_PERKS = [
+  "Preference cards, stored on this phone",
+  "Share cards as files or text; print with QR codes",
+  "Your case log",
+  "Join a facility that has ORSync (its package covers your shared library)",
+] as const;
+
+export const FACILITY_PERKS = [
+  "One shared library for the whole OR, in ORSync Cloud",
+  "Members' shared cards, carts, QC, on-call, loaners, and catalog stored off-device and synced live",
+  `Up to ${FACILITY_SEATS} members; admins approve, remove, and rotate the password`,
+  "Email support",
+] as const;
+
 /** Scaffold "purchase": records the entitlement locally. Real IAP replaces this. */
 export function grantProLocally(): void {
   localStorage.setItem(PRO_KEY, "1");
@@ -50,6 +76,7 @@ export function gateNewFacility(state: AppState): Gate {
 }
 
 export const PRO_PERKS = [
+  "Your personal library in ORSync Cloud: backed up, on every device you sign in to",
   "Unlimited preference cards",
   "Unlimited facilities & location sets",
   "Loaner-tray tracking with deadlines",

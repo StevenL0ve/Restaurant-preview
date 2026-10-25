@@ -47,7 +47,7 @@ export function Login() {
         <h1 className="auth-title">ORSync</h1>
         <p className="auth-sub">
           {cloudEnabled()
-            ? "Sign in and your library follows you: live on every device."
+            ? "Your cards stay on your phone. An account links you to your facility and signs what you pull."
             : "Your surgical preference cards. Yours alone."}
         </p>
 

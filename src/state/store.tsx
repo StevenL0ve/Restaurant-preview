@@ -12,6 +12,7 @@ import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
 import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, setWorkspace, type JoinedWorkspace } from "../lib/workspace";
 import { writeWorkspaceMember } from "./cloudSync";
+import { hasPersonalCloud } from "../lib/tier";
 import { setProfile, roleLabel, type UserProfile } from "../lib/profile";
 import type {
   AppState,
@@ -367,8 +368,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspaceState] = useState<JoinedWorkspace | null>(() => getWorkspace());
   useEffect(() => onWorkspaceChange(() => setWorkspaceState(getWorkspace())), []);
 
+  // Off-device storage costs money per person, so it's never on by default:
+  // a facility's package covers its shared library; Pro covers a personal
+  // one. Otherwise the library lives on this phone only (the account still
+  // signs pulls and links you to your facility).
+  const prevWorkspace = useRef<JoinedWorkspace | null>(workspace);
+  useEffect(() => {
+    const was = prevWorkspace.current;
+    prevWorkspace.current = workspace;
+    if (was && !workspace && !hasPersonalCloud()) {
+      // Left (or lost) the facility: your cards stay; its shared operations
+      // data (carts, roster, loaners, catalog, notes) leaves this device.
+      setState((st) => stripFacilityData(st));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace?.id]);
+
   useEffect(() => {
     if (!cloudEnabled() || !user?.uid) return;
+    if (!workspace && !hasPersonalCloud()) return;
     const stop = startCloudSync({ uid: user.uid, workspace }, {
       getState: () => stateRef.current,
       applyRemote: (patch) => setState((s) => migrateLoaners({ ...s, ...patch } as AppState)),
@@ -380,8 +398,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         forgetFacility(workspace.id);
         setFacilityNotice(
           reason === "gone"
-            ? `${workspace.name} couldn't be reached. This device is back on your personal library.`
-            : `Your access to ${workspace.name} was removed by a facility admin. This device is back on your personal library; your own cards are still yours.`,
+            ? `${workspace.name} couldn't be reached. This device is back on its own library.`
+            : `Your access to ${workspace.name} was removed by a facility admin. Your cards stay on this phone; the facility's carts, roster, and notes were removed from it.`,
         );
         setWorkspace(null);
       },
@@ -1773,6 +1791,25 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+/** Leaving a facility (pure): keep what's personal (cards, surgeons,
+ *  facilities, locations, setups, case log), drop what belongs to the OR
+ *  (carts, on-call, loaners, rep stock, day notes, staff, catalog). */
+export function stripFacilityData(st: AppState): AppState {
+  return {
+    ...st,
+    carts: [],
+    onCallPositions: [],
+    onCallPeople: [],
+    onCallShifts: [],
+    loaners: [],
+    repLocations: [],
+    repStock: [],
+    dayNotes: [],
+    staff: [],
+    catalog: [],
+  };
+}
+
 /** Link a profile to the OR's people records (pure): the staff directory
  *  gets the name + position, and the on-call roster entry for this account
  *  (matched by uid, else by name) takes the name, phone, and position, or

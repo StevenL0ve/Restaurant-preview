@@ -2077,3 +2077,9 @@ html, body { overflow-x: hidden; }
 .account-security .form-actions { flex-wrap: wrap; }
 
 .field .muted.small { font-weight: 400; }
+
+/* ---- Plans page ---- */
+.plan-section { margin-top: 12px; }
+.plan-section h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 18px; margin: 0 0 6px; }
+.plan-price-line { margin: 8px 0 4px; }
+.paywall-logo { display: block; margin: 0 auto 6px; }
