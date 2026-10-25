@@ -2028,3 +2028,17 @@ html, body { overflow-x: hidden; }
 .onboarding .profile-form .form-actions .btn-primary, .onboarding .facility-join .form-actions .btn-primary { flex: 1; width: 100%; padding: 14px; font-size: 17px; }
 .account-profile { margin-top: 10px; display: grid; gap: 6px; }
 .onboarding .auth-card { max-height: none; }
+
+/* ---- Facility admin + member lists ---- */
+.facility-admin { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.facility-admin-title { display: flex; align-items: center; gap: 6px; font-size: 16px; margin: 0 0 4px; }
+.facility-admin-sub { font-size: 13px; color: var(--slate); margin: 12px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.member-list { display: grid; gap: 6px; }
+.member-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.member-row:last-child { border-bottom: 0; }
+.member-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.member-main .muted.small { flex-basis: 100%; }
+.member-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill-brand { background: var(--brand); color: #fff; }
+.btn-danger-outline { border-color: var(--red); color: var(--red); }
+.facility-others { margin-top: 12px; }

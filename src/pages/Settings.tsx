@@ -4,8 +4,13 @@ import { useStore, getRepMode, setRepMode } from "../state/store";
 import { parseStaffList } from "../lib/staffImport";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
-import { getWorkspace, onWorkspaceChange, setWorkspace } from "../lib/workspace";
-import { workspaceMemberCount } from "../state/cloudSync";
+import {
+  facilityId, forgetFacility, getFacilities, getFacilityNotice, getWorkspace, onWorkspaceChange,
+  setFacilityNotice, setWorkspace, type JoinedWorkspace,
+} from "../lib/workspace";
+import { facilityInfo, myMembership, workspaceMemberCount } from "../state/cloudSync";
+import { FacilityAdmin } from "../components/FacilityAdmin";
+import { isOrsyncOwner } from "../lib/owner";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { ProfileForm } from "../components/ProfileForm";
 import { roleLabel, useProfile } from "../lib/profile";
@@ -160,6 +165,7 @@ export function Settings() {
       {cloudEnabled() && user?.uid && (
         <FacilityCard uid={user.uid} userName={user.name} email={user.email} />
       )}
+      {cloudEnabled() && user?.uid && isOrsyncOwner(user.email) && <OwnerConsole uid={user.uid} />}
 
       <div className="card settings-card">
         <h2>Plan</h2>
@@ -372,23 +378,73 @@ function StaffRosterCard() {
 // pull status, QC, schedules, teams, and notes are one set for the whole OR.
 function FacilityCard({ uid, userName, email }: { uid: string; userName: string; email: string }) {
   const [joined, setJoined] = useState(getWorkspace());
-  useEffect(() => onWorkspaceChange(() => setJoined(getWorkspace())), []);
+  const [others, setOthers] = useState<JoinedWorkspace[]>(() => getFacilities().filter((f) => f.id !== getWorkspace()?.id));
+  const [notice, setNotice] = useState(getFacilityNotice());
+  const isOwner = isOrsyncOwner(email);
+  useEffect(() => onWorkspaceChange(() => {
+    const w = getWorkspace();
+    setJoined(w);
+    setOthers(getFacilities().filter((f) => f.id !== w?.id));
+    setNotice(getFacilityNotice());
+  }), []);
+
+  // Membership as the cloud sees it: member count for the blurb, and your
+  // role (an admin promoted since you joined sees the admin tools).
   const [members, setMembers] = useState<number | null>(null);
+  const [role, setRole] = useState<"admin" | "member" | null>(joined?.role ?? null);
   useEffect(() => {
-    if (!joined) { setMembers(null); return; }
+    if (!joined) { setMembers(null); setRole(null); return; }
     let on = true;
-    workspaceMemberCount(joined.key).then((n) => { if (on) setMembers(n); }).catch(() => undefined);
+    setRole(joined.role ?? null);
+    myMembership(joined.id, uid).then((m) => {
+      if (!on || !m) return;
+      setRole(m.role);
+      if (m.role !== joined.role) setWorkspace({ ...joined, role: m.role });
+    }).catch(() => undefined);
+    workspaceMemberCount(joined.id).then((n) => { if (on) setMembers(n); }).catch(() => undefined);
     return () => { on = false; };
-  }, [joined]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joined?.id, uid]);
 
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  const noticeBlock = notice && (
+    <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left", marginBottom: 10 }}>
+      <span>{notice}</span>
+      <button className="link small" type="button" onClick={() => setFacilityNotice(null)}>Dismiss</button>
+    </div>
+  );
+
+  const othersBlock = others.length > 0 && (
+    <div className="facility-others">
+      <h4 className="facility-admin-sub">{joined ? "Your other facilities" : "Facilities you've joined"}</h4>
+      {others.map((f) => (
+        <div key={f.id} className="member-row">
+          <div className="member-main">
+            <strong>{f.name}</strong>
+            {f.role === "admin" && <span className="pill pill-brand">Admin</span>}
+          </div>
+          <div className="member-actions">
+            <button className="btn btn-sm btn-primary" onClick={() => { setWorkspace(f); setConfirmLeave(false); setAdding(false); }}>Switch to</button>
+            <button className="btn btn-sm" onClick={() => forgetFacility(f.id)}>Forget</button>
+          </div>
+        </div>
+      ))}
+      <p className="muted small" style={{ margin: "6px 0 0" }}>
+        Switching changes what this device shows and syncs to. Each facility keeps its own library.
+      </p>
+    </div>
+  );
 
   if (joined) {
     return (
       <div className="card settings-card">
         <h2>Facility</h2>
+        {noticeBlock}
         <p>
           This device is synced with <strong>{joined.name}</strong>
+          {role === "admin" ? " (you're an admin)" : ""}
           {members !== null ? ` · ${members} ${members === 1 ? "person" : "people"} joined` : ""}.
           Everyone who joins sees the same cards, case carts, pull status, QC, schedules, team
           assignments, and notes, live.
@@ -400,13 +456,23 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
         {confirmLeave ? (
           <span className="confirm">
             Leave {joined.name}? This device goes back to your personal library; nothing at the facility is deleted.
-            <button className="btn btn-danger btn-sm" onClick={() => { setWorkspace(null); setConfirmLeave(false); }}>Leave</button>
+            <button className="btn btn-danger btn-sm" onClick={() => { forgetFacility(joined.id); setConfirmLeave(false); }}>Leave</button>
             <button className="btn btn-sm" onClick={() => setConfirmLeave(false)}>Stay</button>
           </span>
         ) : (
           <div className="form-actions">
             <button className="btn" onClick={() => setConfirmLeave(true)}>Leave facility</button>
+            <button className="btn" onClick={() => setAdding((v) => !v)}>{adding ? "Cancel" : "Join another facility"}</button>
           </div>
+        )}
+        {adding && (
+          <div style={{ marginTop: 10 }}>
+            <FacilityJoinForm uid={uid} userName={userName} email={email} compact onJoined={() => setAdding(false)} />
+          </div>
+        )}
+        {othersBlock}
+        {(role === "admin" || isOwner) && (
+          <FacilityAdmin facilityId={joined.id} facilityName={joined.name} meUid={uid} canAssignAdmins={isOwner} />
         )}
       </div>
     );
@@ -415,17 +481,64 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
   return (
     <div className="card settings-card">
       <h2>Facility</h2>
+      {noticeBlock}
       <p>
         Join your hospital's OR so everyone works from <strong>one shared library</strong>: cards,
         case carts, pull status, QC, schedules, teams, and notes, live on every device. Ask your
-        charge desk for the facility name and password.
+        charge desk for the facility name and password. Work at more than one hospital, or travel?
+        Join each one; this device switches between them.
       </p>
       <FacilityJoinForm uid={uid} userName={userName} email={email} />
+      {othersBlock}
     </div>
   );
 }
 
+// ORSync (the company): look up any facility by name and manage its
+// admins and members, without joining it.
+function OwnerConsole({ uid }: { uid: string }) {
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState<{ id: string; name: string } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
+  async function open() {
+    setErr(null);
+    setTarget(null);
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      const id = await facilityId(name);
+      const info = await facilityInfo(id);
+      if (!info) { setErr(`No facility named "${name.trim()}".`); return; }
+      setTarget({ id, name: info.name });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't reach ORSync Cloud.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card settings-card">
+      <h2>ORSync admin</h2>
+      <p className="muted small">
+        You're signed in as an ORSync owner. Look up any facility to assign its admins, block or
+        allow members, or change its password.
+      </p>
+      <div className="form-grid">
+        <label className="field field-wide"><span>Facility name</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Keesler AFB OR" autoCapitalize="words" onKeyDown={(e) => e.key === "Enter" && void open()} />
+        </label>
+      </div>
+      {err && <p className="neg small">{err}</p>}
+      <div className="form-actions">
+        <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={open}>{busy ? "Looking up…" : "Open facility"}</button>
+      </div>
+      {target && <FacilityAdmin facilityId={target.id} facilityName={target.name} meUid={uid} canAssignAdmins />}
+    </div>
+  );
+}
 
 // Your details on the account: name, phone, position. Saving updates the
 // on-call roster entry and staff directory, and what your pulls are signed as.

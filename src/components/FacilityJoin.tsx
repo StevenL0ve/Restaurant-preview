@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
-import { deriveWorkspaceKey, setWorkspace } from "../lib/workspace";
-import { createWorkspace, joinWorkspace } from "../state/cloudSync";
+import { setWorkspace } from "../lib/workspace";
+import { createFacility, joinFacility } from "../state/cloudSync";
 
 // Join a hospital's shared library with its facility name and password.
 // Shared by onboarding and Settings → Facility. A wrong password can't
 // silently fork a facility: "not found" offers an explicit Create for
-// first-time setup only.
+// first-time setup only, and a refused password says so.
 export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
   uid: string;
   userName: string;
@@ -19,7 +19,7 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [offerCreate, setOfferCreate] = useState<{ key: string; name: string } | null>(null);
+  const [offerCreate, setOfferCreate] = useState<string | null>(null);
   const me = { uid, name: userName, email };
 
   async function join() {
@@ -28,12 +28,13 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
     if (!name.trim() || !pw) return;
     setBusy(true);
     try {
-      const key = await deriveWorkspaceKey(name, pw);
-      const r = await joinWorkspace(key, name, me);
-      if (r === "not-found") {
-        setOfferCreate({ key, name: name.trim() });
+      const r = await joinFacility(name, pw, me);
+      if (r.result === "not-found") {
+        setOfferCreate(name.trim());
+      } else if (r.result === "denied") {
+        setErr(`That password isn't right for ${name.trim()}, or this account's access to it was removed. Check with the charge desk or a facility admin.`);
       } else {
-        setWorkspace({ key, name: name.trim() });
+        setWorkspace({ id: r.id, name: name.trim(), role: r.role });
         setPw("");
         onJoined?.(name.trim());
       }
@@ -49,9 +50,14 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
     setBusy(true);
     setErr(null);
     try {
-      await createWorkspace(offerCreate.key, offerCreate.name, me);
-      setWorkspace({ key: offerCreate.key, name: offerCreate.name });
-      const n = offerCreate.name;
+      const r = await createFacility(offerCreate, pw, me);
+      if (r.result === "exists") {
+        setErr(`${offerCreate} was just created by someone else. Join it with its password instead.`);
+        setOfferCreate(null);
+        return;
+      }
+      setWorkspace({ id: r.id, name: offerCreate, role: "admin" });
+      const n = offerCreate;
       setOfferCreate(null);
       setPw("");
       onJoined?.(n);
@@ -89,15 +95,15 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
       {err && <p className="neg small">{err}</p>}
       {offerCreate ? (
         <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left", marginTop: 10 }}>
-          <strong>No facility found for "{offerCreate.name}" with that password.</strong>
+          <strong>No facility named "{offerCreate}" yet.</strong>
           <span>
-            Joining one that already exists? Check the spelling and password and try again. Setting
-            up <strong>{offerCreate.name}</strong> for the first time? Create it now: your library on
-            this device becomes its starting point, and this name + password is what everyone else
-            will use to join.
+            Joining one that already exists? Check the spelling and try again. Setting
+            up <strong>{offerCreate}</strong> for the first time? Create it now: your library on
+            this device becomes its starting point, you become its first admin, and this name +
+            password is what everyone else will use to join.
           </span>
           <div className="form-actions">
-            <button className="btn btn-primary" type="button" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate.name}`}</button>
+            <button className="btn btn-primary" type="button" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate}`}</button>
             <button className="btn" type="button" onClick={() => setOfferCreate(null)}>Try again</button>
           </div>
         </div>
@@ -118,7 +124,7 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
   );
 }
 
-function friendly(e: unknown): string {
+export function friendly(e: unknown): string {
   const msg = e instanceof Error ? e.message : "";
   if (/permission|insufficient/i.test(msg)) {
     return "ORSync Cloud isn't set up for facilities yet (the Firestore rules need the workspaces section). Ask whoever manages the Firebase project.";

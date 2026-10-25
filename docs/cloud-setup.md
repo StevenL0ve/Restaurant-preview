@@ -17,32 +17,120 @@ dormant; these steps create the project and drop in its keys.
    Email/Password → Enable → Save**.
 4. **Build → Firestore Database → Create database → Start in production
    mode** → pick a US location → Enable.
-5. Still in Firestore: **Rules** tab → replace everything with:
+5. Still in Firestore: **Rules** tab → replace everything with the
+   contents of `firestore.rules` (repo root; copied below) → Publish.
+
+   What the rules enforce: each account can only touch its own data. A
+   facility's shared library is readable and writable only by that
+   facility's ACTIVE members. Joining needs the facility password (checked
+   server-side against a proof only admins can read) and is refused for a
+   blocked email. Admins change the password and block or allow members;
+   ORSync owners (the `ownerEmails()` list) assign admins at any facility.
 
 ```
 rules_version = '2';
+
+// ORSync Cloud security rules. Paste into Firebase console → Firestore →
+// Rules → Publish. Everything the app relies on for facility access control
+// is enforced HERE, not on the device, so a removed member's phone can't
+// touch the facility no matter what it sends.
+//
+// Layout:
+//   users/{uid}/...                       a person's own library and setups
+//   workspaces/{ws}                       facility (name, createdBy); ws = sha256 of the name
+//   workspaces/{ws}/private/auth          { proof } the current password proof (admins only)
+//   workspaces/{ws}/members/{uid}         { email, name, phone, position, role, status }
+//   workspaces/{ws}/blocked/{email}       people an admin shut out (rejoin refused)
+//   workspaces/{ws}/data/library/...      the shared library (active members only)
+
 service cloud.firestore {
-  match /databases/{database}/documents {
+  match /databases/{db}/documents {
+
+    // ORSync (the company). Owners assign facility admins anywhere.
+    function ownerEmails() {
+      return ['stevenlnelson24@gmail.com'];
+    }
+    function signedIn() { return request.auth != null; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function isOwner() {
+      return signedIn() && ('email' in request.auth.token) && myEmail() in ownerEmails();
+    }
+
+    function wsDoc(ws) { return get(/databases/$(db)/documents/workspaces/$(ws)); }
+    function memberPath(ws) { return /databases/$(db)/documents/workspaces/$(ws)/members/$(request.auth.uid); }
+    function isActiveMember(ws) {
+      return signedIn() && exists(memberPath(ws)) && get(memberPath(ws)).data.status == 'active';
+    }
+    function isAdmin(ws) {
+      return isActiveMember(ws) && get(memberPath(ws)).data.role == 'admin';
+    }
+    function facilityProof(ws) {
+      return get(/databases/$(db)/documents/workspaces/$(ws)/private/auth).data.proof;
+    }
+    function isBlockedEmail(ws) {
+      return exists(/databases/$(db)/documents/workspaces/$(ws)/blocked/$(myEmail()));
+    }
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
     // Each account's own library.
     match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if signedIn() && request.auth.uid == uid;
     }
-    // Facility workspaces (one shared library per hospital OR). The path key
-    // is derived on-device from the facility name + password, so knowing it
-    // IS the credential: signed-in users can open a workspace only by its
-    // exact address ("get"), never list them.
+
     match /workspaces/{ws} {
-      allow get, create, update: if request.auth != null;
-      match /{document=**} {
-        allow read, write: if request.auth != null;
+      // Anyone signed in can look a facility up by its exact address (to
+      // tell "no such facility" from "wrong password"); never list them.
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin(ws) || isOwner();
+      allow delete: if false;
+
+      // The password proof. Written once by the creator, changed by admins.
+      match /private/auth {
+        allow read: if isAdmin(ws) || isOwner();
+        allow create: if signedIn() && wsDoc(ws).data.createdBy == request.auth.uid;
+        allow update: if isAdmin(ws) || isOwner();
+        allow delete: if false;
+      }
+
+      match /members/{uid} {
+        allow read: if isActiveMember(ws) || isOwner();
+        // Joining: your own record, active, with the facility's current
+        // password proof, and not on the blocked list. The facility's
+        // creator joins as its first admin; everyone else as a member.
+        allow create: if signedIn()
+          && uid == request.auth.uid
+          && request.resource.data.email == myEmail()
+          && request.resource.data.status == 'active'
+          && !isBlockedEmail(ws)
+          && request.resource.data.proof == facilityProof(ws)
+          && (request.resource.data.role == 'member'
+              || (request.resource.data.role == 'admin' && wsDoc(ws).data.createdBy == request.auth.uid));
+        // You keep your own name/phone/position current (and drop the proof
+        // once in). Admins change status. Owners change anything (roles).
+        allow update: if (isActiveMember(ws) && uid == request.auth.uid
+              && changedOnly(['name', 'phone', 'position', 'updatedAt', 'proof'])
+              && !('proof' in request.resource.data))
+          || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy']))
+          || isOwner();
+        allow delete: if isAdmin(ws) || isOwner();
+      }
+
+      match /blocked/{email} {
+        allow read, write: if isAdmin(ws) || isOwner();
+      }
+
+      // The shared library: cards, carts, pulls, QC, schedule, on-call, notes.
+      match /data/{document=**} {
+        allow read, write: if isActiveMember(ws);
       }
     }
   }
 }
 ```
-
-   → Publish. (Each account can only touch its own data, and a facility's
-   shared data only by knowing its name + password.)
 
 ## 3. Get the keys
 

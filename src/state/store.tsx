@@ -10,7 +10,7 @@ import {
 import { useAuth } from "./auth";
 import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
-import { getWorkspace, onWorkspaceChange, type JoinedWorkspace } from "../lib/workspace";
+import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, setWorkspace, type JoinedWorkspace } from "../lib/workspace";
 import { writeWorkspaceMember } from "./cloudSync";
 import { setProfile, roleLabel, type UserProfile } from "../lib/profile";
 import type {
@@ -372,9 +372,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const stop = startCloudSync({ uid: user.uid, workspace }, {
       getState: () => stateRef.current,
       applyRemote: (patch) => setState((s) => migrateLoaners({ ...s, ...patch } as AppState)),
+      // Blocked or removed by a facility admin: this device drops back to
+      // the person's own library. Nothing of theirs is lost; nothing of the
+      // facility's can be touched.
+      onAccessLost: (reason) => {
+        if (!workspace) return;
+        forgetFacility(workspace.id);
+        setFacilityNotice(
+          reason === "gone"
+            ? `${workspace.name} couldn't be reached. This device is back on your personal library.`
+            : `Your access to ${workspace.name} was removed by a facility admin. This device is back on your personal library; your own cards are still yours.`,
+        );
+        setWorkspace(null);
+      },
     });
     return stop;
-  }, [user?.uid, workspace?.key]);
+  }, [user?.uid, workspace?.id]);
 
   useEffect(() => {
     schedulePush();
@@ -615,8 +628,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         update((st) => applyProfileToRoster(st, p));
         const ws = getWorkspace();
         if (ws) {
-          void writeWorkspaceMember(ws.key, {
-            uid: p.uid, name: p.name, email: p.email, phone: p.phone, role: roleLabel(p.role, p.level) || undefined,
+          void writeWorkspaceMember(ws.id, {
+            uid: p.uid, name: p.name, email: p.email, phone: p.phone, position: roleLabel(p.role, p.level) || undefined,
           }).catch(() => undefined);
         }
       },

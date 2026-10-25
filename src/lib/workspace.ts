@@ -1,19 +1,32 @@
 // Facility workspaces: one shared library per hospital OR, joined with the
-// facility's name and password. There's no server to check a password
-// against (Firebase's free tier has no server code), so the password is
-// never stored anywhere. Instead the app derives a long secret key from
-// name + password on the device, and that key IS the workspace's address in
-// the cloud. The security rules let signed-in users read a workspace only by
-// its exact address and never list them, so knowing the password is the
-// only way in. Deriving the key is deliberately slow (PBKDF2, 150k rounds)
-// so guessing passwords one query at a time is impractical.
+// facility's name and password.
+//
+// How access works (no server code; Firestore security rules do the work):
+//  • The facility's cloud address is derived from its NAME only, so an
+//    admin can change the password without moving any data.
+//  • The password never leaves the device as-is. The app derives a slow
+//    PBKDF2 "proof" from name + password; the facility keeps the current
+//    proof in a private doc only admins can read, and the rules compare a
+//    joiner's proof against it. Wrong password: the join is refused.
+//  • Membership is a per-person record with a status. Everything in the
+//    facility's library is readable and writable ONLY by active members.
+//    An admin blocking someone flips that status (and remembers their
+//    email), and their device is shut out immediately, password or not.
+
+export type MemberRole = "admin" | "member";
 
 export interface JoinedWorkspace {
-  key: string; // the derived address
-  name: string; // display name, as typed
+  /** The facility's cloud address (SHA-256 of its normalized name). */
+  id: string;
+  /** Display name, as typed. */
+  name: string;
+  /** Your membership role at the facility, as last seen. */
+  role?: MemberRole;
 }
 
-const KEY = "orsync.workspace.v1";
+const ACTIVE_KEY = "orsync.workspace.v2";
+const LIST_KEY = "orsync.facilities.v2";
+const LEGACY_KEY = "orsync.workspace.v1";
 const ITERATIONS = 150_000;
 
 export function normalizeFacilityName(name: string): string {
@@ -28,9 +41,21 @@ async function subtle(): Promise<SubtleCrypto> {
   return (webcrypto as unknown as Crypto).subtle;
 }
 
-/** The workspace address for a facility name + password. Same inputs, same
- *  address, on every device; nothing about the password survives it. */
-export async function deriveWorkspaceKey(name: string, password: string): Promise<string> {
+function hex(buf: ArrayBuffer): string {
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** The facility's cloud address: the same on every device for the same
+ *  name, whatever the spacing or capitalization. */
+export async function facilityId(name: string): Promise<string> {
+  const s = await subtle();
+  return hex(await s.digest("SHA-256", new TextEncoder().encode(`orsync-facility:${normalizeFacilityName(name)}`)));
+}
+
+/** The password proof for a facility: PBKDF2 over name + password, slow by
+ *  design (150k rounds) so guessing passwords is impractical. Nothing about
+ *  the password itself survives it. */
+export async function deriveFacilityProof(name: string, password: string): Promise<string> {
   const s = await subtle();
   const enc = new TextEncoder();
   const base = await s.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
@@ -39,21 +64,34 @@ export async function deriveWorkspaceKey(name: string, password: string): Promis
     base,
     256,
   );
-  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hex(bits);
 }
+
+/** @deprecated Older name for the proof; kept for existing tests/imports. */
+export const deriveWorkspaceKey = deriveFacilityProof;
 
 const listeners = new Set<() => void>();
 export function onWorkspaceChange(fn: () => void): () => void {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
 }
+function notify() { for (const fn of listeners) fn(); }
 
+function valid(w: unknown): w is JoinedWorkspace {
+  const x = w as JoinedWorkspace;
+  return !!x && typeof x.id === "string" && x.id.length === 64 && typeof x.name === "string";
+}
+
+/** The facility this device is synced with right now, if any. */
 export function getWorkspace(): JoinedWorkspace | null {
   try {
-    const raw = localStorage.getItem(KEY);
+    // The first-generation address scheme (name + password) is retired;
+    // anything joined under it has to be joined again.
+    localStorage.removeItem(LEGACY_KEY);
+    const raw = localStorage.getItem(ACTIVE_KEY);
     if (!raw) return null;
-    const w = JSON.parse(raw) as JoinedWorkspace;
-    return w && typeof w.key === "string" && w.key.length === 64 ? w : null;
+    const w = JSON.parse(raw);
+    return valid(w) ? w : null;
   } catch {
     return null;
   }
@@ -61,16 +99,63 @@ export function getWorkspace(): JoinedWorkspace | null {
 
 export function setWorkspace(w: JoinedWorkspace | null): void {
   try {
-    if (w) localStorage.setItem(KEY, JSON.stringify(w));
-    else localStorage.removeItem(KEY);
+    if (w) {
+      localStorage.setItem(ACTIVE_KEY, JSON.stringify(w));
+      rememberFacility(w);
+    } else {
+      localStorage.removeItem(ACTIVE_KEY);
+    }
   } catch { /* private mode */ }
-  for (const fn of listeners) fn();
+  notify();
+}
+
+/** Every facility this device has joined (people work at, or travel to,
+ *  more than one). One is active at a time; the rest are a tap away. */
+export function getFacilities(): JoinedWorkspace[] {
+  try {
+    const raw = localStorage.getItem(LIST_KEY);
+    const list = raw ? (JSON.parse(raw) as unknown[]) : [];
+    return Array.isArray(list) ? list.filter(valid) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function rememberFacility(w: JoinedWorkspace): void {
+  try {
+    const rest = getFacilities().filter((f) => f.id !== w.id);
+    localStorage.setItem(LIST_KEY, JSON.stringify([w, ...rest]));
+  } catch { /* private mode */ }
+  notify();
+}
+
+export function forgetFacility(id: string): void {
+  try {
+    localStorage.setItem(LIST_KEY, JSON.stringify(getFacilities().filter((f) => f.id !== id)));
+    const active = getWorkspace();
+    if (active?.id === id) localStorage.removeItem(ACTIVE_KEY);
+  } catch { /* private mode */ }
+  notify();
+}
+
+// A one-line notice for the Settings screen when a facility shut this
+// device out (an admin blocked the account, or the facility was removed).
+const NOTICE_KEY = "orsync.facilitynotice.v1";
+export function getFacilityNotice(): string | null {
+  try { return localStorage.getItem(NOTICE_KEY); } catch { return null; }
+}
+export function setFacilityNotice(msg: string | null): void {
+  try {
+    if (msg) localStorage.setItem(NOTICE_KEY, msg);
+    else localStorage.removeItem(NOTICE_KEY);
+  } catch { /* private mode */ }
+  notify();
 }
 
 /** Where a device's synced library lives: the person's own cloud copy, or
  *  the facility workspace once joined. */
 export function syncRootId(uid: string, ws: JoinedWorkspace | null): string {
-  return ws ? `ws:${ws.key}` : uid;
+  return ws ? `ws:${ws.id}` : uid;
 }
 
 /** Should the local library be treated as someone else's when switching

@@ -1,8 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { deriveWorkspaceKey, isForeignRoot, normalizeFacilityName, syncRootId } from "./workspace";
+import { deriveWorkspaceKey, facilityId, isForeignRoot, normalizeFacilityName, syncRootId } from "./workspace";
 
-describe("facility workspace keys", () => {
-  it("derives the same 64-hex address on every device for the same name + password", async () => {
+describe("facility addresses", () => {
+  it("the address comes from the name alone, so a password change never moves the data", async () => {
+    const a = await facilityId("Keesler AFB OR");
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+    expect(await facilityId("  keesler   afb or ")).toBe(a);
+    expect(await facilityId("Mercy General OR")).not.toBe(a);
+  });
+
+  it("the address never reveals the proof (different derivations)", async () => {
+    expect(await facilityId("Keesler AFB OR")).not.toBe(await deriveWorkspaceKey("Keesler AFB OR", "Keeslerorflight"));
+  });
+});
+
+describe("facility password proofs", () => {
+  it("derives the same 64-hex proof on every device for the same name + password", async () => {
     const a = await deriveWorkspaceKey("Keesler AFB OR", "Keeslerorflight");
     const b = await deriveWorkspaceKey("  keesler   afb or ", "Keeslerorflight"); // spacing/case of the NAME don't matter
     expect(a).toMatch(/^[0-9a-f]{64}$/);
@@ -22,7 +35,7 @@ describe("facility workspace keys", () => {
 
 describe("sync root switching", () => {
   const uid = "uid-steven";
-  const ws = { key: "a".repeat(64), name: "Keesler AFB OR" };
+  const ws = { id: "a".repeat(64), name: "Keesler AFB OR" };
 
   it("roots at the user, or at the facility once joined", () => {
     expect(syncRootId(uid, null)).toBe(uid);

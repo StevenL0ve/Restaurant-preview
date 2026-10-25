@@ -1,6 +1,6 @@
 import type { AppState, LoanerTray, PrefCard, CardItem, CatalogItem } from "../types";
 import { firebase, setCloudStatus } from "../lib/cloud";
-import { isForeignRoot, syncRootId, type JoinedWorkspace } from "../lib/workspace";
+import { deriveFacilityProof, facilityId, isForeignRoot, syncRootId, type JoinedWorkspace, type MemberRole } from "../lib/workspace";
 
 // Live sync between the local store and Firestore. The shape is simple and
 // honest: every entity is a document under users/{uid}/<collection>/<id>,
@@ -164,12 +164,18 @@ export interface SyncTarget {
 interface SyncHooks {
   getState: () => AppState;
   applyRemote: (patch: Partial<AppState>) => void;
+  /** The facility refused this account (blocked, removed, or gone). */
+  onAccessLost?: (reason: AccessLostReason) => void;
 }
+
+export type AccessLostReason = "blocked" | "removed" | "gone";
 
 interface ActiveSync {
   uid: string;
-  /** Firestore path segments for shared collections: ["users", uid] or ["workspaces", key]. */
-  root: [string, string];
+  /** Firestore path segments the shared collections hang off:
+   *  ["users", uid] or ["workspaces", id, "data", "library"]. */
+  root: string[];
+  workspace: JoinedWorkspace | null;
   hooks: SyncHooks;
   lastKnown: Record<string, Map<string, string>>;
   lastSetupsJson: string | null;
@@ -198,7 +204,8 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
   const rootId = syncRootId(uid, workspace);
   const sync: ActiveSync = {
     uid,
-    root: workspace ? ["workspaces", workspace.key] : ["users", uid],
+    root: workspace ? workspaceRoot(workspace.id) : ["users", uid],
+    workspace,
     hooks,
     lastKnown: Object.fromEntries(SYNCED_KEYS.map((k) => [k, new Map()])),
     lastSetupsJson: null,
@@ -213,8 +220,20 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
       const fs = await import("firebase/firestore");
       if (sync.stopped) return;
       // Shared data follows the root; a person's own setup checklists stay theirs.
-      const colRef = (key: string) => fs.collection(db, sync.root[0], sync.root[1], key);
+      const [r0, ...rRest] = sync.root;
+      const colRef = (key: string) => fs.collection(db, r0, ...rRest, key);
+      const docRef = (key: string, id: string) => fs.doc(db, r0, ...rRest, key, id);
       const setupsRef = fs.doc(db, "users", uid, "meta", "setups");
+
+      // At a facility, membership is checked up front so a blocked or removed
+      // account is told so plainly instead of seeing a wall of sync errors.
+      if (workspace) {
+        const me = await fs.getDoc(fs.doc(db, "workspaces", workspace.id, "members", uid)).catch(() => null);
+        if (sync.stopped) return;
+        if (!me) { lostAccess(sync, "gone"); return; }
+        if (!me.exists()) { lostAccess(sync, "removed"); return; }
+        if ((me.data() as { status?: string }).status !== "active") { lostAccess(sync, "blocked"); return; }
+      }
 
       // Bootstrap: read what the cloud has. "Empty" is judged by entity
       // docs only, never by the meta doc.
@@ -227,7 +246,7 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
 
       if (entityCount === 0 && !localIsForeign) {
         // First device on this account: the local library seeds the cloud.
-        await pushAll(sync, fs, db);
+        await pushAll(sync, fs, db, docRef);
       } else {
         const patch: Partial<AppState> = {};
         SYNCED_KEYS.forEach((key, i) => {
@@ -272,7 +291,10 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
             sync.hooks.applyRemote({ [key]: items } as Partial<AppState>);
           }
           setCloudStatus({ state: "live", lastSyncAt: new Date().toISOString() });
-        }, (err) => setCloudStatus({ state: "error", message: err.message }));
+        }, (err) => {
+          if (isDenied(err) && sync.workspace) lostAccess(sync, "blocked");
+          else setCloudStatus({ state: "error", message: err.message });
+        });
         sync.stops.push(stop);
       }
       const stopSetups = fs.onSnapshot(setupsRef, (snap) => {
@@ -290,11 +312,28 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
       // whatever changed locally while bootstrapping.
       schedulePush();
     } catch (e) {
-      setCloudStatus({ state: "error", message: e instanceof Error ? e.message : "Sync failed to start." });
+      if (isDenied(e) && sync.workspace) lostAccess(sync, "blocked");
+      else setCloudStatus({ state: "error", message: e instanceof Error ? e.message : "Sync failed to start." });
     }
   })();
 
   return stopCloudSync;
+}
+
+function workspaceRoot(id: string): string[] {
+  return ["workspaces", id, "data", "library"];
+}
+
+function isDenied(e: unknown): boolean {
+  const code = (e as { code?: string })?.code ?? "";
+  return /permission-denied|PERMISSION_DENIED/.test(code) || /insufficient permissions/i.test((e as Error)?.message ?? "");
+}
+
+function lostAccess(sync: ActiveSync, reason: AccessLostReason) {
+  if (sync.stopped) return;
+  stopCloudSync();
+  setCloudStatus({ state: "error", message: "This facility no longer accepts this account." });
+  sync.hooks.onAccessLost?.(reason);
 }
 
 export function stopCloudSync() {
@@ -336,11 +375,11 @@ async function pushNow(sync: ActiveSync) {
       const desired = prepareForCloud(key, state[key] as unknown as Item[]);
       const { changed, removedIds } = diffDocs(sync.lastKnown[key], desired);
       for (const it of changed) {
-        await op((b) => b.set(fs.doc(db, sync.root[0], sync.root[1], key, it.id), it));
+        await op((b) => b.set(fs.doc(db, sync.root[0], ...sync.root.slice(1), key, it.id), it));
         applied.push([key, it.id, stableStringify(it)]);
       }
       for (const id of removedIds) {
-        await op((b) => b.delete(fs.doc(db, sync.root[0], sync.root[1], key, id)));
+        await op((b) => b.delete(fs.doc(db, sync.root[0], ...sync.root.slice(1), key, id)));
         applied.push([key, id, null]);
       }
     }
@@ -359,6 +398,7 @@ async function pushNow(sync: ActiveSync) {
     if (setupsJsonToRecord !== null) sync.lastSetupsJson = setupsJsonToRecord;
     setCloudStatus({ state: "live", lastSyncAt: new Date().toISOString() });
   } catch (e) {
+    if (isDenied(e) && sync.workspace) { lostAccess(sync, "blocked"); return; }
     setCloudStatus({ state: "error", message: e instanceof Error ? e.message : "Sync push failed." });
     // Retry while the error stands: the diff is still intact.
     if (!sync.stopped) {
@@ -368,14 +408,19 @@ async function pushNow(sync: ActiveSync) {
   }
 }
 
-async function pushAll(sync: ActiveSync, fs: typeof import("firebase/firestore"), db: import("firebase/firestore").Firestore) {
+async function pushAll(
+  sync: ActiveSync,
+  fs: typeof import("firebase/firestore"),
+  db: import("firebase/firestore").Firestore,
+  docRef: (key: string, id: string) => import("firebase/firestore").DocumentReference,
+) {
   const state = sync.hooks.getState();
   let batch = fs.writeBatch(db);
   let ops = 0;
   const applied: [SyncedKey, string, string][] = [];
   for (const key of SYNCED_KEYS) {
     for (const it of prepareForCloud(key, state[key] as unknown as Item[])) {
-      batch.set(fs.doc(db, sync.root[0], sync.root[1], key, it.id), it);
+      batch.set(docRef(key, it.id), it);
       applied.push([key, it.id, stableStringify(it)]);
       if (++ops >= 400) { await batch.commit(); batch = fs.writeBatch(db); ops = 0; }
     }
@@ -389,55 +434,175 @@ async function pushAll(sync: ActiveSync, fs: typeof import("firebase/firestore")
 
 
 // ---- Facility workspaces -----------------------------------------------------
+// See src/lib/workspace.ts for the access model and firestore.rules for
+// what the server enforces.
 
-export type JoinResult = "joined" | "not-found";
+export type JoinResult = "joined" | "not-found" | "denied" | "exists";
+export type MemberStatus = "active" | "blocked";
 
-/** Join an existing facility by its derived key. "not-found" means no
- *  workspace lives at that address: wrong password, or never created. The
- *  caller decides whether to create it (first-time setup) or ask again. */
-export async function joinWorkspace(key: string, name: string, member: { uid: string; name: string; email: string }): Promise<JoinResult> {
-  const { db } = await firebase();
-  const fs = await import("firebase/firestore");
-  const ref = fs.doc(db, "workspaces", key);
-  const snap = await fs.getDoc(ref);
-  if (!snap.exists()) return "not-found";
-  await fs.setDoc(
-    fs.doc(db, "workspaces", key, "members", member.uid),
-    { name: member.name, email: member.email, joinedAt: new Date().toISOString() },
-    { merge: true },
-  );
-  void name;
-  return "joined";
+export interface FacilityMember {
+  uid: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  position?: string | null;
+  role: MemberRole;
+  status: MemberStatus;
+  joinedAt?: string;
 }
 
-/** First-time setup for a facility: create the workspace at this key. */
-export async function createWorkspace(key: string, name: string, member: { uid: string; name: string; email: string }): Promise<void> {
+export interface BlockedEntry {
+  email: string;
+  name?: string;
+  blockedAt?: string;
+}
+
+type Me = { uid: string; name: string; email: string; phone?: string; position?: string };
+
+function memberFields(m: Me) {
+  return {
+    uid: m.uid,
+    name: m.name,
+    email: m.email.trim().toLowerCase(),
+    phone: m.phone ?? null,
+    position: m.position ?? null,
+  };
+}
+
+function isDeniedErr(e: unknown): boolean { return isDenied(e); }
+
+/** Join a facility by name + password. "not-found": no facility by that
+ *  name. "denied": the password is wrong, or this account was blocked. */
+export async function joinFacility(name: string, password: string, me: Me): Promise<{ result: JoinResult; id: string; role?: MemberRole }> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
+  const id = await facilityId(name);
+  const ws = await fs.getDoc(fs.doc(db, "workspaces", id));
+  if (!ws.exists()) return { result: "not-found", id };
+  const memberRef = fs.doc(db, "workspaces", id, "members", me.uid);
+  // Already a member (another device, or re-entering the password): just
+  // confirm the record is still active.
+  const existing = await fs.getDoc(memberRef).catch(() => null);
+  if (existing?.exists()) {
+    const d = existing.data() as FacilityMember;
+    if (d.status !== "active") return { result: "denied", id };
+    return { result: "joined", id, role: d.role };
+  }
+  const proof = await deriveFacilityProof(name, password);
+  const role: MemberRole = (ws.data() as { createdBy?: string }).createdBy === me.uid ? "admin" : "member";
+  try {
+    await fs.setDoc(memberRef, { ...memberFields(me), role, status: "active", joinedAt: new Date().toISOString(), proof });
+  } catch (e) {
+    if (isDeniedErr(e)) return { result: "denied", id };
+    throw e;
+  }
+  // The proof did its job; it doesn't need to sit in the member record.
+  await fs.updateDoc(memberRef, { proof: fs.deleteField(), updatedAt: new Date().toISOString() }).catch(() => undefined);
+  return { result: "joined", id, role };
+}
+
+/** First-time setup: create the facility at its name's address, with this
+ *  person as its first admin. "exists" if someone already created it. */
+export async function createFacility(name: string, password: string, me: Me): Promise<{ result: "created" | "exists"; id: string }> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const id = await facilityId(name);
+  const ref = fs.doc(db, "workspaces", id);
+  if ((await fs.getDoc(ref)).exists()) return { result: "exists", id };
   const now = new Date().toISOString();
-  await fs.setDoc(fs.doc(db, "workspaces", key), { name: name.trim(), createdAt: now, createdBy: member.uid }, { merge: true });
-  await fs.setDoc(
-    fs.doc(db, "workspaces", key, "members", member.uid),
-    { name: member.name, email: member.email, joinedAt: now },
-    { merge: true },
-  );
+  const proof = await deriveFacilityProof(name, password);
+  await fs.setDoc(ref, { name: name.trim(), createdAt: now, createdBy: me.uid, v: 2 });
+  await fs.setDoc(fs.doc(db, "workspaces", id, "private", "auth"), { proof, changedAt: now, changedBy: me.uid });
+  const memberRef = fs.doc(db, "workspaces", id, "members", me.uid);
+  await fs.setDoc(memberRef, { ...memberFields(me), role: "admin", status: "active", joinedAt: now, proof });
+  await fs.updateDoc(memberRef, { proof: fs.deleteField(), updatedAt: now }).catch(() => undefined);
+  return { result: "created", id };
+}
+
+/** Your own membership record at a facility, or null if none/unreadable. */
+export async function myMembership(id: string, uid: string): Promise<FacilityMember | null> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const snap = await fs.getDoc(fs.doc(db, "workspaces", id, "members", uid)).catch(() => null);
+  return snap?.exists() ? ({ ...(snap.data() as FacilityMember), uid: snap.id }) : null;
+}
+
+/** Everyone at the facility (admins and ORSync owners can read this). */
+export async function listMembers(id: string): Promise<FacilityMember[]> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const snap = await fs.getDocs(fs.collection(db, "workspaces", id, "members"));
+  return snap.docs
+    .map((d) => ({ ...(d.data() as FacilityMember), uid: d.id }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function listBlocked(id: string): Promise<BlockedEntry[]> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const snap = await fs.getDocs(fs.collection(db, "workspaces", id, "blocked"));
+  return snap.docs.map((d) => ({ ...(d.data() as BlockedEntry), email: d.id }));
+}
+
+/** The facility's display name and whether it exists (for the owner console). */
+export async function facilityInfo(id: string): Promise<{ name: string } | null> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const snap = await fs.getDoc(fs.doc(db, "workspaces", id));
+  return snap.exists() ? { name: (snap.data() as { name: string }).name } : null;
 }
 
 /** How many people have joined (for the Settings card). */
-export async function workspaceMemberCount(key: string): Promise<number> {
+export async function workspaceMemberCount(id: string): Promise<number> {
+  return (await listMembers(id)).length;
+}
+
+/** Admin: shut an account out of the facility. Their device stops syncing
+ *  on its next read or write, and the password alone won't get them back
+ *  in; "Allow back" reverses it. */
+export async function blockMember(id: string, m: { uid: string; email: string; name: string }, byUid: string): Promise<void> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
-  const snap = await fs.getDocs(fs.collection(db, "workspaces", key, "members"));
-  return snap.size;
+  const now = new Date().toISOString();
+  const email = m.email.trim().toLowerCase();
+  await fs.setDoc(fs.doc(db, "workspaces", id, "blocked", email), { email, name: m.name, blockedAt: now, blockedBy: byUid });
+  await fs.updateDoc(fs.doc(db, "workspaces", id, "members", m.uid), { status: "blocked", blockedAt: now, blockedBy: byUid, updatedAt: now });
+}
+
+export async function allowMember(id: string, m: { uid?: string; email: string }): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const now = new Date().toISOString();
+  const email = m.email.trim().toLowerCase();
+  await fs.deleteDoc(fs.doc(db, "workspaces", id, "blocked", email)).catch(() => undefined);
+  if (m.uid) {
+    await fs.updateDoc(fs.doc(db, "workspaces", id, "members", m.uid), { status: "active", updatedAt: now }).catch(() => undefined);
+  }
+}
+
+/** ORSync owner: make someone an admin at a facility, or take it back. */
+export async function setMemberRole(id: string, uid: string, role: MemberRole): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  await fs.updateDoc(fs.doc(db, "workspaces", id, "members", uid), { role, updatedAt: new Date().toISOString() });
+}
+
+/** Admin: change the facility password. Everyone already joined keeps
+ *  working; anyone joining from now on needs the new one. */
+export async function changeFacilityPassword(id: string, name: string, newPassword: string, byUid: string): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const proof = await deriveFacilityProof(name, newPassword);
+  await fs.setDoc(fs.doc(db, "workspaces", id, "private", "auth"), { proof, changedAt: new Date().toISOString(), changedBy: byUid });
 }
 
 /** Mirror a person's profile into the facility's member list. */
-export async function writeWorkspaceMember(key: string, m: { uid: string; name: string; email: string; phone?: string; role?: string }): Promise<void> {
+export async function writeWorkspaceMember(id: string, m: { uid: string; name: string; email: string; phone?: string; position?: string }): Promise<void> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
   await fs.setDoc(
-    fs.doc(db, "workspaces", key, "members", m.uid),
-    { name: m.name, email: m.email, phone: m.phone ?? null, role: m.role ?? null, updatedAt: new Date().toISOString() },
+    fs.doc(db, "workspaces", id, "members", m.uid),
+    { name: m.name, phone: m.phone ?? null, position: m.position ?? null, updatedAt: new Date().toISOString() },
     { merge: true },
   );
 }
