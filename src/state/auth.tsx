@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { cloudEnabled, firebase, authErrorMessage } from "../lib/cloud";
+import { bioStatus, bioAuthenticate } from "../lib/biometric";
 
 // Lightweight, optional accounts. ORSync is a *personal* tool, so the whole
 // point is that you never need anyone's permission to use it — there's a
@@ -52,20 +53,6 @@ function saveAccounts(a: Record<string, Account>) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a));
 }
 
-async function biometricAvailable(): Promise<boolean> {
-  try {
-    const w = window as unknown as {
-      PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> };
-    };
-    if (w.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) {
-      return await w.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    }
-  } catch {
-    /* not available */
-  }
-  return false;
-}
-
 interface AuthContext {
   user: SessionUser | null;
   ready: boolean;
@@ -75,10 +62,13 @@ interface AuthContext {
   resetPassword: (email: string) => Promise<void>;
   continueAsGuest: () => void;
   signOut: () => void;
-  // biometric
+  // biometric app lock (Face ID / Touch ID / Android fingerprint or face)
   bioAvailable: boolean;
+  /** "Face ID", "Touch ID", "fingerprint"… for UI copy. */
+  bioLabel: string;
   bioEnabled: boolean;
-  setBioEnabled: (on: boolean) => void;
+  /** Turning it on requires one successful scan first; resolves whether it's on. */
+  setBioEnabled: (on: boolean) => Promise<boolean>;
   bioUnlock: () => Promise<boolean>;
 }
 
@@ -104,10 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const ready = true;
   const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioLabel, setBioLabel] = useState("Face ID");
   const [bioEnabled, setBioEnabledState] = useState(() => localStorage.getItem(BIO_KEY) === "1");
 
   useEffect(() => {
-    biometricAvailable().then(setBioAvailable);
+    void bioStatus().then((st) => {
+      setBioAvailable(st.available);
+      setBioLabel(st.label);
+    });
   }, []);
 
   // With the cloud on, Firebase owns the session: reconcile the cached copy
@@ -145,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     ready,
     bioAvailable,
+    bioLabel,
     bioEnabled,
 
     signUp: async (name, email, password) => {
@@ -234,6 +229,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     signOut: () => {
+      localStorage.removeItem(BIO_KEY);
+      setBioEnabledState(false);
       localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem(GUEST_KEY);
       localStorage.removeItem(CLOUD_SESSION_KEY);
@@ -246,28 +243,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     },
 
-    setBioEnabled: (on) => {
+    setBioEnabled: async (on) => {
+      if (on) {
+        // Prove it works before relying on it, so nobody locks themselves out.
+        const ok = await bioAuthenticate(`Turn on ${bioLabel} for ORSync`);
+        if (!ok) return false;
+      }
       localStorage.setItem(BIO_KEY, on ? "1" : "0");
       setBioEnabledState(on);
+      return on;
     },
 
-    bioUnlock: async () => {
-      if (!(await biometricAvailable())) return true;
-      try {
-        const cred = await navigator.credentials.get({
-          publicKey: {
-            challenge: crypto.getRandomValues(new Uint8Array(32)),
-            timeout: 60000,
-            userVerification: "required",
-            rpId: location.hostname,
-            allowCredentials: [],
-          },
-        });
-        return !!cred;
-      } catch {
-        return false;
-      }
-    },
+    bioUnlock: () => bioAuthenticate("Unlock ORSync"),
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

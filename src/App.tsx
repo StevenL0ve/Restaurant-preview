@@ -4,6 +4,7 @@ import { useAuth } from "./state/auth";
 import { useStore } from "./state/store";
 import { initNativeFileOpen } from "./lib/nativeFileOpen";
 import { Login } from "./pages/Login";
+import { AppLock } from "./components/AppLock";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
@@ -74,6 +75,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <AppLock />
       {banner && <div className="toast">{banner}</div>}
       <a href="#main-content" className="skip-link">Skip to content</a>
       <Welcome />

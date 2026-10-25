@@ -6,7 +6,7 @@ import { cloudEnabled } from "../lib/cloud";
 // Optional account gate. A personal tool shouldn't gate you behind anyone's
 // approval — so the most prominent action is "use it now, no account."
 export function Login() {
-  const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioEnabled, bioUnlock } = useAuth();
+  const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioLabel } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signup");
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -32,12 +32,6 @@ export function Login() {
     }
   }
 
-  async function faceId() {
-    setError(null);
-    const ok = await bioUnlock();
-    if (!ok) setError("Face ID could not verify you. Use your password.");
-  }
-
   return (
     <div className="auth">
       <div className="auth-card">
@@ -53,7 +47,7 @@ export function Login() {
           Use it now, no account
         </button>
         <p className="auth-foot" style={{ margin: "10px 0 18px" }}>
-          Everything stays on this device. Add an account anytime to lock it with Face&nbsp;ID.
+          Everything stays on this device.{bioAvailable ? ` You can lock it with ${bioLabel} in Settings.` : ""}
         </p>
 
         <div className="auth-tabs">
@@ -91,7 +85,7 @@ export function Login() {
             </button>
           </div>
         ) : (
-        <form className="auth-form" onSubmit={submit}>
+        <form className="auth-form" onSubmit={submit} autoComplete="on" name={mode === "signup" ? "signup" : "login"}>
           {mode === "reset" && (
             <p className="auth-foot" style={{ margin: 0, textAlign: "left" }}>
               Enter the email you signed up with and we'll send a link to set a new password.
@@ -100,22 +94,40 @@ export function Login() {
           {mode === "signup" && (
             <label className="field">
               <span>Your name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Lee" autoComplete="name" />
+              <input name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Lee" autoComplete="name" autoCapitalize="words" />
             </label>
           )}
           <label className="field">
             <span>Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" autoComplete="email" />
+            <input
+              type="email"
+              name="email"
+              id="orsync-email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
+            />
           </label>
           {mode !== "reset" && (
             <label className="field">
               <span>Password</span>
               <input
                 type="password"
+                name="password"
+                id="orsync-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                {...(mode === "signup" ? { passwordrules: "minlength: 6;" } : {})}
               />
             </label>
           )}
@@ -155,11 +167,6 @@ export function Login() {
         </form>
         )}
 
-        {bioAvailable && bioEnabled && mode === "signin" && (
-          <button className="btn auth-faceid" onClick={faceId} type="button">
-            Unlock with Face ID
-          </button>
-        )}
       </div>
     </div>
   );

@@ -62,6 +62,13 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string $MSG" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription $MSG" "$PLIST"
 
+      - name: Face ID permission (app lock)
+        run: |
+          PLIST=ios/App/App/Info.plist
+          MSG="ORSync uses Face ID to unlock the app, so only you can open your preference cards."
+          /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string $MSG" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :NSFaceIDUsageDescription $MSG" "$PLIST"
+
       - name: Register the .orsync document type
         run: |
           PLIST=ios/App/App/Info.plist

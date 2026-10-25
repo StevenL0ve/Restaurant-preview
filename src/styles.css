@@ -1981,3 +1981,13 @@ html, body { overflow-x: hidden; }
   border: 1px solid color-mix(in srgb, var(--green) 30%, var(--line));
   border-radius: 12px; padding: 12px 14px; font-size: 0.9rem; line-height: 1.45; color: var(--ink);
 }
+
+/* ---- Face ID / fingerprint app lock ---- */
+.app-lock {
+  position: fixed; inset: 0; z-index: 400;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px; text-align: center;
+}
+.app-lock h1 { margin: 10px 0 0; font-size: 1.5rem; }
+.app-lock .auth-submit { margin-top: 14px; min-width: 240px; }

@@ -63,7 +63,8 @@ function importMessage(added: number, skipped: number, source: string, carts = 0
 
 export function Settings() {
   const { state, exportAll, importCards, importCsv, downloadCsvTemplate, resetDemo, wipeAll } = useStore();
-  const { user, signOut, bioAvailable, bioEnabled, setBioEnabled } = useAuth();
+  const { user, signOut, bioAvailable, bioLabel, bioEnabled, setBioEnabled } = useAuth();
+  const [bioMsg, setBioMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
@@ -111,15 +112,36 @@ export function Settings() {
       <div className="card settings-card">
         <h2>Account</h2>
         {user?.guest ? (
-          <p>You’re using ORSync <strong>without an account</strong>. Everything is saved on this device. Create an account anytime to add a Face&nbsp;ID lock.</p>
+          <p>You’re using ORSync <strong>without an account</strong>. Everything is saved on this device. Create an account anytime to sync it across your devices.</p>
         ) : (
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
-        {bioAvailable && !user?.guest && (
-          <div className="toggle-row">
-            <span>Require Face ID to open</span>
-            <input type="checkbox" checked={bioEnabled} onChange={(e) => setBioEnabled(e.target.checked)} />
-          </div>
+        {bioAvailable ? (
+          <>
+            <label className="toggle-row">
+              <span>Lock ORSync with {bioLabel}</span>
+              <input
+                type="checkbox"
+                checked={bioEnabled}
+                onChange={async (e) => {
+                  const want = e.target.checked;
+                  setBioMsg(null);
+                  const on = await setBioEnabled(want);
+                  if (want && !on) setBioMsg(`${bioLabel} didn't confirm, so the lock stayed off. Try again.`);
+                }}
+              />
+            </label>
+            <p className="muted small" style={{ margin: "4px 0 0" }}>
+              {bioEnabled
+                ? `ORSync asks for ${bioLabel} when it opens and after a minute in the background. Your device passcode always works as a backup.`
+                : `Asks for ${bioLabel} when ORSync opens, so only you can see your cards.`}
+            </p>
+            {bioMsg && <p className="neg small" style={{ margin: "4px 0 0" }}>{bioMsg}</p>}
+          </>
+        ) : (
+          <p className="muted small" style={{ margin: "4px 0 0" }}>
+            Face ID and fingerprint lock are available in the iPhone and Android apps.
+          </p>
         )}
         <div className="form-actions">
           <button className="btn" onClick={signOut}>{user?.guest ? "Switch / create account" : "Sign out"}</button>
