@@ -4,9 +4,12 @@ import { useStore, getRepMode, setRepMode } from "../state/store";
 import { parseStaffList } from "../lib/staffImport";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
-import { Icon } from "../components/Icon";
-import { deriveWorkspaceKey, getWorkspace, onWorkspaceChange, setWorkspace } from "../lib/workspace";
-import { createWorkspace, joinWorkspace, workspaceMemberCount } from "../state/cloudSync";
+import { getWorkspace, onWorkspaceChange, setWorkspace } from "../lib/workspace";
+import { workspaceMemberCount } from "../state/cloudSync";
+import { FacilityJoinForm } from "../components/FacilityJoin";
+import { ProfileForm } from "../components/ProfileForm";
+import { roleLabel, useProfile } from "../lib/profile";
+import { formatPhone } from "../lib/oncall";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
@@ -119,6 +122,7 @@ export function Settings() {
         ) : (
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
+        {user?.uid && <AccountProfile uid={user.uid} email={user.email} fallbackName={user.name} />}
         {bioAvailable ? (
           <>
             <label className="toggle-row">
@@ -377,52 +381,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
     return () => { on = false; };
   }, [joined]);
 
-  const [name, setName] = useState("");
-  const [pw, setPw] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [offerCreate, setOfferCreate] = useState<{ key: string; name: string } | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
-
-  const me = { uid, name: userName, email };
-
-  async function join() {
-    setErr(null);
-    setOfferCreate(null);
-    if (!name.trim() || !pw) return;
-    setBusy(true);
-    try {
-      const key = await deriveWorkspaceKey(name, pw);
-      const r = await joinWorkspace(key, name, me);
-      if (r === "not-found") {
-        setOfferCreate({ key, name: name.trim() });
-      } else {
-        setWorkspace({ key, name: name.trim() });
-        setPw("");
-      }
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't reach ORSync Cloud. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function create() {
-    if (!offerCreate) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await createWorkspace(offerCreate.key, offerCreate.name, me);
-      setWorkspace({ key: offerCreate.key, name: offerCreate.name });
-      setOfferCreate(null);
-      setPw("");
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't create the facility. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   if (joined) {
     return (
@@ -461,54 +420,38 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
         case carts, pull status, QC, schedules, teams, and notes, live on every device. Ask your
         charge desk for the facility name and password.
       </p>
-      <div className="form-grid">
-        <label className="field"><span>Facility name</span>
-          <input value={name} onChange={(e) => { setName(e.target.value); setOfferCreate(null); }} placeholder="Keesler AFB OR" autoCapitalize="words" />
-        </label>
-        <label className="field"><span>Facility password</span>
-          <span className="pw-wrap">
-            <input
-              type={showPw ? "text" : "password"}
-              value={pw}
-              onChange={(e) => { setPw(e.target.value); setOfferCreate(null); }}
-              autoComplete="off"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              onKeyDown={(e) => e.key === "Enter" && void join()}
-            />
-            <button type="button" className="pw-eye" aria-label={showPw ? "Hide password" : "Show password"} onClick={() => setShowPw((v) => !v)}>
-              <Icon name={showPw ? "eye-off" : "eye"} size={20} />
-            </button>
-          </span>
-        </label>
-      </div>
-      {err && <p className="neg small">{err}</p>}
-      {offerCreate ? (
-        <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left", marginTop: 10 }}>
-          <strong>No facility found for "{offerCreate.name}" with that password.</strong>
-          <span>
-            If you're joining one that already exists, check the spelling and password and try again.
-            If you're setting up <strong>{offerCreate.name}</strong> for the first time, create it now;
-            your library on this device becomes its starting point, and this name + password is what
-            everyone else will use to join.
-          </span>
-          <div className="form-actions">
-            <button className="btn btn-primary" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate.name}`}</button>
-            <button className="btn" onClick={() => setOfferCreate(null)}>Try again</button>
-          </div>
-        </div>
-      ) : (
-        <div className="form-actions">
-          <button className="btn btn-primary" disabled={busy || !name.trim() || !pw} onClick={join}>
-            {busy ? "Checking…" : "Join facility"}
-          </button>
-        </div>
-      )}
-      <p className="muted small" style={{ margin: "8px 0 0" }}>
-        Joining merges this device's library into the facility's. Your personal cloud copy stays as
-        it was, and Leave facility brings it back.
+      <FacilityJoinForm uid={uid} userName={userName} email={email} />
+    </div>
+  );
+}
+
+
+
+// Your details on the account: name, phone, position. Saving updates the
+// on-call roster entry and staff directory, and what your pulls are signed as.
+function AccountProfile({ uid, email, fallbackName }: { uid: string; email: string; fallbackName: string }) {
+  const { saveProfile } = useStore();
+  const profile = useProfile(uid);
+  const [editing, setEditing] = useState(false);
+  const base = profile ?? { uid, name: fallbackName, email };
+  if (editing) {
+    return (
+      <ProfileForm
+        initial={base}
+        submitLabel="Save"
+        onSave={(p) => { saveProfile({ ...p, completedAt: profile?.completedAt ?? new Date().toISOString() }); setEditing(false); }}
+        onCancel={() => setEditing(false)}
+      />
+    );
+  }
+  return (
+    <div className="account-profile">
+      <div className="meta-row"><span className="meta-label">Phone</span><span className="meta-value">{profile?.phone ? formatPhone(profile.phone) : <span className="muted">not set</span>}</span></div>
+      <div className="meta-row"><span className="meta-label">Position</span><span className="meta-value">{roleLabel(profile?.role, profile?.level) || <span className="muted">not set</span>}</span></div>
+      <p className="muted small" style={{ margin: "6px 0 0" }}>
+        These feed the on-call roster and staff directory; changing your number here updates it there.
       </p>
+      <div className="form-actions"><button className="btn btn-sm" onClick={() => setEditing(true)}>Edit profile</button></div>
     </div>
   );
 }

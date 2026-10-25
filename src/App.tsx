@@ -5,6 +5,9 @@ import { useStore } from "./state/store";
 import { initNativeFileOpen } from "./lib/nativeFileOpen";
 import { Login } from "./pages/Login";
 import { AppLock } from "./components/AppLock";
+import { Onboarding } from "./components/Onboarding";
+import { useProfile } from "./lib/profile";
+import { cloudEnabled } from "./lib/cloud";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
 import { TopBar } from "./components/TopBar";
@@ -37,6 +40,7 @@ import { Paywall } from "./pages/Paywall";
 
 export default function App() {
   const { user, ready } = useAuth();
+  const profile = useProfile(user?.uid);
   const { importCards } = useStore();
   const navigate = useNavigate();
   const [banner, setBanner] = useState<string | null>(null);
@@ -72,6 +76,9 @@ export default function App() {
 
   if (!ready) return null;
   if (!user) return <Login />;
+  // Right after creating an account (once per device): who you are, join
+  // your hospital. Guests skip it; nothing here applies to a local-only library.
+  if (cloudEnabled() && user.uid && !profile?.completedAt) return <Onboarding />;
 
   return (
     <div className="app">

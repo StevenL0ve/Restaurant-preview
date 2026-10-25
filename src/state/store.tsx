@@ -11,6 +11,8 @@ import { useAuth } from "./auth";
 import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
 import { getWorkspace, onWorkspaceChange, type JoinedWorkspace } from "../lib/workspace";
+import { writeWorkspaceMember } from "./cloudSync";
+import { setProfile, roleLabel, type UserProfile } from "../lib/profile";
 import type {
   AppState,
   DayConsideration,
@@ -233,6 +235,9 @@ export interface Store {
   /** Bulk roster import; returns how many new people were added. */
   importStaff: (members: { name: string; role: TeamRole; level?: 1 | 2 | 3 }[]) => number;
   deleteStaff: (id: string) => void;
+  /** Save who you are: staff directory, on-call roster entry (name/phone/
+   *  position), puller name, and the facility member list all follow. */
+  saveProfile: (p: UserProfile) => void;
   // supply catalog (the custodian's master list)
   addCatalogItem: (p: { name: string; ref: string; facilityId?: string; photo?: string }) => CatalogItem;
   /** Update a catalog entry; name/ref/photo flow to every linked card item. */
@@ -355,6 +360,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ORSync Cloud: with a signed-in account, the library's primary home is
   // Firestore. Local storage stays as the instant-start cache; the engine
   // streams other devices' changes in live and pushes local edits up.
+  useEffect(() => { setCurrentUid(user?.uid ?? null); }, [user?.uid]);
+
   // The joined facility workspace (shared library), if any. Joining or
   // leaving restarts sync against the new root.
   const [workspace, setWorkspaceState] = useState<JoinedWorkspace | null>(() => getWorkspace());
@@ -601,6 +608,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       deleteStaff: (id) => update((st) => ({ ...st, staff: st.staff.filter((m) => m.id !== id) })),
+
+      saveProfile: (p) => {
+        setProfile(p);
+        setPullerName(p.name);
+        update((st) => applyProfileToRoster(st, p));
+        const ws = getWorkspace();
+        if (ws) {
+          void writeWorkspaceMember(ws.key, {
+            uid: p.uid, name: p.name, email: p.email, phone: p.phone, role: roleLabel(p.role, p.level) || undefined,
+          }).catch(() => undefined);
+        }
+      },
 
       addCatalogItem: (p) => {
         const item: CatalogItem = {
@@ -906,7 +925,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 m.itemId === itemId && m.resolvedAt ? { ...m, resolvedAt: undefined, resolvedBy: undefined } : m,
               );
             } else {
-              pulls[itemId] = { by: who, at: now };
+              pulls[itemId] = { by: who, at: now, byUid: currentUid ?? undefined };
               // Pulling an item someone flagged missing resolves the flag.
               missing = missing.map((m) =>
                 m.itemId === itemId && !m.resolvedAt ? { ...m, resolvedAt: now, resolvedBy: who } : m,
@@ -1039,7 +1058,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             return {
               ...c,
               pulls: { ...c.pulls, [itemId]: { by: who, at: now } },
-              qc: { ...(c.qc ?? {}), [itemId]: { by: who, at: now } },
+              qc: { ...(c.qc ?? {}), [itemId]: { by: who, at: now, byUid: currentUid ?? undefined } },
               missing: c.missing.map((m) =>
                 m.itemId === itemId
                   ? { ...m, resolvedAt: now, resolvedBy: who, qcCheckedAt: now, qcCheckedBy: who }
@@ -1741,6 +1760,55 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+/** Link a profile to the OR's people records (pure): the staff directory
+ *  gets the name + position, and the on-call roster entry for this account
+ *  (matched by uid, else by name) takes the name, phone, and position, or
+ *  is created if there isn't one, so the desk can reach them. */
+export function applyProfileToRoster(st: AppState, p: UserProfile): AppState {
+  const name = p.name.trim();
+  if (!name) return st;
+  const label = roleLabel(p.role, p.level) || undefined;
+
+  let staff = st.staff;
+  if (p.role) {
+    const hit = staff.find((m) => m.name.toLowerCase() === name.toLowerCase() && m.role === p.role);
+    if (!hit) {
+      staff = [...staff, { id: uid("staff"), name, role: p.role, level: p.role === "trainee" ? p.level : undefined }];
+    } else if (p.role === "trainee" && p.level && hit.level !== p.level) {
+      staff = staff.map((m) => (m.id === hit.id ? { ...m, level: p.level } : m));
+    }
+  }
+
+  const byUid = st.onCallPeople.find((o) => o.uid === p.uid);
+  const byName = byUid ?? st.onCallPeople.find((o) => !o.uid && o.name.toLowerCase() === name.toLowerCase());
+  let onCallPeople: OnCallPerson[];
+  if (byName) {
+    onCallPeople = st.onCallPeople.map((o) =>
+      o.id === byName.id
+        ? {
+            ...o,
+            uid: p.uid,
+            name,
+            initials: initials(name),
+            phone: p.phone ?? o.phone,
+            staffRole: p.role ?? o.staffRole,
+            role: label ?? o.role,
+          }
+        : o,
+    );
+  } else {
+    onCallPeople = [
+      ...st.onCallPeople,
+      {
+        id: uid("oc"), uid: p.uid, name, initials: initials(name),
+        color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+        phone: p.phone, staffRole: p.role, role: label, positionIds: [],
+      },
+    ];
+  }
+  return { ...st, staff, onCallPeople };
+}
+
 /** The custodian updated a catalog entry: stamp it, and flow the new
  *  name/ref/photo into every card item linked to it. Cards without a link
  *  are untouched (same reference), so sync stays quiet. (Pure.) */
@@ -1884,6 +1952,11 @@ export function getPullerName(): string {
     return "";
   }
 }
+// The signed-in account, so pulls and QC marks can be tied to a person as
+// well as a name. Set by the StoreProvider from the auth session.
+let currentUid: string | null = null;
+export function setCurrentUid(uid: string | null) { currentUid = uid; }
+
 export function setPullerName(name: string) {
   try {
     localStorage.setItem(PULLER_KEY, name.trim());

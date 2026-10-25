@@ -2015,3 +2015,14 @@ html, body { overflow-x: hidden; }
 .mascot-cart { height: 74px; width: auto; margin-left: auto; flex: none; }
 .cart-mascot { height: 48px; width: auto; flex: none; align-self: center; }
 @media (max-width: 420px) { .mascot-cart { height: 60px; } }
+
+/* ---- Onboarding + account profile ---- */
+.onb-steps { display: flex; gap: 6px; justify-content: center; margin: 6px 0 10px; }
+.onb-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--line); }
+.onb-dot.on { background: var(--brand); }
+.onb-summary { text-align: left; margin: 8px 0 18px; padding-left: 20px; display: grid; gap: 8px; color: var(--slate); }
+.profile-form .field .muted.small { margin-top: 4px; font-weight: 400; text-align: left; }
+.onboarding .profile-form .form-actions, .onboarding .facility-join .form-actions { justify-content: stretch; }
+.onboarding .profile-form .form-actions .btn-primary, .onboarding .facility-join .form-actions .btn-primary { flex: 1; width: 100%; padding: 14px; font-size: 17px; }
+.account-profile { margin-top: 10px; display: grid; gap: 6px; }
+.onboarding .auth-card { max-height: none; }

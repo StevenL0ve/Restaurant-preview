@@ -430,3 +430,14 @@ export async function workspaceMemberCount(key: string): Promise<number> {
   const snap = await fs.getDocs(fs.collection(db, "workspaces", key, "members"));
   return snap.size;
 }
+
+/** Mirror a person's profile into the facility's member list. */
+export async function writeWorkspaceMember(key: string, m: { uid: string; name: string; email: string; phone?: string; role?: string }): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  await fs.setDoc(
+    fs.doc(db, "workspaces", key, "members", m.uid),
+    { name: m.name, email: m.email, phone: m.phone ?? null, role: m.role ?? null, updatedAt: new Date().toISOString() },
+    { merge: true },
+  );
+}

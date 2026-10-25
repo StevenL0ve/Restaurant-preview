@@ -304,6 +304,8 @@ export interface OnCallPerson {
   /** Typed role for filtering (who shows up for a tech call); usually
    *  inferred from `role` text, set explicitly when that can't be read. */
   staffRole?: TeamRole;
+  /** Linked ORSync account: profile changes (name, phone, position) flow here. */
+  uid?: string;
   positionIds: ID[]; // positions this person is in the pool for
   notes?: string;
   color: string;
@@ -338,6 +340,8 @@ export interface OnCallShift {
 export interface CartPullRecord {
   by: string;
   at: string; // ISO
+  /** The account that did it, when signed in; links pulls/QC to a person. */
+  byUid?: string;
 }
 
 /** An item that wasn't in the cart when pulling finished. Name/section are
