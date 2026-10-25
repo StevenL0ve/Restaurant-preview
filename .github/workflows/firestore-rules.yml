@@ -26,8 +26,8 @@ jobs:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           if [ -z "$SA_JSON" ]; then
-            echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret (service-account JSON) to publish rules from here."
-            exit 1
+            echo "::warning::No FIREBASE_SERVICE_ACCOUNT secret, so the rules were NOT published. Add the secret (service-account JSON) and rerun, or paste firestore.rules into the Firebase console."
+            exit 0
           fi
           printf '%s' "$SA_JSON" > "$HOME/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$HOME/sa.json"
