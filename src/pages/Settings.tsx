@@ -4,6 +4,9 @@ import { useStore, getRepMode, setRepMode } from "../state/store";
 import { parseStaffList } from "../lib/staffImport";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { cloudEnabled, getCloudStatus, onCloudStatus, type CloudStatus } from "../lib/cloud";
+import { Icon } from "../components/Icon";
+import { deriveWorkspaceKey, getWorkspace, onWorkspaceChange, setWorkspace } from "../lib/workspace";
+import { createWorkspace, joinWorkspace, workspaceMemberCount } from "../state/cloudSync";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPro } from "../lib/tier";
@@ -149,6 +152,10 @@ export function Settings() {
       </div>
 
       <CloudCard guest={!!user?.guest} signedIn={!!user?.uid} />
+
+      {cloudEnabled() && user?.uid && (
+        <FacilityCard uid={user.uid} userName={user.name} email={user.email} />
+      )}
 
       <div className="card settings-card">
         <h2>Plan</h2>
@@ -350,6 +357,158 @@ function StaffRosterCard() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+
+// One shared library per hospital OR. Everyone signs in with their own
+// account (so changes carry their name), then joins the facility once per
+// device with the facility's name and password. From then on cards, carts,
+// pull status, QC, schedules, teams, and notes are one set for the whole OR.
+function FacilityCard({ uid, userName, email }: { uid: string; userName: string; email: string }) {
+  const [joined, setJoined] = useState(getWorkspace());
+  useEffect(() => onWorkspaceChange(() => setJoined(getWorkspace())), []);
+  const [members, setMembers] = useState<number | null>(null);
+  useEffect(() => {
+    if (!joined) { setMembers(null); return; }
+    let on = true;
+    workspaceMemberCount(joined.key).then((n) => { if (on) setMembers(n); }).catch(() => undefined);
+    return () => { on = false; };
+  }, [joined]);
+
+  const [name, setName] = useState("");
+  const [pw, setPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [offerCreate, setOfferCreate] = useState<{ key: string; name: string } | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  const me = { uid, name: userName, email };
+
+  async function join() {
+    setErr(null);
+    setOfferCreate(null);
+    if (!name.trim() || !pw) return;
+    setBusy(true);
+    try {
+      const key = await deriveWorkspaceKey(name, pw);
+      const r = await joinWorkspace(key, name, me);
+      if (r === "not-found") {
+        setOfferCreate({ key, name: name.trim() });
+      } else {
+        setWorkspace({ key, name: name.trim() });
+        setPw("");
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't reach ORSync Cloud. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function create() {
+    if (!offerCreate) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await createWorkspace(offerCreate.key, offerCreate.name, me);
+      setWorkspace({ key: offerCreate.key, name: offerCreate.name });
+      setOfferCreate(null);
+      setPw("");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't create the facility. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (joined) {
+    return (
+      <div className="card settings-card">
+        <h2>Facility</h2>
+        <p>
+          This device is synced with <strong>{joined.name}</strong>
+          {members !== null ? ` · ${members} ${members === 1 ? "person" : "people"} joined` : ""}.
+          Everyone who joins sees the same cards, case carts, pull status, QC, schedules, team
+          assignments, and notes, live.
+        </p>
+        <p className="muted small">
+          Changes still carry each person's name. Anyone at the facility joins the same way: sign in
+          with their own account, then enter the facility name and password here.
+        </p>
+        {confirmLeave ? (
+          <span className="confirm">
+            Leave {joined.name}? This device goes back to your personal library; nothing at the facility is deleted.
+            <button className="btn btn-danger btn-sm" onClick={() => { setWorkspace(null); setConfirmLeave(false); }}>Leave</button>
+            <button className="btn btn-sm" onClick={() => setConfirmLeave(false)}>Stay</button>
+          </span>
+        ) : (
+          <div className="form-actions">
+            <button className="btn" onClick={() => setConfirmLeave(true)}>Leave facility</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card settings-card">
+      <h2>Facility</h2>
+      <p>
+        Join your hospital's OR so everyone works from <strong>one shared library</strong>: cards,
+        case carts, pull status, QC, schedules, teams, and notes, live on every device. Ask your
+        charge desk for the facility name and password.
+      </p>
+      <div className="form-grid">
+        <label className="field"><span>Facility name</span>
+          <input value={name} onChange={(e) => { setName(e.target.value); setOfferCreate(null); }} placeholder="Keesler AFB OR" autoCapitalize="words" />
+        </label>
+        <label className="field"><span>Facility password</span>
+          <span className="pw-wrap">
+            <input
+              type={showPw ? "text" : "password"}
+              value={pw}
+              onChange={(e) => { setPw(e.target.value); setOfferCreate(null); }}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              onKeyDown={(e) => e.key === "Enter" && void join()}
+            />
+            <button type="button" className="pw-eye" aria-label={showPw ? "Hide password" : "Show password"} onClick={() => setShowPw((v) => !v)}>
+              <Icon name={showPw ? "eye-off" : "eye"} size={20} />
+            </button>
+          </span>
+        </label>
+      </div>
+      {err && <p className="neg small">{err}</p>}
+      {offerCreate ? (
+        <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left", marginTop: 10 }}>
+          <strong>No facility found for "{offerCreate.name}" with that password.</strong>
+          <span>
+            If you're joining one that already exists, check the spelling and password and try again.
+            If you're setting up <strong>{offerCreate.name}</strong> for the first time, create it now;
+            your library on this device becomes its starting point, and this name + password is what
+            everyone else will use to join.
+          </span>
+          <div className="form-actions">
+            <button className="btn btn-primary" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate.name}`}</button>
+            <button className="btn" onClick={() => setOfferCreate(null)}>Try again</button>
+          </div>
+        </div>
+      ) : (
+        <div className="form-actions">
+          <button className="btn btn-primary" disabled={busy || !name.trim() || !pw} onClick={join}>
+            {busy ? "Checking…" : "Join facility"}
+          </button>
+        </div>
+      )}
+      <p className="muted small" style={{ margin: "8px 0 0" }}>
+        Joining merges this device's library into the facility's. Your personal cloud copy stays as
+        it was, and Leave facility brings it back.
+      </p>
     </div>
   );
 }

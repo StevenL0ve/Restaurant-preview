@@ -1,5 +1,6 @@
 import type { AppState, LoanerTray, PrefCard, CardItem, CatalogItem } from "../types";
 import { firebase, setCloudStatus } from "../lib/cloud";
+import { isForeignRoot, syncRootId, type JoinedWorkspace } from "../lib/workspace";
 
 // Live sync between the local store and Firestore. The shape is simple and
 // honest: every entity is a document under users/{uid}/<collection>/<id>,
@@ -140,15 +141,22 @@ export function mergeLoanerPhotos(remote: LoanerTray[], local: LoanerTray[]): Lo
   });
 }
 
-// Which account this device's local library last synced with. Guards the
-// shared-device case: user A signs out, user B signs in; A's local data must
-// never seed or merge into B's account.
+// Which root (own account, or a facility workspace) this device's local
+// library last synced with. Guards the shared-device case: user A signs out,
+// user B signs in; A's local data must never seed or merge into B's account.
+// Older installs stored the bare uid, which is still the personal root id.
 const SYNCED_UID_KEY = "orsync.synceduid.v1";
 export function getSyncedUid(): string | null {
   try { return localStorage.getItem(SYNCED_UID_KEY); } catch { return null; }
 }
-function setSyncedUid(uid: string) {
-  try { localStorage.setItem(SYNCED_UID_KEY, uid); } catch { /* private mode */ }
+function setSyncedUid(rootId: string) {
+  try { localStorage.setItem(SYNCED_UID_KEY, rootId); } catch { /* private mode */ }
+}
+
+export interface SyncTarget {
+  uid: string;
+  /** Joined facility, if any: shared data lives there instead of under the user. */
+  workspace: JoinedWorkspace | null;
 }
 
 // ---- The engine -------------------------------------------------------------
@@ -160,6 +168,8 @@ interface SyncHooks {
 
 interface ActiveSync {
   uid: string;
+  /** Firestore path segments for shared collections: ["users", uid] or ["workspaces", key]. */
+  root: [string, string];
   hooks: SyncHooks;
   lastKnown: Record<string, Map<string, string>>;
   lastSetupsJson: string | null;
@@ -182,10 +192,14 @@ function prepareForCloud(key: SyncedKey, items: Item[]): Item[] {
   return withOrd(cleaned as unknown as Item[]);
 }
 
-export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
+export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void {
   stopCloudSync();
+  const { uid, workspace } = target;
+  const rootId = syncRootId(uid, workspace);
   const sync: ActiveSync = {
-    uid, hooks,
+    uid,
+    root: workspace ? ["workspaces", workspace.key] : ["users", uid],
+    hooks,
     lastKnown: Object.fromEntries(SYNCED_KEYS.map((k) => [k, new Map()])),
     lastSetupsJson: null,
     stops: [], pushTimer: null, stopped: false, ready: false,
@@ -198,7 +212,8 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
       const { db } = await firebase();
       const fs = await import("firebase/firestore");
       if (sync.stopped) return;
-      const colRef = (key: string) => fs.collection(db, "users", uid, key);
+      // Shared data follows the root; a person's own setup checklists stay theirs.
+      const colRef = (key: string) => fs.collection(db, sync.root[0], sync.root[1], key);
       const setupsRef = fs.doc(db, "users", uid, "meta", "setups");
 
       // Bootstrap: read what the cloud has. "Empty" is judged by entity
@@ -207,8 +222,7 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
       const setupsSnap = await fs.getDoc(setupsRef);
       if (sync.stopped) return;
       const entityCount = snaps.reduce((n, s) => n + s.size, 0);
-      const prevUid = getSyncedUid();
-      const localIsForeign = prevUid !== null && prevUid !== uid;
+      const localIsForeign = isForeignRoot(getSyncedUid(), rootId, uid);
       const local = hooks.getState();
 
       if (entityCount === 0 && !localIsForeign) {
@@ -236,7 +250,7 @@ export function startCloudSync(uid: string, hooks: SyncHooks): () => void {
         sync.lastSetupsJson = setupsSnap.exists() ? (setupsSnap.data() as { json?: string }).json ?? "{}" : null;
         hooks.applyRemote(patch);
       }
-      setSyncedUid(uid);
+      setSyncedUid(rootId);
 
       // Live listeners: other devices' edits land here within a second.
       for (const key of SYNCED_KEYS) {
@@ -322,11 +336,11 @@ async function pushNow(sync: ActiveSync) {
       const desired = prepareForCloud(key, state[key] as unknown as Item[]);
       const { changed, removedIds } = diffDocs(sync.lastKnown[key], desired);
       for (const it of changed) {
-        await op((b) => b.set(fs.doc(db, "users", sync.uid, key, it.id), it));
+        await op((b) => b.set(fs.doc(db, sync.root[0], sync.root[1], key, it.id), it));
         applied.push([key, it.id, stableStringify(it)]);
       }
       for (const id of removedIds) {
-        await op((b) => b.delete(fs.doc(db, "users", sync.uid, key, id)));
+        await op((b) => b.delete(fs.doc(db, sync.root[0], sync.root[1], key, id)));
         applied.push([key, id, null]);
       }
     }
@@ -361,7 +375,7 @@ async function pushAll(sync: ActiveSync, fs: typeof import("firebase/firestore")
   const applied: [SyncedKey, string, string][] = [];
   for (const key of SYNCED_KEYS) {
     for (const it of prepareForCloud(key, state[key] as unknown as Item[])) {
-      batch.set(fs.doc(db, "users", sync.uid, key, it.id), it);
+      batch.set(fs.doc(db, sync.root[0], sync.root[1], key, it.id), it);
       applied.push([key, it.id, stableStringify(it)]);
       if (++ops >= 400) { await batch.commit(); batch = fs.writeBatch(db); ops = 0; }
     }
@@ -371,4 +385,48 @@ async function pushAll(sync: ActiveSync, fs: typeof import("firebase/firestore")
   await batch.commit();
   for (const [key, id, json] of applied) sync.lastKnown[key].set(id, json);
   sync.lastSetupsJson = setupsJson;
+}
+
+
+// ---- Facility workspaces -----------------------------------------------------
+
+export type JoinResult = "joined" | "not-found";
+
+/** Join an existing facility by its derived key. "not-found" means no
+ *  workspace lives at that address: wrong password, or never created. The
+ *  caller decides whether to create it (first-time setup) or ask again. */
+export async function joinWorkspace(key: string, name: string, member: { uid: string; name: string; email: string }): Promise<JoinResult> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const ref = fs.doc(db, "workspaces", key);
+  const snap = await fs.getDoc(ref);
+  if (!snap.exists()) return "not-found";
+  await fs.setDoc(
+    fs.doc(db, "workspaces", key, "members", member.uid),
+    { name: member.name, email: member.email, joinedAt: new Date().toISOString() },
+    { merge: true },
+  );
+  void name;
+  return "joined";
+}
+
+/** First-time setup for a facility: create the workspace at this key. */
+export async function createWorkspace(key: string, name: string, member: { uid: string; name: string; email: string }): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const now = new Date().toISOString();
+  await fs.setDoc(fs.doc(db, "workspaces", key), { name: name.trim(), createdAt: now, createdBy: member.uid }, { merge: true });
+  await fs.setDoc(
+    fs.doc(db, "workspaces", key, "members", member.uid),
+    { name: member.name, email: member.email, joinedAt: now },
+    { merge: true },
+  );
+}
+
+/** How many people have joined (for the Settings card). */
+export async function workspaceMemberCount(key: string): Promise<number> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const snap = await fs.getDocs(fs.collection(db, "workspaces", key, "members"));
+  return snap.size;
 }

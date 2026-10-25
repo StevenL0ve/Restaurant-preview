@@ -10,6 +10,7 @@ import {
 import { useAuth } from "./auth";
 import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
+import { getWorkspace, onWorkspaceChange, type JoinedWorkspace } from "../lib/workspace";
 import type {
   AppState,
   DayConsideration,
@@ -354,14 +355,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ORSync Cloud: with a signed-in account, the library's primary home is
   // Firestore. Local storage stays as the instant-start cache; the engine
   // streams other devices' changes in live and pushes local edits up.
+  // The joined facility workspace (shared library), if any. Joining or
+  // leaving restarts sync against the new root.
+  const [workspace, setWorkspaceState] = useState<JoinedWorkspace | null>(() => getWorkspace());
+  useEffect(() => onWorkspaceChange(() => setWorkspaceState(getWorkspace())), []);
+
   useEffect(() => {
     if (!cloudEnabled() || !user?.uid) return;
-    const stop = startCloudSync(user.uid, {
+    const stop = startCloudSync({ uid: user.uid, workspace }, {
       getState: () => stateRef.current,
       applyRemote: (patch) => setState((s) => migrateLoaners({ ...s, ...patch } as AppState)),
     });
     return stop;
-  }, [user?.uid]);
+  }, [user?.uid, workspace?.key]);
 
   useEffect(() => {
     schedulePush();

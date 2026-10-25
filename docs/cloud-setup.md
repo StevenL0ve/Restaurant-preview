@@ -23,14 +23,26 @@ dormant; these steps create the project and drop in its keys.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Each account's own library.
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Facility workspaces (one shared library per hospital OR). The path key
+    // is derived on-device from the facility name + password, so knowing it
+    // IS the credential: signed-in users can open a workspace only by its
+    // exact address ("get"), never list them.
+    match /workspaces/{ws} {
+      allow get, create, update: if request.auth != null;
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
     }
   }
 }
 ```
 
-   → Publish. (This means: each account can only ever touch its own data.)
+   → Publish. (Each account can only touch its own data, and a facility's
+   shared data only by knowing its name + password.)
 
 ## 3. Get the keys
 
