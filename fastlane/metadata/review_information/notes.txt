@@ -1,0 +1,5 @@
+ORSync is a preference-card and case-cart app for surgical teams. It holds no patient information; every free-text field reminds users not to enter any.
+
+Sign in with the demo account. The Carts and On call tabs work with a facility: the demo account is already an admin of the facility "Apple Review OR" (facility password "appleteam"). If the app asks, enter that under Settings > Facility, or tap "Try the demo" on either tab to see those screens with sample data.
+
+Face ID is optional (Settings > Account). Sharing a card uses the system share sheet. The app uses standard HTTPS only.

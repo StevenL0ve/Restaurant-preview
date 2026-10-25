@@ -1,0 +1,59 @@
+# Pushes the App Store listing to App Store Connect through Apple's API:
+# name, subtitle, description, keywords, screenshots, categories, age
+# rating, privacy URL, and the App Review contact + demo account. No
+# binary, no submission: pick the build and press Submit in the console.
+#
+# Secrets (the TestFlight ones, plus one more):
+#   ASC_ISSUER_ID, ASC_KEY_CONTENT, ASC_KEY_ID (optional), APPLE_TEAM_ID
+#   ASC_CONTACT_PHONE   the App Review contact phone, e.g. +1 228 555 0100.
+#                       Without it the review contact/demo account step is
+#                       skipped (Apple requires a phone with it).
+name: App Store metadata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Install fastlane
+        run: gem install fastlane --no-document
+
+      - name: Write App Store Connect API key
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          mkdir -p "$HOME/asc"
+          if [[ "$ASC_KEY_CONTENT" == *"BEGIN PRIVATE KEY"* ]]; then
+            printf '%s' "$ASC_KEY_CONTENT" > "$HOME/asc/AuthKey.p8"
+          else
+            echo "$ASC_KEY_CONTENT" | base64 --decode > "$HOME/asc/AuthKey.p8"
+          fi
+
+      - name: Review contact phone
+        env:
+          PHONE: ${{ secrets.ASC_CONTACT_PHONE }}
+        run: |
+          if [ -n "$PHONE" ]; then
+            printf '%s' "$PHONE" > fastlane/metadata/review_information/phone_number.txt
+          else
+            echo "::warning::No ASC_CONTACT_PHONE secret: skipping App Review contact + demo account (add the secret and rerun, or fill it in the console)."
+            rm -rf fastlane/metadata/review_information
+          fi
+
+      - name: Upload listing, screenshots, categories, rating
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+        run: fastlane ios metadata

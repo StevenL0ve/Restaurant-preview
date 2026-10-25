@@ -64,4 +64,7 @@ https://stevenl0ve.github.io/Restaurant-preview/privacy.html
 Primary: Medical · Secondary: Productivity
 
 ## Age rating
-17+ (medical/treatment information), no objectionable content.
+12+ (infrequent/mild medical/treatment information), no objectionable content.
+
+All of this lives as files under `fastlane/metadata/` and is pushed by the
+**App Store metadata** workflow; edit there.

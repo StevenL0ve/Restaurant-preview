@@ -25,18 +25,24 @@ Links you'll paste into both stores:
 
 ## iOS App Store (Apple developer account: bkborngaraised@gmail.com)
 
-The TestFlight pipeline already works, so review is the only new step.
+The TestFlight pipeline already works. The listing goes up through Apple's
+API too, so the console work is three clicks.
 
-1. App Store Connect → ORSync → **App Information**: category Medical,
-   secondary Productivity. Privacy Policy URL above.
-2. **App Privacy** (the nutrition label). Declare, all "linked to the user",
-   not used for tracking:
+1. Add one repository secret, **ASC_CONTACT_PHONE**, with the phone number
+   Apple's reviewers may call (GitHub → Settings → Secrets and variables →
+   Actions). Then run the **App Store metadata** workflow from the Actions
+   tab. It fills in the name, subtitle, description, keywords, screenshots,
+   categories (Medical, Productivity), age rating, privacy URL, and the App
+   Review contact + demo account from `fastlane/metadata/`.
+2. **App Privacy** (the nutrition label) can't be set by API. In App Store
+   Connect → ORSync → App Privacy declare, all "linked to the user", not
+   used for tracking:
    - Contact info: name, email, phone number (optional)
    - User content: other user content (preference cards and OR records)
    - Identifiers: user ID
-3. **1.0 Prepare for Submission**: pick the latest TestFlight build, paste
-   the copy from `STORE_LISTING.md`, upload the screenshots, age rating 4+.
-4. **App Review Information**. Sign-in required: yes.
+3. **1.0 Prepare for Submission**: pick the latest TestFlight build under
+   Build, check the listing the workflow filled in, and Submit.
+4. **App Review Information** is filled in by the workflow. Sign-in required: yes.
    - Username: `bkborngaraised@gmail.com`
    - Password: `appleteam`
    Create that account in the app first (Create account, name "Apple Review")
