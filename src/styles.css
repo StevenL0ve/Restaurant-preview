@@ -2157,3 +2157,20 @@ html, body { overflow-x: hidden; }
   .tab-label { line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .content { padding-bottom: 90px; }
 }
+
+/* ---- Sliding tab bar (portrait phones) ---- */
+@media (max-width: 880px) {
+  .bottom-nav { padding-left: 0; padding-right: 0; }
+  .tab-strip {
+    display: flex; width: 100%; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain; scrollbar-width: none;
+    padding: 0 6px;
+    /* Fade the edges so a cut-off icon reads as "there's more". */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%);
+  }
+  .tab-strip::-webkit-scrollbar { display: none; }
+  /* Five and a bit across, so the sixth peeks in. */
+  .tab-strip .tab { flex: 0 0 18%; min-width: 62px; scroll-snap-align: start; }
+}
