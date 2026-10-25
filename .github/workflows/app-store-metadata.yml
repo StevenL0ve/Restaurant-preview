@@ -12,6 +12,11 @@ name: App Store metadata
 
 on:
   workflow_dispatch:
+  # New workflows can only be dispatched from the default branch, so this
+  # one also runs whenever the listing files change on the release branch.
+  push:
+    branches: ["claude/prefcard-app-rebuild-47hgvc"]
+    paths: ["fastlane/metadata/**", "fastlane/screenshots/**", "fastlane/rating.json", ".github/workflows/app-store-metadata.yml"]
 
 jobs:
   metadata:

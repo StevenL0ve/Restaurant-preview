@@ -1,1 +1,1 @@
-First release.
+First release: preference cards on your phone, and facility sync for case carts, QC, on-call, and rep set requests.
