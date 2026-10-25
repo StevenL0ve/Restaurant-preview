@@ -8,7 +8,7 @@ trying it on your phone. This doc covers full **store releases**.
 ## Prerequisites
 
 - **Apple:** Apple Developer Program membership; a Mac with Xcode *or* the cloud
-  workflow in `.github/workflows/ios-testflight.yml`.
+  workflow in `.github/workflows/testflight.yml`.
 - **Google:** Google Play Console account; Android Studio or `fastlane supply`.
 - Node 18+ and `npm ci` for the web build.
 
@@ -51,24 +51,14 @@ npm run store-shots      # composed store frames → docs/store/
 
 ## Android — Google Play
 
-```bash
-npm run build
-npx cap add android
-npx cap sync android
-```
+The **Android** workflow (`.github/workflows/android.yml`) builds a signed AAB
+and APK on a Linux runner and, with a Play service account secret, uploads
+to Internal testing. Step by step, including the one-time keystore and
+Data safety answers: [`STORE_RELEASE.md`](STORE_RELEASE.md).
 
-Build a signed **AAB** in Android Studio (Build → Generate Signed Bundle) or via
-`fastlane supply`. Create the app in Play Console, complete the Data safety form
-(declare: **no data collected/shared** — everything is on-device), add the
-listing copy and screenshots, and roll out to **Internal testing** first, then
-production.
+## Where the data lives
 
-## Notes & honest limitations
-
-This is a polished **single-device** app: your library lives on your phone and
-is yours to export. A future version could add optional encrypted cloud backup
-and multi-device sync — the state is plain serializable data and the optional
-account is already structured to swap a hosted backend in behind it without UI
-changes. The product decision — that your cards are *yours*, with no approvals —
-is deliberate, and it's the direct answer to what the old app's reviewers asked
-for.
+Signed-in accounts sync to ORSync Cloud (Firebase); facilities share one
+library per hospital OR, gated by membership (see `firestore.rules` and
+`docs/cloud-setup.md`). Guests stay on-device. The release checklist for
+both stores is [`STORE_RELEASE.md`](STORE_RELEASE.md).

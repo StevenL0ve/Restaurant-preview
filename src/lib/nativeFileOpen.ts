@@ -22,7 +22,9 @@ export function initNativeFileOpen(onJson: (json: string) => void): void {
 
       const seen = new Set<string>();
       const handle = async (url?: string | null) => {
-        if (!url || !url.startsWith("file") || !LOOKS_LIKE_CARD_FILE.test(url)) return;
+        if (!url || !/^(file|content):/i.test(url)) return;
+        // Android content: URIs often hide the filename; the importer rejects non-card JSON anyway.
+        if (url.startsWith("file") && !LOOKS_LIKE_CARD_FILE.test(url)) return;
         if (seen.has(url)) return; // launch URL can also arrive as an event
         seen.add(url);
         try {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./state/auth";
 import { useStore } from "./state/store";
@@ -37,6 +38,18 @@ import { CaseLogPage } from "./pages/CaseLogPage";
 import { CatalogPage } from "./pages/CatalogPage";
 import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
+import { FacilityRequired, DemoBanner } from "./pages/FacilityRequired";
+import { useFacilityAccess } from "./lib/facilityGate";
+
+// Facility-only screens: with a facility they're the real thing; in demo
+// they run on the device's sample data behind a banner; otherwise the gate
+// page explains and offers the facility login.
+function Gated({ children }: { children: React.ReactNode }) {
+  const access = useFacilityAccess();
+  if (access.joined) return <>{children}</>;
+  if (access.demo) return <><DemoBanner />{children}</>;
+  return <FacilityRequired />;
+}
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -97,7 +110,7 @@ export default function App() {
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/scan" element={<CardScan />} />
-            <Route path="/catalog" element={<CatalogPage />} />
+            <Route path="/catalog" element={<Gated><CatalogPage /></Gated>} />
             <Route path="/cards/templates" element={<TemplatesPage />} />
             <Route path="/cards/combine" element={<CombineCardsPage />} />
             <Route path="/cards/:id" element={<CardDetail />} />
@@ -106,14 +119,14 @@ export default function App() {
             <Route path="/surgeons" element={<SurgeonsPage />} />
             <Route path="/surgeons/:id" element={<SurgeonDetail />} />
             <Route path="/facilities" element={<FacilitiesPage />} />
-            <Route path="/loaners" element={<LoanersPage />} />
-            <Route path="/loaners/storage" element={<RepStoragePage />} />
-            <Route path="/carts" element={<CartsPage />} />
-            <Route path="/carts/missing" element={<MissingDayPage />} />
-            <Route path="/carts/send" element={<SendPullPage />} />
-            <Route path="/carts/:id" element={<CartPullPage />} />
-            <Route path="/on-call" element={<OnCallPage />} />
-            <Route path="/on-call/people" element={<OnCallPeoplePage />} />
+            <Route path="/loaners" element={<Gated><LoanersPage /></Gated>} />
+            <Route path="/loaners/storage" element={<Gated><RepStoragePage /></Gated>} />
+            <Route path="/carts" element={<Gated><CartsPage /></Gated>} />
+            <Route path="/carts/missing" element={<Gated><MissingDayPage /></Gated>} />
+            <Route path="/carts/send" element={<Gated><SendPullPage /></Gated>} />
+            <Route path="/carts/:id" element={<Gated><CartPullPage /></Gated>} />
+            <Route path="/on-call" element={<Gated><OnCallPage /></Gated>} />
+            <Route path="/on-call/people" element={<Gated><OnCallPeoplePage /></Gated>} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/upgrade" element={<Paywall />} />

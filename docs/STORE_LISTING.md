@@ -9,9 +9,9 @@ ORSync
 Your surgical pref cards
 
 ## Promotional text (170 chars)
-The preference-card app that's actually yours. Organize every surgeon and
-procedure, then pull the room in a tap-to-check setup list. Works offline. No
-hospital login.
+Your surgical preference cards, yours to keep. Build them, share them, pull
+the room from a tap-to-check list. Join your facility and the whole OR shares
+carts, QC, and the on-call board, live.
 
 ## Description
 
@@ -36,6 +36,12 @@ permission.
 • Check items off as you gather them; a progress bar hits "Case ready" at 100%
 • Lock your phone mid-setup — your checkmarks are still there
 
+**With your facility (facility account)**
+• Case carts for every scheduled case: pull, mark missing, QC, all live
+• The on-call board, with everyone's number from their own account
+• Loaner tray tracking and the supply catalog with REF photos
+• Admins control who's in; remove someone and they're out instantly
+
 **Yours, everywhere**
 • Works fully offline (because OR Wi-Fi doesn't)
 • One global search across surgeons, procedures, and every item
@@ -52,7 +58,7 @@ surgical,scrub tech,preference card,OR,operating room,surgery,nurse,circulator,p
 https://github.com/StevenL0ve/Restaurant-preview
 
 ## Privacy Policy URL
-(Publish docs/PRIVACY.md to a public URL and paste it here.)
+https://stevenl0ve.github.io/Restaurant-preview/privacy.html
 
 ## Category
 Primary: Medical · Secondary: Productivity

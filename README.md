@@ -135,7 +135,7 @@ npm run cap:sync   # build + sync the native iOS/Android projects
 ## Shipping to TestFlight & the stores
 
 ORSync is an installable PWA wrapped with **Capacitor**, with a one-click
-**GitHub Actions → TestFlight** pipeline (`.github/workflows/ios-testflight.yml`)
+**GitHub Actions → TestFlight** pipeline (`.github/workflows/testflight.yml`)
 and Fastlane lanes for a Mac. The runbooks live in [`docs/`](docs/):
 
 - [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) — get it on your iPhone (cloud or Mac)

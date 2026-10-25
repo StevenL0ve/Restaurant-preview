@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useFacilityAccess } from "../lib/facilityGate";
 import {
   useStore,
   surgeonOf,
@@ -18,6 +19,7 @@ import { relativeTime, formatDate } from "../lib/format";
 
 export function Dashboard() {
   const { state } = useStore();
+  const access = useFacilityAccess();
 
   const favorites = state.cards.filter((c) => c.favorite);
   const recent = [...state.cards].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
@@ -42,7 +44,7 @@ export function Dashboard() {
 
       <TodayLineup />
 
-      <OnCallNow />
+      {access.open && <OnCallNow />}
 
       {inProgress.length > 0 && (
         <div className="card form-card">
@@ -60,7 +62,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {loanerWatch.length > 0 && (
+      {access.open && loanerWatch.length > 0 && (
         <div className="card form-card">
           <div className="card-head">
             <h2>Loaner trays to watch</h2>

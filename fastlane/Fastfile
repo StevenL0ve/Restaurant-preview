@@ -1,7 +1,7 @@
 # ORSync — Fastlane lanes for shipping to TestFlight.
 #
 # Runs either on your Mac (Xcode installed) or on a GitHub Actions macOS runner
-# (see .github/workflows/ios-testflight.yml). One-time setup is in
+# (see .github/workflows/testflight.yml). One-time setup is in
 # docs/TESTFLIGHT.md. After that, shipping a beta is just:  fastlane beta
 #
 # Authentication uses an App Store Connect API key (no interactive 2FA) when

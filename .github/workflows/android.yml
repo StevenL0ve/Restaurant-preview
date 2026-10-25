@@ -1,0 +1,174 @@
+# Builds ORSync for Android on a GitHub Linux runner: a signed release AAB
+# for Google Play, a signed APK testers can install directly, and (when the
+# Play secrets are set) an upload straight to Play's Internal testing track.
+#
+# Repository secrets:
+#   ANDROID_KEYSTORE_B64        base64 of the upload keystore (.jks). If MISSING,
+#                               the workflow creates one and attaches it as the
+#                               "upload-keystore" artifact: download it, base64
+#                               it, and save it as this secret so every build
+#                               signs with the same key (Play requires that).
+#   ANDROID_KEYSTORE_PASSWORD   keystore password (default: orsync-upload)
+#   ANDROID_KEY_ALIAS           key alias (default: upload)
+#   ANDROID_KEY_PASSWORD        key password (default: same as keystore password)
+#   PLAY_SERVICE_ACCOUNT_JSON   (optional) Play Console service-account JSON;
+#                               with it set, the AAB goes to Internal testing.
+#
+# Run it from the Actions tab (workflow_dispatch) on the branch to ship.
+name: Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      # The native project is not committed: generate it fresh, stamp the
+      # icons/splash from the real logo, sync the web build in.
+      - name: Generate Android native project
+        run: |
+          npx cap add android
+          npx capacitor-assets generate --android
+          npx cap sync android
+
+      - name: Version, permissions, and the .orsync file type
+        run: |
+          # +10 keeps CI build numbers clear of earlier manual builds; the
+          # same formula as the iOS workflow so both stores show one number.
+          BUILD_NUM=$(( ${{ github.run_number }} + 10 ))
+          echo "versionCode $BUILD_NUM"
+          sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.$BUILD_NUM\"/" android/app/build.gradle
+
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          # Open tapped .orsync card files (Messages, Gmail, Drive) in the app.
+          python3 - "$MANIFEST" <<'PY'
+          import re, sys
+          p = sys.argv[1]
+          s = open(p).read()
+          filters = '''
+              <intent-filter>
+                  <action android:name="android.intent.action.VIEW" />
+                  <category android:name="android.intent.category.DEFAULT" />
+                  <category android:name="android.intent.category.BROWSABLE" />
+                  <data android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\\\.orsync" />
+                  <data android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\\\.orsync" />
+                  <data android:scheme="content" android:mimeType="application/json" />
+                  <data android:scheme="content" android:mimeType="application/octet-stream" />
+              </intent-filter>
+          '''
+          # Insert after the MAIN/LAUNCHER intent-filter of the main activity.
+          s = re.sub(r'(<category android:name="android.intent.category.LAUNCHER" />\s*</intent-filter>)', r'\1' + filters, s, count=1)
+          if 'USE_BIOMETRIC' not in s:
+              s = s.replace('</manifest>', '    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n</manifest>')
+          open(p, 'w').write(s)
+          PY
+          grep -n "orsync\|BIOMETRIC" "$MANIFEST"
+
+      - name: Upload keystore
+        id: keystore
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          KS_PASS="${KS_PASS:-orsync-upload}"
+          KEY_ALIAS="${KEY_ALIAS:-upload}"
+          KEY_PASS="${KEY_PASS:-$KS_PASS}"
+          KEYS="$GITHUB_WORKSPACE/keys"
+          mkdir -p "$KEYS"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 --decode > "$KEYS/upload.jks"
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_B64 secret. Generating a keystore; download the upload-keystore artifact and save it as that secret, or every build will be signed with a different key."
+            keytool -genkeypair -v -keystore "$KEYS/upload.jks" -storepass "$KS_PASS" -keypass "$KEY_PASS" \
+              -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=ORSync, OU=Mobile, O=ORSync, L=Biloxi, ST=MS, C=US"
+            base64 -w0 "$KEYS/upload.jks" > "$KEYS/upload.jks.b64"
+            echo "generated=true" >> "$GITHUB_OUTPUT"
+          fi
+          cat > android/keystore.properties <<EOF
+          storeFile=$KEYS/upload.jks
+          storePassword=$KS_PASS
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASS
+          EOF
+          # Teach the app module to sign release builds with it.
+          python3 - <<'PY'
+          p = "android/app/build.gradle"
+          s = open(p).read()
+          if "keystore.properties" not in s:
+              s = s.replace("android {", '''def keystoreProps = new Properties()
+          def keystoreFile = rootProject.file("keystore.properties")
+          if (keystoreFile.exists()) keystoreProps.load(new FileInputStream(keystoreFile))
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(keystoreProps["storeFile"])
+                      storePassword keystoreProps["storePassword"]
+                      keyAlias keystoreProps["keyAlias"]
+                      keyPassword keystoreProps["keyPassword"]
+                  }
+              }''', 1)
+              s = s.replace("buildTypes {\n        release {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release", 1)
+          open(p, "w").write(s)
+          PY
+          grep -n "signingConfig" android/app/build.gradle
+
+      - name: Build release AAB and APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleRelease
+          ls -la app/build/outputs/bundle/release app/build/outputs/apk/release
+
+      - name: Attach the AAB (for Play) and APK (for direct install)
+        uses: actions/upload-artifact@v4
+        with:
+          name: orsync-android-${{ github.run_number }}
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Attach the generated upload keystore (save it as a secret!)
+        if: steps.keystore.outputs.generated == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-keystore
+          path: |
+            keys/upload.jks
+            keys/upload.jks.b64
+
+      - name: Upload to Google Play (Internal testing)
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.stevennelson.orsync
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed

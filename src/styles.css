@@ -2042,3 +2042,17 @@ html, body { overflow-x: hidden; }
 .pill-brand { background: var(--brand); color: #fff; }
 .btn-danger-outline { border-color: var(--red); color: var(--red); }
 .facility-others { margin-top: 12px; }
+
+/* ---- Facility gate + demo ---- */
+.gate-hero { text-align: center; padding: 10px 0 6px; }
+.gate-mascot { height: 120px; width: auto; }
+.gate-hero h1 { margin: 6px 0 6px; font-size: 24px; }
+.gate-hero p { max-width: 520px; margin: 0 auto; }
+.gate-card { margin-top: 12px; }
+.gate-features { display: grid; gap: 10px; margin: 6px 0 12px; }
+.gate-feature { display: flex; gap: 10px; align-items: flex-start; }
+.gate-feature-icon { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--brand-soft, #e8f0fe); color: var(--brand); display: grid; place-items: center; }
+.gate-stores { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.demo-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #fff7e6; color: #7a4b00; border: 1px solid #ffd58a; border-radius: 12px; padding: 8px 12px; margin: 0 0 10px; font-size: 13.5px; }
+[data-theme="dark"] .demo-banner { background: #3a2a0a; color: #ffd58a; border-color: #5a4010; }
+[data-theme="dark"] .gate-feature-icon { background: #1d293f; }

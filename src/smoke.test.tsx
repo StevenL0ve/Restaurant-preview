@@ -26,6 +26,9 @@ function renderAt(path: string): string {
 function asGuest() {
   localStorage.setItem("orsync.guest.v1", "1");
   localStorage.setItem("orsync.welcomed.v1", "1");
+  // Facility-only screens (carts, on call, loaners, catalog) open in demo
+  // mode here; the gate itself has its own test below.
+  localStorage.setItem("orsync.demo.v1", "1");
 }
 
 describe("app smoke test", () => {
@@ -35,6 +38,17 @@ describe("app smoke test", () => {
     const html = renderAt("/");
     expect(html).toContain("Use it now");
     expect(html).toContain("ORSync");
+  });
+
+  it("without a facility or demo, facility-only screens show the gate", () => {
+    localStorage.setItem("orsync.guest.v1", "1");
+    localStorage.setItem("orsync.welcomed.v1", "1");
+    const html = renderAt("/carts");
+    expect(html).toContain("works with your facility");
+    expect(html).toContain("Try the demo");
+    expect(html).not.toContain("New carts");
+    // Cards stay fully available on your own.
+    expect(renderAt("/cards")).toContain("Ready for your next case");
   });
 
   it("renders the dashboard in guest mode with seeded cards", () => {
