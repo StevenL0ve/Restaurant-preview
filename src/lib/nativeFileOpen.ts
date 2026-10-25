@@ -22,6 +22,14 @@ export function initNativeFileOpen(onJson: (json: string) => void): void {
 
       const seen = new Set<string>();
       const handle = async (url?: string | null) => {
+        // orsync://join?f=...&p=... from a facility password email: land on
+        // the join screen with the fields filled in.
+        if (url && /^orsync:\/\//i.test(url)) {
+          const q = url.split("?")[1] ?? "";
+          const path = url.replace(/^orsync:\/\//i, "").split("?")[0].replace(/\/+$/, "");
+          window.location.hash = `#/${path}${q ? `?${q}` : ""}`;
+          return;
+        }
         if (!url || !/^(file|content):/i.test(url)) return;
         // Android content: URIs often hide the filename; the importer rejects non-card JSON anyway.
         if (url.startsWith("file") && !LOOKS_LIKE_CARD_FILE.test(url)) return;

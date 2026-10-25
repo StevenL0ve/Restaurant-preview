@@ -29,8 +29,13 @@ service cloud.firestore {
 
     function wsDoc(ws) { return get(/databases/$(db)/documents/workspaces/$(ws)); }
     function memberPath(ws) { return /databases/$(db)/documents/workspaces/$(ws)/members/$(request.auth.uid); }
+    function memberData(ws) { return get(memberPath(ws)).data; }
+    // Active, and (after a password change) still inside the 30-day window
+    // to enter the new password. Past it, the facility is closed to them
+    // until they re-enter the password (see the self re-key update below).
     function isActiveMember(ws) {
-      return signedIn() && exists(memberPath(ws)) && get(memberPath(ws)).data.status == 'active';
+      return signedIn() && exists(memberPath(ws)) && memberData(ws).status == 'active'
+        && (!('rekeyBy' in memberData(ws)) || memberData(ws).rekeyBy > request.time);
     }
     function isAdmin(ws) {
       return isActiveMember(ws) && get(memberPath(ws)).data.role == 'admin';
@@ -85,14 +90,21 @@ service cloud.firestore {
               || (request.resource.data.role == 'admin' && request.resource.data.status == 'active'
                   && wsDoc(ws).data.createdBy == request.auth.uid));
         // You keep your own name/phone/position current (and drop the proof
-        // once sent). Admins change status (approve, deny, block, allow).
-        // Owners change anything (roles).
+        // once sent). Entering the facility's current password clears your
+        // re-key deadline. Admins change status (approve, deny, block,
+        // allow) and set re-key deadlines. Owners change anything (roles).
         allow update: if (signedIn() && uid == request.auth.uid
               && changedOnly(['name', 'phone', 'position', 'updatedAt', 'proof'])
               && !('proof' in request.resource.data))
-          || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy', 'approvedAt', 'approvedBy', 'deniedAt']))
+          || (signedIn() && uid == request.auth.uid
+              && changedOnly(['rekeyBy', 'rekeyedAt', 'updatedAt', 'proof'])
+              && !('rekeyBy' in request.resource.data)
+              && request.resource.data.proof == facilityProof(ws))
+          || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy', 'approvedAt', 'approvedBy', 'deniedAt', 'rekeyBy', 'rekeyedAt']))
           || isOwner();
-        allow delete: if isAdmin(ws) || isOwner();
+        // Admins remove people; anyone can delete their own membership
+        // (leaving, or deleting their account).
+        allow delete: if isAdmin(ws) || isOwner() || (signedIn() && uid == request.auth.uid);
       }
 
       match /blocked/{email} {

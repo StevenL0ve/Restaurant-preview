@@ -450,6 +450,14 @@ export interface FacilityMember {
   status: MemberStatus;
   joinedAt?: string;
   requestedAt?: string;
+  /** Firestore Timestamp: deadline to enter a changed password. */
+  rekeyBy?: { toDate: () => Date } | null;
+}
+
+export function rekeyByIso(m: FacilityMember | null | undefined): string | undefined {
+  const t = m?.rekeyBy;
+  if (!t || typeof t.toDate !== "function") return undefined;
+  return t.toDate().toISOString();
 }
 
 export interface BlockedEntry {
@@ -488,7 +496,22 @@ export async function joinFacility(name: string, password: string, me: Me): Prom
   const existing = await fs.getDoc(memberRef).catch(() => null);
   if (existing?.exists()) {
     const d = existing.data() as FacilityMember;
-    if (d.status === "active") return { result: "joined", id, role: d.role };
+    if (d.status === "active") {
+      if (d.rekeyBy) {
+        // The facility's password changed: entering the new one clears the
+        // deadline (the rules check the proof). Wrong password: refused.
+        const proof = await deriveFacilityProof(name, password);
+        const now = new Date().toISOString();
+        try {
+          await fs.updateDoc(memberRef, { proof, rekeyBy: fs.deleteField(), rekeyedAt: now, updatedAt: now });
+        } catch (e) {
+          if (isDeniedErr(e)) return { result: "denied", id };
+          throw e;
+        }
+        await fs.updateDoc(memberRef, { proof: fs.deleteField(), updatedAt: now }).catch(() => undefined);
+      }
+      return { result: "joined", id, role: d.role };
+    }
     if (d.status === "pending") return { result: "pending", id };
     return { result: "denied", id };
   }
@@ -650,13 +673,48 @@ export async function setMemberRole(id: string, uid: string, role: MemberRole): 
   await fs.updateDoc(fs.doc(db, "workspaces", id, "members", uid), { role, updatedAt: new Date().toISOString() });
 }
 
-/** Admin: change the facility password. Everyone already joined keeps
- *  working; anyone joining from now on needs the new one. */
-export async function changeFacilityPassword(id: string, name: string, newPassword: string, byUid: string): Promise<void> {
+export const REKEY_DAYS = 30;
+
+/** Admin: change the facility password. The members the admin keeps stay
+ *  connected and get 30 days to enter the new password (from the email
+ *  the admin sends); the rest are removed now and would have to request
+ *  again with the new password. */
+export async function changeFacilityPassword(
+  id: string, name: string, newPassword: string, byUid: string,
+  keepUids: string[], removeUids: string[],
+): Promise<void> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
+  const now = new Date();
   const proof = await deriveFacilityProof(name, newPassword);
-  await fs.setDoc(fs.doc(db, "workspaces", id, "private", "auth"), { proof, changedAt: new Date().toISOString(), changedBy: byUid });
+  await fs.setDoc(fs.doc(db, "workspaces", id, "private", "auth"), { proof, changedAt: now.toISOString(), changedBy: byUid });
+  const deadline = fs.Timestamp.fromDate(new Date(now.getTime() + REKEY_DAYS * 86400000));
+  let batch = fs.writeBatch(db);
+  let ops = 0;
+  const flush = async () => { if (ops) { await batch.commit(); batch = fs.writeBatch(db); ops = 0; } };
+  for (const uid of keepUids) {
+    if (uid === byUid) continue; // the admin knows the password they just set
+    batch.update(fs.doc(db, "workspaces", id, "members", uid), { rekeyBy: deadline, rekeyedAt: fs.deleteField(), updatedAt: now.toISOString() });
+    if (++ops >= 400) await flush();
+  }
+  for (const uid of removeUids) {
+    batch.delete(fs.doc(db, "workspaces", id, "members", uid));
+    if (++ops >= 400) await flush();
+  }
+  await flush();
+}
+
+/** On open and when the app comes forward: pending requests decided? Is
+ *  there a password re-key deadline on the active facility? */
+export async function refreshFacilities(uid: string): Promise<void> {
+  await checkPendingFacilities(uid);
+  const { getWorkspace, setWorkspace } = await import("../lib/workspace");
+  const ws = getWorkspace();
+  if (!ws) return;
+  const m = await myMembership(ws.id, uid).catch(() => null);
+  if (!m) return;
+  const rekeyBy = rekeyByIso(m);
+  if ((rekeyBy ?? undefined) !== (ws.rekeyBy ?? undefined)) setWorkspace({ ...ws, rekeyBy });
 }
 
 /** Mirror a person's profile into the facility's member list. */

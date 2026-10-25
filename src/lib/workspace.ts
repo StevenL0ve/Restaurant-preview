@@ -24,6 +24,8 @@ export interface JoinedWorkspace {
   role?: MemberRole;
   /** Asked to join; an admin hasn't approved yet. Not synced until then. */
   pending?: boolean;
+  /** The facility changed its password: enter the new one by this ISO time. */
+  rekeyBy?: string;
 }
 
 const ACTIVE_KEY = "orsync.workspace.v2";

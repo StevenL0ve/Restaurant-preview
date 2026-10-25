@@ -11,6 +11,8 @@ import {
 import { checkPendingFacilities, facilityInfo, myMembership, workspaceMemberCount } from "../state/cloudSync";
 import { FacilityAdmin } from "../components/FacilityAdmin";
 import { isOrsyncOwner } from "../lib/owner";
+import { RekeyReminder } from "../components/RekeyReminder";
+import { AccountSecurity } from "../components/AccountSecurity";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { ProfileForm } from "../components/ProfileForm";
 import { roleLabel, useProfile } from "../lib/profile";
@@ -128,6 +130,7 @@ export function Settings() {
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
         {user?.uid && <AccountProfile uid={user.uid} email={user.email} fallbackName={user.name} />}
+        {user?.uid && <AccountSecurity email={user.email} />}
         {bioAvailable ? (
           <>
             <label className="toggle-row">
@@ -463,6 +466,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
       <div className="card settings-card">
         <h2>Facility</h2>
         {noticeBlock}
+        <RekeyReminder />
         <p>
           This device is synced with <strong>{joined.name}</strong>
           {role === "admin" ? " (you're an admin)" : ""}

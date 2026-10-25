@@ -36,10 +36,22 @@ The TestFlight pipeline already works, so review is the only new step.
    - Identifiers: user ID
 3. **1.0 Prepare for Submission**: pick the latest TestFlight build, paste
    the copy from `STORE_LISTING.md`, upload the screenshots, age rating 4+.
-4. **App Review Information**: give Apple a test account. Create a throwaway
-   account in the app (any email you control) and, in notes, a facility name
-   and password for a demo facility so they can see carts and on call. Say
-   that the app holds no patient data.
+4. **App Review Information**. Sign-in required: yes.
+   - Username: `bkborngaraised@gmail.com`
+   - Password: `appleteam`
+   Create that account in the app first (Create account, name "Apple Review")
+   and, signed in as it, create a facility named **Apple Review OR** with
+   password **appleteam** so the reviewer is its admin and sees carts, QC,
+   on call, loaners, and the catalog without waiting for approval.
+   Notes to paste:
+
+   > ORSync is a preference-card and case-cart app for surgical teams. It
+   > holds no patient information (every free-text field reminds users not
+   > to enter any). Sign in with the test account. The Carts and On call tabs
+   > work with a facility: the test account is already an admin of the
+   > facility "Apple Review OR" (password "appleteam"); if asked, enter that
+   > in Settings → Facility, or tap "Try the demo" on either tab. Face ID is
+   > optional and can be enabled in Settings.
 5. Export compliance is already declared in the build (standard HTTPS only).
 6. Submit. First reviews usually take one to three days.
 

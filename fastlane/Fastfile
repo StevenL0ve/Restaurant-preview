@@ -53,8 +53,14 @@ platform :ios do
     face_msg = "ORSync uses Face ID to unlock the app, so only you can open your preference cards."
     sh(%(/usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string #{face_msg}" "#{plist}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSFaceIDUsageDescription #{face_msg}" "#{plist}"))
 
-    # Register the .orsync document type so tapped card files open in the app.
+    # Register the .orsync document type so tapped card files open in the app,
+    # and the orsync:// scheme for join links in facility emails.
     [
+      "Add :CFBundleURLTypes array",
+      "Add :CFBundleURLTypes:0 dict",
+      "Add :CFBundleURLTypes:0:CFBundleURLName string com.stevennelson.orsync",
+      "Add :CFBundleURLTypes:0:CFBundleURLSchemes array",
+      "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string orsync",
       "Add :UTExportedTypeDeclarations array",
       "Add :UTExportedTypeDeclarations:0 dict",
       "Add :UTExportedTypeDeclarations:0:UTTypeIdentifier string com.stevennelson.orsync.card",

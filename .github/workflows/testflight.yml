@@ -69,6 +69,16 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string $MSG" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :NSFaceIDUsageDescription $MSG" "$PLIST"
 
+      - name: Register the orsync:// link scheme (join links from facility emails)
+        run: |
+          PLIST=ios/App/App/Info.plist
+          PB=/usr/libexec/PlistBuddy
+          "$PB" -c "Add :CFBundleURLTypes array" "$PLIST" 2>/dev/null || true
+          "$PB" -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
+          "$PB" -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.stevennelson.orsync" "$PLIST"
+          "$PB" -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
+          "$PB" -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string orsync" "$PLIST"
+
       - name: Register the .orsync document type
         run: |
           PLIST=ios/App/App/Info.plist

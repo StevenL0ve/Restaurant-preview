@@ -41,8 +41,9 @@ import { Paywall } from "./pages/Paywall";
 import { FacilityRequired, DemoBanner } from "./pages/FacilityRequired";
 import { useFacilityAccess } from "./lib/facilityGate";
 import { usePendingRequests } from "./lib/approvals";
-import { checkPendingFacilities } from "./state/cloudSync";
-import { getPendingFacilities } from "./lib/workspace";
+import { refreshFacilities } from "./state/cloudSync";
+import { JoinLinkPage } from "./pages/JoinLinkPage";
+
 
 // Facility-only screens: with a facility they're the real thing; in demo
 // they run on the device's sample data behind a banner; otherwise the gate
@@ -94,7 +95,7 @@ export default function App() {
   // and whenever the app comes back to the front.
   useEffect(() => {
     if (!cloudEnabled() || !user?.uid) return;
-    const run = () => { if (getPendingFacilities().length) void checkPendingFacilities(user.uid!); };
+    const run = () => { void refreshFacilities(user.uid!); };
     run();
     const onVis = () => { if (document.visibilityState === "visible") run(); };
     document.addEventListener("visibilitychange", onVis);
@@ -160,6 +161,7 @@ export default function App() {
             <Route path="/on-call/people" element={<Gated><OnCallPeoplePage /></Gated>} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/join" element={<JoinLinkPage />} />
             <Route path="/upgrade" element={<Paywall />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

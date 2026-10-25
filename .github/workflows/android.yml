@@ -74,6 +74,12 @@ jobs:
                   <action android:name="android.intent.action.VIEW" />
                   <category android:name="android.intent.category.DEFAULT" />
                   <category android:name="android.intent.category.BROWSABLE" />
+                  <data android:scheme="orsync" />
+              </intent-filter>
+              <intent-filter>
+                  <action android:name="android.intent.action.VIEW" />
+                  <category android:name="android.intent.category.DEFAULT" />
+                  <category android:name="android.intent.category.BROWSABLE" />
                   <data android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\\\.orsync" />
                   <data android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\\\.orsync" />
                   <data android:scheme="content" android:mimeType="application/json" />

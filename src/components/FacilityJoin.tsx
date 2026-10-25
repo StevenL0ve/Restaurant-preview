@@ -7,16 +7,18 @@ import { createFacility, joinFacility } from "../state/cloudSync";
 // Shared by onboarding and Settings → Facility. A wrong password can't
 // silently fork a facility: "not found" offers an explicit Create for
 // first-time setup only, and a refused password says so.
-export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
+export function FacilityJoinForm({ uid, userName, email, onJoined, compact, initialName, initialPassword }: {
   uid: string;
   userName: string;
   email: string;
   onJoined?: (name: string, status: "joined" | "pending") => void;
   compact?: boolean;
+  initialName?: string;
+  initialPassword?: string;
 }) {
   const [pendingName, setPendingName] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [pw, setPw] = useState("");
+  const [name, setName] = useState(initialName ?? "");
+  const [pw, setPw] = useState(initialPassword ?? "");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);

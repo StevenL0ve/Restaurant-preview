@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useFacilityAccess } from "../lib/facilityGate";
 import { usePendingRequests } from "../lib/approvals";
+import { RekeyReminder } from "../components/RekeyReminder";
 import {
   useStore,
   surgeonOf,
@@ -43,6 +44,8 @@ export function Dashboard() {
           <p className="muted">Today at a glance: the lineup, who's on call, and what needs a push.</p>
         </div>
       </div>
+
+      <RekeyReminder />
 
       {pending.length > 0 && (
         <Link to="/settings" className="card form-card approvals-tile">
