@@ -1,23 +1,23 @@
 import { NavLink } from "react-router-dom";
 import { APP_VERSION } from "../version";
-import { Icon, type IconName } from "./Icon";
+import { NavIcon, type NavIconName } from "./NavIcon";
 
 interface NavItem {
   to: string;
   label: string;
-  icon: IconName;
+  icon: NavIconName;
   end?: boolean;
 }
 
 const items: NavItem[] = [
   { to: "/", label: "Home", icon: "home", end: true },
-  { to: "/today", label: "My day", icon: "calendar" },
+  { to: "/today", label: "My day", icon: "myday" },
   { to: "/cards", label: "Cards", icon: "cards" },
-  { to: "/carts", label: "Case carts", icon: "cart" },
-  { to: "/surgeons", label: "Surgeons", icon: "surgeon" },
-  { to: "/loaners", label: "Loaner trays", icon: "truck" },
-  { to: "/on-call", label: "On call", icon: "bell" },
-  { to: "/facilities", label: "Facilities", icon: "building" },
+  { to: "/carts", label: "Case carts", icon: "carts" },
+  { to: "/surgeons", label: "Surgeons", icon: "surgeons" },
+  { to: "/loaners", label: "Loaner trays", icon: "loaners" },
+  { to: "/on-call", label: "On call", icon: "oncall" },
+  { to: "/facilities", label: "Facilities", icon: "facilities" },
   { to: "/search", label: "Search", icon: "search" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
@@ -41,7 +41,7 @@ export function Sidebar() {
             end={it.end ?? false}
             className={({ isActive }) => "nav-item" + (isActive ? " active" : "")}
           >
-            <span className="nav-icon" aria-hidden><Icon name={it.icon} size={20} /></span>
+            <span className="nav-icon" aria-hidden><NavIcon name={it.icon} size={26} /></span>
             <span className="nav-label">{it.label}</span>
           </NavLink>
         ))}
@@ -50,8 +50,8 @@ export function Sidebar() {
       <div className="sidebar-footer">
         <span className="pill pill-free">Yours. Offline.</span>
         <p className="footnote">
-          Your cards live on this device. No hospital account, no approvals.
-          Export or wipe everything anytime.
+          Your cards live on this device and work offline. Join your facility to
+          share carts, QC, and on-call. Export or wipe everything anytime.
         </p>
         <p className="version">ORSync v{APP_VERSION}</p>
       </div>

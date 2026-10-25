@@ -2145,3 +2145,15 @@ html, body { overflow-x: hidden; }
 .cropper-zoom input { flex: 1; }
 .admin-confirm { align-items: flex-start; }
 .admin-powers { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; }
+
+/* ---- Illustrated nav icons ---- */
+.nav-art { display: block; object-fit: contain; flex: none; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.nav-icon { width: 28px; }
+@media (max-width: 880px) {
+  /* Picture on top, label underneath with its own space: the label never
+     overlaps the art, and the active pill sits behind the picture only. */
+  .tab { gap: 3px; padding: 2px 2px; min-width: 0; }
+  .tab-icon { width: 50px; height: 36px; }
+  .tab-label { line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .content { padding-bottom: 90px; }
+}
