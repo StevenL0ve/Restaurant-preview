@@ -1,5 +1,6 @@
 import type { AppState, LoanerTray, PrefCard, CardItem, CatalogItem } from "../types";
 import { firebase, setCloudStatus } from "../lib/cloud";
+import { buildSeed } from "./seed";
 import { deriveFacilityProof, facilityId, isForeignRoot, syncRootId, type JoinedWorkspace, type MemberRole } from "../lib/workspace";
 
 // Live sync between the local store and Firestore. The shape is simple and
@@ -17,6 +18,14 @@ import { deriveFacilityProof, facilityId, isForeignRoot, syncRootId, type Joined
 //  • A device whose library last synced to a DIFFERENT account never seeds
 //    or merges into the new one (no cross-account leakage): the new
 //    account's cloud contents, even empty, replace the view.
+
+// Ids of the example data every fresh install starts with.
+const SEED_IDS: Set<string> = (() => {
+  const seed = buildSeed() as unknown as Record<string, unknown>;
+  const ids = new Set<string>();
+  for (const v of Object.values(seed)) if (Array.isArray(v)) for (const x of v) if (x && typeof x === "object" && "id" in x) ids.add(String((x as { id: unknown }).id));
+  return ids;
+})();
 
 export const SYNCED_KEYS = [
   "facilities", "locations", "surgeons", "cards", "loaners", "cases",
@@ -265,7 +274,10 @@ export function startCloudSync(target: SyncTarget, hooks: SyncHooks): () => void
           if (key === "catalog") items = mergeCatalogPhotos(items as unknown as CatalogItem[], local.catalog) as unknown as Item[];
           if (!localIsForeign) {
             // Same owner on both sides: nothing local is thrown away.
-            items = unionById(items, local[key] as unknown as Item[]);
+            // Keep what's only on this device, except the example data a
+            // fresh install starts with: it never belongs in a real library.
+            const mine = (local[key] as unknown as Item[]).filter((x) => !SEED_IDS.has(x.id));
+            items = unionById(items, mine);
           }
           (patch as Record<string, unknown>)[key] = items;
         });

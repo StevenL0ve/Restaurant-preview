@@ -1,3 +1,4 @@
+import { isOrsyncOwner } from "./owner";
 import type { AppState } from "../types";
 
 // ORSync pricing tiers — scaffolded now, switched on at App Store launch.
@@ -28,8 +29,18 @@ export function hasPro(): boolean {
  *  on every device you sign in to). Never free, beta included: storage
  *  costs real money per person. A facility's package covers its members'
  *  shared library instead; see the store's sync gate. */
-export function hasPersonalCloud(): boolean {
+export function hasPersonalCloud(email?: string | null): boolean {
+  if (isOrsyncOwner(email ?? sessionEmail())) return true;
   try { return localStorage.getItem(PRO_KEY) === "1"; } catch { return false; }
+}
+
+function sessionEmail(): string | null {
+  try {
+    const raw = localStorage.getItem("orsync.cloudsession.v1");
+    return raw ? (JSON.parse(raw) as { email?: string }).email ?? null : null;
+  } catch {
+    return null;
+  }
 }
 
 export const FACILITY_PRICE_MONTHLY = "$199";

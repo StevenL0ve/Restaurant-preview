@@ -382,7 +382,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const was = prevWorkspace.current;
     prevWorkspace.current = workspace;
-    if (was && !workspace && !hasPersonalCloud()) {
+    if (was && !workspace && !hasPersonalCloud(user?.email)) {
       // Left (or lost) the facility: your cards stay; its shared operations
       // data (carts, roster, loaners, catalog, notes) leaves this device.
       setState((st) => stripFacilityData(st));
@@ -392,7 +392,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!cloudEnabled() || !user?.uid) return;
-    if (!workspace && !hasPersonalCloud()) return;
+    if (!workspace && !hasPersonalCloud(user?.email)) return;
     const stop = startCloudSync({ uid: user.uid, workspace }, {
       getState: () => stateRef.current,
       applyRemote: (patch) => setState((s) => migrateLoaners({ ...s, ...patch } as AppState)),

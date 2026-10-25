@@ -8,7 +8,7 @@ import { cloudEnabled } from "../lib/cloud";
 // approval — so the most prominent action is "use it now, no account."
 export function Login() {
   const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioLabel, setBioEnabled } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signup");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [showPw, setShowPw] = useState(false);
   const [wantBio, setWantBio] = useState(false);
@@ -28,7 +28,19 @@ export function Login() {
         setResetSentTo(email.trim().toLowerCase());
         return;
       }
-      if (mode === "signup") await signUp(name, email, password);
+      if (mode === "signup") {
+        try {
+          await signUp(name, email, password);
+        } catch (e) {
+          // Already have an account (made on another device): just sign in.
+          if (/already exists/i.test(e instanceof Error ? e.message : "")) {
+            setMode("signin");
+            await signIn(email, password);
+          } else {
+            throw e;
+          }
+        }
+      }
       else await signIn(email, password);
       // Opted in on the form: one scan turns the lock on. A cancel just
       // leaves it off; it can be turned on later in Settings.
