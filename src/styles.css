@@ -2015,6 +2015,8 @@ html, body { overflow-x: hidden; }
 .mascot-cart { height: 74px; width: auto; margin-left: auto; flex: none; }
 .cart-mascot { height: 48px; width: auto; flex: none; align-self: center; }
 @media (max-width: 420px) { .mascot-cart { height: 60px; } }
+.oncall-head { display: flex; align-items: center; gap: 8px; }
+.mascot-phone { height: 52px; width: auto; flex: none; }
 
 /* ---- Onboarding + account profile ---- */
 .onb-steps { display: flex; gap: 6px; justify-content: center; margin: 6px 0 10px; }

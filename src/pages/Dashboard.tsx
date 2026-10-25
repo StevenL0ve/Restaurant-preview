@@ -147,7 +147,7 @@ function OnCallNow() {
   return (
     <div className="card form-card">
       <div className="card-head">
-        <h2><span aria-hidden="true">🚨</span> On call now</h2>
+        <h2 className="oncall-head"><img className="mascot-phone" src="brand/mascot-phone.png" alt="" width={64} height={55} /> On call now</h2>
         <Link className="link" to="/on-call">Full board</Link>
       </div>
       {rows.slice(0, 4).map(({ pos, now }) => (
