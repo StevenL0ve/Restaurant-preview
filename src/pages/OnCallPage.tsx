@@ -11,7 +11,7 @@ import {
   positionsByCategory,
   telHref,
 } from "../state/store";
-import { TEAM_ROLES } from "../types";
+import { TEAM_ROLES, roleMatches } from "../types";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { tapLight } from "../lib/haptics";
@@ -204,7 +204,7 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
       .filter((p) => !needle || p.name.toLowerCase().includes(needle) || (p.role ?? "").toLowerCase().includes(needle))
       .sort((a, b) => Number(inPool(b)) - Number(inPool(a)) || a.name.localeCompare(b.name));
     if (!needed || showAllRoles) return { results: all.slice(0, 8), hiddenCount: 0 };
-    const matching = all.filter((p) => onCallPersonRole(p) === needed);
+    const matching = all.filter((p) => roleMatches(needed, onCallPersonRole(p)));
     return { results: matching.slice(0, 8), hiddenCount: all.length - matching.length };
   }, [q, state.onCallPeople, position.id, needed, showAllRoles]);
 

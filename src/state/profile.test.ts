@@ -10,7 +10,7 @@ describe("account profile links to the OR's people records", () => {
   it("creates an on-call roster entry and staff entry for a new person", () => {
     const out = applyProfileToRoster(base(), steven);
     expect(out.onCallPeople).toHaveLength(1);
-    expect(out.onCallPeople[0]).toMatchObject({ uid: "u1", name: "Steven Nelson", phone: "+12285550100", staffRole: "tech", role: "Tech", initials: "SN" });
+    expect(out.onCallPeople[0]).toMatchObject({ uid: "u1", name: "Steven Nelson", phone: "+12285550100", staffRole: "tech", role: "Surgical technologist", initials: "SN" });
     expect(out.staff[0]).toMatchObject({ name: "Steven Nelson", role: "tech" });
   });
 

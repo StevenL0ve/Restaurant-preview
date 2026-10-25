@@ -22,6 +22,8 @@ export interface JoinedWorkspace {
   name: string;
   /** Your membership role at the facility, as last seen. */
   role?: MemberRole;
+  /** Asked to join; an admin hasn't approved yet. Not synced until then. */
+  pending?: boolean;
 }
 
 const ACTIVE_KEY = "orsync.workspace.v2";
@@ -127,6 +129,10 @@ export function rememberFacility(w: JoinedWorkspace): void {
     localStorage.setItem(LIST_KEY, JSON.stringify([w, ...rest]));
   } catch { /* private mode */ }
   notify();
+}
+
+export function getPendingFacilities(): JoinedWorkspace[] {
+  return getFacilities().filter((f) => f.pending);
 }
 
 export function forgetFacility(id: string): void {

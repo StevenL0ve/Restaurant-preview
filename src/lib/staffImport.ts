@@ -14,9 +14,14 @@ const ROLE_ALIASES: Record<string, TeamRole> = {
   surgeon: "surgeon", md: "surgeon", do: "surgeon", doctor: "surgeon", attending: "surgeon",
   nurse: "nurse", rn: "nurse", circulator: "nurse", "circulating nurse": "nurse", lpn: "nurse",
   tech: "tech", cst: "tech", scrub: "tech", "scrub tech": "tech", "surgical tech": "tech", "st": "tech",
-  trainee: "trainee", student: "trainee", resident: "trainee",
+  "surgical technologist": "tech", "surgical technician": "tech", technologist: "tech",
+  trainee: "trainee", student: "trainee", "trainee tech": "trainee",
+  resident: "resident", fellow: "resident", pgy: "resident",
   phase2: "phase2", "phase ii": "phase2", "phase 2": "phase2", "phase ii student": "phase2", "phase 2 student": "phase2",
-  anesthesia: "anesthesia", crna: "anesthesia", anesthesiologist: "anesthesia", "anesthesia provider": "anesthesia",
+  anesthesia: "anesthesia", "anesthesia provider": "anesthesia", crna: "crna", anesthesiologist: "anesthesiologist",
+  "or admin": "oradmin", admin: "oradmin", administrator: "oradmin", "or manager": "oradmin", manager: "oradmin", director: "oradmin",
+  scheduler: "scheduler", scheduling: "scheduler",
+  spd: "spd", "spd tech": "spd", "sterile processing": "spd", "sterile processing tech": "spd", "cs tech": "spd",
 };
 
 function parseRole(raw: string): { role: TeamRole; level?: 1 | 2 | 3 } | null {
@@ -47,11 +52,17 @@ export function guessRole(raw?: string): TeamRole | null {
     const r = parseRole(tok.trim());
     if (r) return r.role;
   }
-  if (/anesthes|crna/.test(t)) return "anesthesia";
+  if (/\bcrna\b/.test(t)) return "crna";
+  if (/anesthesiologist/.test(t)) return "anesthesiologist";
+  if (/anesthes/.test(t)) return "anesthesia";
+  if (/\bspd\b|sterile proc/.test(t)) return "spd";
+  if (/schedul/.test(t)) return "scheduler";
+  if (/\badmin|manager|director/.test(t)) return "oradmin";
+  if (/resident|fellow|\bpgy/.test(t)) return "resident";
   if (/tech|cst|scrub/.test(t)) return "tech";
   if (/nurse|\brn\b|charge|circulat|\blpn\b/.test(t)) return "nurse";
   if (/phase\s*(ii|2)/.test(t)) return "phase2";
-  if (/trainee|student|resident/.test(t)) return "trainee";
+  if (/trainee|student/.test(t)) return "trainee";
   if (/surgeon|\bmd\b|\bdo\b|\bdr\b/.test(t)) return "surgeon";
   return null;
 }

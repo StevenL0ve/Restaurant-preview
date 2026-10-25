@@ -8,7 +8,7 @@ import {
   facilityId, forgetFacility, getFacilities, getFacilityNotice, getWorkspace, onWorkspaceChange,
   setFacilityNotice, setWorkspace, type JoinedWorkspace,
 } from "../lib/workspace";
-import { facilityInfo, myMembership, workspaceMemberCount } from "../state/cloudSync";
+import { checkPendingFacilities, facilityInfo, myMembership, workspaceMemberCount } from "../state/cloudSync";
 import { FacilityAdmin } from "../components/FacilityAdmin";
 import { isOrsyncOwner } from "../lib/owner";
 import { FacilityJoinForm } from "../components/FacilityJoin";
@@ -335,7 +335,7 @@ function StaffRosterCard() {
         Names you can pick when building a case's room team. Anyone typed into a team is added
         automatically; paste or upload a whole roster here, one person per line:{" "}
         <code>Kim Park, nurse</code> · <code>Lee, trainee 2</code> · <code>Dr. Osei, anesthesia</code>.
-        Roles: {TEAM_ROLES.map((r) => r.label.toLowerCase()).join(", ")} (RN, CST, CRNA work too).
+        Roles: {TEAM_ROLES.map((r) => r.label).join(", ")} (RN, CST, scrub, MD work too).
       </p>
       <textarea
         rows={3}
@@ -378,13 +378,15 @@ function StaffRosterCard() {
 // pull status, QC, schedules, teams, and notes are one set for the whole OR.
 function FacilityCard({ uid, userName, email }: { uid: string; userName: string; email: string }) {
   const [joined, setJoined] = useState(getWorkspace());
-  const [others, setOthers] = useState<JoinedWorkspace[]>(() => getFacilities().filter((f) => f.id !== getWorkspace()?.id));
+  const [others, setOthers] = useState<JoinedWorkspace[]>(() => getFacilities().filter((f) => f.id !== getWorkspace()?.id && !f.pending));
+  const [pendingList, setPendingList] = useState<JoinedWorkspace[]>(() => getFacilities().filter((f) => f.pending));
   const [notice, setNotice] = useState(getFacilityNotice());
   const isOwner = isOrsyncOwner(email);
   useEffect(() => onWorkspaceChange(() => {
     const w = getWorkspace();
     setJoined(w);
-    setOthers(getFacilities().filter((f) => f.id !== w?.id));
+    setOthers(getFacilities().filter((f) => f.id !== w?.id && !f.pending));
+    setPendingList(getFacilities().filter((f) => f.pending));
     setNotice(getFacilityNotice());
   }), []);
 
@@ -413,6 +415,25 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
     <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left", marginBottom: 10 }}>
       <span>{notice}</span>
       <button className="link small" type="button" onClick={() => setFacilityNotice(null)}>Dismiss</button>
+    </div>
+  );
+
+  const [checking, setChecking] = useState(false);
+  const pendingBlock = pendingList.length > 0 && (
+    <div className="facility-others">
+      <h4 className="facility-admin-sub">Waiting for approval</h4>
+      {pendingList.map((f) => (
+        <div key={f.id} className="member-row">
+          <div className="member-main">
+            <strong>{f.name}</strong>
+            <div className="muted small">A facility admin has your request. ORSync stays your personal card app until they approve it.</div>
+          </div>
+          <div className="member-actions">
+            <button className="btn btn-sm" disabled={checking} onClick={async () => { setChecking(true); try { await checkPendingFacilities(uid); } finally { setChecking(false); } }}>{checking ? "Checking…" : "Check now"}</button>
+            <button className="btn btn-sm" onClick={() => forgetFacility(f.id)}>Withdraw</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 
@@ -470,6 +491,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
             <FacilityJoinForm uid={uid} userName={userName} email={email} compact onJoined={() => setAdding(false)} />
           </div>
         )}
+        {pendingBlock}
         {othersBlock}
         {(role === "admin" || isOwner) && (
           <FacilityAdmin facilityId={joined.id} facilityName={joined.name} meUid={uid} canAssignAdmins={isOwner} />
@@ -489,6 +511,7 @@ function FacilityCard({ uid, userName, email }: { uid: string; userName: string;
         Join each one; this device switches between them.
       </p>
       <FacilityJoinForm uid={uid} userName={userName} email={email} />
+      {pendingBlock}
       {othersBlock}
     </div>
   );

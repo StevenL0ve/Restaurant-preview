@@ -10,7 +10,7 @@ describe("staff roster import", () => {
     expect(members).toEqual([
       { name: "Kim Park", role: "nurse", level: undefined },
       { name: "Marcus Cole", role: "tech", level: undefined },
-      { name: "Dr. Osei", role: "anesthesia", level: undefined },
+      { name: "Dr. Osei", role: "crna", level: undefined },
       { name: "Jalen Lee", role: "trainee", level: 2 },
       { name: "Sam Reyes", role: "phase2", level: undefined },
     ]);
@@ -35,9 +35,9 @@ describe("role guessing for on-call filtering", () => {
     expect(guessRole("CST")).toBe("tech");
     expect(guessRole("Surgical Tech")).toBe("tech");
     expect(guessRole("Anesthesiology")).toBe("anesthesia");
-    expect(guessRole("CRNA")).toBe("anesthesia");
+    expect(guessRole("CRNA")).toBe("crna");
     expect(guessRole("MD")).toBe("surgeon");
-    expect(guessRole("Resident")).toBe("trainee");
+    expect(guessRole("Resident")).toBe("resident");
     expect(guessRole("Honeywell")).toBeNull();
     expect(guessRole(undefined)).toBeNull();
   });

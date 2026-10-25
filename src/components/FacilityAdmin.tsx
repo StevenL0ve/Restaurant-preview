@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
 import { friendly } from "./FacilityJoin";
 import {
-  allowMember, blockMember, changeFacilityPassword, listBlocked, listMembers, setMemberRole,
+  allowMember, approveMember, blockMember, changeFacilityPassword, denyMember, listBlocked, listMembers, setMemberRole,
   type BlockedEntry, type FacilityMember,
 } from "../state/cloudSync";
+import { relativeTime } from "../lib/format";
 import { formatPhone } from "../lib/oncall";
 
 // Facility admin tools: who's in, who's out, and the password. Shown to a
@@ -52,16 +53,18 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
   }
 
   const active = (members ?? []).filter((m) => m.status === "active");
-  const out = (members ?? []).filter((m) => m.status !== "active");
+  const pending = (members ?? []).filter((m) => m.status === "pending");
+  const out = (members ?? []).filter((m) => m.status === "blocked" || m.status === "denied");
   const blockedOnly = blocked.filter((b) => !out.some((m) => m.email === b.email));
 
   return (
     <div className="facility-admin">
       <h3 className="facility-admin-title"><Icon name="shield" size={18} /> Facility admin</h3>
       <p className="muted small">
-        Blocking someone shuts their account out of {facilityName} right away: no reading cards, no
-        marking carts, no edits, and the password alone won't get them back in. Their own account and
-        the cards on their device stay theirs.
+        Everyone who enters the facility password waits here until an admin approves them. Blocking
+        someone shuts their account out of {facilityName} right away: no reading cards, no marking
+        carts, no edits, and the password alone won't get them back in. Their own account and the
+        cards on their device stay theirs.
       </p>
       {err && <p className="neg small">{err}</p>}
 
@@ -69,6 +72,31 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
         <p className="muted small">Loading members…</p>
       ) : (
         <>
+          {pending.length > 0 && (
+            <>
+              <h4 className="facility-admin-sub">Waiting for approval ({pending.length})</h4>
+              <div className="member-list">
+                {pending.map((m) => (
+                  <div key={m.uid} className="member-row member-pending">
+                    <div className="member-main">
+                      <strong>{m.name}</strong>
+                      {m.position && <span className="pill">{m.position}</span>}
+                      <div className="muted small">
+                        {m.email}
+                        {m.phone ? ` · ${formatPhone(m.phone)}` : ""}
+                        {m.requestedAt ? ` · asked ${relativeTime(m.requestedAt)}` : ""}
+                      </div>
+                    </div>
+                    <div className="member-actions">
+                      <button className="btn btn-sm btn-primary" disabled={busy !== null} onClick={() => run("approve:" + m.uid, () => approveMember(facilityId, m.uid, meUid))}>Approve</button>
+                      <button className="btn btn-sm btn-danger-outline" disabled={busy !== null} onClick={() => run("deny:" + m.uid, () => denyMember(facilityId, m.uid, meUid))}>Deny</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <h4 className="facility-admin-sub">Members</h4>
+            </>
+          )}
           <div className="member-list">
             {active.map((m) => (
               <div key={m.uid} className="member-row">
@@ -111,7 +139,7 @@ export function FacilityAdmin({ facilityId, facilityName, meUid, canAssignAdmins
 
           {(out.length > 0 || blockedOnly.length > 0) && (
             <>
-              <h4 className="facility-admin-sub">Blocked</h4>
+              <h4 className="facility-admin-sub">Blocked or denied</h4>
               <div className="member-list">
                 {out.map((m) => (
                   <div key={m.uid} className="member-row">

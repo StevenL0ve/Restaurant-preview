@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
-import { setWorkspace } from "../lib/workspace";
+import { rememberFacility, setWorkspace } from "../lib/workspace";
 import { createFacility, joinFacility } from "../state/cloudSync";
 
 // Join a hospital's shared library with its facility name and password.
@@ -11,9 +11,10 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
   uid: string;
   userName: string;
   email: string;
-  onJoined?: (name: string) => void;
+  onJoined?: (name: string, status: "joined" | "pending") => void;
   compact?: boolean;
 }) {
+  const [pendingName, setPendingName] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -32,11 +33,16 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
       if (r.result === "not-found") {
         setOfferCreate(name.trim());
       } else if (r.result === "denied") {
-        setErr(`That password isn't right for ${name.trim()}, or this account's access to it was removed. Check with the charge desk or a facility admin.`);
+        setErr(`That password isn't right for ${name.trim()}, or this account's access to it was turned down. Check with the charge desk or a facility admin.`);
+      } else if (r.result === "pending") {
+        rememberFacility({ id: r.id, name: name.trim(), pending: true });
+        setPendingName(name.trim());
+        setPw("");
+        onJoined?.(name.trim(), "pending");
       } else {
         setWorkspace({ id: r.id, name: name.trim(), role: r.role });
         setPw("");
-        onJoined?.(name.trim());
+        onJoined?.(name.trim(), "joined");
       }
     } catch (e) {
       setErr(friendly(e));
@@ -60,12 +66,27 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
       const n = offerCreate;
       setOfferCreate(null);
       setPw("");
-      onJoined?.(n);
+      onJoined?.(n, "joined");
     } catch (e) {
       setErr(friendly(e));
     } finally {
       setBusy(false);
     }
+  }
+
+  if (pendingName) {
+    return (
+      <div className="facility-join">
+        <div className="auth-notice" style={{ alignItems: "flex-start", textAlign: "left" }}>
+          <strong>Request sent to {pendingName}.</strong>
+          <span>
+            A facility admin will see your name, email, and position and approve you. Until then
+            ORSync works as your personal card app; the facility opens up on its own once you're in.
+          </span>
+          <button className="link small" type="button" onClick={() => setPendingName(null)}>Join a different facility</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -99,8 +120,8 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact }: {
           <span>
             Joining one that already exists? Check the spelling and try again. Setting
             up <strong>{offerCreate}</strong> for the first time? Create it now: your library on
-            this device becomes its starting point, you become its first admin, and this name +
-            password is what everyone else will use to join.
+            this device becomes its starting point, you become its first admin, and everyone who
+            enters this name + password waits for your approval.
           </span>
           <div className="form-actions">
             <button className="btn btn-primary" type="button" disabled={busy} onClick={create}>{busy ? "Creating…" : `Create ${offerCreate}`}</button>

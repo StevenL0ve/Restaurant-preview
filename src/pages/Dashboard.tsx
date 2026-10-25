@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useFacilityAccess } from "../lib/facilityGate";
+import { usePendingRequests } from "../lib/approvals";
 import {
   useStore,
   surgeonOf,
@@ -20,6 +21,7 @@ import { relativeTime, formatDate } from "../lib/format";
 export function Dashboard() {
   const { state } = useStore();
   const access = useFacilityAccess();
+  const pending = usePendingRequests();
 
   const favorites = state.cards.filter((c) => c.favorite);
   const recent = [...state.cards].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
@@ -41,6 +43,19 @@ export function Dashboard() {
           <p className="muted">Today at a glance: the lineup, who's on call, and what needs a push.</p>
         </div>
       </div>
+
+      {pending.length > 0 && (
+        <Link to="/settings" className="card form-card approvals-tile">
+          <div className="card-head">
+            <h2>{pending.length} {pending.length === 1 ? "person is" : "people are"} waiting to join</h2>
+            <span className="link">Review</span>
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>
+            {pending.slice(0, 3).map((m) => `${m.name}${m.position ? ` (${m.position})` : ""}`).join(", ")}
+            {pending.length > 3 ? ` and ${pending.length - 3} more` : ""}. Approve or deny in Settings → Facility.
+          </p>
+        </Link>
+      )}
 
       <TodayLineup />
 

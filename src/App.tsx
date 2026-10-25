@@ -40,6 +40,9 @@ import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
 import { FacilityRequired, DemoBanner } from "./pages/FacilityRequired";
 import { useFacilityAccess } from "./lib/facilityGate";
+import { usePendingRequests } from "./lib/approvals";
+import { checkPendingFacilities } from "./state/cloudSync";
+import { getPendingFacilities } from "./lib/workspace";
 
 // Facility-only screens: with a facility they're the real thing; in demo
 // they run on the device's sample data behind a banner; otherwise the gate
@@ -86,6 +89,34 @@ export default function App() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Asked to join a facility? Find out whether an admin decided, on open
+  // and whenever the app comes back to the front.
+  useEffect(() => {
+    if (!cloudEnabled() || !user?.uid) return;
+    const run = () => { if (getPendingFacilities().length) void checkPendingFacilities(user.uid!); };
+    run();
+    const onVis = () => { if (document.visibilityState === "visible") run(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [user?.uid]);
+
+  // Admins: a toast when someone new asks to join.
+  const pending = usePendingRequests();
+  const seenPending = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const ids = new Set(pending.map((m) => m.uid));
+    if (seenPending.current) {
+      const fresh = pending.filter((m) => !seenPending.current!.has(m.uid));
+      if (fresh.length) {
+        setBanner(fresh.length === 1
+          ? `${fresh[0].name}${fresh[0].position ? ` (${fresh[0].position})` : ""} asked to join your facility. Approve in Settings.`
+          : `${fresh.length} people asked to join your facility. Approve in Settings.`);
+        setTimeout(() => setBanner(null), 7000);
+      }
+    }
+    seenPending.current = ids;
+  }, [pending]);
 
   if (!ready) return null;
   if (!user) return <Login />;

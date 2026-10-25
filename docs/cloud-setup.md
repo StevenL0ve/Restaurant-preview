@@ -23,8 +23,8 @@ dormant; these steps create the project and drop in its keys.
    What the rules enforce: each account can only touch its own data. A
    facility's shared library is readable and writable only by that
    facility's ACTIVE members. Joining needs the facility password (checked
-   server-side against a proof only admins can read) and is refused for a
-   blocked email. Admins change the password and block or allow members;
+   server-side against a proof only admins can read), is refused for a
+   blocked email, and waits as PENDING until a facility admin approves it. Admins change the password and block or allow members;
    ORSync owners (the `ownerEmails()` list) assign admins at any facility.
 
 ```
@@ -40,6 +40,7 @@ rules_version = '2';
 //   workspaces/{ws}                       facility (name, createdBy); ws = sha256 of the name
 //   workspaces/{ws}/private/auth          { proof } the current password proof (admins only)
 //   workspaces/{ws}/members/{uid}         { email, name, phone, position, role, status }
+//                                         status: pending → active (admin approved) | denied | blocked
 //   workspaces/{ws}/blocked/{email}       people an admin shut out (rejoin refused)
 //   workspaces/{ws}/data/library/...      the shared library (active members only)
 
@@ -97,24 +98,29 @@ service cloud.firestore {
       }
 
       match /members/{uid} {
-        allow read: if isActiveMember(ws) || isOwner();
-        // Joining: your own record, active, with the facility's current
-        // password proof, and not on the blocked list. The facility's
-        // creator joins as its first admin; everyone else as a member.
+        // Members and owners see the roster; anyone can read their own
+        // record (to learn whether their request was approved).
+        allow get: if isActiveMember(ws) || isOwner() || (signedIn() && uid == request.auth.uid);
+        allow list: if isActiveMember(ws) || isOwner();
+        // Asking to join: your own record, with the facility's current
+        // password proof, not on the blocked list, and PENDING until an
+        // admin approves it. The facility's creator is its first admin and
+        // starts active.
         allow create: if signedIn()
           && uid == request.auth.uid
           && request.resource.data.email == myEmail()
-          && request.resource.data.status == 'active'
           && !isBlockedEmail(ws)
           && request.resource.data.proof == facilityProof(ws)
-          && (request.resource.data.role == 'member'
-              || (request.resource.data.role == 'admin' && wsDoc(ws).data.createdBy == request.auth.uid));
+          && ((request.resource.data.role == 'member' && request.resource.data.status == 'pending')
+              || (request.resource.data.role == 'admin' && request.resource.data.status == 'active'
+                  && wsDoc(ws).data.createdBy == request.auth.uid));
         // You keep your own name/phone/position current (and drop the proof
-        // once in). Admins change status. Owners change anything (roles).
-        allow update: if (isActiveMember(ws) && uid == request.auth.uid
+        // once sent). Admins change status (approve, deny, block, allow).
+        // Owners change anything (roles).
+        allow update: if (signedIn() && uid == request.auth.uid
               && changedOnly(['name', 'phone', 'position', 'updatedAt', 'proof'])
               && !('proof' in request.resource.data))
-          || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy']))
+          || (isAdmin(ws) && changedOnly(['status', 'updatedAt', 'blockedAt', 'blockedBy', 'approvedAt', 'approvedBy', 'deniedAt']))
           || isOwner();
         allow delete: if isAdmin(ws) || isOwner();
       }

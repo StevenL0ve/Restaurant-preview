@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
+import { usePendingRequests } from "../lib/approvals";
 
 // Mobile-only bottom tab bar — the native pattern people expect from a real
 // phone app, which is what this competes with.
@@ -22,6 +23,7 @@ const tabs: Tab[] = [
 ];
 
 export function BottomNav() {
+  const pending = usePendingRequests().length;
   return (
     <nav className="bottom-nav">
       {tabs.map((it) => (
@@ -31,7 +33,10 @@ export function BottomNav() {
           end={it.end ?? false}
           className={({ isActive }) => "tab" + (isActive ? " active" : "")}
         >
-          <span className="tab-icon"><Icon name={it.icon} size={23} /></span>
+          <span className="tab-icon">
+            <Icon name={it.icon} size={23} />
+            {it.to === "/settings" && pending > 0 && <span className="tab-badge" aria-label={`${pending} join requests`}>{pending}</span>}
+          </span>
           <span className="tab-label">{it.label}</span>
         </NavLink>
       ))}

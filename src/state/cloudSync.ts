@@ -437,8 +437,8 @@ async function pushAll(
 // See src/lib/workspace.ts for the access model and firestore.rules for
 // what the server enforces.
 
-export type JoinResult = "joined" | "not-found" | "denied" | "exists";
-export type MemberStatus = "active" | "blocked";
+export type JoinResult = "joined" | "pending" | "not-found" | "denied" | "exists";
+export type MemberStatus = "pending" | "active" | "denied" | "blocked";
 
 export interface FacilityMember {
   uid: string;
@@ -449,6 +449,7 @@ export interface FacilityMember {
   role: MemberRole;
   status: MemberStatus;
   joinedAt?: string;
+  requestedAt?: string;
 }
 
 export interface BlockedEntry {
@@ -471,8 +472,10 @@ function memberFields(m: Me) {
 
 function isDeniedErr(e: unknown): boolean { return isDenied(e); }
 
-/** Join a facility by name + password. "not-found": no facility by that
- *  name. "denied": the password is wrong, or this account was blocked. */
+/** Ask to join a facility by name + password. "pending": the password was
+ *  right and the request now waits for a facility admin. "joined": already
+ *  approved (or you're the creator). "not-found": no facility by that name.
+ *  "denied": wrong password, or this account was denied or blocked. */
 export async function joinFacility(name: string, password: string, me: Me): Promise<{ result: JoinResult; id: string; role?: MemberRole }> {
   const { db } = await firebase();
   const fs = await import("firebase/firestore");
@@ -485,20 +488,80 @@ export async function joinFacility(name: string, password: string, me: Me): Prom
   const existing = await fs.getDoc(memberRef).catch(() => null);
   if (existing?.exists()) {
     const d = existing.data() as FacilityMember;
-    if (d.status !== "active") return { result: "denied", id };
-    return { result: "joined", id, role: d.role };
+    if (d.status === "active") return { result: "joined", id, role: d.role };
+    if (d.status === "pending") return { result: "pending", id };
+    return { result: "denied", id };
   }
   const proof = await deriveFacilityProof(name, password);
-  const role: MemberRole = (ws.data() as { createdBy?: string }).createdBy === me.uid ? "admin" : "member";
+  const creator = (ws.data() as { createdBy?: string }).createdBy === me.uid;
+  const now = new Date().toISOString();
   try {
-    await fs.setDoc(memberRef, { ...memberFields(me), role, status: "active", joinedAt: new Date().toISOString(), proof });
+    await fs.setDoc(memberRef, creator
+      ? { ...memberFields(me), role: "admin", status: "active", joinedAt: now, proof }
+      : { ...memberFields(me), role: "member", status: "pending", requestedAt: now, proof });
   } catch (e) {
     if (isDeniedErr(e)) return { result: "denied", id };
     throw e;
   }
   // The proof did its job; it doesn't need to sit in the member record.
-  await fs.updateDoc(memberRef, { proof: fs.deleteField(), updatedAt: new Date().toISOString() }).catch(() => undefined);
-  return { result: "joined", id, role };
+  await fs.updateDoc(memberRef, { proof: fs.deleteField(), updatedAt: now }).catch(() => undefined);
+  return creator ? { result: "joined", id, role: "admin" } : { result: "pending", id };
+}
+
+/** Admin: let a pending request in. */
+export async function approveMember(id: string, uid: string, byUid: string): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const now = new Date().toISOString();
+  await fs.updateDoc(fs.doc(db, "workspaces", id, "members", uid), { status: "active", joinedAt: now, approvedAt: now, approvedBy: byUid, updatedAt: now });
+}
+
+/** Admin: turn a request down. They can't ask again unless allowed back. */
+export async function denyMember(id: string, uid: string, byUid: string): Promise<void> {
+  const { db } = await firebase();
+  const fs = await import("firebase/firestore");
+  const now = new Date().toISOString();
+  await fs.updateDoc(fs.doc(db, "workspaces", id, "members", uid), { status: "denied", deniedAt: now, blockedBy: byUid, updatedAt: now });
+}
+
+/** Live list of people waiting to be approved (admins only). */
+export function watchPendingMembers(id: string, cb: (members: FacilityMember[]) => void, onError?: (e: unknown) => void): () => void {
+  let stop: (() => void) | null = null;
+  let cancelled = false;
+  void (async () => {
+    try {
+      const { db } = await firebase();
+      const fs = await import("firebase/firestore");
+      if (cancelled) return;
+      const q = fs.query(fs.collection(db, "workspaces", id, "members"), fs.where("status", "==", "pending"));
+      stop = fs.onSnapshot(q, (snap) => {
+        cb(snap.docs.map((d) => ({ ...(d.data() as FacilityMember), uid: d.id })).sort((a, b) => (a.requestedAt ?? "").localeCompare(b.requestedAt ?? "")));
+      }, (e) => onError?.(e));
+    } catch (e) {
+      onError?.(e);
+    }
+  })();
+  return () => { cancelled = true; stop?.(); };
+}
+
+/** For each facility this device asked to join: has an admin decided? An
+ *  approval makes it the active facility (if none is); a denial drops it
+ *  with a notice. Called on app open and when the app comes back forward. */
+export async function checkPendingFacilities(uid: string): Promise<void> {
+  const { getPendingFacilities, rememberFacility, forgetFacility, getWorkspace, setWorkspace, setFacilityNotice } = await import("../lib/workspace");
+  for (const f of getPendingFacilities()) {
+    const m = await myMembership(f.id, uid).catch(() => null);
+    if (!m) continue;
+    if (m.status === "active") {
+      const approved = { id: f.id, name: f.name, role: m.role, pending: false };
+      rememberFacility(approved);
+      setFacilityNotice(`You're in: an admin approved you at ${f.name}.`);
+      if (!getWorkspace()) setWorkspace(approved);
+    } else if (m.status === "denied" || m.status === "blocked") {
+      forgetFacility(f.id);
+      setFacilityNotice(`${f.name} turned down this account's request to join. Check with the charge desk or a facility admin.`);
+    }
+  }
 }
 
 /** First-time setup: create the facility at its name's address, with this

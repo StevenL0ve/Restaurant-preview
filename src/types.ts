@@ -213,13 +213,33 @@ export interface LoanerTray {
 // a level (I, II, III); everyone else is just a role and a name.
 export const TEAM_ROLES = [
   { key: "surgeon", label: "Surgeon" },
-  { key: "nurse", label: "Nurse" },
-  { key: "tech", label: "Tech" },
-  { key: "trainee", label: "Trainee" },
+  { key: "resident", label: "Resident" },
+  { key: "anesthesiologist", label: "Anesthesiologist" },
+  { key: "crna", label: "CRNA" },
+  { key: "anesthesia", label: "Anesthesia (other)" },
+  { key: "nurse", label: "RN (Registered Nurse)" },
+  { key: "tech", label: "Surgical technologist" },
+  { key: "trainee", label: "Trainee tech" },
   { key: "phase2", label: "Phase II student" },
-  { key: "anesthesia", label: "Anesthesia" },
+  { key: "oradmin", label: "OR admin" },
+  { key: "scheduler", label: "Scheduler" },
+  { key: "spd", label: "SPD technician" },
 ] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number]["key"];
+
+export function teamRoleLabel(role: TeamRole | undefined | null): string {
+  return TEAM_ROLES.find((r) => r.key === role)?.label ?? (role ?? "");
+}
+
+/** Roles that can cover the same call: any anesthesia provider can take an
+ *  "Anesthesia" call; everything else matches exactly. */
+export function roleMatches(needed: TeamRole | null, have: TeamRole | null): boolean {
+  if (!needed) return true;
+  if (!have) return false;
+  if (needed === have) return true;
+  const anes = new Set<TeamRole>(["anesthesia", "anesthesiologist", "crna"]);
+  return anes.has(needed) && anes.has(have);
+}
 
 export interface TeamMember {
   id: ID;

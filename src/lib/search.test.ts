@@ -86,7 +86,7 @@ describe("scheduled case search", () => {
     const byTeam = search(sched, "lee");
     const hit = byTeam.find((h) => h.kind === "case");
     expect(hit).toBeTruthy();
-    if (hit && hit.kind === "case") expect(hit.snippet).toContain("Trainee II · Lee");
+    if (hit && hit.kind === "case") expect(hit.snippet).toContain("Trainee tech II · Lee");
   });
 });
 
