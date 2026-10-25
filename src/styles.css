@@ -2009,3 +2009,8 @@ html, body { overflow-x: hidden; }
 
 /* ---- Enable Face ID on the sign-up form ---- */
 .auth-bio { padding: 10px 2px; border-top: 1px solid var(--line); margin-top: 2px; }
+
+/* ---- Mascot moments: setup card, QC'd carts ---- */
+.mascot-cart { height: 74px; width: auto; margin-left: auto; flex: none; }
+.cart-mascot { height: 48px; width: auto; flex: none; align-self: center; }
+@media (max-width: 420px) { .mascot-cart { height: 60px; } }

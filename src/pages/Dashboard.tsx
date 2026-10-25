@@ -46,7 +46,10 @@ export function Dashboard() {
 
       {inProgress.length > 0 && (
         <div className="card form-card">
-          <div className="card-head"><h2>Setup in progress</h2></div>
+          <div className="card-head">
+            <h2>Setup in progress</h2>
+            <img className="mascot-cart" src="brand/mascot-cart.png" alt="" width={92} height={74} />
+          </div>
           {inProgress.map(({ card, done, total }) => (
             <Link key={card.id} to={`/cards/${card.id}/setup`} className="resume-row">
               <span className="resume-title">{card.procedure}</span>
@@ -144,7 +147,7 @@ function OnCallNow() {
   return (
     <div className="card form-card">
       <div className="card-head">
-        <h2>On call now</h2>
+        <h2><span aria-hidden="true">🚨</span> On call now</h2>
         <Link className="link" to="/on-call">Full board</Link>
       </div>
       {rows.slice(0, 4).map(({ pos, now }) => (

@@ -134,6 +134,16 @@ function CartRow({ cart }: { cart: CaseCart }) {
           <span className="cart-proc">{card.procedure}{cart.label && <span className="cart-label">{cart.label}</span>}</span>
           <span className="muted small">{sg?.name}{pullers.length ? ` · pulling: ${pullers.join(", ")}` : ""}</span>
         </div>
+        {cart.qcDone && (
+          // QC'd: a thumbs-up; QC'd with nothing missing: shades on.
+          <img
+            className="cart-mascot"
+            src={missing.length === 0 ? "brand/mascot-shades.png" : "brand/mascot-thumbs.png"}
+            alt={missing.length === 0 ? "QC passed, nothing missing" : "QC passed"}
+            width={52}
+            height={48}
+          />
+        )}
         {cart.donePulling ? (
           <span className="cart-badges">
             {missing.length > 0 ? (
