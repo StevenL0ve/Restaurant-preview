@@ -1593,6 +1593,7 @@ body {
 .cart-row-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .cart-proc { font-weight: 700; font-size: 15px; }
 .cart-label {
+  display: inline-block; white-space: nowrap; /* never split "#2 of 2" across lines */
   margin-left: 8px; font-size: 11.5px; font-weight: 700; color: var(--accent, var(--brand));
   background: color-mix(in srgb, var(--accent, var(--brand)) 12%, transparent);
   border-radius: 99px; padding: 2px 9px; vertical-align: 2px;
