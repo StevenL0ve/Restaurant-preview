@@ -83,7 +83,7 @@ export function Dashboard() {
       {access.open && loanerWatch.length > 0 && (
         <div className="card form-card">
           <div className="card-head">
-            <h2>Loaner trays to watch</h2>
+            <h2 className="with-mascot"><img className="mascot-loaner" src="brand/mascot-loaner.png" alt="" width={76} height={48} /> Loaner trays to watch</h2>
             <Link className="link" to="/loaners">All loaners</Link>
           </div>
           {loanerWatch.map((l) => {
@@ -104,7 +104,7 @@ export function Dashboard() {
       <div className="dash-cols">
         <div className="card">
           <div className="card-head">
-            <h2>Favorites</h2>
+            <h2><span aria-hidden="true">⭐</span> Favorites</h2>
             <Link className="link" to="/cards">All cards</Link>
           </div>
           {favorites.length === 0 ? (

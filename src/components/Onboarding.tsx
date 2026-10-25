@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mascot } from "./Mascot";
+import { Mascot, MASCOT_NAME } from "./Mascot";
 import { ProfileForm } from "./ProfileForm";
 import { FacilityJoinForm } from "./FacilityJoin";
 import { useAuth } from "../state/auth";
@@ -15,7 +15,7 @@ export function Onboarding() {
   const { saveProfile } = useStore();
   const uid = user?.uid ?? "";
   const existing = getProfile(uid);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [profile, setProfile] = useState<UserProfile>(
     existing ?? { uid, name: user?.name ?? "", email: user?.email ?? "" },
   );
@@ -31,10 +31,29 @@ export function Onboarding() {
   return (
     <div className="auth onboarding">
       <div className="auth-card">
-        <Mascot size={80} className="auth-mascot" />
-        <div className="onb-steps" aria-label={`Step ${step} of 3`}>
-          {[1, 2, 3].map((n) => <span key={n} className={"onb-dot" + (n <= step ? " on" : "")} />)}
+        {step === 0 ? (
+          <div className="jolie-stage">
+            <Mascot size={140} animate />
+            <div className="jolie-bubble">Hi, I'm {MASCOT_NAME}!</div>
+          </div>
+        ) : (
+          <Mascot size={80} className="auth-mascot" />
+        )}
+        <div className="onb-steps" aria-label={`Step ${step + 1} of 4`}>
+          {[0, 1, 2, 3].map((n) => <span key={n} className={"onb-dot" + (n <= step ? " on" : "")} />)}
         </div>
+
+        {step === 0 && (
+          <>
+            <h1 className="auth-title">Meet {MASCOT_NAME}</h1>
+            <p className="auth-sub">
+              {MASCOT_NAME} is ORSync's scrub sponge, and your assistant in the app. She shows up
+              where a hand helps: setting up a room, QC'ing a cart, finding the right card. Soon she'll
+              answer questions too. When you see her, that's ORSync talking.
+            </p>
+            <button className="btn btn-primary auth-submit" type="button" onClick={() => setStep(1)}>Nice to meet you, {MASCOT_NAME}</button>
+          </>
+        )}
 
         {step === 1 && (
           <>

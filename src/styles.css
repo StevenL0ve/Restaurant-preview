@@ -2083,3 +2083,20 @@ html, body { overflow-x: hidden; }
 .plan-section h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 18px; margin: 0 0 6px; }
 .plan-price-line { margin: 8px 0 4px; }
 .paywall-logo { display: block; margin: 0 auto 6px; }
+
+/* ---- Jolie ---- */
+@keyframes jolie-float {
+  0% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-7px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(-2deg); }
+}
+@keyframes jolie-pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+.mascot-live { animation: jolie-float 3s ease-in-out infinite; transform-origin: 50% 90%; }
+@media (prefers-reduced-motion: reduce) { .mascot-live { animation: none; } }
+.jolie-stage { position: relative; display: flex; justify-content: center; padding: 10px 0 4px; }
+.jolie-bubble { position: absolute; top: 4px; right: calc(50% - 150px); background: #fff; color: var(--ink); border: 2px solid var(--brand); border-radius: 16px; padding: 6px 12px; font-weight: 700; font-size: 15px; box-shadow: var(--shadow); animation: jolie-pop 0.5s ease-out both; animation-delay: 0.3s; }
+.jolie-bubble::after { content: ""; position: absolute; left: -10px; bottom: 8px; border: 6px solid transparent; border-right-color: var(--brand); }
+[data-theme="dark"] .jolie-bubble { background: #1d293f; color: #e2e8f0; }
+.welcome-jolie { margin: 2px 0 10px; color: var(--slate); font-size: 14px; }
+.with-mascot { display: flex; align-items: center; gap: 8px; }
+.mascot-loaner { height: 48px; width: auto; flex: none; }
