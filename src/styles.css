@@ -2006,3 +2006,6 @@ html, body { overflow-x: hidden; }
 .auth-notice-title { font-size: 1rem; }
 .auth-notice-email { word-break: break-all; font-size: 0.95rem; }
 .auth-notice-hint { margin-top: 4px; font-size: 0.82rem; color: var(--slate); }
+
+/* ---- Enable Face ID on the sign-up form ---- */
+.auth-bio { padding: 10px 2px; border-top: 1px solid var(--line); margin-top: 2px; }

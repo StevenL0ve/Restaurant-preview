@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { useAuth } from "../state/auth";
 import { Mascot } from "./Mascot";
+import { authenticatedWithin } from "../lib/biometric";
 
 // Face ID / Touch ID / fingerprint app lock. When it's on, the app opens
 // locked, and locks again after it has been in the background for a minute
@@ -20,6 +21,11 @@ export function AppLock() {
 
   async function unlock() {
     if (prompting.current) return;
+    // Just scanned to turn the lock on (sign-up or Settings): don't ask twice.
+    if (authenticatedWithin(15_000)) {
+      setLocked(false);
+      return;
+    }
     prompting.current = true;
     setFailed(false);
     const ok = await bioUnlock();

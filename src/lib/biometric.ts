@@ -14,6 +14,13 @@ export interface BioStatus {
 
 const NONE: BioStatus = { available: false, label: "Face ID" };
 
+// When the person just proved it's them (e.g. the scan that turns the lock
+// on), the app lock shouldn't immediately ask a second time.
+let lastSuccessAt = 0;
+export function authenticatedWithin(ms: number): boolean {
+  return Date.now() - lastSuccessAt < ms;
+}
+
 function labelFor(t: BiometryType): string {
   switch (t) {
     case BiometryType.faceId: return "Face ID";
@@ -51,6 +58,7 @@ export async function bioAuthenticate(reason: string): Promise<boolean> {
       androidSubtitle: reason,
       androidConfirmationRequired: false,
     });
+    lastSuccessAt = Date.now();
     return true;
   } catch {
     return false;

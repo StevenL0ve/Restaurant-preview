@@ -21,6 +21,8 @@ vi.mock("@capacitor/app", () => ({
   },
 }));
 vi.mock("./Mascot", () => ({ Mascot: () => null }));
+let recent = false;
+vi.mock("../lib/biometric", () => ({ authenticatedWithin: () => recent }));
 
 import { AppLock } from "./AppLock";
 
@@ -40,6 +42,14 @@ describe("Face ID app lock", () => {
     auth.bioEnabled = true;
     auth.bioUnlock.mockReset();
     appStateCb = null;
+    recent = false;
+  });
+
+  it("doesn't ask twice right after the scan that turned the lock on", async () => {
+    recent = true;
+    const { el } = await mount();
+    expect(auth.bioUnlock).not.toHaveBeenCalled();
+    expect(el.textContent).not.toContain("ORSync is locked");
   });
 
   it("opens locked, prompts immediately, and unlocks on success", async () => {

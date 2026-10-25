@@ -7,10 +7,11 @@ import { cloudEnabled } from "../lib/cloud";
 // Optional account gate. A personal tool shouldn't gate you behind anyone's
 // approval — so the most prominent action is "use it now, no account."
 export function Login() {
-  const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioLabel } = useAuth();
+  const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioLabel, setBioEnabled } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signup");
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [showPw, setShowPw] = useState(false);
+  const [wantBio, setWantBio] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +23,16 @@ export function Login() {
     setError(null);
     setBusy(true);
     try {
-      if (mode === "signup") await signUp(name, email, password);
-      else if (mode === "reset") {
+      if (mode === "reset") {
         await resetPassword(email);
         setResetSentTo(email.trim().toLowerCase());
-      } else await signIn(email, password);
+        return;
+      }
+      if (mode === "signup") await signUp(name, email, password);
+      else await signIn(email, password);
+      // Opted in on the form: one scan turns the lock on. A cancel just
+      // leaves it off; it can be turned on later in Settings.
+      if (wantBio && bioAvailable) void setBioEnabled(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -49,7 +55,7 @@ export function Login() {
           Use it now, no account
         </button>
         <p className="auth-foot" style={{ margin: "10px 0 18px" }}>
-          Everything stays on this device.{bioAvailable ? ` You can lock it with ${bioLabel} in Settings.` : ""}
+          Everything stays on this device.
         </p>
 
         <div className="auth-tabs">
@@ -154,6 +160,16 @@ export function Login() {
                 <Icon name={showPw ? "eye-off" : "eye"} size={20} />
               </button>
               </span>
+            </label>
+          )}
+
+          {bioAvailable && mode !== "reset" && (
+            <label className="toggle-row auth-bio">
+              <span>
+                Enable {bioLabel}
+                <span className="muted small"> · unlock ORSync with {bioLabel}</span>
+              </span>
+              <input type="checkbox" checked={wantBio} onChange={(e) => setWantBio(e.target.checked)} />
             </label>
           )}
 
