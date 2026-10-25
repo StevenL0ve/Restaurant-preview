@@ -340,6 +340,21 @@ export interface OnCallShift {
   start: string; // ISO datetime
   end?: string; // ISO datetime, or undefined for open-ended
   note?: string; // "covering for Dana"
+  updatedAt?: string;
+  updatedBy?: string; // full name; shown as "Last, F."
+}
+
+// ---- Change log --------------------------------------------------------------
+// Who changed what, when, for the things a whole OR relies on: the call
+// schedule, the surgical schedule, the roster. Deletions leave a trace here
+// even though the record is gone. Capped; newest first.
+export type ChangeKind = "oncall" | "schedule" | "roster" | "cards" | "carts" | "other";
+export interface ChangeEntry {
+  id: ID;
+  at: string; // ISO
+  by?: string; // full name; shown as "Last, F."
+  kind: ChangeKind;
+  text: string; // "On call: Tech 1 → Kim Park, Oct 26 7:00 PM to Oct 27 7:00 AM"
 }
 
 // ---- Case carts ------------------------------------------------------------
@@ -478,5 +493,6 @@ export interface AppState {
   repStock: RepStockItem[];
   dayNotes: DayConsideration[];
   staff: StaffMember[];
+  changeLog: ChangeEntry[];
   catalog: CatalogItem[];
 }

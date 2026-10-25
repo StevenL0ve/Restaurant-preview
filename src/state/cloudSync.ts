@@ -21,7 +21,7 @@ import { deriveFacilityProof, facilityId, isForeignRoot, syncRootId, type Joined
 export const SYNCED_KEYS = [
   "facilities", "locations", "surgeons", "cards", "loaners", "cases",
   "onCallPositions", "onCallPeople", "onCallShifts", "carts",
-  "repLocations", "repStock", "dayNotes", "staff", "catalog",
+  "repLocations", "repStock", "dayNotes", "staff", "catalog", "changeLog",
 ] as const;
 
 export type SyncedKey = (typeof SYNCED_KEYS)[number];

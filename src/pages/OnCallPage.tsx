@@ -12,6 +12,8 @@ import {
   telHref,
 } from "../state/store";
 import { TEAM_ROLES, roleMatches } from "../types";
+import { RecentChanges } from "../components/RecentChanges";
+import { stampLine } from "../lib/user";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { tapLight } from "../lib/haptics";
@@ -51,6 +53,8 @@ export function OnCallPage() {
           </section>
         ))
       )}
+
+      <RecentChanges kinds={["oncall", "roster"]} title="Who changed the call schedule" />
     </div>
   );
 }
@@ -88,6 +92,9 @@ function PositionCard({ position }: { position: OnCallPosition }) {
               : <span className="muted small">No number on file</span>}
             <div className="muted small">{describeWindow(now.shift, Date.now())}</div>
             {now.shift.note && <div className="oncall-note small">“{now.shift.note}”</div>}
+            {(now.shift.updatedBy || now.shift.updatedAt) && (
+              <div className="muted small oncall-stamp">Set by {stampLine(now.shift.updatedBy, now.shift.updatedAt)}</div>
+            )}
           </div>
           <div className="oncall-call">
             <CallButtons person={now.person} big />

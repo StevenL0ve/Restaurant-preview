@@ -21,6 +21,7 @@ import { Icon } from "../components/Icon";
 import { accentStyle } from "../lib/accent";
 import { TEAM_ROLES, teamMemberLabel } from "../types";
 import { stampLine } from "../lib/user";
+import { RecentChanges } from "../components/RecentChanges";
 import { cardsPdfBlob, cardsPdfFilename, type CardPdfEntry } from "../lib/cardPdf";
 import { cartLink } from "../lib/links";
 import { shareBlobFile } from "../lib/share";
@@ -134,6 +135,8 @@ export function TodayPage() {
           );
         })
       )}
+
+      <RecentChanges kinds={["schedule"]} title="Who changed the schedule" />
     </div>
   );
 }

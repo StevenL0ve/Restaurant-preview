@@ -2100,3 +2100,10 @@ html, body { overflow-x: hidden; }
 .welcome-jolie { margin: 2px 0 10px; color: var(--slate); font-size: 14px; }
 .with-mascot { display: flex; align-items: center; gap: 8px; }
 .mascot-loaner { height: 48px; width: auto; flex: none; }
+
+/* ---- Change log ---- */
+.change-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.change-list li { display: flex; flex-direction: column; gap: 1px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.change-list li:last-child { border-bottom: 0; }
+.change-text { font-size: 14px; }
+.oncall-stamp { margin-top: 2px; }

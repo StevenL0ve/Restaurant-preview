@@ -14,6 +14,7 @@ import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, set
 import { writeWorkspaceMember } from "./cloudSync";
 import { hasPersonalCloud } from "../lib/tier";
 import { setProfile, roleLabel, type UserProfile } from "../lib/profile";
+import type { ChangeEntry, ChangeKind } from "../types";
 import type {
   AppState,
   DayConsideration,
@@ -173,6 +174,7 @@ function migrateLegacy(old: any): AppState {
     dayNotes: old.dayNotes ?? [],
     staff: old.staff ?? [],
     catalog: old.catalog ?? [],
+    changeLog: old.changeLog ?? [],
   };
 }
 
@@ -599,7 +601,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Booking a case queues its cart for pulling, unless one's already there.
         update((st) => {
           const queued = withQueuedCart(st, entry.cardId, entry.date);
-          return { ...queued, cases: [...queued.cases, entry] };
+          const next = { ...queued, cases: [...queued.cases, entry] };
+          return logChange(next, "schedule", `Schedule: added ${describeCase(next, entry)}`);
         });
         return entry;
       },
@@ -708,17 +711,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         update((st) => ({ ...st, cases: reorderCase(st.cases, id, dir) })),
 
       updateCase: (id, patch) =>
-        update((st) => ({
-          ...st,
-          cases: st.cases.map((c) =>
-            c.id === id
-              ? { ...c, ...patch, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined }
-              : c,
-          ),
-        })),
+        update((st) => {
+          const before = st.cases.find((c) => c.id === id);
+          const next = {
+            ...st,
+            cases: st.cases.map((c) =>
+              c.id === id
+                ? { ...c, ...patch, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined }
+                : c,
+            ),
+          };
+          if (!before) return next;
+          const after = next.cases.find((c) => c.id === id)!;
+          const what: string[] = [];
+          if (patch.date !== undefined && patch.date !== before.date) what.push(`moved to ${after.date}`);
+          if (patch.time !== undefined && patch.time !== before.time) what.push(`time ${after.time || "cleared"}`);
+          if (patch.room !== undefined && patch.room !== before.room) what.push(`room ${after.room || "cleared"}`);
+          if (patch.team !== undefined) what.push("team updated");
+          if (patch.notes !== undefined && patch.notes !== before.notes) what.push("notes updated");
+          if (patch.cardId !== undefined && patch.cardId !== before.cardId) what.push("card changed");
+          return logChange(next, "schedule", `Schedule: ${describeCase(st, before)}: ${what.length ? what.join(", ") : "edited"}`);
+        }),
 
       deleteCase: (id) =>
-        update((st) => ({ ...st, cases: st.cases.filter((c) => c.id !== id) })),
+        update((st) => {
+          const gone = st.cases.find((c) => c.id === id);
+          const next = { ...st, cases: st.cases.filter((c) => c.id !== id) };
+          return gone ? logChange(next, "schedule", `Schedule: cancelled ${describeCase(st, gone)}`) : next;
+        }),
 
       addLoaner: (l) => {
         const now = new Date().toISOString();
@@ -1196,23 +1216,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       updateOnCallPosition: (id, patch) =>
-        update((st) => ({
-          ...st,
-          onCallPositions: st.onCallPositions.map((p) =>
-            p.id === id ? { ...p, ...patch, name: (patch.name ?? p.name).trim() } : p,
-          ),
-        })),
+        update((st) => {
+          const before = st.onCallPositions.find((p) => p.id === id);
+          const next = {
+            ...st,
+            onCallPositions: st.onCallPositions.map((p) =>
+              p.id === id ? { ...p, ...patch, name: (patch.name ?? p.name).trim() } : p,
+            ),
+          };
+          return before ? logChange(next, "roster", `On-call position edited: ${before.name}${patch.name && patch.name.trim() !== before.name ? ` renamed to ${patch.name.trim()}` : ""}`) : next;
+        }),
 
       // Removing a position clears its shifts and drops it from every pool.
       deleteOnCallPosition: (id) =>
-        update((st) => ({
-          ...st,
-          onCallPositions: st.onCallPositions.filter((p) => p.id !== id),
-          onCallShifts: st.onCallShifts.filter((s) => s.positionId !== id),
-          onCallPeople: st.onCallPeople.map((p) =>
-            p.positionIds.includes(id) ? { ...p, positionIds: p.positionIds.filter((x) => x !== id) } : p,
-          ),
-        })),
+        update((st) => {
+          const gone = st.onCallPositions.find((p) => p.id === id);
+          const next = {
+            ...st,
+            onCallPositions: st.onCallPositions.filter((p) => p.id !== id),
+            onCallShifts: st.onCallShifts.filter((s) => s.positionId !== id),
+            onCallPeople: st.onCallPeople.map((p) =>
+              p.positionIds.includes(id) ? { ...p, positionIds: p.positionIds.filter((x) => x !== id) } : p,
+            ),
+          };
+          return gone ? logChange(next, "roster", `On-call position removed: ${gone.name}`) : next;
+        }),
 
       addOnCallPerson: (p) => {
         const person: OnCallPerson = {
@@ -1228,31 +1256,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       updateOnCallPerson: (id, patch) =>
-        update((st) => ({
-          ...st,
-          onCallPeople: st.onCallPeople.map((p) =>
-            p.id === id
-              ? {
-                  ...p,
-                  ...patch,
-                  name: (patch.name ?? p.name).trim(),
-                  phone: patch.phone !== undefined ? patch.phone.trim() || undefined : p.phone,
-                  initials: patch.name ? initials(patch.name) : p.initials,
-                }
-              : p,
-          ),
-        })),
+        update((st) => {
+          const before = st.onCallPeople.find((p) => p.id === id);
+          const next = {
+            ...st,
+            onCallPeople: st.onCallPeople.map((p) =>
+              p.id === id
+                ? {
+                    ...p,
+                    ...patch,
+                    name: (patch.name ?? p.name).trim(),
+                    phone: patch.phone !== undefined ? patch.phone.trim() || undefined : p.phone,
+                    initials: patch.name ? initials(patch.name) : p.initials,
+                  }
+                : p,
+            ),
+          };
+          if (!before) return next;
+          const what: string[] = [];
+          if (patch.name && patch.name.trim() !== before.name) what.push(`renamed to ${patch.name.trim()}`);
+          if (patch.phone !== undefined && (patch.phone.trim() || undefined) !== before.phone) what.push(patch.phone.trim() ? "number changed" : "number removed");
+          if (patch.role !== undefined || patch.staffRole !== undefined) what.push("role updated");
+          if (patch.positionIds !== undefined) what.push("call pools updated");
+          return logChange(next, "roster", `Roster: ${before.name} ${what.length ? what.join(", ") : "edited"}`);
+        }),
 
       // Removing a person clears their shifts too.
       deleteOnCallPerson: (id) =>
-        update((st) => ({
-          ...st,
-          onCallPeople: st.onCallPeople.filter((p) => p.id !== id),
-          onCallShifts: st.onCallShifts.filter((s) => s.personId !== id),
-        })),
+        update((st) => {
+          const gone = st.onCallPeople.find((p) => p.id === id);
+          const next = {
+            ...st,
+            onCallPeople: st.onCallPeople.filter((p) => p.id !== id),
+            onCallShifts: st.onCallShifts.filter((s) => s.personId !== id),
+          };
+          return gone ? logChange(next, "roster", `Roster: removed ${gone.name}`) : next;
+        }),
 
       assignOnCall: (positionId, personId, start, end, note) => {
-        const shift: OnCallShift = { id: uid("shift"), positionId, personId, start, end, note: note?.trim() || undefined };
+        const shift: OnCallShift = {
+          id: uid("shift"), positionId, personId, start, end, note: note?.trim() || undefined,
+          updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined,
+        };
         update((st) => {
           // Ensure the person is in this position's pool going forward.
           const onCallPeople = st.onCallPeople.map((p) =>
@@ -1267,19 +1312,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ? { ...s, end: start }
               : s,
           );
-          return { ...st, onCallPeople, onCallShifts: [...onCallShifts, shift] };
+          const next = { ...st, onCallPeople, onCallShifts: [...onCallShifts, shift] };
+          return logChange(next, "oncall", `On call: set ${describeShift(next, shift)}`);
         });
         return shift;
       },
 
       updateOnCallShift: (id, patch) =>
-        update((st) => ({
-          ...st,
-          onCallShifts: st.onCallShifts.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-        })),
+        update((st) => {
+          const next = {
+            ...st,
+            onCallShifts: st.onCallShifts.map((s) =>
+              s.id === id ? { ...s, ...patch, updatedAt: new Date().toISOString(), updatedBy: getPullerName() || undefined } : s,
+            ),
+          };
+          const after = next.onCallShifts.find((s) => s.id === id);
+          return after ? logChange(next, "oncall", `On call: changed ${describeShift(next, after)}`) : next;
+        }),
 
       deleteOnCallShift: (id) =>
-        update((st) => ({ ...st, onCallShifts: st.onCallShifts.filter((s) => s.id !== id) })),
+        update((st) => {
+          const gone = st.onCallShifts.find((s) => s.id === id);
+          const next = { ...st, onCallShifts: st.onCallShifts.filter((s) => s.id !== id) };
+          return gone ? logChange(next, "oncall", `On call: cleared ${describeShift(st, gone)}`) : next;
+        }),
 
       exportCardFile: (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
@@ -1417,6 +1473,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           dayNotes: parsed.dayNotes ?? st.dayNotes,
           staff: parsed.staff ?? st.staff,
           catalog: parsed.catalog ?? st.catalog,
+          changeLog: parsed.changeLog ?? st.changeLog,
         }));
       },
 
@@ -1426,7 +1483,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [],
         }),
     };
   }, [state]);
@@ -1791,6 +1848,32 @@ export function missingForDay(s: AppState, date: string): { cart: CaseCart; card
 }
 
 /** "Lap Chole #1 of 2": how a cart is named in pickers, lists, rollups. */
+const CHANGE_LOG_CAP = 300;
+
+/** Record who changed what, when (pure). Newest first, capped. */
+export function logChange(st: AppState, kind: ChangeKind, text: string, by: string | undefined = getPullerName() || undefined, at = new Date().toISOString()): AppState {
+  const entry: ChangeEntry = { id: uid("chg"), at, by, kind, text };
+  return { ...st, changeLog: [entry, ...(st.changeLog ?? [])].slice(0, CHANGE_LOG_CAP) };
+}
+
+function whenLabel(iso?: string): string {
+  if (!iso) return "open-ended";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function describeShift(st: AppState, sh: OnCallShift): string {
+  const pos = st.onCallPositions.find((p) => p.id === sh.positionId)?.name ?? "position";
+  const who = st.onCallPeople.find((p) => p.id === sh.personId)?.name ?? "someone";
+  return `${pos}: ${who}, ${whenLabel(sh.start)} to ${whenLabel(sh.end)}${sh.note ? ` (${sh.note})` : ""}`;
+}
+
+function describeCase(st: AppState, c: CaseEntry): string {
+  const card = st.cards.find((k) => k.id === c.cardId);
+  const sg = st.surgeons.find((x) => x.id === card?.surgeonId)?.name;
+  return `${card?.procedure ?? "case"}${sg ? ` (${sg})` : ""}, ${c.date}${c.time ? ` ${c.time}` : ""}${c.room ? ` ${c.room}` : ""}`;
+}
+
 /** Leaving a facility (pure): keep what's personal (cards, surgeons,
  *  facilities, locations, setups, case log), drop what belongs to the OR
  *  (carts, on-call, loaners, rep stock, day notes, staff, catalog). */
@@ -1807,6 +1890,7 @@ export function stripFacilityData(st: AppState): AppState {
     dayNotes: [],
     staff: [],
     catalog: [],
+    changeLog: [],
   };
 }
 
@@ -1856,7 +1940,11 @@ export function applyProfileToRoster(st: AppState, p: UserProfile): AppState {
       },
     ];
   }
-  return { ...st, staff, onCallPeople };
+  const changed = byName && (byName.name !== name || (p.phone && p.phone !== byName.phone));
+  const out = { ...st, staff, onCallPeople };
+  return byName
+    ? (changed ? logChange(out, "roster", `Roster: ${name} updated their own ${byName.name !== name ? "name" : "number"} from their account`, name) : out)
+    : logChange(out, "roster", `Roster: ${name} joined from their account`, name);
 }
 
 /** The custodian updated a catalog entry: stamp it, and flow the new
