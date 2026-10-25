@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mascot } from "../components/Mascot";
+import { Icon } from "../components/Icon";
 import { useAuth } from "../state/auth";
 import { cloudEnabled } from "../lib/cloud";
 
@@ -9,6 +10,7 @@ export function Login() {
   const { signIn, signUp, resetPassword, continueAsGuest, bioAvailable, bioLabel } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signup");
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
+  const [showPw, setShowPw] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,8 +72,20 @@ export function Login() {
         {mode === "reset" && resetSentTo ? (
           <div className="auth-form">
             <div className="auth-notice">
-              <strong>Check your email.</strong> If <strong>{resetSentTo}</strong> has an ORSync account, a
-              password reset link is on its way. It can take a minute; check spam or junk if it doesn't show up.
+              <strong className="auth-notice-title">Check your email</strong>
+              <span>If this address has an ORSync account, a reset link is on its way:</span>
+              <strong className="auth-notice-email">{resetSentTo}</strong>
+              <span>It can take a minute. Check spam or junk if it doesn't show up.</span>
+              <span className="auth-notice-hint">
+                No email at all? There may be no account for this address yet.{" "}
+                <button
+                  className="link small"
+                  type="button"
+                  onClick={() => { setMode("signup"); setResetSentTo(null); setPassword(""); setError(null); }}
+                >
+                  Create one
+                </button>
+              </span>
             </div>
             <button
               className="btn auth-submit"
@@ -116,8 +130,9 @@ export function Login() {
           {mode !== "reset" && (
             <label className="field">
               <span>Password</span>
+              <span className="pw-wrap">
               <input
-                type="password"
+                type={showPw ? "text" : "password"}
                 name="password"
                 id="orsync-password"
                 value={password}
@@ -129,10 +144,36 @@ export function Login() {
                 spellCheck={false}
                 {...(mode === "signup" ? { passwordrules: "minlength: 6;" } : {})}
               />
+              <button
+                type="button"
+                className="pw-eye"
+                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-pressed={showPw}
+                onClick={() => setShowPw((v) => !v)}
+              >
+                <Icon name={showPw ? "eye-off" : "eye"} size={20} />
+              </button>
+              </span>
             </label>
           )}
 
-          {error && <div className="auth-error">{error}</div>}
+          {error && (
+            <div className="auth-error">
+              {error}
+              {mode === "signin" && /incorrect email or password/i.test(error) && (
+                <>
+                  {" "}New to ORSync Cloud?{" "}
+                  <button
+                    className="link small"
+                    type="button"
+                    onClick={() => { setMode("signup"); setError(null); }}
+                  >
+                    Create your account
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <button className="btn auth-submit" disabled={busy}>
             {busy
