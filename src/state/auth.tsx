@@ -71,6 +71,8 @@ interface AuthContext {
   ready: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Email a password-reset link (cloud accounts). */
+  resetPassword: (email: string) => Promise<void>;
   continueAsGuest: () => void;
   signOut: () => void;
   // biometric
@@ -206,6 +208,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(GUEST_KEY);
       localStorage.setItem(SESSION_KEY, key);
       setUser({ name: acct.name, email: acct.email });
+    },
+
+    resetPassword: async (email) => {
+      const key = email.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(key)) throw new Error("Enter the email you signed up with.");
+      if (!cloudEnabled()) {
+        throw new Error("Password reset needs an ORSync Cloud account. Accounts kept only on this device can't be reset by email.");
+      }
+      try {
+        const { auth } = await firebase();
+        const { sendPasswordResetEmail } = await import("firebase/auth");
+        await sendPasswordResetEmail(auth, key);
+      } catch (e) {
+        // Firebase's email-enumeration protection means "no such user" is
+        // normally silent; if it does surface, don't reveal who has accounts.
+        if ((e as { code?: string })?.code === "auth/user-not-found") return;
+        throw new Error(authErrorMessage(e));
+      }
     },
 
     continueAsGuest: () => {

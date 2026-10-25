@@ -1973,3 +1973,11 @@ html, body { overflow-x: hidden; }
 }
 .suggest-name { font-weight: 600; color: var(--ink); }
 .suggest-add { color: var(--brand-600); font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+
+/* ---- Password reset ---- */
+.auth-link { align-self: center; background: none; border: none; cursor: pointer; padding: 8px; min-height: 42px; }
+.auth-notice {
+  background: color-mix(in srgb, var(--green) 9%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--green) 30%, var(--line));
+  border-radius: 12px; padding: 12px 14px; font-size: 0.9rem; line-height: 1.45; color: var(--ink);
+}
