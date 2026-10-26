@@ -15,6 +15,7 @@ import { TopBar } from "./components/TopBar";
 import { Welcome } from "./components/Welcome";
 import { Dashboard } from "./pages/Dashboard";
 import { TodayPage } from "./pages/TodayPage";
+import { ScheduleUploadPage } from "./pages/ScheduleUploadPage";
 import { CardsPage } from "./pages/CardsPage";
 import { CardDetail } from "./pages/CardDetail";
 import { CardEdit } from "./pages/CardEdit";
@@ -159,6 +160,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/today" element={<TodayPage />} />
+            <Route path="/today/upload" element={<ScheduleUploadPage />} />
             <Route path="/case-log" element={<CaseLogPage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />

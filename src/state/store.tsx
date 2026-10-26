@@ -237,6 +237,9 @@ export interface Store {
   resetSetup: (cardId: string) => void;
   // case day
   addCase: (c: Omit<CaseEntry, "id">) => CaseEntry;
+  /** Many cases at once (a schedule upload): carts queue as usual, and the
+   *  change log gets one line for the batch. */
+  addCases: (list: Omit<CaseEntry, "id">[], note: string) => number;
   // staff directory: autocomplete for room teams, built as people are typed
   upsertStaff: (name: string, role: TeamRole, level?: 1 | 2 | 3) => void;
   /** Bulk roster import; returns how many new people were added. */
@@ -651,6 +654,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return logChange(next, "schedule", `Schedule: added ${describeCase(next, entry)}`);
         });
         return entry;
+      },
+
+      addCases: (list, note) => {
+        if (!list.length) return 0;
+        const now = new Date().toISOString();
+        const by = getPullerName() || undefined;
+        update((st) => {
+          let next = st;
+          const added: CaseEntry[] = [];
+          for (const c of list) {
+            const entry: CaseEntry = { ...c, id: uid("case"), updatedAt: now, updatedBy: by };
+            if (!entry.approval) next = withQueuedCart(next, entry.cardId, entry.date, now);
+            added.push(entry);
+          }
+          return logChange({ ...next, cases: [...next.cases, ...added] }, "schedule", note, by, now);
+        });
+        return list.length;
       },
 
       upsertStaff: (name, role, level) =>

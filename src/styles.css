@@ -2247,3 +2247,13 @@ html, body { overflow-x: hidden; }
 .history-list > li:last-child { border-bottom: none; }
 .history-who { font-size: 13px; font-weight: 600; }
 .history-list ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink); }
+
+/* Schedule upload */
+.schedule-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.schedule-rows { list-style: none; margin: 8px 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.schedule-rows li { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); min-width: 0; }
+.schedule-rows li.on { border-color: var(--brand); }
+.schedule-rows li.off { opacity: 0.8; }
+.schedule-rows select { width: 100%; max-width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+.schedule-what { overflow-wrap: anywhere; }
+.schedule-problem { color: var(--warn, #b45309); font-weight: 600; }
