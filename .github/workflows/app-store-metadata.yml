@@ -16,7 +16,7 @@ on:
   # one also runs whenever the listing files change on the release branch.
   push:
     branches: ["claude/prefcard-app-rebuild-47hgvc"]
-    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", "fastlane/asc_subscriptions.rb", ".github/workflows/app-store-metadata.yml"]
+    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", "fastlane/asc_subscriptions.rb", "fastlane/asc_release.rb", "fastlane/release_request.txt", ".github/workflows/app-store-metadata.yml"]
 
 jobs:
   metadata:
@@ -43,6 +43,15 @@ jobs:
             echo "$ASC_KEY_CONTENT" | base64 --decode > "$HOME/asc/AuthKey.p8"
           fi
 
+      - name: Release - get the requested version ready
+        if: hashFiles('fastlane/release_request.txt') != ''
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+        run: ruby fastlane/asc_release.rb prepare
+
       - name: Verify the draft and fill in App Store Connect
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
@@ -60,3 +69,12 @@ jobs:
           APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
           FASTLANE_SKIP_UPDATE_CHECK: "1"
         run: ruby fastlane/asc_subscriptions.rb
+
+      - name: Release - submit for App Review
+        if: success() && hashFiles('fastlane/release_request.txt') != ''
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+        run: ruby fastlane/asc_release.rb submit
