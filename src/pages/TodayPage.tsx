@@ -1020,7 +1020,8 @@ function ShareDayButton({ date }: { date: string }) {
             procedure: card?.procedure ?? "Card deleted",
             surgeon: card ? surgeonOf(state, card.surgeonId)?.name : undefined,
             team: (c.team ?? []).map((m) => {
-              const role = (TEAM_ROLES.find((r) => r.key === m.role)?.label ?? m.role).replace(/\s*\(.*\)$/, "");
+              // Short labels for paper: "RN", "Tech", "CRNA".
+              const role = m.role === "tech" ? "Tech" : (TEAM_ROLES.find((r) => r.key === m.role)?.label ?? m.role).replace(/\s*\(.*\)$/, "");
               return `${role}: ${m.name}`;
             }),
             notes,
