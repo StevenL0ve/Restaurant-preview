@@ -1,5 +1,7 @@
 - Scan with camera: reads printed preference cards on the phone and sorts every item into the right section, with quantities, holds and catalog numbers. Or import a PDF export.
 - Upload the OR schedule from a CSV or Excel export.
+- Share day: the whole lineup on one sheet, with a line on each case to write the patient's name after printing.
+- Print or share all of the day's preference cards, or just the ones you pick.
 - Card edit history, and checkboxes on printed cards.
 - Clean up duplicate item names across cards.
 - Under and over glove sizes; View team photos on My day.

@@ -2266,3 +2266,9 @@ html, body { overflow-x: hidden; }
 .loc-row, .rep-stock-row { flex-wrap: wrap; }
 .confirm-delete { flex: 1 1 100%; justify-content: flex-start; gap: 8px; padding: 6px 0 2px; }
 .confirm-delete > .small { flex: 1 1 100%; color: var(--ink); }
+
+/* My day: pick which cases' cards to print or share. */
+.day-cards .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.day-cards-all { font-size: 14px; white-space: nowrap; }
+.day-cards-room { margin-top: 6px; }
+.day-cards-roomname { font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }

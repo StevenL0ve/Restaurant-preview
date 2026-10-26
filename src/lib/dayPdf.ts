@@ -1,9 +1,13 @@
 import { BRAND, INK, MARGIN, MUTED, loadMascot, pdfSafe } from "./cardPdf";
 
 // One day's lineup as a single sheet to text or email: the date across the
-// top, every room's cases in board order, and the ORSync stamp at the
+// top, every room's cases in board order, each with a blank line to write
+// the patient's name on after printing (ORSync never holds it), and the
+// ORSync stamp at the
 // bottom with when it was made ("Current as of: ..."), since the board
 // keeps changing after it's sent.
+
+const PATIENT_SPACE = 34; // room under each case to hand-write the patient's name
 
 export interface DayPdfCase {
   label: string; // "Case 1\n07:30"
@@ -74,6 +78,7 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
 
   type Cell = string | { content: string; colSpan?: number; styles?: Record<string, unknown> };
   const body: Cell[][] = [];
+  const caseRows = new Set<number>();
   for (const r of rooms) {
     body.push([{
       content: pdfSafe(`${r.room || "No room set"}${r.firstTime ? `  ·  first case ${r.firstTime}` : ""}`),
@@ -81,6 +86,7 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
       styles: { fontStyle: "bold", fontSize: 10, textColor: [BRAND.r, BRAND.g, BRAND.b], fillColor: [238, 243, 251] },
     }]);
     for (const c of r.cases) {
+      caseRows.add(body.length);
       body.push([
         pdfSafe(c.label),
         { content: pdfSafe(c.procedure), styles: { fontStyle: "bold" } },
@@ -100,12 +106,27 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     styles: { font: "helvetica", fontSize: 9, cellPadding: { top: 5, bottom: 5, left: 4, right: 4 }, textColor: [INK.r, INK.g, INK.b], valign: "top" },
     headStyles: { fontStyle: "bold", fontSize: 8, textColor: [MUTED.r, MUTED.g, MUTED.b] },
     columnStyles: { 0: { cellWidth: 62 }, 2: { cellWidth: 92 }, 3: { cellWidth: 116 }, 4: { cellWidth: 118 } },
+    // The patient line lives in the bottom of the case's own row, so a page
+    // break never separates the two.
+    rowPageBreak: "avoid",
+    didParseCell: (d) => {
+      if (d.section === "body" && caseRows.has(d.row.index)) d.cell.styles.cellPadding = { top: 6, bottom: PATIENT_SPACE, left: 4, right: 4 };
+    },
     didDrawCell: (d) => {
-      // A hairline under each case row.
-      if (d.section !== "body" || d.column.index !== 0) return;
+      if (d.section !== "body" || d.column.index !== 0 || !caseRows.has(d.row.index)) return;
+      const bottom = d.cell.y + d.cell.height;
+      const ly = bottom - 9;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
+      doc.text("Patient", MARGIN + 4, ly - 1);
+      doc.setDrawColor(150, 150, 150);
+      doc.setLineWidth(0.6);
+      doc.line(MARGIN + 36, ly, pageW - MARGIN - 4, ly);
+      // A hairline closing the case.
       doc.setDrawColor(221, 221, 221);
       doc.setLineWidth(0.5);
-      doc.line(MARGIN, d.cell.y + d.cell.height, pageW - MARGIN, d.cell.y + d.cell.height);
+      doc.line(MARGIN, bottom, pageW - MARGIN, bottom);
     },
   });
 
@@ -133,7 +154,7 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
     doc.text(stamp, tx, fy + 22);
     doc.setFontSize(7.5);
-    doc.text("No patient information on this sheet.", pageW - MARGIN, fy + 10, { align: "right" });
+    doc.text("ORSync stores no patient information.", pageW - MARGIN, fy + 10, { align: "right" });
     if (pages > 1) doc.text(`Page ${i} of ${pages}`, pageW - MARGIN, fy + 22, { align: "right" });
   }
 

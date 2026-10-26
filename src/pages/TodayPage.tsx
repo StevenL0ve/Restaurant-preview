@@ -76,6 +76,8 @@ export function TodayPage() {
   useEffect(() => { if (validParam) setDate(validParam); }, [validParam]);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<CaseEntry | null>(null);
+  const [picking, setPicking] = useState(false);
+  useEffect(() => setPicking(false), [date]);
 
   const cases = casesOn(state, date);
 
@@ -96,7 +98,11 @@ export function TodayPage() {
           {perms.canAddCase && <Link className="btn" to="/today/upload">Upload schedule</Link>}
           <Link className="btn" to="/case-log">My case log</Link>
           {cases.length > 0 && <ShareDayButton date={date} />}
-          {cases.length > 0 && <PrintDayButton date={date} />}
+          {cases.length > 0 && (
+            <button className="btn" onClick={() => { setAdding(false); setPicking((v) => !v); }}>
+              {picking ? "Close" : "Print cards"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,6 +148,8 @@ export function TodayPage() {
       {adding && (
         <CaseForm store={store} date={date} onDone={() => setAdding(false)} />
       )}
+
+      {picking && cases.length > 0 && <DayCardsPanel date={date} onClose={() => setPicking(false)} />}
 
       {cases.length === 0 && !adding ? (
         <div className="empty-state">
@@ -887,21 +895,33 @@ function TeamEditor({ team, onChange }: { team: TeamMember[]; onChange: (t: Team
 // Print the whole day: every case's preference card as ONE document, in
 // room-and-case order, each page carrying a QR code that opens that exact
 // case's live cart. Tape them to the carts; scans stay current.
-function PrintDayButton({ date }: { date: string }) {
+/** Share or print the day's preference cards: all of them, or just the
+ *  cases picked here. One PDF, in case order, each page with its QR code
+ *  back to that case's live cart. */
+function DayCardsPanel({ date, onClose }: { date: string; onClose: () => void }) {
   const store = useStore();
   const { state, ensureCart } = store;
+  const groups = casesByRoom(state, date);
+  const all = groups.flatMap((g) => g.cases.filter((c) => state.cards.some((k) => k.id === c.cardId)).map((c) => c.id));
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(all));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  function toggle(id: string) {
+    const next = new Set(picked);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setPicked(next);
+  }
 
   async function go() {
     setBusy(true);
     setErr(null);
     try {
       const entries: CardPdfEntry[] = [];
-      for (const g of casesByRoom(state, date)) {
+      for (const g of groups) {
         g.cases.forEach((c, i) => {
           const card = state.cards.find((k) => k.id === c.cardId);
-          if (!card) return;
+          if (!card || !picked.has(c.id)) return;
           const cart = cartForCase(state, card.id, c.date) ?? ensureCart(card.id, c.date);
           entries.push({
             card,
@@ -916,10 +936,11 @@ function PrintDayButton({ date }: { date: string }) {
       }
       if (!entries.length) return;
       const blob = await cardsPdfBlob(entries);
+      const some = entries.length < all.length;
       await shareBlobFile(
         cardsPdfFilename(date),
         blob,
-        `Preference cards for ${date}: ${entries.length} ${entries.length === 1 ? "case" : "cases"}, in case order. Scan any page's code for that case's live cart.`,
+        `Preference cards for ${longDate(dayDate(date))}: ${entries.length} ${entries.length === 1 ? "case" : "cases"}${some ? ` of ${all.length}` : ""}, in case order. Scan any page's code for that case's live cart.`,
         "application/pdf",
       );
     } catch {
@@ -930,11 +951,47 @@ function PrintDayButton({ date }: { date: string }) {
     }
   }
 
+  const n = picked.size;
   return (
-    <>
-      <button className="btn" disabled={busy} onClick={go}>{busy ? "Building…" : "Print day"}</button>
-      {err && <span className="neg small">{err}</span>}
-    </>
+    <div className="card form-card day-cards">
+      <div className="card-head">
+        <h2>Print or share cards</h2>
+        <span className="day-cards-all">
+          <button className="link" onClick={() => setPicked(new Set(all))}>All</button>
+          {" · "}
+          <button className="link" onClick={() => setPicked(new Set())}>None</button>
+        </span>
+      </div>
+      <p className="muted small">One PDF in case order. Share it, or pick Print from the share sheet.</p>
+      {groups.map((g) => (
+        <div key={g.room || "no-room"} className="day-cards-room">
+          <div className="muted small day-cards-roomname">{g.room || "No room set"}</div>
+          <div className="cleanup-variants">
+            {g.cases.map((c, i) => {
+              const card = state.cards.find((k) => k.id === c.cardId);
+              if (!card) return null;
+              const sg = surgeonOf(state, card.surgeonId);
+              return (
+                <label key={c.id} className={"pos-check" + (picked.has(c.id) ? " on" : "")}>
+                  <input type="checkbox" checked={picked.has(c.id)} onChange={() => toggle(c.id)} />
+                  <span>
+                    Case {i + 1}{c.time ? ` · ${c.time}` : ""}: {card.procedure}
+                    {sg && <span className="muted"> · {sg.name}</span>}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="form-actions">
+        <button className="btn btn-primary" disabled={busy || n === 0} onClick={go}>
+          {busy ? "Building…" : `Share or print ${n === all.length && n > 1 ? `all ${n}` : n} ${n === 1 ? "card" : "cards"}`}
+        </button>
+        <button className="btn" onClick={onClose}>Cancel</button>
+        {err && <span className="neg small">{err}</span>}
+      </div>
+    </div>
   );
 }
 
