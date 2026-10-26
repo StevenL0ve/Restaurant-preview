@@ -17,5 +17,20 @@ cards is read as ONE card (pages are joined). Plan, inside the Scan screen:
   Clean up items afterwards.
 - Test against the QC'd scans (D&C, knee arthroscopy, appendectomy).
 
+## "(Avail)" at the end of an item means hold
+Already read as hold: "Bone wax (Avail)", "(avail)", "(Avail.)", "(AVAIL)",
+"2 Lap sponges (Avail)", and a wrapped "(REF). (Avail)" line. Spellings that
+slip through today (checked against the parser):
+- "Fluoro (Available)" -> detail "Available", not a hold
+- "Hemoclips ( Avail )" -> detail "Avail" (spaces inside the brackets)
+- "Bipolar cord - Avail" -> detail "Avail"
+- "Stryker drill (Avail) REF 5400-50" -> "(Avail)" mid-line stays in the name
+Make all of these a hold and strip the word.
+
+Found while checking: an item line starting with a section word,
+"Suture passer (PRN)", is taken as a SUTURES header. The item is lost and
+the items after it land in Sutures. Only treat a line as a header when it
+has no item-like tail (brackets, quantities, REF numbers).
+
 ## Already done on the branch, ships with the next build
 - Day sheet lists surgical technologists as "Tech".
