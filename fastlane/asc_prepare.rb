@@ -91,8 +91,9 @@ step("current build on the draft") do
   puts attached ? "  attached: build #{attached.version}" : "  attached: none"
 end
 step("attach newest valid build") do
-  pick = builds.find { |b| b.processing_state == "VALID" && !b.expired }
-  raise "no VALID build yet" unless pick
+  # Only builds made for this version (a 1.0.1 build can't go on 1.0).
+  pick = builds.find { |b| b.processing_state == "VALID" && !b.expired && (b.pre_release_version.version rescue nil) == version.version_string }
+  raise "no VALID #{version.version_string} build yet" unless pick
   version.select_build(build_id: pick.id)
   puts "  now attached: build #{pick.version}"
 end

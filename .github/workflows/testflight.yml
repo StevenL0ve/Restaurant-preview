@@ -155,7 +155,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             CURRENT_PROJECT_VERSION=$BUILD_NUM \
-            MARKETING_VERSION=1.0
+            MARKETING_VERSION=1.0.1
 
       - name: Export signed IPA
         env:

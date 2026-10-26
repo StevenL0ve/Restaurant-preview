@@ -61,7 +61,7 @@ jobs:
           BUILD_NUM=$(( ${{ github.run_number }} + 10 ))
           echo "versionCode $BUILD_NUM"
           sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.$BUILD_NUM\"/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.1\"/" android/app/build.gradle
 
           MANIFEST=android/app/src/main/AndroidManifest.xml
           # Open tapped .orsync card files (Messages, Gmail, Drive) in the app.

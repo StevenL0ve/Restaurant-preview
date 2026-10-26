@@ -1,7 +1,7 @@
 {
   "name": "orsync",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "ORSync — a personal surgical preference-card library for scrub techs and circulating nurses. A better PrefCard.",
   "scripts": {
