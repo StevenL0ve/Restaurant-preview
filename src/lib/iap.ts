@@ -2,16 +2,16 @@ import { Capacitor } from "@capacitor/core";
 
 // Individual Pro through the App Store and Google Play (Apple's and Google's
 // rules require their own billing for subscriptions sold inside the app).
-// RevenueCat sits in front of both stores: one SDK, one "pro" entitlement,
+// RevenueCat sits in front of both stores: one SDK, one Pro entitlement,
 // and the ORSync account id as the RevenueCat user, so a subscription
 // follows the person to any phone they sign in on.
 //
 // Fill in the two public SDK keys from RevenueCat (Project settings → API
 // keys → Apple App Store / Google Play). Until they're set, the Plans page
 // says subscriptions are coming soon instead of showing buy buttons.
-export const REVENUECAT_IOS_KEY = "";
+export const REVENUECAT_IOS_KEY = "appl_jVtTdtPoBRVXEnXXdcsBqnDvkJU";
 export const REVENUECAT_ANDROID_KEY = "";
-export const PRO_ENTITLEMENT = "pro";
+export const PRO_ENTITLEMENT = "orsync_pro"; // lookup key of the "ORSync Pro" entitlement
 
 const CACHE_KEY = "orsync.pro.v1"; // same flag hasPersonalCloud() reads
 
