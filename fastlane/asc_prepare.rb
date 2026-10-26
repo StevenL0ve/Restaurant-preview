@@ -1,4 +1,4 @@
-# Rerun: attach the newest build.
+# Rerun: withdraw build 117 from review and attach build 119.
 # Prepares the ORSync App Store version for review through the App Store
 # Connect API: verifies the draft and builds, then fills in everything the
 # API allows. Each step is independent; a failure is reported and the rest
@@ -37,6 +37,45 @@ puts "App: #{app.name} (#{app.id}) #{app.bundle_id}"
 version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS)
 abort("No editable iOS version (draft) found. Create version 1.0 in App Store Connect first.") unless version
 puts "Draft version: #{version.version_string}, state: #{version.app_store_state}"
+
+require "net/http"
+require "json"
+def rest(method, path, body = nil)
+  uri = URI("https://api.appstoreconnect.apple.com#{path}")
+  req = { get: Net::HTTP::Get, post: Net::HTTP::Post, patch: Net::HTTP::Patch }[method].new(uri)
+  req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+  req["Content-Type"] = "application/json"
+  req.body = JSON.generate(body) if body
+  res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+  data = res.body.to_s.empty? ? {} : JSON.parse(res.body)
+  return [res.code.to_i, data] if res.code.to_i.between?(200, 299) || res.code.to_i == 404
+  raise "#{method.upcase} #{uri.path} -> #{res.code} " + (data["errors"] || []).map { |e| e["detail"] }.join(" | ")
+end
+
+# ---- Swap in a newer build while waiting for review ----
+# fastlane/resubmit_with_build.txt names a build (e.g. 119). If the version
+# is waiting for review with an older build, the review submission is
+# withdrawn so that build can be attached; Submit is pressed again in App
+# Store Connect (the subscriptions go with it there).
+want = (File.read(File.expand_path("resubmit_with_build.txt", __dir__)).strip rescue "")
+step("withdraw from review for build #{want}") do
+  attached = (version.build.version rescue nil)
+  if want.empty? || version.app_store_state != "WAITING_FOR_REVIEW" || attached.to_i >= want.to_i
+    puts "  nothing to withdraw (state #{version.app_store_state}, attached #{attached || 'none'})"
+    next
+  end
+  _, subs = rest(:get, "/v1/reviewSubmissions?filter[app]=#{app.id}&filter[state]=WAITING_FOR_REVIEW,READY_FOR_REVIEW")
+  (subs["data"] || []).each do |sub|
+    rest(:patch, "/v1/reviewSubmissions/#{sub['id']}", { data: { type: "reviewSubmissions", id: sub["id"], attributes: { canceled: true } } })
+    puts "  withdrew review submission #{sub['id']}"
+  end
+  20.times do
+    sleep 6
+    version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS) || version
+    break unless %w[WAITING_FOR_REVIEW].include?(version.app_store_state)
+  end
+  puts "  version state now: #{version.app_store_state}"
+end
 
 # ---- Builds: what's uploaded, and attach the newest valid 1.0 build ----
 builds = []
@@ -165,19 +204,6 @@ step("screenshots (iPhone 6.9\", iPhone 6.3\", iPad 13\")") do
 end
 
 # ---- Price (Free) and availability (every storefront) ----
-require "net/http"
-require "json"
-def rest(method, path, body = nil)
-  uri = URI("https://api.appstoreconnect.apple.com#{path}")
-  req = { get: Net::HTTP::Get, post: Net::HTTP::Post }[method].new(uri)
-  req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
-  req["Content-Type"] = "application/json"
-  req.body = JSON.generate(body) if body
-  res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
-  data = res.body.to_s.empty? ? {} : JSON.parse(res.body)
-  return [res.code.to_i, data] if res.code.to_i.between?(200, 299) || res.code.to_i == 404
-  raise "#{method.upcase} #{uri.path} -> #{res.code} " + (data["errors"] || []).map { |e| e["detail"] }.join(" | ")
-end
 step("price: Free") do
   code, _ = rest(:get, "/v1/apps/#{app.id}/appPriceSchedule")
   if code == 200
