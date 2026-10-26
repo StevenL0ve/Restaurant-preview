@@ -21,7 +21,8 @@ export function ProfilePhotoPicker({ value, name, onChange, size = 96, compact }
   function pick(f: File | undefined) {
     if (!f) return;
     setErr(null);
-    if (!f.type.startsWith("image/")) { setErr("Pick an image."); return; }
+    // iPhone sometimes hands over library photos with no type, so fall back to the name.
+    if (!f.type.startsWith("image/") && !/\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name)) { setErr("Pick an image."); return; }
     setFile(f);
   }
 

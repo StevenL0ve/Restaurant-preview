@@ -1,4 +1,4 @@
-# Rerun: screenshots (iPhone 6.9", 6.3", iPad 13"), Free price, availability.
+# Rerun: attach the newest build (photo cropper fix).
 # Prepares the ORSync App Store version for review through the App Store
 # Connect API: verifies the draft and builds, then fills in everything the
 # API allows. Each step is independent; a failure is reported and the rest
@@ -179,8 +179,8 @@ def rest(method, path, body = nil)
   raise "#{method.upcase} #{uri.path} -> #{res.code} " + (data["errors"] || []).map { |e| e["detail"] }.join(" | ")
 end
 step("price: Free") do
-  code, cur = rest(:get, "/v1/apps/#{app.id}/appPriceSchedule/manualPrices")
-  if code == 200 && (cur["data"] || []).any?
+  code, _ = rest(:get, "/v1/apps/#{app.id}/appPriceSchedule")
+  if code == 200
     puts "  already set"
   else
     _, pts = rest(:get, "/v1/apps/#{app.id}/appPricePoints?filter[territory]=USA&limit=200")
