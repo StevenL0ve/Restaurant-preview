@@ -151,6 +151,49 @@ export function forgetFacility(id: string): void {
 // A one-line notice for the Settings screen when a facility shut this
 // device out (an admin blocked the account, or the facility was removed).
 const NOTICE_KEY = "orsync.facilitynotice.v1";
+
+// Joined facilities belong to the account that joined them, not to the
+// phone. Signing in as someone else starts with no facility (they must
+// enter its name and password); the first account's list is set aside and
+// comes back when it signs in again. Lists saved before this existed have
+// no known owner and are dropped, so nobody inherits a facility.
+const OWNER_KEY = "orsync.facilities.owner.v1";
+const BY_ACCOUNT_KEY = "orsync.facilities.byAccount.v1";
+type Stash = { active: string | null; list: string | null; notice: string | null };
+
+/** Point this device's facility list at `account` (a uid, or null when
+ *  signed out / a guest). Returns the facility that was active before if
+ *  the list changed hands, so the caller can clear its data off the device.
+ *  Doesn't notify listeners (it runs during render); call
+ *  announceWorkspaceChange() afterwards. */
+export function switchFacilityAccount(account: string | null): JoinedWorkspace | null {
+  try {
+    const owner = localStorage.getItem(OWNER_KEY);
+    const before = getWorkspace();
+    if (owner === account && (owner !== null || (!before && getFacilities().length === 0))) return null;
+    let map: Record<string, Stash> = {};
+    try { map = JSON.parse(localStorage.getItem(BY_ACCOUNT_KEY) ?? "{}") ?? {}; } catch { map = {}; }
+    if (owner) {
+      map[owner] = {
+        active: localStorage.getItem(ACTIVE_KEY),
+        list: localStorage.getItem(LIST_KEY),
+        notice: localStorage.getItem(NOTICE_KEY),
+      };
+    }
+    const next = account ? map[account] : undefined;
+    if (account) delete map[account];
+    for (const [k, v] of [[ACTIVE_KEY, next?.active], [LIST_KEY, next?.list], [NOTICE_KEY, next?.notice]] as const) {
+      if (v) localStorage.setItem(k, v); else localStorage.removeItem(k);
+    }
+    localStorage.setItem(BY_ACCOUNT_KEY, JSON.stringify(map));
+    if (account) localStorage.setItem(OWNER_KEY, account); else localStorage.removeItem(OWNER_KEY);
+    return before;
+  } catch {
+    return null;
+  }
+}
+
+export function announceWorkspaceChange(): void { notify(); }
 export function getFacilityNotice(): string | null {
   try { return localStorage.getItem(NOTICE_KEY); } catch { return null; }
 }

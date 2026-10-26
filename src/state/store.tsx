@@ -10,7 +10,7 @@ import {
 import { useAuth } from "./auth";
 import { cloudEnabled } from "../lib/cloud";
 import { schedulePush, startCloudSync } from "./cloudSync";
-import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, setWorkspace, type JoinedWorkspace } from "../lib/workspace";
+import { announceWorkspaceChange, forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, setWorkspace, switchFacilityAccount, type JoinedWorkspace } from "../lib/workspace";
 import { writeWorkspaceMember } from "./cloudSync";
 import { hasPersonalCloud } from "../lib/tier";
 import { setProfile, roleLabel, useProfile, type UserProfile } from "../lib/profile";
@@ -378,8 +378,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // The joined facility workspace (shared library), if any. Joining or
   // leaving restarts sync against the new root.
+  // Facilities follow the account: a different sign-in on this phone starts
+  // with none until it enters a facility's name and password.
+  const account = user?.uid ?? null;
+  const boundAccount = useRef<string | null | undefined>(undefined);
+  const leftBehind = useRef<JoinedWorkspace | null>(null);
+  if (boundAccount.current !== account) {
+    boundAccount.current = account;
+    leftBehind.current = switchFacilityAccount(account) ?? leftBehind.current;
+  }
   const [workspace, setWorkspaceState] = useState<JoinedWorkspace | null>(() => getWorkspace());
   useEffect(() => onWorkspaceChange(() => setWorkspaceState(getWorkspace())), []);
+  useEffect(() => {
+    announceWorkspaceChange();
+    if (leftBehind.current) {
+      leftBehind.current = null;
+      // The previous account's facility data doesn't stay on the phone for
+      // the next one (its own cloud copy, if any, comes back on sign-in).
+      setState((st) => stripFacilityData(st));
+    }
+  }, [account]);
 
   // Off-device storage costs money per person, so it's never on by default:
   // a facility's package covers its shared library; Pro covers a personal
