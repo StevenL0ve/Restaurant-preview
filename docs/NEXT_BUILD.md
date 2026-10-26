@@ -32,6 +32,38 @@ Found while checking: an item line starting with a section word,
 the items after it land in Sutures. Only treat a line as a header when it
 has no item-like tail (brackets, quantities, REF numbers).
 
+## Photo of the OR board fills the day (Keesler's Periop Tracking greaseboard)
+Take a picture of the PowerChart "OR Greaseboard" screen and get the same
+lineup a schedule upload or Add case makes, with questions where it isn't
+sure. Lives in Upload schedule as "Take a photo of the board", reusing that
+screen's review list (it already matches surgeons and cards and asks).
+
+Reading the board (on-device OCR, like card scanning; the photo never leaves
+the phone):
+- Room bars "0073-MOR-01 (2 cases)" -> OR 1; "MOR-05" -> OR 5.
+- Columns used: Start, Surgeon, Procedure(s), Stop/Dur, Circulator, Tech.
+- Columns ignored on purpose: Patient Type, Pt Rm #, Case #, Comment(s)
+  (case numbers and labs/H&P notes are patient-level; ORSync stores none).
+- Procedure text wraps over 2-5 lines; joined until the next row's start time.
+
+What it fills, and what it asks:
+- Surgeon "PETERSON, J" -> John Peterson; ask when two match or none
+  (offer "add new surgeon"). Store names in normal case, not ALL CAPS.
+- Case name = the board's procedure text; card = best match (same matcher
+  as Add case). Ask when no card fits or several do; allow ticking several
+  to combine (the 4-procedure hip case).
+- Team from partial names: Circulator "Lindsey" -> RN Lindsey Biss; Tech
+  "Angie / Vargas" -> Tech Angie Burks + Trainee tech Areli Vargas; "Fisher
+  Moore" -> two people. Match first OR last name against the staff list;
+  ask when unsure. "Clarke (appt 1330-EOD)" -> Julia Clarke, with the
+  bracket kept as a team note.
+- Times: the room's first case keeps its start time; later cases follow
+  ("to follow"). Ask whether to keep the board's later start times as
+  "not before" times.
+- Re-photographing the same day updates cases instead of duplicating them.
+- Test with a typed-up copy of the board (no case numbers or comments);
+  don't commit photos of the real board.
+
 ## Already done on the branch, ships with the next build
 - Day sheet lists surgical technologists as "Tech", with role titles in bold.
 - Add case: free-text case name that searches cards as you type; surgeon
