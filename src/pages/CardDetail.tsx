@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { glovesLabel } from "../lib/gloves";
 import { useAuth } from "../state/auth";
 import { usePermissions } from "../lib/permissions";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -113,13 +114,13 @@ export function CardDetail() {
         </div>
       </div>
 
-      {sg && (sg.gloveSize || sg.quirks) && (
+      {sg && (glovesLabel(sg) || sg.quirks) && (
         <div className="surgeon-banner" style={{ borderColor: sg.color }}>
           <Avatar surgeon={sg} size={40} />
           <div>
-            {sg.gloveSize && (
+            {glovesLabel(sg) && (
               <div className="glove-line">
-                <strong>Gloves {sg.gloveSize}</strong>
+                <strong>Gloves {glovesLabel({ ...sg, gloveType: undefined })}</strong>
                 {sg.gloveType ? ` · ${sg.gloveType}` : ""}
               </div>
             )}

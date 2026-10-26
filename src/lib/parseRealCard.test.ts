@@ -87,7 +87,8 @@ describe("a real S3 printout, as scanned", () => {
     expect(p.position).toBe("Supine");
     expect(p.prep).toBe("Chloraprep");
     expect(p.sourceUpdated).toBe("2024-01-24");
-    expect(p.gloveSize).toBe("8");
+    expect(p.gloveSize).toBe("8"); // 8/8: 8 under, 8 over
+    expect(p.gloveUnder).toBe("8");
   });
 
   it("keeps each line of the notes", () => {

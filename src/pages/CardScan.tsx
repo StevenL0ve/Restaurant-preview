@@ -4,6 +4,7 @@ import { useStore, emptyCard, uid } from "../state/store";
 import { parseCardText, summarizeParse, type ParsedCard } from "../lib/parseCard";
 import { documentScannerAvailable, ocrImage, ocrPdf, scanDocumentText } from "../lib/ocr";
 import type { CardItem, PrefCard } from "../types";
+import type { ScannedGloves } from "./CardEdit";
 import { SECTIONS } from "../types";
 
 const PLACEHOLDER = `Paste or type a card. For example:
@@ -29,7 +30,7 @@ Equipment
 function buildSeed(
   parsed: ParsedCard,
   surgeons: { id: string; name: string; specialty: string }[],
-): { seed: PrefCard; surgeonName?: string } {
+): { seed: PrefCard; surgeonName?: string; gloves?: ScannedGloves } {
   const sgMatch = parsed.surgeonName
     ? surgeons.find((s) => s.name.trim().toLowerCase() === parsed.surgeonName!.trim().toLowerCase())
     : undefined;
@@ -44,8 +45,6 @@ function buildSeed(
     prep: parsed.prep ?? "",
     draping: parsed.draping ?? "",
     notes: parsed.notes ?? "",
-    ...(parsed.gloveSize ? { gloveSize: parsed.gloveSize } : {}),
-    ...(parsed.gloveType ? { gloveType: parsed.gloveType } : {}),
     sourceUpdated: parsed.sourceUpdated,
     uploadedAt: "pending",
     instruments: toItems(parsed.sections.instruments),
@@ -54,7 +53,10 @@ function buildSeed(
     medications: toItems(parsed.sections.medications),
     equipment: toItems(parsed.sections.equipment),
   };
-  return { seed, surgeonName: sgMatch ? undefined : parsed.surgeonName };
+  const gloves = parsed.gloveSize || parsed.gloveUnder
+    ? { gloveSize: parsed.gloveSize, gloveUnder: parsed.gloveUnder, gloveType: parsed.gloveType }
+    : undefined;
+  return { seed, surgeonName: sgMatch ? undefined : parsed.surgeonName, gloves };
 }
 
 function prettyStatus(s: string): string {
@@ -117,8 +119,8 @@ export function CardScan() {
   }
 
   function onCreate() {
-    const { seed, surgeonName } = buildSeed(parsed, state.surgeons);
-    navigate("/cards/new", { state: { seed, surgeonName } });
+    const { seed, surgeonName, gloves } = buildSeed(parsed, state.surgeons);
+    navigate("/cards/new", { state: { seed, surgeonName, gloves } });
   }
 
   return (

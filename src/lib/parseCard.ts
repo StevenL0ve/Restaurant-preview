@@ -34,8 +34,10 @@ export interface ParsedCard {
   prep?: string;
   draping?: string;
   notes?: string;
-  /** "7.5" from "Gloves: 7.5 Biogel, latex-free". */
+  /** "7.5" from "Gloves: 7.5 Biogel, latex-free": the (over) glove size. */
   gloveSize?: string;
+  /** Under-glove size when the card shows double gloving ("8/8", "7.5 under"). */
+  gloveUnder?: string;
   /** "Biogel, latex-free" from the same line. */
   gloveType?: string;
   /** The paper card's own "Last updated" date, as an ISO day (YYYY-MM-DD). */
@@ -359,10 +361,14 @@ export function parseCardText(text: string): ParsedCard {
         if (rawValue) notesParts.push(`Gloves: ${rawValue}`);
         const sizes = rawValue.match(/(?:^|[^\d.])(?:5|6|7|8|9)(?:\.5)?(?![\d.])/g) ?? [];
         const g = parseGloves(rawValue);
-        // "8/8" (double-gloved, same size) is still one size.
-        const oneSize = new Set(sizes.map((x) => x.replace(/[^\d.]/g, ""))).size === 1;
-        if (oneSize && g.size && !out.gloveSize) out.gloveSize = g.size;
-        if (sizes.length <= 1 && g.type && !/\d|\b(dr|over|under)\b/i.test(g.type) && g.type.length <= 40 && !out.gloveType) out.gloveType = g.type;
+        const pair = parseGlovePair(rawValue);
+        if (pair && !out.gloveSize) {
+          out.gloveSize = pair.over;
+          out.gloveUnder = pair.under;
+        } else if (sizes.length === 1 && g.size && !out.gloveSize) {
+          out.gloveSize = g.size;
+        }
+        if ((sizes.length <= 1 || pair) && g.type && !/\d|\b(dr|over|under)\b/i.test(g.type) && g.type.length <= 40 && !out.gloveType) out.gloveType = g.type;
         continue;
       }
       if (label.key === "updated") {
@@ -510,6 +516,20 @@ export function parseCardText(text: string): ParsedCard {
 /** A short, human summary of what was recognized — shown live under the text
  *  box so the tech can see the parse working before they commit. */
 /** "7.5 Biogel, latex-free" -> size 7.5, type "Biogel, latex-free". */
+/** Double gloving as printed: "8/8" and "7.5/8" (under/over), "8 over / 7.5
+ *  under", "under 7.5, over 8". Null for one size, or several people's
+ *  sizes on one line. */
+export function parseGlovePair(raw: string): { under: string; over: string } | null {
+  const SZ = "(5(?:\\.5)?|6(?:\\.5)?|7(?:\\.5)?|8(?:\\.5)?|9)";
+  const t = raw.toLowerCase();
+  const over = t.match(new RegExp(`${SZ}\\s*(?:over|outer)\\b|\\b(?:over|outer)\\s*:?\\s*${SZ}(?![\\d.])`));
+  const under = t.match(new RegExp(`${SZ}\\s*(?:under|inner|indicator)\\b|\\b(?:under|inner|indicator)\\s*:?\\s*${SZ}(?![\\d.])`));
+  if (over && under) return { over: (over[1] ?? over[2])!, under: (under[1] ?? under[2])! };
+  const slash = t.match(new RegExp(`(?:^|[^\\d.])${SZ}\\s*/\\s*${SZ}(?![\\d.])`));
+  if (slash && (t.match(/\d/g) ?? []).length <= 4) return { under: slash[1], over: slash[2] };
+  return null;
+}
+
 export function parseGloves(raw: string): { size?: string; type?: string } {
   const t = raw.trim();
   const m = t.match(/(?:^|\s|size\s*)(5(?:\.5)?|6(?:\.5)?|7(?:\.5)?|8(?:\.5)?|9)(?![\d.])/i);

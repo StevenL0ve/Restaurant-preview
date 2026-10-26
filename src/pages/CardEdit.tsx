@@ -16,6 +16,13 @@ import { Lightbox } from "../components/Lightbox";
 // Create or edit a card. Local draft state; nothing is persisted until "Save"
 // — except newly-created facilities/locations, which are shared resources and
 // commit immediately so they're reusable everywhere.
+/** Glove sizes read off a scanned card, handed to the surgeon on save. */
+export interface ScannedGloves {
+  gloveSize?: string;
+  gloveUnder?: string;
+  gloveType?: string;
+}
+
 export function CardEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -25,7 +32,7 @@ export function CardEdit() {
 
   // A draft handed in from the scan/paste flow: a prefilled card plus, when the
   // scanned surgeon wasn't matched to one you already have, their name.
-  const seedState = location.state as { seed?: PrefCard; surgeonName?: string } | null;
+  const seedState = location.state as { seed?: PrefCard; surgeonName?: string; gloves?: ScannedGloves } | null;
   const seed = seedState?.seed;
   const seedSurgeonName = seedState?.surgeonName;
 
@@ -88,9 +95,13 @@ export function CardEdit() {
     let surgeonId = draft.surgeonId;
     let specialty = draft.specialty;
     if (newSurgeon && sgName.trim()) {
-      const sg = addSurgeon({ name: sgName.trim(), specialty: sgSpecialty.trim() || "General Surgery" });
+      const sg = addSurgeon({ name: sgName.trim(), specialty: sgSpecialty.trim() || "General Surgery", ...(seedState?.gloves ?? {}) });
       surgeonId = sg.id;
       specialty = specialty || sg.specialty;
+    } else if (seedState?.gloves && surgeonId) {
+      // A scanned card's glove sizes fill in a known surgeon who has none yet.
+      const sg = state.surgeons.find((x) => x.id === surgeonId);
+      if (sg && !sg.gloveSize && !sg.gloveUnder) store.updateSurgeon(sg.id, seedState.gloves);
     }
     saveCard({ ...draft, surgeonId, specialty: specialty || "General Surgery" });
     navigate(`/cards/${draft.id}`);

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { glovesLabel } from "../lib/gloves";
 import { ConsiderationsBanner } from "../components/Considerations";
 import { Lightbox } from "../components/Lightbox";
 import { localDay } from "../state/store";
@@ -170,9 +171,9 @@ export function SetupMode() {
         </button>
       </div>
 
-      {(card.position || card.prep || sg?.gloveSize) && (
+      {(card.position || card.prep || glovesLabel(sg)) && (
         <div className="card setup-ref">
-          {sg?.gloveSize && <div><strong>Gloves</strong> {sg.gloveSize}{sg.gloveType ? ` · ${sg.gloveType}` : ""}</div>}
+          {glovesLabel(sg) && <div><strong>Gloves</strong> {glovesLabel({ ...sg!, gloveType: undefined })}{sg!.gloveType ? ` · ${sg!.gloveType}` : ""}</div>}
           {card.position && <div><strong>Position</strong> {card.position}</div>}
           {card.prep && <div><strong>Prep</strong> {card.prep}</div>}
         </div>

@@ -42,7 +42,9 @@ export interface Surgeon {
   name: string; // "Dr. Alvarez"
   specialty: string; // "General Surgery"
   facility?: string; // "Mercy General" — same surgeon can differ by site
-  gloveSize?: string; // "7.0" — techs need this constantly
+  gloveSize?: string; // "7.0" — the (over) glove size; techs need this constantly
+  /** Under-glove size for a surgeon who double-gloves ("8/8" = 8 under, 8 over). */
+  gloveUnder?: string;
   gloveType?: string; // "Biogel, latex-free"
   quirks?: string; // music, temperament, "no chatter on closing", room temp…
   color: string; // avatar color

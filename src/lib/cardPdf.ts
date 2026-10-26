@@ -1,4 +1,5 @@
 import type { Facility, PrefCard, SectionKey, Surgeon } from "../types";
+import { glovesLabel } from "./gloves";
 import { SECTIONS } from "../types";
 import { editLine, PRINT_HISTORY } from "./cardHistory";
 
@@ -189,9 +190,8 @@ async function renderCard(
   y += 14;
 
   // Gloves + surgeon notes.
-  const glovesLine = surgeon?.gloveSize
-    ? `Gloves: ${surgeon.gloveSize}${surgeon.gloveType ? ` (${surgeon.gloveType})` : ""}`
-    : null;
+  const glovesText = glovesLabel(surgeon);
+  const glovesLine = glovesText ? `Gloves: ${glovesText}` : null;
   doc.setFontSize(9.5);
   doc.setTextColor(INK.r, INK.g, INK.b);
   if (glovesLine) {

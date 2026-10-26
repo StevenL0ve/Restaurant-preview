@@ -1,4 +1,5 @@
 import type { PrefCard, SectionKey, Surgeon } from "../types";
+import { glovesLabel } from "./gloves";
 import { SECTIONS } from "../types";
 
 // Render a card as clean plain text. Travelers move between facilities and want
@@ -14,7 +15,8 @@ export function cardToText(
   lines.push(card.procedure.toUpperCase());
   if (surgeon) {
     lines.push(`${surgeon.name} · ${surgeon.specialty}${surgeon.facility ? ` · ${surgeon.facility}` : ""}`);
-    if (surgeon.gloveSize) lines.push(`Gloves: ${surgeon.gloveSize}${surgeon.gloveType ? ` (${surgeon.gloveType})` : ""}`);
+    const gloves = glovesLabel(surgeon);
+    if (gloves) lines.push(`Gloves: ${gloves}`);
   }
   lines.push("");
 

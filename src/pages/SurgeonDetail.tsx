@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { glovesLabel } from "../lib/gloves";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStore, cardsForSurgeon, localDay } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -48,10 +49,10 @@ export function SurgeonDetail() {
         <SurgeonForm surgeon={sg} store={store} onDone={() => setEditing(false)} />
       ) : (
         <div className="card detail-meta">
-          {sg.gloveSize && (
+          {glovesLabel(sg) && (
             <div className="meta-row">
               <span className="meta-label">Gloves</span>
-              <span className="meta-value"><strong>{sg.gloveSize}</strong>{sg.gloveType ? ` · ${sg.gloveType}` : ""}</span>
+              <span className="meta-value"><strong>{glovesLabel({ ...sg, gloveType: undefined })}</strong>{sg.gloveType ? ` · ${sg.gloveType}` : ""}</span>
             </div>
           )}
           {sg.quirks ? (
@@ -60,7 +61,7 @@ export function SurgeonDetail() {
               <span className="meta-value">{sg.quirks}</span>
             </div>
           ) : (
-            !sg.gloveSize && <p className="muted small" style={{ margin: 0 }}>No glove size or quirks recorded yet. Tap Edit to add them.</p>
+            !glovesLabel(sg) && <p className="muted small" style={{ margin: 0 }}>No glove size or quirks recorded yet. Tap Edit to add them.</p>
           )}
         </div>
       )}
@@ -146,6 +147,7 @@ function SurgeonForm({ surgeon, store, onDone }: { surgeon: Surgeon; store: Stor
   const [specialty, setSpecialty] = useState(surgeon.specialty);
   const [facility, setFacility] = useState(surgeon.facility ?? "");
   const [gloveSize, setGloveSize] = useState(surgeon.gloveSize ?? "");
+  const [gloveUnder, setGloveUnder] = useState(surgeon.gloveUnder ?? "");
   const [gloveType, setGloveType] = useState(surgeon.gloveType ?? "");
   const [quirks, setQuirks] = useState(surgeon.quirks ?? "");
 
@@ -155,6 +157,7 @@ function SurgeonForm({ surgeon, store, onDone }: { surgeon: Surgeon; store: Stor
       specialty: specialty.trim(),
       facility: facility.trim() || undefined,
       gloveSize: gloveSize.trim() || undefined,
+      gloveUnder: gloveUnder.trim() || undefined,
       gloveType: gloveType.trim() || undefined,
       quirks: quirks.trim() || undefined,
     });
@@ -167,7 +170,8 @@ function SurgeonForm({ surgeon, store, onDone }: { surgeon: Surgeon; store: Stor
         <label className="field"><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label className="field"><span>Specialty</span><input value={specialty} onChange={(e) => setSpecialty(e.target.value)} /></label>
         <label className="field"><span>Facility</span><input value={facility} onChange={(e) => setFacility(e.target.value)} placeholder="Mercy General" /></label>
-        <label className="field"><span>Glove size</span><input value={gloveSize} onChange={(e) => setGloveSize(e.target.value)} placeholder="7.0" /></label>
+        <label className="field"><span>Glove size (over)</span><input value={gloveSize} onChange={(e) => setGloveSize(e.target.value)} placeholder="7.0" inputMode="decimal" /></label>
+        <label className="field"><span>Under-glove size (if double-gloving)</span><input value={gloveUnder} onChange={(e) => setGloveUnder(e.target.value)} placeholder="None" inputMode="decimal" /></label>
         <label className="field field-wide"><span>Glove type</span><input value={gloveType} onChange={(e) => setGloveType(e.target.value)} placeholder="Biogel, latex-free" /></label>
         <label className="field field-wide"><span>Quirks & preferences</span>
           <textarea rows={3} value={quirks} onChange={(e) => setQuirks(e.target.value)} placeholder="Music, room temp, temperament, count habits…" />
