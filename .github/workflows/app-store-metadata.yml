@@ -16,7 +16,7 @@ on:
   # one also runs whenever the listing files change on the release branch.
   push:
     branches: ["claude/prefcard-app-rebuild-47hgvc"]
-    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", "fastlane/asc_subscriptions.rb", "fastlane/asc_release.rb", "fastlane/release_request.txt", "fastlane/release_hold.txt", ".github/workflows/app-store-metadata.yml"]
+    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", "fastlane/asc_subscriptions.rb", "fastlane/asc_release.rb", "fastlane/release_request.txt", "fastlane/release_hold.txt", "fastlane/release_build.txt", ".github/workflows/app-store-metadata.yml"]
 
 jobs:
   metadata:

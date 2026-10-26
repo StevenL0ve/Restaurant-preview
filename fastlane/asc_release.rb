@@ -142,6 +142,12 @@ end
 build = api(:get, "/v1/appStoreVersions/#{target[:id]}/build")["data"] rescue nil
 abort("No build attached to #{TARGET} yet (is it processed?).") unless build
 puts "Build #{build.dig('attributes', 'version')} is attached to #{TARGET}."
+# fastlane/release_build.txt names the build that must go (e.g. 127): an
+# older one still attached means the new one hasn't finished processing.
+min_build = (File.read(File.expand_path("release_build.txt", __dir__)).strip.to_i rescue 0)
+if build.dig("attributes", "version").to_i < min_build
+  abort("Build #{min_build} isn't attached yet (Apple may still be processing it). Run this workflow again in a few minutes.")
+end
 
 # Release notes for an update (the first release has none).
 if list.any? { |v| RELEASED.include?(v[:state]) } && !NOTES.empty?
