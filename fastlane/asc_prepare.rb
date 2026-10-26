@@ -1,4 +1,4 @@
-# Rerun: attach the newest build (photo cropper fix).
+# Rerun: attach the newest build.
 # Prepares the ORSync App Store version for review through the App Store
 # Connect API: verifies the draft and builds, then fills in everything the
 # API allows. Each step is independent; a failure is reported and the rest
@@ -214,4 +214,8 @@ end
 
 puts "\n==== App Store Connect report ===="
 $report.each { |l| puts l }
-puts "Version #{version.version_string} is NOT submitted; press Submit for Review in App Store Connect when ready."
+if %w[PREPARE_FOR_SUBMISSION DEVELOPER_REJECTED REJECTED METADATA_REJECTED].include?(version.app_store_state)
+  puts "Version #{version.version_string} is NOT submitted; press Submit for Review in App Store Connect when ready."
+else
+  puts "Version #{version.version_string} is #{version.app_store_state}: its build is locked until it's removed from review or released."
+end
