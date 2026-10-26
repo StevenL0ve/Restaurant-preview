@@ -28,7 +28,9 @@ import { useFacilityReps } from "../lib/reps";
 import { loanerStatusLabel } from "../types";
 import { cardsPdfBlob, cardsPdfFilename, type CardPdfEntry } from "../lib/cardPdf";
 import { cartLink } from "../lib/links";
-import { shareBlobFile } from "../lib/share";
+import { shareBlobFile, shareFiles } from "../lib/share";
+import { dayDate, dayPdfBlob, dayPdfFilename, longDate, type DayPdfRoom } from "../lib/dayPdf";
+import { getWorkspace } from "../lib/workspace";
 import type { CaseEntry, OnCallPerson, TeamMember, TeamRole } from "../types";
 import { PhiNote } from "../components/PhiNote";
 import { useAuth } from "../state/auth";
@@ -93,6 +95,7 @@ export function TodayPage() {
           )}
           {perms.canAddCase && <Link className="btn" to="/today/upload">Upload schedule</Link>}
           <Link className="btn" to="/case-log">My case log</Link>
+          {cases.length > 0 && <ShareDayButton date={date} />}
           {cases.length > 0 && <PrintDayButton date={date} />}
         </div>
       </div>
@@ -931,6 +934,66 @@ function PrintDayButton({ date }: { date: string }) {
     <>
       <button className="btn" disabled={busy} onClick={go}>{busy ? "Building…" : "Print day"}</button>
       {err && <span className="neg small">{err}</span>}
+    </>
+  );
+}
+
+/** The day's lineup as one sheet (picture + PDF) for Messages or email. */
+function ShareDayButton({ date }: { date: string }) {
+  const { state } = useStore();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function go() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const rooms: DayPdfRoom[] = casesByRoom(state, date).map((g) => ({
+        room: g.room,
+        firstTime: g.cases[0]?.time,
+        cases: g.cases.map((c, i) => {
+          const card = state.cards.find((k) => k.id === c.cardId);
+          const notes = [
+            ...(c.notes?.trim() ? [c.notes.trim()] : []),
+            ...(card ? dayNotesFor(state, card.id, date).map((n) => `This case: ${n.text}`) : []),
+            ...(card ? pendingLoanersForCard(state, card.id).map((l) => `Loaner not ready: ${l.description}`) : []),
+          ];
+          return {
+            label: `Case ${i + 1}${c.time ? `\n${c.time}` : i > 0 ? "\nto follow" : ""}`,
+            procedure: card?.procedure ?? "Card deleted",
+            surgeon: card ? surgeonOf(state, card.surgeonId)?.name : undefined,
+            team: (c.team ?? []).map((m) => {
+              const role = (TEAM_ROLES.find((r) => r.key === m.role)?.label ?? m.role).replace(/\s*\(.*\)$/, "");
+              return `${role}: ${m.name}`;
+            }),
+            notes,
+          };
+        }),
+      }));
+      const count = rooms.reduce((n, r) => n + r.cases.length, 0);
+      const title = `OR schedule for ${longDate(dayDate(date))}: ${count} ${count === 1 ? "case" : "cases"}`;
+      const pdf = await dayPdfBlob(date, rooms, new Date(), getWorkspace()?.name);
+      const name = dayPdfFilename(date);
+      const files = [new File([pdf], name, { type: "application/pdf" })];
+      try {
+        // A picture first, so Messages shows the sheet itself.
+        const { pdfToPng } = await import("../lib/cardPreview");
+        files.unshift(new File([await pdfToPng(pdf)], name.replace(/\.pdf$/, ".png"), { type: "image/png" }));
+      } catch { /* the PDF alone still shares */ }
+      const how = await shareFiles(files, title);
+      if (how === "downloaded") { setMsg("Saved the day sheet."); setTimeout(() => setMsg(null), 4000); }
+    } catch {
+      setMsg("Couldn't build the day sheet. Try again.");
+      setTimeout(() => setMsg(null), 4000);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button className="btn" disabled={busy} onClick={go}>{busy ? "Preparing…" : "Share day"}</button>
+      {msg && <span className="muted small">{msg}</span>}
     </>
   );
 }

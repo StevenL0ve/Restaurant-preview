@@ -10,10 +10,10 @@ import { editLine, PRINT_HISTORY } from "./cardHistory";
 // gloves and surgeon notes, the position/prep/draping block, then an
 // Item / Detail / Location table per section.
 
-const MARGIN = 48;
-const BRAND = { r: 36, g: 114, b: 216 };
-const INK = { r: 17, g: 17, b: 17 };
-const MUTED = { r: 102, g: 102, b: 102 };
+export const MARGIN = 48;
+export const BRAND = { r: 36, g: 114, b: 216 };
+export const INK = { r: 17, g: 17, b: 17 };
+export const MUTED = { r: 102, g: 102, b: 102 };
 
 /** A QR code printed top-right that points at the live digital version:
  *  the card itself, or one case's cart for one day. */
@@ -25,7 +25,7 @@ export interface CardPdfLink {
 // The mascot rides next to the brand name in the header. Cached after the
 // first load; printing still works if the asset can't be fetched.
 let mascotData: string | null | undefined;
-async function loadMascot(): Promise<string | null> {
+export async function loadMascot(): Promise<string | null> {
   if (mascotData !== undefined) return mascotData;
   try {
     const res = await fetch("brand/mascot-sm.png");
