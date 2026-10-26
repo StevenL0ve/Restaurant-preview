@@ -58,10 +58,15 @@ console.log(`Project ${project.name} (${project.id})`);
 
 const apps = await all(`${P}/apps`);
 for (const a of apps) console.log(`  app ${a.name} [${a.type}] ${a.id}`);
-const ios = apps.find((a) => a.type === "app_store");
+let ios = apps.find((a) => a.type === "app_store");
 if (!ios) {
-  console.error("No App Store app in this project yet. Add it in RevenueCat (bundle id com.stevennelson.orsync) and rerun.");
-  process.exit(1);
+  ios = await step("App Store app", () =>
+    api("POST", `${P}/apps`, { name: "ORSync", type: "app_store", app_store: { bundle_id: "com.stevennelson.orsync" } }));
+  if (!ios) {
+    console.log(report.join("\n"));
+    process.exit(1);
+  }
+  apps.push(ios);
 }
 
 const productIds = {};
