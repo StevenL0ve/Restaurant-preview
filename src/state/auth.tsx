@@ -53,11 +53,39 @@ function saveAccounts(a: Record<string, Account>) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a));
 }
 
+/** If `email` is a phone-only account (early builds) with this password,
+ *  create the matching ORSync Cloud account and drop the local copy.
+ *  Returns the signed-in credential, or null if there's nothing to move. */
+async function moveLocalAccountToCloud(email: string, password: string) {
+  const acct = loadAccounts()[email];
+  if (!acct || acct.passHash !== (await sha256(password))) return null;
+  const { auth } = await firebase();
+  const { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } = await import("firebase/auth");
+  let cred;
+  try {
+    cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: acct.name }).catch(() => undefined);
+  } catch (e) {
+    // Already on the cloud (made on another device) with this password.
+    if ((e as { code?: string })?.code !== "auth/email-already-in-use") throw e;
+    cred = await signInWithEmailAndPassword(auth, email, password);
+  }
+  const rest = loadAccounts();
+  delete rest[email];
+  saveAccounts(rest);
+  localStorage.removeItem(SESSION_KEY);
+  return cred;
+}
+
 interface AuthContext {
   user: SessionUser | null;
   ready: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  /** An account made by an early build that only exists on this phone:
+   *  put it on ORSync Cloud (same email and password) so it works on every
+   *  device. */
+  upgradeLocalAccount: (password: string) => Promise<void>;
   /** Email a password-reset link (cloud accounts). */
   resetPassword: (email: string) => Promise<void>;
   continueAsGuest: () => void;
@@ -182,7 +210,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { auth } = await firebase();
           const { signInWithEmailAndPassword } = await import("firebase/auth");
-          const cred = await signInWithEmailAndPassword(auth, key, password);
+          let cred;
+          try {
+            cred = await signInWithEmailAndPassword(auth, key, password);
+          } catch (e) {
+            // Made by an early build that kept accounts on the phone only?
+            // Same email + password: move it to the cloud now.
+            const moved = await moveLocalAccountToCloud(key, password);
+            if (!moved) throw e;
+            cred = moved;
+          }
           const u: SessionUser = {
             name: cred.user.displayName || key,
             email: key,
@@ -203,6 +240,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(GUEST_KEY);
       localStorage.setItem(SESSION_KEY, key);
       setUser({ name: acct.name, email: acct.email });
+    },
+
+    upgradeLocalAccount: async (password) => {
+      if (!cloudEnabled() || !user || user.uid || user.guest) return;
+      const key = user.email.trim().toLowerCase();
+      let cred;
+      try {
+        cred = await moveLocalAccountToCloud(key, password);
+      } catch (e) {
+        throw new Error(authErrorMessage(e));
+      }
+      if (!cred) throw new Error("That password doesn't match this account.");
+      const u: SessionUser = { name: cred.user.displayName || user.name, email: key, uid: cred.user.uid };
+      localStorage.removeItem(GUEST_KEY);
+      localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify(u));
+      setUser(u);
     },
 
     resetPassword: async (email) => {

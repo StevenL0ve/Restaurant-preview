@@ -15,6 +15,7 @@ import { RekeyReminder } from "../components/RekeyReminder";
 import { AccountSecurity } from "../components/AccountSecurity";
 import { SettingsProfileHeader } from "../components/SettingsProfileHeader";
 import { HelpContactCard } from "../components/HelpContact";
+import { LocalAccountUpgrade } from "../components/LocalAccountUpgrade";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { ProfileForm } from "../components/ProfileForm";
 import { roleLabel, useProfile } from "../lib/profile";
@@ -139,6 +140,7 @@ export function Settings() {
         ) : (
           <p>Signed in as <strong>{user?.name}</strong> ({user?.email}).</p>
         )}
+        <LocalAccountUpgrade />
         {user?.uid && <AccountProfile uid={user.uid} email={user.email} fallbackName={user.name} />}
         {user?.uid && <AccountSecurity email={user.email} />}
         {bioAvailable ? (

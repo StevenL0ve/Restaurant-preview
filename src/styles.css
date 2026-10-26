@@ -2233,3 +2233,9 @@ html, body { overflow-x: hidden; }
 .spd-place { font-weight: 700; white-space: nowrap; }
 .spd-set { align-self: flex-start; margin-top: 2px; }
 .spd-row .resume-title > :first-child { display: inline; }
+
+/* Settings → Account: move a phone-only account to ORSync Cloud */
+.upgrade-local { margin: 10px 0; padding: 12px; border: 1px solid var(--brand); border-radius: 12px; background: var(--brand-50); }
+.upgrade-local p { margin: 0 0 8px; }
+.upgrade-local .form-actions { flex-wrap: wrap; }
+.upgrade-local input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font: inherit; background: var(--card); color: var(--ink); }
