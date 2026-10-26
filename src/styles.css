@@ -2272,3 +2272,31 @@ html, body { overflow-x: hidden; }
 .day-cards-all { font-size: 14px; white-space: nowrap; }
 .day-cards-room { margin-top: 6px; }
 .day-cards-roomname { font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Add case: case name + surgeon searches, matching cards, combine. */
+.case-pick { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
+.case-pick-name { position: relative; }
+.case-pick-drop {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin-top: 4px;
+  display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16); overflow: hidden;
+}
+.case-pick-drop.static { position: static; box-shadow: none; }
+.case-pick-opt {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; cursor: pointer;
+}
+.case-pick-opt:last-child { border-bottom: 0; }
+.case-pick-opt:hover, .case-pick-opt:focus { background: var(--brand-50); outline: none; }
+.case-pick-add { color: var(--brand); font-weight: 600; }
+.case-pick-chip {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--card);
+}
+.case-pick-new { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.case-pick-blank { align-self: flex-start; margin-top: 4px; }
+.not-before { margin-top: 6px; }
+/* Checkboxes inside a .field keep their own size (the field's text-input
+   padding would otherwise blow them up). */
+.field input[type="checkbox"] { padding: 0; border-radius: 4px; width: 18px; height: 18px; flex: 0 0 auto; }
+.case-pick .pos-check { width: 100%; box-sizing: border-box; }

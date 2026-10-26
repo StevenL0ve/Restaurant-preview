@@ -37,6 +37,8 @@ import { useAuth } from "../state/auth";
 import { usePermissions } from "../lib/permissions";
 import { useProfile } from "../lib/profile";
 import { normName, teamPhotos } from "../lib/teamPhotos";
+import { CaseCardPicker, initialPick, type CasePick } from "../components/CaseCardPicker";
+import { buildCombinedCard } from "../lib/combineCards";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -55,6 +57,12 @@ export function parseRoomInput(room?: string): { named: boolean; value: string }
   if (!t) return { named: false, value: "" };
   const m = /^OR\s*(\d+[A-Za-z]?)$/i.exec(t);
   return m ? { named: false, value: m[1] } : { named: true, value: t };
+}
+
+/** What a case is called on the board: the schedule's wording when it was
+ *  typed, else the card's title (minus a one-case combo's tag). */
+export function caseTitle(entry: Pick<CaseEntry, "procedure">, card?: { procedure: string }): string {
+  return entry.procedure || (card?.procedure ?? "").replace(/\s*\(one case\)$/, "");
 }
 
 function shiftDay(date: string, delta: number): string {
@@ -277,6 +285,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
           <span className="case-time">
             {`Case ${position + 1}`}
             {entry.time ? ` · ${entry.time}` : position > 0 ? " · to follow" : ""}
+            {!entry.time && entry.notBefore ? `, not before ${entry.notBefore}` : ""}
           </span>
           {(canUp || canDown) && (
             <span className="case-reorder">
@@ -295,8 +304,11 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
       <Link to={`/cards/${card.id}`} className="case-main">
         {sg && <Avatar surgeon={sg} size={34} />}
         <span className="case-text">
-          <span className="case-proc">{card.procedure}</span>
+          <span className="case-proc">{caseTitle(entry, card)}</span>
           <span className="muted small">{sg?.name} · {card.specialty}</span>
+          {entry.procedure && entry.procedure !== card.procedure && (
+            <span className="muted small">Card: {card.procedure}</span>
+          )}
         </span>
       </Link>
 
@@ -461,13 +473,16 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
 // is just an order: OR 1 Case 2, OR 1 Case 3. Followers can be slotted into
 // any position; they never carry a clock time.
 function CaseForm({ store, date, existing, onDone }: { store: Store; date: string; existing?: CaseEntry; onDone: () => void }) {
-  const { state, addCase, updateCase, moveCase, ensureCart, deleteCart, addLoaner } = store;
+  const { state, addCase, updateCase, moveCase, ensureCart, deleteCart, addLoaner, saveCard } = store;
   const { user: me } = useAuth();
   const perms = usePermissions(me?.uid, me?.email);
   // Booking the same card on a day whose cart is already pulled (say, a
   // cancelled case being rebooked): ask before reusing it.
   const [reusePrompt, setReusePrompt] = useState<null | "ask" | "reuse" | "fresh">(null);
-  const [cardId, setCardId] = useState(existing?.cardId ?? state.cards[0]?.id ?? "");
+  const existingCard = existing ? state.cards.find((c) => c.id === existing.cardId) : undefined;
+  const [pick, setPick] = useState<CasePick>(() =>
+    initialPick(existingCard?.id, existing?.procedure ?? existingCard?.procedure, existingCard?.surgeonId));
+  const singleCardId = pick.cardIds.length === 1 ? pick.cardIds[0] : "";
   // Rep set requests: company, rep, and the sets/implants/supplies needed.
   // Each becomes a loaner request linked to this case, tracked on Loaners.
   const reps = useFacilityReps();
@@ -493,6 +508,10 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
   const [roomVal, setRoomVal] = useState(initialRoom.value);
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [team, setTeam] = useState<TeamMember[]>(existing?.team ?? []);
+  // A follower that can't go before a set time (surgeon's clinic, a rep's
+  // arrival), even though it isn't the room's first start.
+  const [notBefore, setNotBefore] = useState(existing?.notBefore ?? "");
+  const [holdTime, setHoldTime] = useState(!!existing?.notBefore);
   const [orderChoice, setOrderChoice] = useState<number | null>(null); // index among the room's followers
 
   const theDate = /^\d{4}-\d{2}-\d{2}$/.test(caseDate) ? caseDate : (existing?.date ?? date);
@@ -520,8 +539,9 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
   const followerIdx = Math.min(orderChoice ?? currentIdx, untimed.length);
 
   function save(choice?: "reuse" | "fresh") {
-    if (!cardId) return;
-    if (!existing && !choice) {
+    if (!pick.cardIds.length) return;
+    let cardId = singleCardId;
+    if (cardId && !existing && !choice) {
       const leftover = state.carts.find((k) => k.cardId === cardId && k.date === theDate);
       const inUse = state.cases.some((c) => c.cardId === cardId && c.date === theDate);
       const pulled = leftover && (Object.keys(leftover.pulls).length > 0 || leftover.donePulling || leftover.qcDone);
@@ -531,11 +551,29 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
       const leftover = state.carts.find((k) => k.cardId === cardId && k.date === theDate);
       if (leftover) deleteCart(leftover.id);
     }
+    // Two or more cards: one combined card for this case (or kept for the
+    // surgeon going forward), with the overlap counts settled in the form.
+    const caseName = pick.name.trim();
+    if (!cardId) {
+      const chosen = pick.cardIds.map((id) => state.cards.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c);
+      const title = caseName || chosen.map((c) => c.procedure).join(" + ");
+      const combo = buildCombinedCard(chosen, {
+        procedure: pick.keepCombo ? title : `${title} (one case)`,
+        qtyOverrides: pick.overrides,
+        oneCase: !pick.keepCombo,
+        surgeonNameOf: (sid) => surgeonOf(state, sid)?.name,
+      });
+      saveCard(combo);
+      cardId = combo.id;
+    }
+    const cardTitle = state.cards.find((c) => c.id === cardId)?.procedure;
     const first = isFirstCase;
     const payload = {
       date: theDate,
       time: first ? (time || undefined) : undefined,
+      notBefore: !first && holdTime && notBefore ? notBefore : undefined,
       cardId,
+      procedure: caseName && pick.cardIds.length === 1 && caseName !== cardTitle ? caseName : undefined,
       room: roomKey || undefined,
       notes: notes.trim() || undefined,
       team: team.length ? team : undefined,
@@ -564,11 +602,12 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
     // Each rep set request becomes a loaner request tied to this case, so
     // the rep (when they have an account) sees it and the OR tracks it.
     const card = state.cards.find((c) => c.id === cardId);
+    const repTitle = caseName || card?.procedure;
     for (const d of repDrafts) {
       const rep = reps.find((r) => r.uid === d.rep || r.name === d.rep);
       const now = new Date().toISOString();
       addLoaner({
-        description: `${d.company} sets for ${card?.procedure ?? "case"}`,
+        description: `${d.company} sets for ${repTitle ?? "case"}`,
         vendor: d.company,
         repName: rep?.name ?? (d.rep || undefined),
         repPhone: rep?.phone ?? undefined,
@@ -596,14 +635,7 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
   return (
     <div className="card form-card">
       <div className="form-grid">
-        <label className="field field-wide"><span>Procedure card</span>
-          <select value={cardId} onChange={(e) => setCardId(e.target.value)}>
-            {state.cards.map((c) => {
-              const sg = surgeonOf(state, c.surgeonId);
-              return <option key={c.id} value={c.id}>{c.procedure} · {sg?.name ?? "?"}</option>;
-            })}
-          </select>
-        </label>
+        <CaseCardPicker value={pick} onChange={setPick} />
         <label className="field"><span>{existing ? "Date (move to reschedule)" : "Date"}</span>
           <input
             type="date"
@@ -647,18 +679,27 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
         ) : (
-          <label className="field"><span>Case order</span>
+          <div className="field"><span>Case order</span>
             <select value={followerIdx} onChange={(e) => setOrderChoice(Number(e.target.value))}>
               {Array.from({ length: untimed.length + 1 }, (_, j) => (
                 <option key={j} value={j}>{`${roomKey || "Room"} Case ${timedCount + j + 1}`}</option>
               ))}
             </select>
-          </label>
+            <label className="toggle-row not-before">
+              <span>Can't start before a set time</span>
+              <input type="checkbox" checked={holdTime} onChange={(e) => setHoldTime(e.target.checked)} />
+            </label>
+            {holdTime && (
+              <input type="time" value={notBefore} onChange={(e) => setNotBefore(e.target.value)} aria-label="Not before" />
+            )}
+          </div>
         )}
         <p className="muted small" style={{ gridColumn: "1 / -1", margin: 0 }}>
           {isFirstCase
             ? "This is the room's first case, so it gets the start time."
-            : `${roomKey || "This room"} already has a first start. This case just takes its place in line; turnover sets its time.`}
+            : holdTime && notBefore
+              ? `${roomKey || "This room"} already has a first start. This case follows in line, but not before ${notBefore}.`
+              : `${roomKey || "This room"} already has a first start. This case just takes its place in line; turnover sets its time.`}
         </p>
         <label className="field field-wide"><span>Notes</span>
           <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Rep bringing trials, latex-free setup, etc." />
@@ -715,7 +756,7 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
             <button className="btn btn-sm" onClick={() => { setReusePrompt(null); save("fresh"); }}>Start a fresh cart</button>
           </span>
         ) : (
-          <button className="btn btn-primary" disabled={!cardId} onClick={() => save()}>{existing ? "Save" : perms.needsApproval ? "Send for approval" : "Add to lineup"}</button>
+          <button className="btn btn-primary" disabled={!pick.cardIds.length} onClick={() => save()}>{existing ? "Save" : perms.needsApproval ? "Send for approval" : "Add to lineup"}</button>
         )}
         <button className="btn" onClick={onDone}>Cancel</button>
       </div>
@@ -930,7 +971,7 @@ function DayCardsPanel({ date, onClose }: { date: string; onClose: () => void })
             locationName: (id) => locationLabelOf(state, id),
             dayConsiderations: dayNotesFor(state, card.id, date).map((n) => n.text),
             link: { url: cartLink(cart.id), label: "Scan for this case's live cart" },
-            caseLine: `${g.room || "No room"} · Case ${i + 1}${c.time ? ` · ${c.time}` : i > 0 ? " · to follow" : ""}`,
+            caseLine: `${g.room || "No room"} · Case ${i + 1}${c.time ? ` · ${c.time}` : c.notBefore ? ` · not before ${c.notBefore}` : i > 0 ? " · to follow" : ""}${c.procedure && c.procedure !== card.procedure ? ` · ${c.procedure}` : ""}`,
           });
         });
       }
@@ -975,7 +1016,7 @@ function DayCardsPanel({ date, onClose }: { date: string; onClose: () => void })
                 <label key={c.id} className={"pos-check" + (picked.has(c.id) ? " on" : "")}>
                   <input type="checkbox" checked={picked.has(c.id)} onChange={() => toggle(c.id)} />
                   <span>
-                    Case {i + 1}{c.time ? ` · ${c.time}` : ""}: {card.procedure}
+                    Case {i + 1}{c.time ? ` · ${c.time}` : c.notBefore ? ` · not before ${c.notBefore}` : ""}: {caseTitle(c, card)}
                     {sg && <span className="muted"> · {sg.name}</span>}
                   </span>
                 </label>
@@ -1011,18 +1052,19 @@ function ShareDayButton({ date }: { date: string }) {
         cases: g.cases.map((c, i) => {
           const card = state.cards.find((k) => k.id === c.cardId);
           const notes = [
+            ...(card && c.procedure && c.procedure !== card.procedure ? [`Card: ${card.procedure}`] : []),
             ...(c.notes?.trim() ? [c.notes.trim()] : []),
             ...(card ? dayNotesFor(state, card.id, date).map((n) => `This case: ${n.text}`) : []),
             ...(card ? pendingLoanersForCard(state, card.id).map((l) => `Loaner not ready: ${l.description}`) : []),
           ];
           return {
-            label: `Case ${i + 1}${c.time ? `\n${c.time}` : i > 0 ? "\nto follow" : ""}`,
-            procedure: card?.procedure ?? "Card deleted",
+            label: `Case ${i + 1}${c.time ? `\n${c.time}` : c.notBefore ? `\nnot before ${c.notBefore}` : i > 0 ? "\nto follow" : ""}`,
+            procedure: card ? caseTitle(c, card) : c.procedure || "Card deleted",
             surgeon: card ? surgeonOf(state, card.surgeonId)?.name : undefined,
             team: (c.team ?? []).map((m) => {
               // Short labels for paper: "RN", "Tech", "CRNA".
               const role = m.role === "tech" ? "Tech" : (TEAM_ROLES.find((r) => r.key === m.role)?.label ?? m.role).replace(/\s*\(.*\)$/, "");
-              return `${role}: ${m.name}`;
+              return { role, name: m.name };
             }),
             notes,
           };

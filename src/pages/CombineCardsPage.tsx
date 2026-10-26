@@ -185,7 +185,7 @@ export function CombineCardsPage() {
   );
 }
 
-function DupRow({ dup, value, onChange }: { dup: DupGroup; value: number; onChange: (n: number) => void }) {
+export function DupRow({ dup, value, onChange }: { dup: DupGroup; value: number; onChange: (n: number) => void }) {
   const multiplied = dup.combinedQty;
   return (
     <div className="dup-row">

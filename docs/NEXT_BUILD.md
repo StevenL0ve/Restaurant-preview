@@ -33,4 +33,9 @@ the items after it land in Sutures. Only treat a line as a header when it
 has no item-like tail (brackets, quantities, REF numbers).
 
 ## Already done on the branch, ships with the next build
-- Day sheet lists surgical technologists as "Tech".
+- Day sheet lists surgical technologists as "Tech", with role titles in bold.
+- Add case: free-text case name that searches cards as you type; surgeon
+  search with "add a new surgeon"; matching cards to tick, several combine
+  into one case with the overlap settled in the form.
+- "Can't start before a set time" for cases that aren't a room's first.
+- Schedule upload keeps the schedule's wording as the case name.

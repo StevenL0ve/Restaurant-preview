@@ -293,6 +293,12 @@ export interface CaseEntry {
   date: string; // "2026-07-02" (local calendar day)
   time?: string; // "07:30"
   cardId: ID;
+  /** The case as the schedule names it ("Repair Umbilical Hernia Robot-
+   *  Assisted"), when that differs from the card's title. */
+  procedure?: string;
+  /** A follower that can't start before a set time ("13:00"), even though
+   *  turnover would otherwise decide when it goes. */
+  notBefore?: string;
   room?: string; // "OR 4"
   notes?: string;
   /** The room team, filled in as assignments become known. */

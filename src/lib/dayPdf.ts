@@ -13,7 +13,7 @@ export interface DayPdfCase {
   label: string; // "Case 1\n07:30"
   procedure: string;
   surgeon?: string;
-  team: string[]; // "RN: Jane Doe"
+  team: { role: string; name: string }[]; // printed "RN: Jane Doe", the role in bold
   notes: string[];
 }
 
@@ -76,6 +76,26 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
   doc.line(MARGIN, y, pageW - MARGIN, y);
   y += 12;
 
+  // Team lines are drawn by hand (bold role, plain name); the cell holds the
+  // same lines as plain text only so the row is measured to fit them.
+  const TEAM_W = 116 - 8; // column width minus padding
+  const teamLines = new Map<number, { role?: string; text: string }[]>();
+  const layoutTeam = (team: DayPdfCase["team"]) => {
+    const out: { role?: string; text: string }[] = [];
+    doc.setFontSize(9);
+    for (const m of team) {
+      const role = pdfSafe(`${m.role}:`);
+      const name = pdfSafe(m.name);
+      doc.setFont("helvetica", "bold");
+      const rw = doc.getTextWidth(`${role} `);
+      doc.setFont("helvetica", "normal");
+      if (rw + doc.getTextWidth(name) <= TEAM_W) { out.push({ role, text: name }); continue; }
+      out.push({ role, text: "" });
+      for (const l of doc.splitTextToSize(name, TEAM_W) as string[]) out.push({ text: l });
+    }
+    return out;
+  };
+
   type Cell = string | { content: string; colSpan?: number; styles?: Record<string, unknown> };
   const body: Cell[][] = [];
   const caseRows = new Set<number>();
@@ -87,11 +107,13 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     }]);
     for (const c of r.cases) {
       caseRows.add(body.length);
+      const lines = layoutTeam(c.team);
+      teamLines.set(body.length, lines);
       body.push([
         pdfSafe(c.label),
         { content: pdfSafe(c.procedure), styles: { fontStyle: "bold" } },
         pdfSafe(c.surgeon ?? ""),
-        pdfSafe(c.team.join("\n")),
+        lines.map((l) => (l.role ? `${l.role} ${l.text}` : l.text)).join("\n"),
         pdfSafe(c.notes.length > 1 ? c.notes.map((n) => `• ${n}`).join("\n") : c.notes.join("")),
       ]);
     }
@@ -112,7 +134,28 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     didParseCell: (d) => {
       if (d.section === "body" && caseRows.has(d.row.index)) d.cell.styles.cellPadding = { top: 6, bottom: PATIENT_SPACE, left: 4, right: 4 };
     },
+    willDrawCell: (d) => {
+      if (d.section === "body" && d.column.index === 3 && teamLines.has(d.row.index)) d.cell.text = [];
+    },
     didDrawCell: (d) => {
+      if (d.section === "body" && d.column.index === 3 && teamLines.has(d.row.index)) {
+        const lh = 9 * 1.15; // autoTable's line height for 9pt
+        let ty = d.cell.y + 6 + 9 * 0.85;
+        doc.setFontSize(9);
+        doc.setTextColor(INK.r, INK.g, INK.b);
+        for (const l of teamLines.get(d.row.index)!) {
+          let tx = d.cell.x + 4;
+          if (l.role) {
+            doc.setFont("helvetica", "bold");
+            doc.text(l.role, tx, ty);
+            tx += doc.getTextWidth(`${l.role} `);
+          }
+          doc.setFont("helvetica", "normal");
+          if (l.text) doc.text(l.text, tx, ty);
+          ty += lh;
+        }
+        return;
+      }
       if (d.section !== "body" || d.column.index !== 0 || !caseRows.has(d.row.index)) return;
       const bottom = d.cell.y + d.cell.height;
       const ly = bottom - 9;

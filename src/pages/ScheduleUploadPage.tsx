@@ -54,6 +54,8 @@ export function ScheduleUploadPage() {
     const approval = perms.needsApproval ? { kind: "add" as const, by: getPullerName() || undefined, at: new Date().toISOString() } : undefined;
     const list = ready.map((r) => ({
       date: r.date!, time: r.time, room: r.room, cardId: chosen(r.line, r.cardId),
+      // The schedule's own wording names the case; the card is what's pulled.
+      procedure: r.procedureText.trim() && r.procedureText.trim() !== cardName(chosen(r.line, r.cardId) ?? "") ? r.procedureText.trim() : undefined,
       ...(approval ? { approval } : {}),
     }));
     const days = [...new Set(list.map((c) => c.date))].sort();
