@@ -48,6 +48,7 @@ import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from 
 import { shareFiles, shareJsonFile } from "../lib/share";
 import { cardLink } from "../lib/links";
 import { diffCard, withEdit } from "../lib/cardHistory";
+import { mergeOnCard } from "../lib/itemCleanup";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
 const STORAGE_KEY = "orsync.v2";
@@ -240,6 +241,10 @@ export interface Store {
   /** Many cases at once (a schedule upload): carts queue as usual, and the
    *  change log gets one line for the batch. */
   addCases: (list: Omit<CaseEntry, "id">[], note: string) => number;
+  /** Item clean-up: rename every item called one of `variants` to `standard`
+   *  across the library (optionally keeping the old name as a nickname).
+   *  Returns how many cards changed. */
+  mergeItemNames: (variants: string[], standard: string, keepAlias: boolean, ref?: string) => number;
   // staff directory: autocomplete for room teams, built as people are typed
   upsertStaff: (name: string, role: TeamRole, level?: 1 | 2 | 3) => void;
   /** Bulk roster import; returns how many new people were added. */
@@ -654,6 +659,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return logChange(next, "schedule", `Schedule: added ${describeCase(next, entry)}`);
         });
         return entry;
+      },
+
+      mergeItemNames: (variants, standard, keepAlias, ref) => {
+        const name = standard.trim();
+        if (!name) return 0;
+        const willChange = state.cards.filter((c) => mergeOnCard(c, variants, name, keepAlias, ref).card !== c).length;
+        update((st) => {
+          let changed = 0;
+          const now = new Date().toISOString();
+          const by = getPullerName() || undefined;
+          const role = currentRole ? roleLabel(currentRole) || undefined : undefined;
+          let renamed = 0;
+          const cards = st.cards.map((c) => {
+            const { card, changes } = mergeOnCard(c, variants, name, keepAlias, ref);
+            if (card === c) return c;
+            changed++;
+            renamed += changes.length;
+            return withEdit({ ...card, updatedAt: now, updatedBy: by }, { at: now, by, role, changes: changes.length ? changes : [`Clean-up: REF ${ref} added to ${name}`] });
+          });
+          if (!changed) return st;
+          return logChange({ ...st, cards }, "cards", `Item clean-up: ${renamed} ${renamed === 1 ? "item" : "items"} renamed to ${name} on ${changed} ${changed === 1 ? "card" : "cards"}`, by, now);
+        });
+        return willChange;
       },
 
       addCases: (list, note) => {

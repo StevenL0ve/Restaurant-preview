@@ -2257,3 +2257,7 @@ html, body { overflow-x: hidden; }
 .schedule-rows select { width: 100%; max-width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
 .schedule-what { overflow-wrap: anywhere; }
 .schedule-problem { color: var(--warn, #b45309); font-weight: 600; }
+
+/* Item clean-up */
+.cleanup-variants { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 10px; }
+.cleanup-custom { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font: inherit; background: var(--card); color: var(--ink); }

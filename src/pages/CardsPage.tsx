@@ -81,6 +81,7 @@ export function CardsPage() {
               <button className="btn" onClick={() => navigate("/cards/combine")}>Combine</button>
               <button className="btn" onClick={() => navigate("/cards/templates")}>Templates</button>
               <button className="btn" onClick={() => navigate("/cards/scan")}>Scan / paste</button>
+              <button className="btn" onClick={() => navigate("/cards/cleanup")}>Clean up items</button>
             </>
           )}
         </div>

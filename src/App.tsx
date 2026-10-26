@@ -16,6 +16,7 @@ import { Welcome } from "./components/Welcome";
 import { Dashboard } from "./pages/Dashboard";
 import { TodayPage } from "./pages/TodayPage";
 import { ScheduleUploadPage } from "./pages/ScheduleUploadPage";
+import { ItemCleanupPage } from "./pages/ItemCleanupPage";
 import { CardsPage } from "./pages/CardsPage";
 import { CardDetail } from "./pages/CardDetail";
 import { CardEdit } from "./pages/CardEdit";
@@ -165,6 +166,7 @@ export default function App() {
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/cards/new" element={<CardEdit />} />
             <Route path="/cards/scan" element={<CardScan />} />
+            <Route path="/cards/cleanup" element={<ItemCleanupPage />} />
             <Route path="/catalog" element={<Gated><CatalogPage /></Gated>} />
             <Route path="/cards/templates" element={<TemplatesPage />} />
             <Route path="/cards/combine" element={<CombineCardsPage />} />
