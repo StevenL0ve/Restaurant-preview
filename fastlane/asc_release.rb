@@ -8,6 +8,9 @@
 #       release), so the new build can go on it
 #     - app already approved or live: create the requested version
 #     - version in review right now: stop and say so (Apple won't allow it)
+#   With fastlane/release_hold.txt present, prepare instead withdraws the
+#   version from review and submit does nothing: the app is being changed
+#   and a new build goes on before it's resubmitted.
 #   ruby fastlane/asc_release.rb submit
 #     - adds the Pro subscriptions to the submission (they ride along with
 #       the version the first time), then submits the version for review
@@ -21,6 +24,7 @@ MODE = ARGV[0] || "prepare"
 REQUEST = File.expand_path("release_request.txt", __dir__)
 abort("No fastlane/release_request.txt: nothing to release.") unless File.exist?(REQUEST)
 TARGET = File.read(REQUEST).strip
+HOLD = File.exist?(File.expand_path("release_hold.txt", __dir__))
 NOTES = (File.read(File.expand_path("metadata/en-US/release_notes.txt", __dir__)).strip rescue "")
 
 Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
@@ -65,6 +69,24 @@ list = versions
 puts "Requested version: #{TARGET}"
 list.each { |v| puts "  version #{v[:version]}: #{v[:state]}" }
 open_submissions.each { |s| puts "  review submission #{s['id']}: #{s.dig('attributes', 'state')}" }
+
+if HOLD
+  target = list.find { |v| v[:version] == TARGET }
+  if MODE == "prepare" && target && %w[WAITING_FOR_REVIEW IN_REVIEW].include?(target[:state])
+    open_submissions.each do |s|
+      api(:patch, "/v1/reviewSubmissions/#{s['id']}", { data: { type: "reviewSubmissions", id: s["id"], attributes: { canceled: true } } })
+      puts "Withdrew review submission #{s['id']} (#{TARGET})."
+    end
+    30.times do
+      sleep 6
+      target = versions.find { |v| v[:id] == target[:id] }
+      break if EDITABLE.include?(target[:state])
+    end
+    puts "Version #{TARGET} is now #{target[:state]}."
+  end
+  puts "Release on hold (fastlane/release_hold.txt): not submitting."
+  exit 0
+end
 
 if MODE == "prepare"
   target = list.find { |v| v[:version] == TARGET }
