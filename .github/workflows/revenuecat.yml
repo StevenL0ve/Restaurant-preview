@@ -1,0 +1,31 @@
+# Sets up the RevenueCat project (products, "pro" entitlement, default
+# offering) and prints the public SDK keys. See scripts/revenuecat-setup.mjs.
+#
+# Secret: REVENUECAT_SECRET_KEY, a v2 secret API key (RevenueCat → Project
+# settings → API keys → New secret API key, read/write).
+name: RevenueCat setup
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/prefcard-app-rebuild-47hgvc"]
+    paths: ["scripts/revenuecat-setup.mjs", ".github/workflows/revenuecat.yml"]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Configure RevenueCat
+        env:
+          REVENUECAT_SECRET_KEY: ${{ secrets.REVENUECAT_SECRET_KEY }}
+        run: |
+          if [ -z "$REVENUECAT_SECRET_KEY" ]; then
+            echo "::warning::No REVENUECAT_SECRET_KEY secret yet. Add it and rerun this workflow."
+            exit 0
+          fi
+          node scripts/revenuecat-setup.mjs
