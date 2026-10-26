@@ -1,5 +1,6 @@
 import type { Facility, PrefCard, SectionKey, Surgeon } from "../types";
 import { SECTIONS } from "../types";
+import { editLine, PRINT_HISTORY } from "./cardHistory";
 
 // Turn a preference card into a clean one-or-more-page PDF, entirely on the
 // device (jsPDF is lazy-loaded so it never weighs down app startup). This is
@@ -52,6 +53,8 @@ export interface CardPdfEntry {
   /** Printed above the title in day packets: "OR 1 · Case 2 · 07:30". */
   caseLine?: string;
 }
+
+const BOX_COL = 16; // the pick-ticket checkbox column
 
 export async function cardPdfBlob(
   card: PrefCard,
@@ -227,17 +230,20 @@ async function renderCard(
     // Supplies (or any section) with reference numbers get a REF column, so
     // materials can reorder straight off the printout.
     const hasRef = items.some((it) => it.ref?.trim());
+    const rest = usable - BOX_COL;
     autoTable(doc, {
       startY: y,
       margin: { left: MARGIN, right: MARGIN },
+      // A checkbox column first, so the printout works as a pick ticket.
       head: [hasRef
-        ? [sec.label.toUpperCase(), "DETAIL", "REF #", "LOCATION"]
-        : [sec.label.toUpperCase(), "DETAIL", "LOCATION"]],
+        ? ["", sec.label.toUpperCase(), "DETAIL", "REF #", "LOCATION"]
+        : ["", sec.label.toUpperCase(), "DETAIL", "LOCATION"]],
       // Qty and hold render the way a hospital pick list prints them:
       // "2×" ahead of the name, "(hold)" after the detail.
       body: items.map((it) => {
         const base = [
-          `${(it.qty ?? 1) > 1 ? `${it.qty}× ` : ""}${it.name}`,
+          "",
+          `${(it.qty ?? 1) > 1 ? `${it.qty}× ` : ""}${it.name}${it.alias ? ` ("${it.alias}")` : ""}`,
           [it.detail, it.hold ? "(hold)" : null].filter(Boolean).join(" "),
         ];
         if (hasRef) base.push(it.ref ?? "");
@@ -248,13 +254,41 @@ async function renderCard(
       styles: { fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 0, right: 8 }, textColor: [17, 17, 17], lineColor: [230, 230, 230], lineWidth: { bottom: 0.6 } },
       headStyles: { fontStyle: "bold", fontSize: 8, textColor: [17, 17, 17], lineColor: [17, 17, 17], lineWidth: { bottom: 1.2 } },
       columnStyles: hasRef
-        ? { 0: { cellWidth: usable * 0.36 }, 1: { cellWidth: usable * 0.22 }, 2: { cellWidth: usable * 0.16 }, 3: { cellWidth: usable * 0.26 } }
-        : { 0: { cellWidth: usable * 0.42 }, 1: { cellWidth: usable * 0.28 }, 2: { cellWidth: usable * 0.3 } },
+        ? { 0: { cellWidth: BOX_COL }, 1: { cellWidth: rest * 0.36 }, 2: { cellWidth: rest * 0.22 }, 3: { cellWidth: rest * 0.16 }, 4: { cellWidth: rest * 0.26 } }
+        : { 0: { cellWidth: BOX_COL }, 1: { cellWidth: rest * 0.42 }, 2: { cellWidth: rest * 0.28 }, 3: { cellWidth: rest * 0.3 } },
       rowPageBreak: "avoid",
+      didDrawCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 0) return;
+        const size = 8.5;
+        doc.setDrawColor(90, 90, 90);
+        doc.setLineWidth(0.7);
+        doc.rect(data.cell.x + 1, data.cell.y + (data.cell.height - size) / 2, size, size);
+      },
     });
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
   }
 
+  // The last few edits, one short line each; the full history is in the app.
+  const recent = (card.history ?? []).slice(0, PRINT_HISTORY);
+  if (recent.length) {
+    const pageH = doc.internal.pageSize.getHeight();
+    const need = 14 + recent.length * 10;
+    if (y + need > pageH - 40) { doc.addPage(); y = MARGIN + 8; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
+    doc.text("RECENT CHANGES", MARGIN, y);
+    y += 11;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    for (const e of recent) {
+      // The PDF's built-in font has no arrow or ellipsis glyphs.
+      const text = editLine(e).replace(/→/g, "->").replace(/…/g, "...").replace(/[“”]/g, '"');
+      const lines = doc.splitTextToSize(text, usable) as string[];
+      doc.text(lines.length > 1 ? `${lines[0].replace(/[\s;,.]+$/, "")}...` : lines[0], MARGIN, y);
+      y += 10;
+    }
+  }
 }
 
 export function cardPdfFilename(procedure: string): string {

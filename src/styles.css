@@ -2239,3 +2239,11 @@ html, body { overflow-x: hidden; }
 .upgrade-local p { margin: 0 0 8px; }
 .upgrade-local .form-actions { flex-wrap: wrap; }
 .upgrade-local input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font: inherit; background: var(--card); color: var(--ink); }
+
+/* Card edit history */
+.item-alias { color: var(--muted); font-weight: 400; }
+.history-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.history-list > li { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.history-list > li:last-child { border-bottom: none; }
+.history-who { font-size: 13px; font-weight: 600; }
+.history-list ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink); }

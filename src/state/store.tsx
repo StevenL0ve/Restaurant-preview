@@ -47,6 +47,7 @@ import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from "../lib/loanerFile";
 import { shareFiles, shareJsonFile } from "../lib/share";
 import { cardLink } from "../lib/links";
+import { diffCard, withEdit } from "../lib/cardHistory";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
 const STORAGE_KEY = "orsync.v2";
@@ -549,16 +550,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveCard: (card) =>
         update((st) => {
           const now = new Date().toISOString();
-          const stamped = { ...card, updatedAt: now, updatedBy: getPullerName() || undefined };
+          const by = getPullerName() || undefined;
+          let stamped: PrefCard = { ...card, updatedAt: now, updatedBy: by };
           // A scanned card's first save is its upload; later saves are edits.
-          if (card.uploadedAt === "pending") stamped.uploadedAt = now;
-          const exists = st.cards.some((c) => c.id === card.id);
-          return {
+          const scanned = card.uploadedAt === "pending";
+          if (scanned) stamped.uploadedAt = now;
+          const before = st.cards.find((c) => c.id === card.id);
+          const role = currentRole ? roleLabel(currentRole) || undefined : undefined;
+          const changes = before
+            ? diffCard(before, card, (id) => st.surgeons.find((g) => g.id === id)?.name)
+            : [scanned ? "Uploaded from a scan" : "Created"];
+          stamped = withEdit({ ...stamped, history: card.history ?? before?.history }, { at: now, by, role, changes });
+          const next = {
             ...st,
-            cards: exists
+            cards: before
               ? st.cards.map((c) => (c.id === card.id ? stamped : c))
               : [stamped, ...st.cards],
           };
+          if (!before || !changes.length) return next;
+          const shown = changes.slice(0, 3).join("; ") + (changes.length > 3 ? `; +${changes.length - 3} more` : "");
+          return logChange(next, "cards", `Card ${card.procedure}: ${shown}`, by, now);
         }),
 
       addDayNote: (cardId, date, text, by) =>

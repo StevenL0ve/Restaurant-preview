@@ -77,6 +77,17 @@ export interface CardItem {
   /** "Have available": in the room but not pulled onto the field — grouped
    *  at the bottom of setup so the must-gather items come first. */
   haveAvailable?: boolean;
+  /** The familiar name the team used before an item clean-up merged it into
+   *  the standard one ("Ray-tec" for "Raytec 4x4"); shown beside the name. */
+  alias?: string;
+}
+
+/** One saved edit to a card: who, when, and what changed (short lines). */
+export interface CardEdit {
+  at: string; // ISO
+  by?: string; // full name
+  role?: string; // their position when they edited, e.g. "Surgical technologist"
+  changes: string[];
 }
 
 /** The five checklist sections every card shares. Kept as a const tuple so the
@@ -121,6 +132,8 @@ export interface PrefCard {
   backTablePhoto?: string;
   updatedAt: string; // ISO
   updatedBy?: string; // full name of who last changed it; shown as "Last, F."
+  /** Edit history, newest first (capped; see cardHistory.ts). */
+  history?: CardEdit[];
   /** Set when the card came from a photo/scan: when it was uploaded. Until
    *  someone edits it in the app, the card shows "Uploaded" with this date. */
   uploadedAt?: string;

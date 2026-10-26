@@ -172,7 +172,7 @@ export function CardDetail() {
                 const where = locationLabelOf(state, it.locationId);
                 return (
                   <li key={it.id}>
-                    <span className="item-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}</span>
+                    <span className="item-name">{(it.qty ?? 1) > 1 && <span className="qty-chip">{it.qty}×</span>}{it.name}{it.alias && <span className="item-alias" title="The name the team used before a clean-up"> “{it.alias}”</span>}</span>
                     {it.detail && <span className="item-detail">{it.detail}</span>}
                     {it.photo ? (
                       <button
@@ -195,6 +195,8 @@ export function CardDetail() {
           </div>
         );
       })}
+
+      <CardHistory card={card} />
 
       <div className="detail-actions">
         <button className="btn btn-primary" onClick={onSharePdf} disabled={pdfBusy}>
@@ -374,6 +376,40 @@ function SetupPhotos({ card, onView }: { card: PrefCard; onView: (src: string, a
         ))}
       </div>
       <PhiNote />
+    </div>
+  );
+}
+
+// Who changed what on this card, newest first. The printed card carries only
+// the last few; the full list (up to the cap) lives here.
+function CardHistory({ card }: { card: PrefCard }) {
+  const [all, setAll] = useState(false);
+  const list = card.history ?? [];
+  if (!list.length) return null;
+  const shown = all ? list : list.slice(0, 5);
+  return (
+    <div className="card section-card card-history">
+      <div className="card-head">
+        <h2>History</h2>
+        <span className="pill">{list.length}</span>
+      </div>
+      <ul className="history-list">
+        {shown.map((e, i) => (
+          <li key={`${e.at}-${i}`}>
+            <span className="history-who">
+              {stampLine(e.by, e.at)}{e.role && <span className="muted"> · {e.role}</span>}
+            </span>
+            <ul>
+              {e.changes.map((c, j) => <li key={j}>{c}</li>)}
+            </ul>
+          </li>
+        ))}
+      </ul>
+      {list.length > 5 && (
+        <button className="link small" onClick={() => setAll((v) => !v)}>
+          {all ? "Show fewer" : `Show all ${list.length} edits`}
+        </button>
+      )}
     </div>
   );
 }
