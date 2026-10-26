@@ -15,9 +15,9 @@ BUNDLE_ID = "com.stevennelson.orsync"
 GROUP_NAME = "ORSync Pro"
 PRODUCTS = [
   { id: "orsync_pro_monthly", name: "ORSync Pro Monthly", period: "ONE_MONTH", price: "4.99",
-    desc: "Your preference cards backed up and synced on every device." },
+    desc: "Your cards backed up and synced on every device." },
   { id: "orsync_pro_annual", name: "ORSync Pro Annual", period: "ONE_YEAR", price: "39.99",
-    desc: "A year of your preference cards backed up and synced everywhere." },
+    desc: "A year of your cards backed up and synced everywhere." },
 ]
 REVIEW_NOTE = "Pro backs up the user's personal preference-card library to ORSync Cloud and syncs it across their devices. Open Settings > Plan > See plans to find it."
 
@@ -119,36 +119,35 @@ PRODUCTS.each_with_index do |p, i|
   end
 
   step("#{p[:id]}: price #{p[:price]} USD + equalized worldwide") do
-    existing = all(token, "/v1/subscriptions/#{sid}/prices?limit=200")
-    next "already priced (#{existing.size} storefronts)" if existing.any?
-    points = all(token, "/v1/subscriptions/#{sid}/pricePoints?filter[territory]=USA&limit=200")
+    terr_of = ->(row) { row.dig("relationships", "territory", "data", "id") }
+    priced = all(token, "/v1/subscriptions/#{sid}/prices?include=territory&limit=200").map { |r| terr_of.call(r) }.compact.uniq
+    points = all(token, "/v1/subscriptions/#{sid}/pricePoints?filter[territory]=USA&include=territory&limit=200")
     us = points.find { |pt| pt.dig("attributes", "customerPrice") == p[:price] } or raise "no US price point for #{p[:price]}"
-    api(token, :post, "/v1/subscriptionPrices", { data: { type: "subscriptionPrices",
-      attributes: { preserveCurrentPrice: false },
-      relationships: {
-        subscription: { data: { type: "subscriptions", id: sid } },
-        subscriptionPricePoint: { data: { type: "subscriptionPricePoints", id: us["id"] } },
-        territory: { data: { type: "territories", id: "USA" } },
-      } } })
-    eq = all(token, "/v1/subscriptionPricePoints/#{us['id']}/equalizations?limit=200")
-    done = 1
+    post_price = lambda do |point_id, terr|
+      api(token, :post, "/v1/subscriptionPrices", { data: { type: "subscriptionPrices",
+        attributes: { preserveCurrentPrice: false },
+        relationships: {
+          subscription: { data: { type: "subscriptions", id: sid } },
+          subscriptionPricePoint: { data: { type: "subscriptionPricePoints", id: point_id } },
+          territory: { data: { type: "territories", id: terr } },
+        } } })
+    end
+    added = 0
+    failed = []
+    unless priced.include?("USA")
+      post_price.call(us["id"], "USA"); added += 1; priced << "USA"
+    end
+    eq = all(token, "/v1/subscriptionPricePoints/#{us['id']}/equalizations?include=territory&limit=200")
     eq.each do |pt|
-      terr = pt.dig("relationships", "territory", "data", "id")
-      next if terr.nil? || terr == "USA"
+      terr = terr_of.call(pt)
+      next if terr.nil? || priced.include?(terr)
       begin
-        api(token, :post, "/v1/subscriptionPrices", { data: { type: "subscriptionPrices",
-          attributes: { preserveCurrentPrice: false },
-          relationships: {
-            subscription: { data: { type: "subscriptions", id: sid } },
-            subscriptionPricePoint: { data: { type: "subscriptionPricePoints", id: pt["id"] } },
-            territory: { data: { type: "territories", id: terr } },
-          } } })
-        done += 1
-      rescue StandardError
-        # A storefront Apple won't price this way is skipped, not fatal.
+        post_price.call(pt["id"], terr); added += 1; priced << terr
+      rescue StandardError => e
+        failed << "#{terr} (#{e.message[0, 80]})"
       end
     end
-    "#{done} storefronts"
+    "#{priced.size} storefronts priced (#{added} added now)#{failed.any? ? "; skipped #{failed.size}: #{failed.first(3).join('; ')}" : ''}"
   end
 end
 
