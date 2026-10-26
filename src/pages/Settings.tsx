@@ -14,6 +14,7 @@ import { isOrsyncOwner } from "../lib/owner";
 import { RekeyReminder } from "../components/RekeyReminder";
 import { AccountSecurity } from "../components/AccountSecurity";
 import { SettingsProfileHeader } from "../components/SettingsProfileHeader";
+import { HelpContactCard } from "../components/HelpContact";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { ProfileForm } from "../components/ProfileForm";
 import { roleLabel, useProfile } from "../lib/profile";
@@ -194,6 +195,8 @@ export function Settings() {
         </p>
         <Link className="btn" to="/upgrade">See plans →</Link>
       </div>
+
+      <HelpContactCard />
 
       <div className="card settings-card">
         <h2>Vendor rep mode</h2>

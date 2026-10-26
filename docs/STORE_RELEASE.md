@@ -9,7 +9,7 @@ Links you'll paste into both stores:
 
 - Privacy policy: https://stevenl0ve.github.io/Restaurant-preview/privacy.html
 - Support URL: https://github.com/StevenL0ve/Restaurant-preview (or your email)
-- Support / sales email: bkborngaraised@gmail.com
+- Support / sales email: admin@ourgymapp.com (Settings → Help & contact; support page public/support.html)
 
 ## Before either store (10 minutes)
 

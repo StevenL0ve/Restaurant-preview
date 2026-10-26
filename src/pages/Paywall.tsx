@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Mascot } from "../components/Mascot";
 import { FREE_PERKS, PRO_PERKS, FACILITY_PERKS, hasPersonalCloud } from "../lib/tier";
-import { SALES_EMAIL } from "../lib/facilityGate";
+import { facilityPricingMailto, repLinkMailto } from "../lib/contact";
+import { useContactContext } from "../components/HelpContact";
 import { useAuth } from "../state/auth";
 import { buyPro, iapPlatform, iapReady, initIap, manageSubscriptionsUrl, proPackages, restorePro, type ProPackage } from "../lib/iap";
 
@@ -12,6 +13,7 @@ import { buyPro, iapPlatform, iapReady, initIap, manageSubscriptionsUrl, proPack
 export function Paywall() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const contact = useContactContext();
   const [pro, setPro] = useState(hasPersonalCloud());
   const [pkgs, setPkgs] = useState<ProPackage[] | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -53,12 +55,8 @@ export function Paywall() {
     } finally { setBusy(false); }
   }
 
-  const facilityMail = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent("ORSync facility pricing")}&body=${encodeURIComponent(
-    "Hi ORSync,\n\nWe'd like pricing for a facility account.\n\nHospital / facility:\nCity, state:\nYour name and role:\nAbout how many people on the OR team:\n\nThanks",
-  )}`;
-  const repMail = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent("ORSync vendor rep link")}&body=${encodeURIComponent(
-    "Hi ORSync,\n\nI'm a vendor rep and would like pricing for linking to a facility.\n\nCompany:\nFacilities I cover:\nYour name:\n\nThanks",
-  )}`;
+  const facilityMail = facilityPricingMailto(contact);
+  const repMail = repLinkMailto(contact);
 
   return (
     <div className="page page-narrow">

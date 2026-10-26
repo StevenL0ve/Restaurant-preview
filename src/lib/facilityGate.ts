@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CONTACT_EMAIL } from "./contact";
 import { getWorkspace, onWorkspaceChange } from "./workspace";
 
 // What a person gets on their own vs. with a facility. Alone, ORSync is a
@@ -59,6 +60,6 @@ export function useFacilityAccess(): FacilityAccess {
 
 // Where to send people. The store links fill in once the listings are live;
 // until then the gate page says "coming soon" instead of a dead link.
-export const SALES_EMAIL = "bkborngaraised@gmail.com";
+export const SALES_EMAIL = CONTACT_EMAIL;
 export const APP_STORE_URL = "";
 export const PLAY_STORE_URL = "";

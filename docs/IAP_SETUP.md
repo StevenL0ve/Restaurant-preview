@@ -3,7 +3,7 @@
 ORSync sells individual Pro through Apple and Google (their rules require it
 for subscriptions sold inside the app). Facility accounts and vendor rep
 links are sold directly: the app shows "Contact us for facility pricing",
-which emails bkborngaraised@gmail.com, and you invoice through Stripe.
+which emails admin@ourgymapp.com, and you invoice through Stripe.
 
 RevenueCat (free up to $2,500/month in revenue) connects both stores to one
 "pro" entitlement. The app logs in to RevenueCat with the person's ORSync

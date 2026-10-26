@@ -4,7 +4,9 @@ import { useAuth } from "../state/auth";
 import { FacilityJoinForm } from "../components/FacilityJoin";
 import { Icon, type IconName } from "../components/Icon";
 import { cloudEnabled } from "../lib/cloud";
-import { APP_STORE_URL, PLAY_STORE_URL, SALES_EMAIL, setDemo } from "../lib/facilityGate";
+import { APP_STORE_URL, PLAY_STORE_URL, setDemo } from "../lib/facilityGate";
+import { facilityPricingMailto } from "../lib/contact";
+import { useContactContext } from "../components/HelpContact";
 
 // Shown in place of a facility-only screen (carts, on call, loaners,
 // catalog) when this device isn't synced with a facility. Three ways out:
@@ -32,9 +34,7 @@ export function FacilityRequired() {
   const [joining, setJoining] = useState(false);
   const what = Object.entries(WHAT).find(([p]) => pathname === p || pathname.startsWith(p + "/"))?.[1] ?? "This";
   const canJoin = cloudEnabled() && !!user?.uid;
-  const mailto = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent("ORSync facility account")}&body=${encodeURIComponent(
-    "Hi ORSync,\n\nWe'd like a facility account for our OR.\n\nHospital / facility:\nCity, state:\nYour name and role:\nAbout how many people on the OR team:\n\nThanks",
-  )}`;
+  const mailto = facilityPricingMailto(useContactContext());
 
   return (
     <div className="page gate">
