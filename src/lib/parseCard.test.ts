@@ -162,7 +162,7 @@ describe("hospital-system printout (AORS/Genesis style)", () => {
   });
 
   it("reads staff/service/position/prep from the header block", () => {
-    expect(p.surgeonName).toBe("Wagner");
+    expect(p.surgeonName).toBe("Chad Wagner"); // "Wagner, Chad" on the printout
     expect(p.specialty).toBe("Oral-Maxillofacial");
     expect(p.position).toContain("rotate bed 180");
     expect(p.prep).toContain("Peridex");
@@ -179,7 +179,7 @@ describe("hospital-system printout (AORS/Genesis style)", () => {
     expect(names).toContain("ORAL, PLATING SYSTEM, ORTHOGNATHIC MATRIX, SYNTHES");
     expect(names).toContain("HEMOSTATS, TOWEL CLIP, NON-PERFORATING, SMALL");
     const pencil = p.sections.supplies.find((i) => i.name.startsWith("ELECTROCAUTERY PENCIL"));
-    expect(pencil?.detail).toContain("0703-046-000");
+    expect(pencil?.ref).toBe("0703-046-000"); // a wrapped catalog number lands in REF
   });
 
   it("maps hospital sections into the app's five sections", () => {
@@ -196,7 +196,7 @@ describe("hospital-system printout (AORS/Genesis style)", () => {
   it("turns quantities and Avail flags into structured qty/hold, keeps catalog numbers", () => {
     const bowls = p.sections.supplies.find((i) => i.name === "BOWLS, BLUE");
     expect(bowls?.qty).toBe(2);
-    expect(bowls?.detail).toBe("61200");
+    expect(bowls?.ref).toBe("61200");
     const chromic = p.sections.sutures.find((i) => i.name.startsWith("CHROMIC"));
     expect(chromic?.qty).toBe(2);
     expect(chromic?.hold).toBe(true); // "(Avail)" on the printout
@@ -266,7 +266,7 @@ describe("S3 cystoscopy printout", () => {
 
   it("titles from PREF CARD and reads the header block", () => {
     expect(p.procedure).toBe("Cystoscopy");
-    expect(p.surgeonName).toBe("Peterson");
+    expect(p.surgeonName).toBe("Adam Peterson");
     expect(p.specialty).toBe("Urology");
     expect(p.position).toBe("Lithotomy");
     expect(p.prep).toBe("Hibiclens");

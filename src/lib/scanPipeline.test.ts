@@ -59,7 +59,8 @@ describe("parsing a clean scan into the five sections", () => {
   it("moves plain sutures, drugs and devices out of the Supplies catch-all", () => {
     expect(names("sutures")).toContain("Monocryl 4-0 PS-2");
     expect(names("medications")).toContain("Marcaine 0.25% 20ml");
-    expect(names("equipment")).toEqual(expect.arrayContaining(["Ligasure 5mm", "Insufflator"]));
+    expect(names("equipment")).toEqual(["Insufflator"]);
+    expect(names("supplies")).toContain("Ligasure 5mm"); // a disposable handpiece, not the generator
   });
   it("leaves disposables in Supplies", () => {
     expect(names("supplies")).toEqual(expect.arrayContaining(["Lap chole pack", "Camera drape", "60 ml syringe", "Lap sponges"]));

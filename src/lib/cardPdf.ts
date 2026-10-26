@@ -54,7 +54,18 @@ export interface CardPdfEntry {
   caseLine?: string;
 }
 
+/** The PDF's built-in fonts only cover Latin-1 (+ a few marks); one stray
+ *  character outside it makes jsPDF letter-space the whole line. Fold
+ *  accents and drop anything else. */
+export function pdfSafe(s: string): string {
+  return s
+    .replace(/[″“”]/g, '"').replace(/[′‘’]/g, "'").replace(/→/g, "->").replace(/…/g, "...").replace(/[–—]/g, "-")
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x09\x0a\x0d\x20-\x7e\xa0-\xff•]/g, "");
+}
+
 const BOX_COL = 16; // the pick-ticket checkbox column
+const QR_SIZE = 84;
 
 export async function cardPdfBlob(
   card: PrefCard,
@@ -117,7 +128,7 @@ async function renderCard(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(19);
   doc.setTextColor(INK.r, INK.g, INK.b);
-  const titleLines = doc.splitTextToSize(card.procedure, usable - (link ? 118 : 90));
+  const titleLines = doc.splitTextToSize(pdfSafe(card.procedure), usable - (link ? 118 : 90));
   doc.text(titleLines, MARGIN, y);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -125,14 +136,18 @@ async function renderCard(
   doc.text("ORSync", pageW - MARGIN, MARGIN + 2, { align: "right" });
   const mascot = await loadMascot();
   if (mascot) {
+    // Jolie sits at the QR code's left edge (or just left of the name when
+    // there's no code), a bit larger than the text.
+    const size = 24;
     const tw = doc.getTextWidth("ORSync");
-    doc.addImage(mascot, "PNG", pageW - MARGIN - tw - 21, MARGIN - 10, 16, 16);
+    const mx = link?.url ? pageW - MARGIN - QR_SIZE : pageW - MARGIN - tw - size - 5;
+    doc.addImage(mascot, "PNG", mx, MARGIN - 16, size, size);
   }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   const updated = new Date(card.updatedAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  doc.text(`Updated ${updated}`, pageW - MARGIN, MARGIN + 14, { align: "right" });
+  doc.text(`Updated ${updated}`, pageW - MARGIN, MARGIN + 17, { align: "right" });
   y += titleLines.length * 20;
 
   // The way back from paper to the live version: scan the code, see the
@@ -144,9 +159,9 @@ async function renderCard(
       width: 252,
       color: { dark: "#111111", light: "#ffffff" },
     });
-    const size = 84;
+    const size = QR_SIZE;
     const qx = pageW - MARGIN - size;
-    const qy = MARGIN + 24;
+    const qy = MARGIN + 26;
     doc.addImage(qrData, "PNG", qx, qy, size, size);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
@@ -204,7 +219,7 @@ async function renderCard(
     ["Notes", card.notes],
     ["Special considerations", considerations || undefined],
   ];
-  const metaRows = meta.filter(([, v]) => v?.trim()).map(([k, v]) => [k, v as string]);
+  const metaRows = meta.filter(([, v]) => v?.trim()).map(([k, v]) => [k, pdfSafe(v as string)]);
   if (metaRows.length) {
     autoTable(doc, {
       startY: y + 2,
@@ -248,7 +263,7 @@ async function renderCard(
         ];
         if (hasRef) base.push(it.ref ?? "");
         base.push((it.locationId ? locationName?.(it.locationId) : "") ?? "");
-        return base;
+        return base.map(pdfSafe);
       }),
       theme: "plain",
       styles: { fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 0, right: 8 }, textColor: [17, 17, 17], lineColor: [230, 230, 230], lineWidth: { bottom: 0.6 } },
@@ -283,7 +298,7 @@ async function renderCard(
     doc.setFontSize(7.5);
     for (const e of recent) {
       // The PDF's built-in font has no arrow or ellipsis glyphs.
-      const text = editLine(e).replace(/→/g, "->").replace(/…/g, "...").replace(/[“”]/g, '"');
+      const text = pdfSafe(editLine(e));
       const lines = doc.splitTextToSize(text, usable) as string[];
       doc.text(lines.length > 1 ? `${lines[0].replace(/[\s;,.]+$/, "")}...` : lines[0], MARGIN, y);
       y += 10;

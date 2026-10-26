@@ -35,7 +35,7 @@ function buildSeed(
     : undefined;
   const specialty = parsed.specialty || sgMatch?.specialty || "General Surgery";
   const toItems = (arr: ParsedCard["sections"][keyof ParsedCard["sections"]]): CardItem[] =>
-    arr.map((i) => ({ id: uid("it"), name: i.name, detail: i.detail, qty: i.qty, hold: i.hold }));
+    arr.map((i) => ({ id: uid("it"), name: i.name, detail: i.detail, ref: i.ref, qty: i.qty, hold: i.hold }));
 
   const seed: PrefCard = {
     ...emptyCard(sgMatch?.id ?? "", specialty),

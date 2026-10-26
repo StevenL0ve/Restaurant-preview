@@ -22,6 +22,8 @@ export interface ParsedItem {
   qty?: number;
   /** S3's "(Avail)": pull it but keep it unopened unless asked for. */
   hold?: boolean;
+  /** Catalog / reference number printed in parentheses ("(EGIA45AVM)"). */
+  ref?: string;
 }
 
 export interface ParsedCard {
@@ -73,6 +75,16 @@ const SECTION_ALIASES: Record<string, SectionKey> = {
   "or equipment": "equipment", video: "equipment",
 };
 
+// Supply sub-sections a printout names on purpose ("Dressing", "Drapes"):
+// what the card files there stays there. Only the catch-all Supplies (and
+// facility-custom headers) let a plain suture, drug or device move out.
+const SPECIFIC_SUPPLY_HEADERS = new Set([
+  "dressing", "dressings", "drapes", "drape", "gowns/gloves", "gowns", "gloves", "blades/bits/burrs", "blades", "burrs",
+  "needles, syringes, iv", "needles", "syringes", "packs", "pack", "peel packs", "sponges", "sponge", "cautery", "positioning", "opth", "ophth",
+]);
+/** "Laparoscopic (cont)", "Supplies cont'd", "Instruments - continued" */
+const CONT_RE = /\s*[-–—]?\s*\(?\s*cont(?:'?d|inued|\.)?\s*\)?\s*$/i;
+
 // Headers that switch into "these lines are card notes" mode — the
 // NOTES/SPECIAL INSTRUCTIONS block on hospital printouts.
 const NOTES_HEADER_RE = /^notes?\s*[/&]?\s*(special\s*)?(instructions?)?$|^special\s*instructions?$|^comments?$/i;
@@ -111,7 +123,7 @@ const NOISE_RES: RegExp[] = [
 const KEYWORD_SECTION: { section: SectionKey; re: RegExp }[] = [
   { section: "sutures", re: /\b(vicryl|pds|monocryl|prolene|nylon|ethilon|silk|chromic|ethibond|maxon|biosyn|caprosyn|polysorb|v-?loc|quill|stratafix|fiberwire|mersilene|ti-?cron|surgilon|dermabond|steri-?strips?|\d-0|suture|(ct|sh|ps|fs|rb|cp)-\d)\b/i },
   { section: "medications", re: /\b(saline|irrigation|lidocaine|marcaine|bupivacaine|ropivacaine|naropin|exparel|xylocaine|epinephrine|\bepi\b|heparin|thrombin|antibiotic|cefazolin|ancef|vancomycin|vanco|gentamicin|bacitracin|kenalog|toradol|ketorolac|decadron|dexamethasone|glycine|sorbitol|sterile water|lactated ringers?|methylene blue|indigo carmine|icg|papaverine|tisseel|floseal|evicel|gelfoam|surgicel|hemostatic|\d+(\.\d+)?\s?(mg|mcg|units?)\b|\d+(\.\d+)?\s?%|local|injectable)\b/i },
-  { section: "equipment", re: /\b(unit|tower|insufflator|camera|monitor|\besu\b|bovie|generator|ligasure|harmonic|enseal|laser|cell saver|bair hugger|warmer|pump|microscope|c-?arm|fluoro|doppler|nerve monitor|nim|stealth|navigation|headlight|light\s?source|machine|drill|saw|tourniquet|console|footswitch|smoke evac\w*|stirrups|mayfield|jackson table|beach chair|arm ?board|positioner)\b/i },
+  { section: "equipment", re: /\b(unit|tower|insufflator|camera|monitor|\besu\b|bovie|generator|laser|cell saver|bair hugger|warmer|pump|microscope|c-?arm|fluoro|doppler|nerve monitor|nim|stealth|navigation|headlight|light\s?source|machine|drill|saw|tourniquet|console|footswitch|smoke evac\w*|stirrups|mayfield|jackson table|beach chair|arm ?board|positioner)\b/i },
   { section: "instruments", re: /\b(tray|set|pan|forceps|clamp|scissors|retractor|needle\s?driver|needle holder|dissector|kelly|hemostat|metz\w*|debakey|allis|babcock|kocher|army-?navy|richardson|deaver|weitlaner|gelpi|bookwalter|balfour|freer|penfield|kerrison|cobb|scalpel|knife handle|handle|elevator|rongeur|curette|osteotome|mallet|rasp)\b/i },
 ];
 
@@ -127,16 +139,26 @@ function looksLikeJunk(text: string): boolean {
   const letters = (text.match(/[a-zA-Z]/g) ?? []).length;
   if (letters < 3) return true;
   const dense = text.replace(/\s/g, "");
-  return letters / dense.length < 0.45;
+  // Digits are real content too ("VICRYL, #0, UR-6, 37\"" is mostly symbols).
+  const alnum = (text.match(/[a-zA-Z0-9]/g) ?? []).length;
+  return alnum / dense.length < 0.55;
 }
 // Leading checkbox/blank glyphs hospital printouts put before the quantity.
 const CHECKBOX_RE = /^[\s_☐□■◻▢[\]()｜|]*(?:[-–—]{1,2}\s+)?/;
+
+/** A catalog / reference code: no spaces, has a digit ("41180", "EGIA45AVM",
+ *  "0703-046-000", "LT-C02"); "REGULAR" or "fridge" are details. */
+const isRefCode = (s: string) => /^[A-Z0-9][A-Z0-9\-./]{2,}$/i.test(s) && /\d/.test(s);
 
 /** Split an item line into name + detail on clear separators only. */
 function splitDetail(line: string): ParsedItem {
   const text = line.trim();
   const paren = text.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
-  if (paren && paren[1].trim()) return { name: paren[1].trim(), detail: paren[2].trim() };
+  if (paren && paren[1].trim()) {
+    const name = paren[1].trim().replace(/[,\s]+$/, "");
+    const inner = paren[2].trim();
+    return isRefCode(inner) ? { name, ref: inner } : { name, detail: inner };
+  }
   const colon = text.match(/^([^:]+):\s+(.+)$/);
   if (colon && colon[1].trim() && !/\d$/.test(colon[1])) return { name: colon[1].trim(), detail: colon[2].trim() };
   const dash = text.match(/^(.+?)\s+(?:[—–]|-{1,2})\s+(.+)$/);
@@ -168,10 +190,15 @@ function parseItemLine(raw: string): ParsedItem | null {
 
   // "(Avail)" = pull it, keep it unopened unless asked — a structured hold.
   let hold = false;
-  if (/\(avail\.?\)\s*$/i.test(text)) {
+  if (/\(avail\.?\)\.?\s*$/i.test(text)) {
     hold = true;
-    text = text.replace(/\s*\(avail\.?\)\s*$/i, "").trim();
+    text = text.replace(/\s*\(avail\.?\)\.?\s*$/i, "").trim();
   }
+  // Printouts end lines with stray periods ("VERESS NEEDLE 120MM..").
+  text = text.replace(/\s*\.+$/, "").trim();
+  // "1 2 RELOAD…": a checkbox blank read as "1" ahead of the real count.
+  // (Not "1 60 ml syringe": there the second number is a size.)
+  text = text.replace(/^1\s+(?=\d{1,3}\s+(?!(?:ml|cc|mm|cm|fr|french|in|oz|l|g|mg|mcg|ga)\b)[A-Za-z])/i, "");
   // Leading quantity: "2 BOWLS, BLUE (61200)".
   // ("1 60 ml syringe" too: a count before a measured size.)
   const qty = text.match(/^(\d{1,3})\s+(?=\D|\d+(?:\.\d+)?\s?(?:ml|cc|mm|cm|fr|french|in|oz|l)\b)(.+)$/i);
@@ -185,8 +212,9 @@ function parseItemLine(raw: string): ParsedItem | null {
   const item = splitDetail(text);
   if (looksLikeJunk(item.name)) return null;
   return {
-    name: item.name,
+    name: item.name.replace(/[,\s]+$/, ""),
     detail: item.detail,
+    ref: item.ref,
     qty: count && count > 1 ? count : item.qty,
     hold: hold || undefined,
   };
@@ -210,8 +238,8 @@ function strongDrug(hay: string): boolean {
  *  section, unless the item doesn't fit it and is plainly a suture, a
  *  medication, or a piece of equipment (Supplies is the usual catch-all, and
  *  a header the scan missed leaves the previous section running on). */
-function placeItem(current: SectionKey, item: ParsedItem): SectionKey {
-  if (current === "instruments") return current;
+function placeItem(current: SectionKey, item: ParsedItem, specificHeader: boolean): SectionKey {
+  if (current === "instruments" || specificHeader) return current;
   const hay = `${item.name} ${item.detail ?? ""}`;
   const own = KEYWORD_SECTION.find((k) => k.section === current);
   if (own && own.re.test(hay)) return current;
@@ -223,9 +251,14 @@ function emptySections(): Record<SectionKey, ParsedItem[]> {
   return { instruments: [], sutures: [], supplies: [], medications: [], equipment: [] };
 }
 
+/** A header line as a lookup key: lower case, no trailing colon or count. */
+function headerKey(line: string): string {
+  return line.trim().replace(/[:\-–—]+\s*$/, "").replace(/\s*\(\d+\)\s*$/, "").trim().toLowerCase();
+}
+
 /** Normalize a possible section-header line to a section key, or null. */
 function asSectionHeader(line: string): SectionKey | null {
-  const cleaned = line.trim().replace(/[:\-–—]+\s*$/, "").replace(/\s*\(\d+\)\s*$/, "").trim().toLowerCase();
+  const cleaned = headerKey(line);
   if (!cleaned || cleaned.length > 30) return null;
   if (SECTION_ALIASES[cleaned]) return SECTION_ALIASES[cleaned];
   const first = cleaned.split(/[\s,/]+/)[0];
@@ -248,8 +281,21 @@ function isHeaderish(line: string): boolean {
   return dense.length > 0 && (line.match(/[a-zA-Z]/g) ?? []).length / dense.length > 0.8;
 }
 
+/** The value after a label, up to the next table column (3+ spaces). */
 function labelValue(line: string, re: RegExp): string {
-  return line.replace(re, "").replace(/^\s*[:\-–—]\s*/, "").trim();
+  return line.replace(re, "").replace(/^\s*[:\-–—]\s*/, "").trim().split(/\s{3,}/)[0].trim();
+}
+
+/** "Debuysere, Sean" -> "Sean Debuysere"; "Dr. Chen, Michael" -> "Dr. Chen". */
+function surgeonFrom(value: string): string {
+  const m = value.match(/^([A-Za-z'’-]+),\s*([A-Za-z'’-]+)(?:\s+[A-Za-z]\.?)?$/);
+  if (m && !/^dr$/i.test(m[1])) return `${m[2]} ${m[1]}`;
+  return value.replace(/,.*$/, "").trim();
+}
+
+/** Suture lengths lose their inch mark to OCR: 18" reads as 18i or 18Ảồi. */
+function fixInchMarks(line: string): string {
+  return line.replace(/(\b\d{1,2})(?:[^\x00-\x7F]{1,4}i?|i|″)(?=[\s,.;)]|$)/g, '$1"');
 }
 
 export function parseCardText(text: string): ParsedCard {
@@ -271,7 +317,18 @@ export function parseCardText(text: string): ParsedCard {
   let titleGuessed = false;
 
   // Scans leave table rules behind as runs of dashes/underscores; drop them.
-  const lines = rawLines.map((r) => r.replace(/\t/g, " ").replace(/(\s+[_—–-]+|[_—–-]{2,})[\s_—–-]*$/, "").replace(/[_—–]{3,}/g, " ").trim());
+  const lines = rawLines.map((r) => fixInchMarks(r.replace(/\t/g, " ").replace(/(\s+[_—–-]+|[_—–-]{2,})[\s_—–-]*$/, "").replace(/[_—–]{3,}/g, " ").trim()));
+  let specificHeader = false;
+
+  // "LAST UPDATE" often heads a table column with the date a row below it.
+  const upAt = lines.findIndex((l) => /\blast\s*(updated?|revised)\b/i.test(l));
+  if (upAt >= 0) {
+    for (const l of lines.slice(upAt, upAt + 3)) {
+      const m = l.match(/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b/);
+      const d = m ? parseLooseDate(m[0]) : undefined;
+      if (d) { out.sourceUpdated = d; break; }
+    }
+  }
   // Section names, for spotting a header's broken echo ("INSTRU" under "INSTRUMENTS").
   const headerWords = Object.keys(SECTION_ALIASES).filter((k) => /^[a-z]+$/.test(k) && k.length >= 6);
   for (let i = 0; i < lines.length; i++) {
@@ -302,7 +359,9 @@ export function parseCardText(text: string): ParsedCard {
         if (rawValue) notesParts.push(`Gloves: ${rawValue}`);
         const sizes = rawValue.match(/(?:^|[^\d.])(?:5|6|7|8|9)(?:\.5)?(?![\d.])/g) ?? [];
         const g = parseGloves(rawValue);
-        if (sizes.length === 1 && g.size && !out.gloveSize) out.gloveSize = g.size;
+        // "8/8" (double-gloved, same size) is still one size.
+        const oneSize = new Set(sizes.map((x) => x.replace(/[^\d.]/g, ""))).size === 1;
+        if (oneSize && g.size && !out.gloveSize) out.gloveSize = g.size;
         if (sizes.length <= 1 && g.type && !/\d|\b(dr|over|under)\b/i.test(g.type) && g.type.length <= 40 && !out.gloveType) out.gloveType = g.type;
         continue;
       }
@@ -326,16 +385,28 @@ export function parseCardText(text: string): ParsedCard {
         continue;
       }
       if (value && !out[label.key]) {
-        if (label.key === "surgeonName") out.surgeonName = value.replace(/,.*$/, "").trim();
+        if (label.key === "surgeonName") out.surgeonName = surgeonFrom(value);
         else (out as unknown as Record<string, string>)[label.key] = value;
       }
       continue;
+    }
+
+    // 2b) "Laparoscopic (cont)": the section carries on from the last column.
+    if (CONT_RE.test(line) && !/\d/.test(line) && line.length <= 40 && sawSectionHeader) {
+      const base = line.replace(CONT_RE, "").trim();
+      if (base && isHeaderish(base)) {
+        const known = asSectionHeader(base);
+        if (known) { current = known; specificHeader = SPECIFIC_SUPPLY_HEADERS.has(headerKey(base)); }
+        lastItem = null;
+        continue;
+      }
     }
 
     // 3) Section headers.
     const header = asSectionHeader(line);
     if (header && !/^\d/.test(line)) {
       current = header;
+      specificHeader = SPECIFIC_SUPPLY_HEADERS.has(headerKey(line));
       inNotes = false;
       sawSectionHeader = true;
       lastItem = null;
@@ -355,6 +426,7 @@ export function parseCardText(text: string): ParsedCard {
       const next = lines.slice(i + 1).find((l) => l !== "");
       if (next && isItemish(next)) {
         current = guessSection({ name: line });
+        specificHeader = false;
         lastItem = null;
         dropProcList = false;
         continue;
@@ -389,10 +461,14 @@ export function parseCardText(text: string): ParsedCard {
 
     // 7) Wrapped-line stitching before treating it as a new item.
     if (lastItem) {
-      // "(0703-046-000)" — a catalog number wrapped onto its own line.
-      if (/^\(.+\)$/.test(line)) {
-        const inner = line.slice(1, -1).trim();
-        lastItem.detail = lastItem.detail ? `${lastItem.detail} · ${inner}` : inner;
+      // "(0703-046-000)" or "(250-070-520). (Avail)": a catalog number
+      // wrapped onto its own line, maybe with the hold flag after it.
+      const wrapped = line.match(/^\(([^)]+)\)\.?\s*(\(avail\.?\))?\.?$/i);
+      if (wrapped) {
+        const inner = wrapped[1].trim();
+        if (isRefCode(inner) && !lastItem.ref) lastItem.ref = inner;
+        else lastItem.detail = lastItem.detail ? `${lastItem.detail} · ${inner}` : inner;
+        if (wrapped[2]) lastItem.hold = true;
         lastEndedWithComma = false;
         continue;
       }
@@ -408,7 +484,7 @@ export function parseCardText(text: string): ParsedCard {
     const item = parseItemLine(line);
     if (!item?.name) continue;
     if (current) {
-      out.sections[placeItem(current, item)].push(item);
+      out.sections[placeItem(current, item, specificHeader)].push(item);
     } else {
       looseItems.push(item);
     }

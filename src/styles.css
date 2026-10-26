@@ -735,7 +735,7 @@ a { color: inherit; }
 .meta-row:last-child { border-bottom: none; }
 .meta-row.note { flex-direction: column; gap: 4px; }
 .meta-label { width: 92px; flex-shrink: 0; color: var(--muted); font-size: 12.5px; font-weight: 600; padding-top: 1px; }
-.meta-value { flex: 1; line-height: 1.5; }
+.meta-value { flex: 1; line-height: 1.5; white-space: pre-line; }
 
 /* Section cards + item lists */
 .section-card { margin-bottom: 14px; }
