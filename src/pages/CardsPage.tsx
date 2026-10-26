@@ -57,7 +57,7 @@ export function CardsPage() {
         <Mascot size={78} className="dash-mascot" />
         <div className="dash-hero-text">
           <h1 className="page-title"><NavIcon name="cards" size={40} />Ready for your next case</h1>
-          <p>Your preference cards, your way. No hospital login, works offline.</p>
+          <p>Your preference cards, your way. On your phone, and synced with your OR.</p>
         </div>
         <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>
           <Icon name="plus" size={17} /> New card
