@@ -1,4 +1,4 @@
-# Rerun: attach the newest processed build (build 113: Sterile processing, item search).
+# Rerun: attach the newest processed build (build 114: App Store subscriptions).
 # Prepares the ORSync App Store version for review through the App Store
 # Connect API: verifies the draft and builds, then fills in everything the
 # API allows. Each step is independent; a failure is reported and the rest

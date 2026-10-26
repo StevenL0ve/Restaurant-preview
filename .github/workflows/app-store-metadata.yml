@@ -16,7 +16,7 @@ on:
   # one also runs whenever the listing files change on the release branch.
   push:
     branches: ["claude/prefcard-app-rebuild-47hgvc"]
-    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", ".github/workflows/app-store-metadata.yml"]
+    paths: ["fastlane/metadata/**", "fastlane/asc_prepare.rb", "fastlane/asc_subscriptions.rb", ".github/workflows/app-store-metadata.yml"]
 
 jobs:
   metadata:
@@ -51,3 +51,12 @@ jobs:
           ASC_CONTACT_PHONE: ${{ secrets.ASC_CONTACT_PHONE }}
           FASTLANE_SKIP_UPDATE_CHECK: "1"
         run: ruby fastlane/asc_prepare.rb
+
+      - name: Create the Pro subscriptions and their prices
+        if: always()
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID || 'WGG9X24KSU' }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: /home/runner/asc/AuthKey.p8
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+        run: ruby fastlane/asc_subscriptions.rb
