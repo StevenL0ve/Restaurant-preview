@@ -152,7 +152,7 @@ export function CardDetail() {
             {card.uploadedAt && card.uploadedAt !== "pending" && card.uploadedAt === card.updatedAt
               ? <>Uploaded: {stampLine(card.updatedBy, card.uploadedAt)}</>
               : <>Last updated: {stampLine(card.updatedBy, card.updatedAt)}</>}
-            {card.sourceUpdated && <> · Paper card last updated {card.sourceUpdated}</>}
+            {card.sourceUpdated && <> · Paper card last updated {new Date(`${card.sourceUpdated}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</>}
           </p>
         )}
       </div>

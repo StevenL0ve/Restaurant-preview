@@ -73,7 +73,7 @@ const SECTION_ALIASES: Record<string, SectionKey> = {
   irrigation: "medications", drug: "medications", drugs: "medications", "medications & irrigation": "medications",
   pharmacy: "medications", solutions: "medications",
   // equipment
-  equipment: "equipment", equip: "equipment", equipments: "equipment", devices: "equipment",
+  equipment: "equipment", equip: "equipment", "positioning room": "equipment", "positioning equipment": "equipment", equipments: "equipment", devices: "equipment",
   "or equipment": "equipment", video: "equipment",
 };
 
@@ -203,7 +203,7 @@ function parseItemLine(raw: string): ParsedItem | null {
   text = text.replace(/^1\s+(?=\d{1,3}\s+(?!(?:ml|cc|mm|cm|fr|french|in|oz|l|g|mg|mcg|ga)\b)[A-Za-z])/i, "");
   // Leading quantity: "2 BOWLS, BLUE (61200)".
   // ("1 60 ml syringe" too: a count before a measured size.)
-  const qty = text.match(/^(\d{1,3})\s+(?=\D|\d+(?:\.\d+)?\s?(?:ml|cc|mm|cm|fr|french|in|oz|l)\b)(.+)$/i);
+  const qty = text.match(/^(\d{1,3})\s+(?=\D|\d+(?:\.\d+)?\s?(?:ml|cc|mm|cm|fr|french|in|oz|l)\b|\d+(?:\.\d+)?\s?%)(.+)$/i);
   let count: number | undefined;
   if (qty) {
     count = parseInt(qty[1], 10);
@@ -246,6 +246,9 @@ function placeItem(current: SectionKey, item: ParsedItem, specificHeader: boolea
   const own = KEYWORD_SECTION.find((k) => k.section === current);
   if (own && own.re.test(hay)) return current;
   const guess = guessSection(item);
+  // A stocked item with a catalog number is a disposable (tourniquet cuffs,
+  // pump tubing), not the device itself.
+  if (guess === "equipment" && item.ref) return current;
   return guess === "sutures" || guess === "medications" || guess === "equipment" ? guess : current;
 }
 
@@ -261,10 +264,17 @@ function headerKey(line: string): string {
 /** Normalize a possible section-header line to a section key, or null. */
 function asSectionHeader(line: string): SectionKey | null {
   const cleaned = headerKey(line);
-  if (!cleaned || cleaned.length > 30) return null;
+  if (!cleaned) return null;
   if (SECTION_ALIASES[cleaned]) return SECTION_ALIASES[cleaned];
-  const first = cleaned.split(/[\s,/]+/)[0];
-  return SECTION_ALIASES[first] ?? null;
+  // Long sub-section names ("Sterile Supplies, Needles, Syringes, IV
+  // Supplies", "Sterile Supplies Drapes"): match their opening words.
+  if (cleaned.length > 30 && (/\d/.test(cleaned) || cleaned.length > 60)) return null;
+  const words = cleaned.split(/[\s,/]+/).filter(Boolean);
+  for (let n = Math.min(words.length, 3); n >= 1; n--) {
+    const k = SECTION_ALIASES[words.slice(0, n).join(" ")];
+    if (k) return k;
+  }
+  return null;
 }
 
 /** Item-shaped: a checkbox/quantity prefix ("_ 1 SCOPE…") or a bullet. */
@@ -303,6 +313,8 @@ function fixInchMarks(line: string): string {
 export function parseCardText(text: string): ParsedCard {
   const out: ParsedCard = { sections: emptySections(), itemCount: 0 };
   const notesParts: string[] = [];
+  let notesBulleted = false;
+  let notesStart = 0; // where the NOTES block's own lines begin
   const rawLines = text.split(/\r?\n/);
 
   let current: SectionKey | null = null;
@@ -317,6 +329,8 @@ export function parseCardText(text: string): ParsedCard {
   // lines; once that label is seen, such lines are list debris, not items.
   let dropProcList = false;
   let titleGuessed = false;
+  // A procedure list that ends with "," continues on the next line ("Knee").
+  let procWrap = false;
 
   // Scans leave table rules behind as runs of dashes/underscores; drop them.
   const lines = rawLines.map((r) => fixInchMarks(r.replace(/\t/g, " ").replace(/(\s+[_—–-]+|[_—–-]{2,})[\s_—–-]*$/, "").replace(/[_—–]{3,}/g, " ").trim()));
@@ -343,6 +357,7 @@ export function parseCardText(text: string): ParsedCard {
     // 1) Notes-section header ("NOTES/SPECIAL INSTRUCTIONS").
     if (NOTES_HEADER_RE.test(line.replace(/[:\-–—]+\s*$/, "").trim())) {
       inNotes = true;
+      notesStart = notesParts.length;
       current = null;
       lastItem = null;
       continue;
@@ -354,6 +369,7 @@ export function parseCardText(text: string): ParsedCard {
       const rawValue = labelValue(line, label.re);
       const value = label.strip ? rawValue.replace(label.strip, "") : rawValue;
       dropProcList = label.key === "procedure";
+      procWrap = label.key === "procedure" && /[,;]\s*$/.test(rawValue);
       if (label.key === "ignore") continue;
       if (label.key === "gloves") {
         // The full line stays in notes (double-gloving, per-person sizes);
@@ -396,6 +412,12 @@ export function parseCardText(text: string): ParsedCard {
       }
       continue;
     }
+
+    if (procWrap && !isItemish(line) && !/:/.test(line)) {
+      procWrap = /[,;]\s*$/.test(line);
+      continue;
+    }
+    procWrap = false;
 
     // 2b) "Laparoscopic (cont)": the section carries on from the last column.
     if (CONT_RE.test(line) && !/\d/.test(line) && line.length <= 40 && sawSectionHeader) {
@@ -445,7 +467,16 @@ export function parseCardText(text: string): ParsedCard {
 
     // 4) Inside the notes block, every content line is a note.
     if (inNotes) {
-      notesParts.push(line.replace(BULLET_RE, "").trim());
+      const bulleted = /^\s*[•▪◦●*·-]/.test(line);
+      const text = line.replace(/^\s*[•▪◦●*·-]\s*/, "").replace(BULLET_RE, "").trim();
+      if (!text) continue; // an empty bullet
+      // A bulleted list's unbulleted lines are wraps of the bullet above.
+      if (!bulleted && notesBulleted && notesParts.length > notesStart) {
+        notesParts[notesParts.length - 1] += ` ${text}`;
+      } else {
+        notesParts.push(text);
+      }
+      if (bulleted) notesBulleted = true;
       continue;
     }
 
@@ -525,7 +556,8 @@ export function parseGlovePair(raw: string): { under: string; over: string } | n
   const over = t.match(new RegExp(`${SZ}\\s*(?:over|outer)\\b|\\b(?:over|outer)\\s*:?\\s*${SZ}(?![\\d.])`));
   const under = t.match(new RegExp(`${SZ}\\s*(?:under|inner|indicator)\\b|\\b(?:under|inner|indicator)\\s*:?\\s*${SZ}(?![\\d.])`));
   if (over && under) return { over: (over[1] ?? over[2])!, under: (under[1] ?? under[2])! };
-  const slash = t.match(new RegExp(`(?:^|[^\\d.])${SZ}\\s*/\\s*${SZ}(?![\\d.])`));
+  // "8/8", "7.5/8", "8 Blue/7.5 white x 2" (a color or brand between).
+  const slash = t.match(new RegExp(`(?:^|[^\\d.])${SZ}(?:\\s*[a-z]+)?\\s*/\\s*${SZ}(?![\\d.])`));
   if (slash && (t.match(/\d/g) ?? []).length <= 4) return { under: slash[1], over: slash[2] };
   return null;
 }

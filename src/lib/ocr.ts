@@ -307,10 +307,14 @@ export function cropToPaper(src: HTMLCanvasElement): HTMLCanvasElement {
   const rowFrac = (y: number) => { let n = 0; for (let x = 0; x < sw; x++) if (bright(lum(x, y))) n++; return n / sw; };
   const colFrac = (x: number) => { let n = 0; for (let y = 0; y < sh; y++) if (bright(lum(x, y))) n++; return n / sh; };
   let top = 0, bottom = sh - 1, left = 0, right = sw - 1;
-  while (top < sh - 1 && rowFrac(top) < 0.3) top++;
-  while (bottom > top && rowFrac(bottom) < 0.3) bottom--;
-  while (left < sw - 1 && colFrac(left) < 0.3) left++;
-  while (right > left && colFrac(right) < 0.3) right--;
+  // Only trim edges that are clearly background (mostly dark); a dim edge
+  // of the card itself (a photo of a screen darkens toward the corners)
+  // stays, so labels at the margin aren't cut.
+  const EDGE = 0.15;
+  while (top < sh - 1 && rowFrac(top) < EDGE) top++;
+  while (bottom > top && rowFrac(bottom) < EDGE) bottom--;
+  while (left < sw - 1 && colFrac(left) < EDGE) left++;
+  while (right > left && colFrac(right) < EDGE) right--;
   const cw = (right - left + 1) / sw, ch = (bottom - top + 1) / sh;
   if (cw < 0.3 || ch < 0.3 || (cw > 0.97 && ch > 0.97)) return src;
   const pad = 4;
@@ -344,8 +348,9 @@ async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrPro
     },
   });
   try {
-    // One column of variable-size text keeps table rows (qty · item) together.
-    await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN, preserve_interword_spaces: "1" });
+    // Automatic page layout; reading order is then rebuilt from each word's
+    // box (rows, columns) the same way as for the phone's own recognizer.
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO, preserve_interword_spaces: "1" });
     const run = async (degrees: 0 | 90 | 270, clean: boolean) => {
       const c = rotate(source, degrees);
       let img: Blob = await canvasBlob(c, "image/png");
@@ -356,8 +361,16 @@ async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrPro
         ctx.putImageData(px, 0, 0);
         img = await canvasBlob(c, "image/png");
       }
-      const { data } = await worker.recognize(img);
-      return { text: (data.text ?? "").trim(), confidence: data.confidence ?? 0 };
+      const { data } = await worker.recognize(img, {}, { text: true, blocks: true });
+      const words: OcrLine[] = [];
+      for (const b of data.blocks ?? []) for (const para of b.paragraphs) for (const ln of para.lines) for (const w of ln.words) {
+        const t = w.text.trim();
+        if (!t || w.confidence < 20) continue;
+        const { x0, y0, x1, y1 } = w.bbox;
+        words.push({ text: t, x: x0 / c.width, y: y0 / c.height, w: (x1 - x0) / c.width, h: (y1 - y0) / c.height });
+      }
+      const text = words.length ? buildLines(words).join("\n") : (data.text ?? "").trim();
+      return { text, confidence: data.confidence ?? 0 };
     };
     let best = await run(0, true);
     if (best.confidence < 60) {
