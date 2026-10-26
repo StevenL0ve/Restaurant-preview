@@ -58,9 +58,10 @@ export const FREE_PERKS = [
 export const FACILITY_PERKS = [
   "One shared library for the whole OR, in ORSync Cloud",
   "Members' shared cards, carts, QC, on-call, loaners, and catalog stored off-device and synced live",
-  `Up to ${FACILITY_SEATS} members; admins approve, remove, and rotate the password`,
+  "Admins approve who joins, remove anyone, and rotate the password",
   "Email support",
 ] as const;
+// Facility and rep links are sold directly (email for pricing), not in the app.
 
 /** Scaffold "purchase": records the entitlement locally. Real IAP replaces this. */
 export function grantProLocally(): void {

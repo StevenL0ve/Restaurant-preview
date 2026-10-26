@@ -45,6 +45,7 @@ import { useFacilityAccess } from "./lib/facilityGate";
 import { usePendingRequests } from "./lib/approvals";
 import { refreshFacilities } from "./state/cloudSync";
 import { JoinLinkPage } from "./pages/JoinLinkPage";
+import { initIap } from "./lib/iap";
 
 
 // Facility-only screens: with a facility they're the real thing; in demo
@@ -118,6 +119,9 @@ export default function App() {
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [user?.uid]);
+
+  // Individual Pro (App Store / Google Play): refresh the entitlement at launch.
+  useEffect(() => { if (user?.uid) void initIap(user.uid).catch(() => undefined); }, [user?.uid]);
 
   // Admins: a toast when someone new asks to join.
   const pending = usePendingRequests();

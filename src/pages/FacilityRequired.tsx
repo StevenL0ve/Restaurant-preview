@@ -95,7 +95,7 @@ export function FacilityRequired() {
           Email us and we'll set it up with you.
         </p>
         <div className="form-actions">
-          <a className="btn btn-primary" href={mailto}>Email {SALES_EMAIL}</a>
+          <a className="btn btn-primary" href={mailto}>Contact us for facility pricing</a>
         </div>
         <div className="gate-stores">
           {APP_STORE_URL ? <a className="btn btn-sm" href={APP_STORE_URL} target="_blank" rel="noreferrer">App Store</a> : <span className="pill">App Store: coming soon</span>}
