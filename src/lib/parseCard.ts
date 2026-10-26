@@ -102,16 +102,22 @@ const NOISE_RES: RegExp[] = [
   /^\d+(\.\d+)?%$/, // zoom levels
   /^\d+\s*\/\s*\d+$/, // "2 / 2"
   /^search$/i,
+  /\w=\d+\s*$/, // URL query debris ("…card=4138")
+  /\b[\w-]+\.(com|org|net|gov|edu|mil)\b/i, // web addresses, even OCR-garbled
   /^[\s\-—_=~.·•]*$/, // rules / separators / empty
 ];
 
 // Keyword hints used to guess a section for items with no section header.
 const KEYWORD_SECTION: { section: SectionKey; re: RegExp }[] = [
-  { section: "sutures", re: /\b(vicryl|pds|monocryl|prolene|nylon|silk|chromic|ethibond|dermabond|stratafix|\d-0|suture)\b/i },
-  { section: "medications", re: /\b(saline|irrigation|lidocaine|marcaine|bupivacaine|xylocaine|epinephrine|\bepi\b|heparin|thrombin|antibiotic|cefazolin|ancef|gelfoam|surgicel|hemostatic|\d+\s?(mg|ml|cc|units?)\b|local|injectable)\b/i },
-  { section: "equipment", re: /\b(unit|tower|insufflator|camera|monitor|\besu\b|bovie|generator|pump|warmer|microscope|c-?arm|headlight|light\s?source|machine|drill|saw|tourniquet|console|footswitch)\b/i },
-  { section: "instruments", re: /\b(tray|set|pan|forceps|clamp|scissors|retractor|needle\s?driver|dissector|kelly|hemostat|scalpel|blade|handle|elevator|rongeur|curette|osteotome)\b/i },
+  { section: "sutures", re: /\b(vicryl|pds|monocryl|prolene|nylon|ethilon|silk|chromic|ethibond|maxon|biosyn|caprosyn|polysorb|v-?loc|quill|stratafix|fiberwire|mersilene|ti-?cron|surgilon|dermabond|steri-?strips?|\d-0|suture|(ct|sh|ps|fs|rb|cp)-\d)\b/i },
+  { section: "medications", re: /\b(saline|irrigation|lidocaine|marcaine|bupivacaine|ropivacaine|naropin|exparel|xylocaine|epinephrine|\bepi\b|heparin|thrombin|antibiotic|cefazolin|ancef|vancomycin|vanco|gentamicin|bacitracin|kenalog|toradol|ketorolac|decadron|dexamethasone|glycine|sorbitol|sterile water|lactated ringers?|methylene blue|indigo carmine|icg|papaverine|tisseel|floseal|evicel|gelfoam|surgicel|hemostatic|\d+(\.\d+)?\s?(mg|mcg|units?)\b|\d+(\.\d+)?\s?%|local|injectable)\b/i },
+  { section: "equipment", re: /\b(unit|tower|insufflator|camera|monitor|\besu\b|bovie|generator|ligasure|harmonic|enseal|laser|cell saver|bair hugger|warmer|pump|microscope|c-?arm|fluoro|doppler|nerve monitor|nim|stealth|navigation|headlight|light\s?source|machine|drill|saw|tourniquet|console|footswitch|smoke evac\w*|stirrups|mayfield|jackson table|beach chair|arm ?board|positioner)\b/i },
+  { section: "instruments", re: /\b(tray|set|pan|forceps|clamp|scissors|retractor|needle\s?driver|needle holder|dissector|kelly|hemostat|metz\w*|debakey|allis|babcock|kocher|army-?navy|richardson|deaver|weitlaner|gelpi|bookwalter|balfour|freer|penfield|kerrison|cobb|scalpel|knife handle|handle|elevator|rongeur|curette|osteotome|mallet|rasp)\b/i },
 ];
+
+// Disposable-sounding words that keep an item in Supplies even when it also
+// names a device or drug ("camera drape", "60 ml syringe", "saw blade").
+const SUPPLY_WORDS_RE = /\b(drape|cover|sleeve|bag|bit|blade|tubing|pad|electrode|pencil|tip|cord|syringe|needle|cup|basin|bowl|sponge|lap|towel|glove|gown|canister|liner|cable|trocar|sheath)s?\b/i;
 
 const BULLET_RE = /^\s*(?:[-–—•*·▪◻☐□■◦●○‣_]+|\d+[.)]|[a-z][.)])\s+/i;
 
@@ -135,6 +141,15 @@ function splitDetail(line: string): ParsedItem {
   if (colon && colon[1].trim() && !/\d$/.test(colon[1])) return { name: colon[1].trim(), detail: colon[2].trim() };
   const dash = text.match(/^(.+?)\s+(?:[—–]|-{1,2})\s+(.+)$/);
   if (dash && dash[1].trim() && dash[2].trim()) return { name: dash[1].trim(), detail: dash[2].trim() };
+  // Scanned tables keep their column gaps as 3+ spaces: "Lap sponges   10"
+  // is a quantity column, "Monocryl 4-0 PS-2   Y3216H" a catalog column.
+  const cols = text.match(/^(.+?)\s{3,}(.+)$/);
+  if (cols && cols[1].trim()) {
+    const right = cols[2].trim();
+    const n = right.match(/^(\d{1,3})(?:\s*(?:ea|each|pk|x))?$/i);
+    if (n) return { name: cols[1].trim(), qty: parseInt(n[1], 10) > 1 ? parseInt(n[1], 10) : undefined };
+    return { name: cols[1].trim(), detail: right.replace(/\s{2,}/g, " · ") };
+  }
   // Trailing quantity ("Raytec x2", "Towels qty 4", "Blades 2 ea") becomes a
   // structured qty, not detail text.
   const qty = text.match(/^(.+?)\s+(?:[x×]\s?(\d+)|qty\.?\s*(\d+)|(\d+)\s?(?:ea|each|pk|packs?))\s*$/i);
@@ -158,7 +173,8 @@ function parseItemLine(raw: string): ParsedItem | null {
     text = text.replace(/\s*\(avail\.?\)\s*$/i, "").trim();
   }
   // Leading quantity: "2 BOWLS, BLUE (61200)".
-  const qty = text.match(/^(\d{1,3})\s+(?=\D)(.+)$/);
+  // ("1 60 ml syringe" too: a count before a measured size.)
+  const qty = text.match(/^(\d{1,3})\s+(?=\D|\d+(?:\.\d+)?\s?(?:ml|cc|mm|cm|fr|french|in|oz|l)\b)(.+)$/i);
   let count: number | undefined;
   if (qty) {
     count = parseInt(qty[1], 10);
@@ -178,8 +194,29 @@ function parseItemLine(raw: string): ParsedItem | null {
 
 function guessSection(item: ParsedItem): SectionKey {
   const hay = `${item.name} ${item.detail ?? ""}`;
-  for (const { section, re } of KEYWORD_SECTION) if (re.test(hay)) return section;
+  for (const { section, re } of KEYWORD_SECTION) {
+    if (!re.test(hay)) continue;
+    if ((section === "equipment" || section === "medications") && SUPPLY_WORDS_RE.test(item.name) && !strongDrug(hay)) continue;
+    return section;
+  }
   return "supplies";
+}
+
+function strongDrug(hay: string): boolean {
+  return /\b(lidocaine|marcaine|bupivacaine|ropivacaine|exparel|epinephrine|heparin|thrombin|cefazolin|ancef|vancomycin|gentamicin|kenalog|toradol|ketorolac|dexamethasone|papaverine)\b/i.test(hay);
+}
+
+/** Where an item goes when it sits under a section header: the header's
+ *  section, unless the item doesn't fit it and is plainly a suture, a
+ *  medication, or a piece of equipment (Supplies is the usual catch-all, and
+ *  a header the scan missed leaves the previous section running on). */
+function placeItem(current: SectionKey, item: ParsedItem): SectionKey {
+  if (current === "instruments") return current;
+  const hay = `${item.name} ${item.detail ?? ""}`;
+  const own = KEYWORD_SECTION.find((k) => k.section === current);
+  if (own && own.re.test(hay)) return current;
+  const guess = guessSection(item);
+  return guess === "sutures" || guess === "medications" || guess === "equipment" ? guess : current;
 }
 
 function emptySections(): Record<SectionKey, ParsedItem[]> {
@@ -231,8 +268,12 @@ export function parseCardText(text: string): ParsedCard {
   // S3 prints the PROCEDURES list over several wrapped, semicolon-packed
   // lines; once that label is seen, such lines are list debris, not items.
   let dropProcList = false;
+  let titleGuessed = false;
 
-  const lines = rawLines.map((r) => r.replace(/\t/g, " ").trim());
+  // Scans leave table rules behind as runs of dashes/underscores; drop them.
+  const lines = rawLines.map((r) => r.replace(/\t/g, " ").replace(/(\s+[_—–-]+|[_—–-]{2,})[\s_—–-]*$/, "").replace(/[_—–]{3,}/g, " ").trim());
+  // Section names, for spotting a header's broken echo ("INSTRU" under "INSTRUMENTS").
+  const headerWords = Object.keys(SECTION_ALIASES).filter((k) => /^[a-z]+$/.test(k) && k.length >= 6);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!line) { lastEndedWithComma = false; continue; }
@@ -277,6 +318,13 @@ export function parseCardText(text: string): ParsedCard {
         }
         continue;
       }
+      // A labeled "Procedure:" beats a title guessed from the first line
+      // (often a banner like "UNIVERSAL" or the hospital's name).
+      if (value && label.key === "procedure" && titleGuessed) {
+        out.procedure = value;
+        titleGuessed = false;
+        continue;
+      }
       if (value && !out[label.key]) {
         if (label.key === "surgeonName") out.surgeonName = value.replace(/,.*$/, "").trim();
         else (out as unknown as Record<string, string>)[label.key] = value;
@@ -294,6 +342,10 @@ export function parseCardText(text: string): ParsedCard {
       dropProcList = false;
       continue;
     }
+
+    // 3a) A fragment of a section name on its own line is scan debris.
+    const bare = line.toLowerCase().replace(/[^a-z]/g, "");
+    if (bare.length >= 4 && bare.length === line.replace(/[\s.:]/g, "").length && headerWords.some((wd) => wd !== bare && wd.startsWith(bare))) continue;
 
     // 3b) Facility-custom section headers ("Urology", specialty carts):
     //     once the printout has shown real sections, a short clean line whose
@@ -330,6 +382,7 @@ export function parseCardText(text: string): ParsedCard {
     if (!out.procedure && !current && !isBullet && !sawSectionHeader) {
       if (!looksLikeJunk(line) && (line.match(/[a-zA-Z]/g) ?? []).length >= 4) {
         out.procedure = line.replace(/[:.]$/, "").trim();
+        titleGuessed = true;
       }
       continue;
     }
@@ -355,7 +408,7 @@ export function parseCardText(text: string): ParsedCard {
     const item = parseItemLine(line);
     if (!item?.name) continue;
     if (current) {
-      out.sections[current].push(item);
+      out.sections[placeItem(current, item)].push(item);
     } else {
       looseItems.push(item);
     }

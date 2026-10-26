@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore, emptyCard, uid } from "../state/store";
 import { parseCardText, summarizeParse, type ParsedCard } from "../lib/parseCard";
-import { ocrImage } from "../lib/ocr";
+import { documentScannerAvailable, ocrImage, ocrPdf, scanDocumentText } from "../lib/ocr";
 import type { CardItem, PrefCard } from "../types";
 import { SECTIONS } from "../types";
 
@@ -65,6 +65,7 @@ function prettyStatus(s: string): string {
     "loading language traineddata": "Loading language…",
     "initialized api": "Reading…",
     "recognizing text": "Reading the card…",
+    "reading the card": "Reading the card…",
   };
   return map[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -80,31 +81,39 @@ export function CardScan() {
   const [pct, setPct] = useState(0);
   const [status, setStatus] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [docScanner, setDocScanner] = useState(false);
+  useEffect(() => { void documentScannerAvailable().then(setDocScanner); }, []);
 
   const parsed = useMemo(() => parseCardText(text), [text]);
   const canCreate = !!parsed.procedure || parsed.itemCount > 0;
 
-  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  async function read(job: (progress: (p: number, s: string) => void) => Promise<string>, what: string) {
     setErr(null);
     setBusy(true);
     setPct(0);
-    setStatus("Loading scanner…");
+    setStatus("Starting scanner…");
     try {
-      const recognized = await ocrImage(file, (p, s) => { setPct(p); setStatus(prettyStatus(s)); });
-      if (!recognized) {
-        setErr("Couldn’t read any text from that photo. Try a straighter, brighter shot, or just type it below.");
-      } else {
+      const recognized = await job((p, s) => { setPct(p); setStatus(prettyStatus(s)); });
+      if (recognized.trim()) {
         setText((prev) => (prev.trim() ? `${prev}\n${recognized}` : recognized));
+      } else if (what) {
+        setErr(`Couldn’t read any text from that ${what}. Try a straighter, brighter shot, or type it below.`);
       }
     } catch {
       setErr("Couldn’t start the scanner. You may be offline. You can still paste or type the card below.");
     } finally {
       setBusy(false);
     }
+  }
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    void read((p) => (pdf ? ocrPdf(file, p) : ocrImage(file, p)), pdf ? "PDF" : "photo");
   }
 
   function onCreate() {
@@ -130,21 +139,22 @@ export function CardScan() {
       <div className="card form-card">
         <h2>Scan a printed or typed card</h2>
         <p className="muted small">
-          The photo is read <strong>on your device</strong>. Nothing is uploaded. Best results: lay the
-          card flat, fill the frame, good light.
+          Read <strong>on your device</strong>; nothing is uploaded. Best results: lay the card flat,
+          fill the frame, good light. Have a PDF export of the card? Import it for an exact copy.
         </p>
         <div className="form-actions">
-          <button className="btn btn-primary" onClick={() => fileRef.current?.click()} disabled={busy}>
-            {busy ? "Reading…" : "Take / choose photo"}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            onChange={onPhoto}
-          />
+          {docScanner ? (
+            <button className="btn btn-primary" onClick={() => void read(() => scanDocumentText(), "")} disabled={busy}>
+              {busy ? "Reading…" : "Scan with camera"}
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={() => cameraRef.current?.click()} disabled={busy}>
+              {busy ? "Reading…" : "Take photo"}
+            </button>
+          )}
+          <button className="btn" onClick={() => fileRef.current?.click()} disabled={busy}>Choose photo or PDF</button>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
+          <input ref={fileRef} type="file" accept="image/*,application/pdf,.pdf" hidden onChange={onFile} />
         </div>
         {busy && (
           <div className="ocr-progress" role="status" aria-live="polite">

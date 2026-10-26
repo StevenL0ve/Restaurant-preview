@@ -1,0 +1,13 @@
+{
+  "name": "orsync-ocr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "On-device text recognition for ORSync card scanning: Apple Vision (with the VisionKit document camera) on iOS, Google ML Kit on Android.",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "author": "ORSync",
+  "capacitor": {
+    "ios": { "src": "ios" },
+    "android": { "src": "android" }
+  }
+}

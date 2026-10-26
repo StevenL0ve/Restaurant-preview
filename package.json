@@ -31,6 +31,8 @@
     "firebase": "^12.19.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "orsync-ocr": "file:native/orsync-ocr",
+    "pdfjs-dist": "^4.10.38",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
