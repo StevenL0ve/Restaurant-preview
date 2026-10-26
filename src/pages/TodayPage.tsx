@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavIcon } from "../components/NavIcon";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -29,10 +29,12 @@ import { loanerStatusLabel } from "../types";
 import { cardsPdfBlob, cardsPdfFilename, type CardPdfEntry } from "../lib/cardPdf";
 import { cartLink } from "../lib/links";
 import { shareBlobFile } from "../lib/share";
-import type { CaseEntry, TeamMember, TeamRole } from "../types";
+import type { CaseEntry, OnCallPerson, TeamMember, TeamRole } from "../types";
 import { PhiNote } from "../components/PhiNote";
 import { useAuth } from "../state/auth";
 import { usePermissions } from "../lib/permissions";
+import { useProfile } from "../lib/profile";
+import { normName, teamPhotos } from "../lib/teamPhotos";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -191,6 +193,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
   const navigate = useNavigate();
   const { user: me } = useAuth();
   const perms = usePermissions(me?.uid, me?.email);
+  const myProfile = useProfile(me?.uid);
   const [confirmDel, setConfirmDel] = useState(false);
   const [resched, setResched] = useState<string | null>(null); // new date while the panel is open
   const [noting, setNoting] = useState(false);
@@ -288,11 +291,7 @@ function CaseRow({ entry, position, canUp, canDown, store, onEdit }: {
       {entry.notes && <p className="loaner-notes">{entry.notes}</p>}
 
       {(entry.team?.length ?? 0) > 0 && (
-        <div className="case-team">
-          {entry.team!.map((m) => (
-            <span key={m.id} className="team-chip">{teamMemberLabel(m)}</span>
-          ))}
-        </div>
+        <CaseTeam team={entry.team!} people={state.onCallPeople} me={{ name: myProfile?.name || me?.name, photo: myProfile?.photo }} />
       )}
 
       {caseNotes.length > 0 && (
@@ -713,6 +712,40 @@ function CaseForm({ store, date, existing, onDone }: { store: Store; date: strin
           Last changed: {stampLine(existing.updatedBy, existing.updatedAt)}
         </p>
       )}
+    </div>
+  );
+}
+
+// The room team on a case tile. "View team" pops each teammate's profile
+// photo in beside their name (when they have one); the tile grows to hold
+// them and they tuck away again after five seconds.
+const TEAM_PHOTO_MS = 5000;
+function CaseTeam({ team, people, me }: { team: TeamMember[]; people: OnCallPerson[]; me: { name?: string; photo?: string } }) {
+  const [photos, setPhotos] = useState<Map<string, string> | null>(null); // null = hidden
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  async function view() {
+    if (timer.current) clearTimeout(timer.current);
+    if (photos) { setPhotos(null); return; }
+    setPhotos(await teamPhotos(people, me));
+    timer.current = setTimeout(() => setPhotos(null), TEAM_PHOTO_MS);
+  }
+  const anyPhoto = !!photos && team.some((m) => photos.has(normName(m.name)));
+  return (
+    <div className={"case-team" + (photos ? " showing" : "")}>
+      {team.map((m) => {
+        const photo = photos?.get(normName(m.name));
+        return (
+          <span key={m.id} className={"team-chip" + (photo ? " with-photo" : "")}>
+            {photo && <img className="team-photo" src={photo} alt="" width={44} height={44} />}
+            <span>{teamMemberLabel(m)}</span>
+          </span>
+        );
+      })}
+      <button type="button" className="link small case-team-view" onClick={() => void view()}>
+        {photos ? "Hide team" : "View team"}
+      </button>
+      {photos && !anyPhoto && <span className="muted small case-team-none">No profile photos for this team yet.</span>}
     </div>
   );
 }
