@@ -81,11 +81,15 @@ for (const p of PRODUCTS) {
   });
 }
 
+// Reuses one RevenueCat's onboarding already made ("ORSync Pro"); the app
+// checks the lookup key printed here (PRO_ENTITLEMENT in src/lib/iap.ts).
 const ent = await step("entitlement pro", async () => {
-  const existing = (await all(`${P}/entitlements`)).find((e) => e.lookup_key === "pro");
+  const ents = await all(`${P}/entitlements`);
+  const existing = ents.find((e) => e.lookup_key === "pro") ?? ents.find((e) => e.display_name === "ORSync Pro");
   return existing ?? (await api("POST", `${P}/entitlements`, { lookup_key: "pro", display_name: "ORSync Pro" }));
 });
 if (ent) {
+  report.push(`      entitlement lookup key: ${ent.lookup_key}`);
   await step("attach products to pro", async () => {
     const have = new Set((await all(`${P}/entitlements/${ent.id}/products`)).map((x) => x.id));
     const add = Object.values(productIds).filter((id) => id && !have.has(id));
