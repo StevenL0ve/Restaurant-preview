@@ -38,7 +38,7 @@ export function SearchPage() {
             <button
               key={h.kind + h.id}
               className="card search-list-item"
-              onClick={() => navigate(h.kind === "surgeon" ? `/surgeons/${h.id}` : h.kind === "oncall" ? "/on-call" : h.kind === "case" ? `/today?d=${h.entry.date}` : `/cards/${h.id}`)}
+              onClick={() => navigate(h.kind === "surgeon" ? `/surgeons/${h.id}` : h.kind === "oncall" ? "/on-call" : h.kind === "case" ? `/today?d=${h.entry.date}` : h.kind === "item" ? `/item?n=${encodeURIComponent(h.name)}` : `/cards/${h.id}`)}
             >
                 <span className="hit-text">
                 <span className="hit-title">{h.title} <span className="hit-type">{h.kind}</span></span>

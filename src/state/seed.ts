@@ -598,6 +598,7 @@ export function buildSeed(): AppState {
     staff: [],
     catalog: [],
     changeLog: [],
+    spdTrays: [],
   };
 }
 

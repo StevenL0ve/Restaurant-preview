@@ -362,7 +362,7 @@ export interface OnCallShift {
 // Who changed what, when, for the things a whole OR relies on: the call
 // schedule, the surgical schedule, the roster. Deletions leave a trace here
 // even though the record is gone. Capped; newest first.
-export type ChangeKind = "oncall" | "schedule" | "roster" | "cards" | "carts" | "other";
+export type ChangeKind = "oncall" | "schedule" | "roster" | "cards" | "carts" | "spd" | "other";
 export interface ChangeEntry {
   id: ID;
   at: string; // ISO
@@ -509,6 +509,26 @@ export interface AppState {
   repStock: RepStockItem[];
   dayNotes: DayConsideration[];
   staff: StaffMember[];
+  spdTrays: SpdTray[];
   changeLog: ChangeEntry[];
   catalog: CatalogItem[];
+}
+
+// ---- Sterile processing ----------------------------------------------------
+// Where each instrument tray or set is kept in SPD, so anyone can find it:
+// "Major Ortho Tray, set 2: Cabinet B, Shelf 3". Facility data; synced.
+export interface SpdTray {
+  id: ID;
+  name: string; // "Major Ortho Tray"
+  setNumber?: string; // "2", "A-14": which copy, when there are several
+  cabinet?: string; // "B", "Case cart room 2"
+  shelf?: string; // "3", "Top"
+  notes?: string; // "Heavy: 2-person lift", "Count sheet in lid"
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+/** "Cabinet B · Shelf 3" (either half optional). */
+export function spdPlace(t: { cabinet?: string; shelf?: string }): string {
+  return [t.cabinet && `Cabinet ${t.cabinet}`, t.shelf && `Shelf ${t.shelf}`].filter(Boolean).join(" · ");
 }

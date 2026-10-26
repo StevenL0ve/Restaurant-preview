@@ -37,8 +37,10 @@ describe("global search", () => {
 
   it("ranks exact procedure matches above incidental item matches", () => {
     const hits = search(state, "vicryl"); // appears as a suture on several cards
-    expect(hits.length).toBeGreaterThan(1);
-    expect(hits.every((h) => h.kind === "card")).toBe(true);
+    expect(hits.filter((h) => h.kind === "card").length).toBeGreaterThan(1);
+    // The suture itself is a result too, listing the cards that use it.
+    expect(hits.some((h) => h.kind === "item" && /vicryl/i.test(h.title))).toBe(true);
+    expect(hits.every((h) => h.kind === "card" || h.kind === "item")).toBe(true);
   });
 
   it("finds an on-call person by name and flags who's on right now", () => {

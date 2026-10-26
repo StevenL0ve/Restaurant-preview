@@ -30,7 +30,7 @@ const SEED_IDS: Set<string> = (() => {
 export const SYNCED_KEYS = [
   "facilities", "locations", "surgeons", "cards", "loaners", "cases",
   "onCallPositions", "onCallPeople", "onCallShifts", "carts",
-  "repLocations", "repStock", "dayNotes", "staff", "catalog", "changeLog",
+  "repLocations", "repStock", "dayNotes", "staff", "catalog", "changeLog", "spdTrays",
 ] as const;
 
 export type SyncedKey = (typeof SYNCED_KEYS)[number];

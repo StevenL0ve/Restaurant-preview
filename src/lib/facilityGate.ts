@@ -8,7 +8,7 @@ import { getWorkspace, onWorkspaceChange } from "./workspace";
 // is synced with a facility. A demo mode lets someone try those screens
 // with the sample data on their device, nothing synced.
 
-export const GATED_PREFIXES = ["/carts", "/on-call", "/loaners", "/catalog"];
+export const GATED_PREFIXES = ["/carts", "/on-call", "/loaners", "/catalog", "/spd"];
 
 export function isGatedPath(path: string): boolean {
   return GATED_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));

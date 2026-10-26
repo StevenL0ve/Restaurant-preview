@@ -4,7 +4,7 @@
 // shown by the pill behind the icon instead.
 export type NavIconName =
   | "home" | "myday" | "cards" | "carts" | "surgeons"
-  | "loaners" | "oncall" | "facilities" | "search" | "settings";
+  | "loaners" | "oncall" | "facilities" | "search" | "settings" | "spd";
 
 export function NavIcon({ name, size = 28 }: { name: NavIconName; size?: number }) {
   return (

@@ -14,6 +14,7 @@ const FEATURES: { icon: IconName; title: string; body: string }[] = [
   { icon: "bell", title: "On-call board", body: "Who's on call tonight, with one tap to call or text. Everyone's number comes from their own account." },
   { icon: "truck", title: "Loaner trays", body: "Track rep trays coming in and going out, with photos, so nothing is lost between cases." },
   { icon: "search", title: "Supply catalog", body: "The custodian's REF list, with photos, so cards autocomplete and corrections flow to every card." },
+  { icon: "pin", title: "Sterile processing", body: "Every tray and set with its cabinet and shelf, searchable from anywhere in the app." },
   { icon: "cards", title: "One shared card library", body: "The whole OR works from the same preference cards, with every change signed and dated." },
 ];
 
@@ -22,6 +23,7 @@ const WHAT: Record<string, string> = {
   "/on-call": "The on-call board",
   "/loaners": "Loaner trays",
   "/catalog": "The supply catalog",
+  "/spd": "Sterile processing",
 };
 
 export function FacilityRequired() {

@@ -38,6 +38,8 @@ import { CaseLogPage } from "./pages/CaseLogPage";
 import { CatalogPage } from "./pages/CatalogPage";
 import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
+import { SpdPage } from "./pages/SpdPage";
+import { ItemPage } from "./pages/ItemPage";
 import { FacilityRequired, DemoBanner } from "./pages/FacilityRequired";
 import { useFacilityAccess } from "./lib/facilityGate";
 import { usePendingRequests } from "./lib/approvals";
@@ -175,6 +177,8 @@ export default function App() {
             <Route path="/on-call" element={<Gated><OnCallPage /></Gated>} />
             <Route path="/on-call/people" element={<Gated><OnCallPeoplePage /></Gated>} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/spd" element={<Gated><SpdPage /></Gated>} />
+            <Route path="/item" element={<ItemPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/join" element={<JoinLinkPage />} />
             <Route path="/upgrade" element={<Paywall />} />

@@ -22,6 +22,7 @@ const tabs: Tab[] = [
   { to: "/on-call", label: "On call", icon: "oncall" },
   { to: "/surgeons", label: "Surgeons", icon: "surgeons" },
   { to: "/loaners", label: "Loaners", icon: "loaners" },
+  { to: "/spd", label: "SPD", icon: "spd" },
   { to: "/facilities", label: "Facilities", icon: "facilities" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];

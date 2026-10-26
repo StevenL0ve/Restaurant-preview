@@ -14,7 +14,8 @@ import { forgetFacility, getWorkspace, onWorkspaceChange, setFacilityNotice, set
 import { writeWorkspaceMember } from "./cloudSync";
 import { hasPersonalCloud } from "../lib/tier";
 import { setProfile, roleLabel, useProfile, type UserProfile } from "../lib/profile";
-import type { ChangeEntry, ChangeKind } from "../types";
+import type { ChangeEntry, ChangeKind, SpdTray } from "../types";
+import { spdPlace } from "../types";
 import type {
   AppState,
   DayConsideration,
@@ -175,6 +176,7 @@ function migrateLegacy(old: any): AppState {
     staff: old.staff ?? [],
     catalog: old.catalog ?? [],
     changeLog: old.changeLog ?? [],
+    spdTrays: old.spdTrays ?? [],
   };
 }
 
@@ -238,6 +240,8 @@ export interface Store {
   /** Bulk roster import; returns how many new people were added. */
   importStaff: (members: { name: string; role: TeamRole; level?: 1 | 2 | 3 }[]) => number;
   deleteStaff: (id: string) => void;
+  saveSpdTray: (t: Omit<SpdTray, "id" | "updatedAt" | "updatedBy"> & { id?: string }) => SpdTray;
+  deleteSpdTray: (id: string) => void;
   /** Remove the example cards, surgeons, carts, and the rest a fresh
    *  install starts with, keeping everything the user made. */
   removeExampleData: () => number;
@@ -652,6 +656,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       deleteStaff: (id) => update((st) => ({ ...st, staff: st.staff.filter((m) => m.id !== id) })),
+
+      saveSpdTray: (t) => {
+        const now = new Date().toISOString();
+        const tray: SpdTray = {
+          ...t,
+          id: t.id ?? uid("spd"),
+          name: t.name.trim(),
+          setNumber: t.setNumber?.trim() || undefined,
+          cabinet: t.cabinet?.trim() || undefined,
+          shelf: t.shelf?.trim() || undefined,
+          notes: t.notes?.trim() || undefined,
+          updatedAt: now,
+          updatedBy: getPullerName() || undefined,
+        };
+        update((st) => {
+          const before = st.spdTrays.find((x) => x.id === tray.id);
+          const spdTrays = before ? st.spdTrays.map((x) => (x.id === tray.id ? tray : x)) : [...st.spdTrays, tray];
+          const label = `${tray.name}${tray.setNumber ? ` #${tray.setNumber}` : ""}`;
+          const text = before
+            ? `SPD: ${label} ${spdPlace(before) !== spdPlace(tray) ? `moved to ${spdPlace(tray) || "no location"}` : "edited"}`
+            : `SPD: added ${label}${spdPlace(tray) ? ` at ${spdPlace(tray)}` : ""}`;
+          return logChange({ ...st, spdTrays }, "spd", text);
+        });
+        return tray;
+      },
+      deleteSpdTray: (id) =>
+        update((st) => {
+          const gone = st.spdTrays.find((x) => x.id === id);
+          const next = { ...st, spdTrays: st.spdTrays.filter((x) => x.id !== id) };
+          return gone ? logChange(next, "spd", `SPD: removed ${gone.name}${gone.setNumber ? ` #${gone.setNumber}` : ""}`) : next;
+        }),
 
       removeExampleData: () => {
         const ids = exampleIds();
@@ -1505,6 +1540,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           staff: parsed.staff ?? st.staff,
           catalog: parsed.catalog ?? st.catalog,
           changeLog: parsed.changeLog ?? st.changeLog,
+          spdTrays: parsed.spdTrays ?? st.spdTrays,
         }));
       },
 
@@ -1514,7 +1550,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [], spdTrays: [],
         }),
     };
   }, [state]);
@@ -1931,6 +1967,7 @@ export function stripFacilityData(st: AppState): AppState {
     staff: [],
     catalog: [],
     changeLog: [],
+    spdTrays: [],
   };
 }
 

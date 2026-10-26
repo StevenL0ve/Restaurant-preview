@@ -16,6 +16,7 @@ const items: NavItem[] = [
   { to: "/carts", label: "Case carts", icon: "carts" },
   { to: "/surgeons", label: "Surgeons", icon: "surgeons" },
   { to: "/loaners", label: "Loaner trays", icon: "loaners" },
+  { to: "/spd", label: "Sterile processing", icon: "spd" },
   { to: "/on-call", label: "On call", icon: "oncall" },
   { to: "/facilities", label: "Facilities", icon: "facilities" },
   { to: "/settings", label: "Settings", icon: "settings" },

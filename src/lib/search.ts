@@ -1,5 +1,5 @@
 import type { AppState, CaseEntry, OnCallPerson, PrefCard, SectionKey, Surgeon } from "../types";
-import { SECTIONS, locationLabel, teamMemberLabel } from "../types";
+import { SECTIONS, locationLabel, spdPlace, teamMemberLabel } from "../types";
 
 // One global search across the whole library: surgeons, procedures, every item
 // on every card, and the on-call directory. Techs search by all of these —
@@ -10,7 +10,8 @@ export type SearchHit =
   | { kind: "surgeon"; id: string; title: string; subtitle: string; snippet?: string; surgeon: Surgeon }
   | { kind: "card"; id: string; title: string; subtitle: string; snippet?: string; card: PrefCard }
   | { kind: "oncall"; id: string; title: string; subtitle: string; snippet?: string; person: OnCallPerson }
-  | { kind: "case"; id: string; title: string; subtitle: string; snippet?: string; entry: CaseEntry };
+  | { kind: "case"; id: string; title: string; subtitle: string; snippet?: string; entry: CaseEntry }
+  | { kind: "item"; id: string; title: string; subtitle: string; snippet?: string; name: string };
 
 export function search(state: AppState, raw: string): SearchHit[] {
   const q = raw.trim().toLowerCase();
@@ -143,6 +144,58 @@ export function search(state: AppState, raw: string): SearchHit[] {
         },
       });
     }
+  }
+
+  // Items: one result per supply, piece of equipment, or tray, wherever it
+  // appears (cards, Sterile processing, the catalog), with where it's kept
+  // and how many cards list it. Ranked just under an exact card match.
+  const items = new Map<string, { name: string; section?: string; cards: Set<string>; where: Set<string>; spd?: string; best: number }>();
+  const norm = (n: string) => n.trim().toLowerCase().replace(/\s+/g, " ");
+  const touch = (name: string, sc: number) => {
+    const k = norm(name);
+    const e = items.get(k) ?? { name: name.trim(), cards: new Set<string>(), where: new Set<string>(), best: 0 };
+    e.best = Math.max(e.best, sc);
+    items.set(k, e);
+    return e;
+  };
+  for (const c of state.cards) {
+    for (const sec of SECTIONS) {
+      for (const it of c[sec.key as SectionKey]) {
+        const sc = Math.max(score(it.name), score(it.ref ?? ""));
+        if (!sc) continue;
+        const e = touch(it.name, sc);
+        e.section ??= sec.label;
+        e.cards.add(c.id);
+        const where = it.locationId ? locLabel.get(it.locationId) : undefined;
+        if (where) e.where.add(where);
+      }
+    }
+  }
+  for (const t of state.spdTrays ?? []) {
+    const sc = Math.max(score(t.name), score(t.cabinet ? `cabinet ${t.cabinet}` : ""), score(t.notes ?? ""));
+    if (!sc) continue;
+    const e = touch(t.name, sc);
+    e.section ??= "Instrument tray";
+    const place = spdPlace(t);
+    e.spd = place ? `SPD ${place}` : "SPD, no shelf yet";
+  }
+  for (const c of state.catalog ?? []) {
+    const sc = Math.max(score(c.name), score(c.ref ?? ""));
+    if (sc) touch(c.name, sc).section ??= "Catalog";
+  }
+  for (const [k, e] of items) {
+    const where = [e.spd, ...e.where].filter(Boolean).slice(0, 2).join(" · ");
+    hits.push({
+      score: Math.max(0.5, e.best - 0.5),
+      hit: {
+        kind: "item",
+        id: k,
+        title: e.name,
+        subtitle: e.section ?? "Item",
+        name: e.name,
+        snippet: [where || "No location yet", e.cards.size ? `on ${e.cards.size} card${e.cards.size === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · "),
+      },
+    });
   }
 
   return hits.sort((a, b) => b.score - a.score).map((h) => h.hit);
