@@ -114,8 +114,10 @@ function PositionRow({ position }: { position: OnCallPosition }) {
   }
   return (
     <li className="pos-row">
-      <span className="pos-name">{position.name}</span>
-      <span className="muted small">{poolCount} in pool</span>
+      <span className="pos-name">
+        {position.name}
+        <span className="muted small pos-pool">{poolCount} in pool</span>
+      </span>
       <button className="icon-btn" title="Rename" onClick={() => setEditing(true)}><Icon name="edit" size={15} /></button>
       {confirmDel ? (
         <span className="confirm small">

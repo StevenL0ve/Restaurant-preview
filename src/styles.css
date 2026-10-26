@@ -1518,12 +1518,20 @@ body {
 .pos-group { margin-top: 12px; }
 .pos-cat { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 6px; }
 .pos-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.pos-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pos-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); min-width: 0; }
 .pos-row:last-child { border-bottom: none; }
-.pos-row .pos-name { font-weight: 600; flex: 1; }
-.pos-row input { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+.pos-row .pos-name { font-weight: 600; flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
+.pos-row .pos-pool { display: block; font-weight: 400; }
+.pos-row > .muted, .pos-row > .icon-btn, .pos-row > .btn, .pos-row > .confirm { flex: 0 0 auto; }
+.pos-row input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+/* Renaming a position: name, role and Save/Cancel wrap instead of running
+   off the right edge. */
+.pos-row-edit { flex-wrap: wrap; }
+.pos-row-edit select { flex: 1 1 160px; min-width: 0; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+.settings-card:has(.pos-list) { max-width: 100%; box-sizing: border-box; overflow-x: hidden; }
 .pos-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.pos-add input { flex: 1; min-width: 160px; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+.pos-add select { flex: 1 1 140px; min-width: 0; }
+.pos-add input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
 .pos-add select { border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
 
 .people-list { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-direction: column; gap: 12px; }
@@ -1534,13 +1542,22 @@ body {
 .person-positions { display: flex; flex-wrap: wrap; gap: 5px; }
 .person-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .person-pos-pick { display: flex; flex-direction: column; }
-.pos-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+/* "In the pool for": one tidy [box] [label] row per position, left aligned,
+   as many columns as fit (one on the narrowest phones). */
+.pos-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .pos-check {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
-  border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; background: var(--card); cursor: pointer;
+  display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0;
+  font-size: 13px; text-align: left;
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--card); cursor: pointer;
 }
 .pos-check.on { border-color: var(--brand); background: var(--brand-50); color: var(--brand); font-weight: 600; }
-.pos-check input { accent-color: var(--brand); }
+.pos-check input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--brand); }
+.pos-check span { flex: 1 1 auto; min-width: 0; text-align: left; white-space: normal; overflow-wrap: break-word; margin: 0; }
+
+@media (max-width: 480px) {
+  .pos-row-edit input, .pos-row-edit select { flex-basis: 100%; }
+  .pos-add input, .pos-add select { flex-basis: 100%; }
+}
 
 @media (max-width: 560px) {
   .assign-newperson, .assign-custom { grid-template-columns: 1fr; }
