@@ -1,3 +1,4 @@
+import { ConfirmDelete } from "../components/ConfirmDelete";
 import { printSetLabels } from "../lib/labels";
 import { NavIcon } from "../components/NavIcon";
 import { useMemo, useRef, useState } from "react";
@@ -306,7 +307,7 @@ function SetRow({ loaner: l, set: s, store }: { loaner: LoanerTray; set: LoanerS
       <div className="set-row-top">
         <span className="set-name">{s.name}</span>
         <span className="set-step muted small">step {stepIdx + 1}/{LOANER_STATUSES.length}</span>
-        <button className="info-del" aria-label={`Remove set ${s.name}`} onClick={() => deleteLoanerSet(l.id, s.id)}>✕</button>
+        <ConfirmDelete label={`Remove set ${s.name}`} question={`Remove set ${s.name}${s.photos?.length ? ` and its ${s.photos.length} photos` : ""}?`} onConfirm={() => deleteLoanerSet(l.id, s.id)} />
       </div>
       <div className="set-row-status">
         {statusSelect(s.status, (v) => setLoanerSetStatus(l.id, s.id, v), `Status of ${s.name}`)}

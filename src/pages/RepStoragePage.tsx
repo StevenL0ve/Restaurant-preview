@@ -1,3 +1,4 @@
+import { ConfirmDelete } from "../components/ConfirmDelete";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
@@ -178,7 +179,7 @@ function SiteCard({ loc, store, facilities }: { loc: RepLocation; store: Store; 
               <span className="stock-qty">{s.qty}</span>
               <button className="btn btn-sm" aria-label={`One more ${s.name}`} onClick={() => updateRepStock(s.id, { qty: s.qty + 1 })}>+</button>
             </span>
-            <button className="info-del" aria-label={`Remove ${s.name}`} onClick={() => deleteRepStock(s.id)}>✕</button>
+            <ConfirmDelete label={`Remove ${s.name}`} question={`Remove ${s.name}?`} onConfirm={() => deleteRepStock(s.id)} />
           </div>
         ))}
         <div className="set-add">

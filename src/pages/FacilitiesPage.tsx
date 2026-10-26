@@ -1,3 +1,5 @@
+import { ConfirmDelete } from "../components/ConfirmDelete";
+import { SECTIONS, type SectionKey } from "../types";
 import { useState } from "react";
 import { NavIcon } from "../components/NavIcon";
 import { useNavigate } from "react-router-dom";
@@ -127,8 +129,9 @@ function FacilityCard({ facility, store }: { facility: Facility; store: Store })
 }
 
 function LocationRow({ loc, store, areaListId }: { loc: Location; store: Store; areaListId: string }) {
-  const { updateLocation, deleteLocation } = store;
+  const { updateLocation, deleteLocation, state } = store;
   const [editing, setEditing] = useState(false);
+  const uses = state.cards.reduce((n, c) => n + SECTIONS.reduce((m, sec) => m + (c[sec.key as SectionKey] ?? []).filter((it) => it.locationId === loc.id).length, 0), 0);
   const [area, setArea] = useState(loc.area);
   const [spot, setSpot] = useState(loc.spot ?? "");
 
@@ -146,7 +149,11 @@ function LocationRow({ loc, store, areaListId }: { loc: Location; store: Store; 
     <li className="loc-row">
       <span className="loc-name">{locationLabel(loc)}</span>
       <button className="link" onClick={() => setEditing(true)}>Edit</button>
-      <button className="info-del" aria-label="Delete location" onClick={() => deleteLocation(loc.id)}>✕</button>
+      <ConfirmDelete
+        label="Delete location"
+        question={`Delete ${locationLabel(loc)}?${uses === 1 ? " 1 card item uses it and will lose its location." : uses ? ` ${uses} card items use it and will lose their location.` : ""}`}
+        onConfirm={() => deleteLocation(loc.id)}
+      />
     </li>
   );
 }

@@ -2261,3 +2261,8 @@ html, body { overflow-x: hidden; }
 /* Item clean-up */
 .cleanup-variants { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 10px; }
 .cleanup-custom { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font: inherit; background: var(--card); color: var(--ink); }
+
+/* "Are you sure?" under a row's ✕ */
+.loc-row, .rep-stock-row { flex-wrap: wrap; }
+.confirm-delete { flex: 1 1 100%; justify-content: flex-start; gap: 8px; padding: 6px 0 2px; }
+.confirm-delete > .small { flex: 1 1 100%; color: var(--ink); }
