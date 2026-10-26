@@ -45,7 +45,8 @@ import { guessRole } from "../lib/staffImport";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from "../lib/loanerFile";
-import { shareJsonFile } from "../lib/share";
+import { shareFiles, shareJsonFile } from "../lib/share";
+import { cardLink } from "../lib/links";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
 
 const STORAGE_KEY = "orsync.v2";
@@ -335,7 +336,9 @@ export interface Store {
   resolveMissing: (cartId: string, itemId: string, by: string) => void;
   unresolveMissing: (cartId: string, itemId: string) => void;
   // sharing — portable card bundles
-  exportCardFile: (cardId: string) => void;
+  /** Share a card as its .orsync import file plus a picture of the printed
+   *  card (so chat apps show the card, not a blank file). */
+  exportCardFile: (cardId: string) => Promise<void>;
   /** Package a card + a pull assignment as a shareable file — the recipient's
    *  import creates ready-to-pull carts for that date. */
   sendCardForPull: (cardId: string, date: string, count: number, note?: string, requestedBy?: string) => Promise<"shared" | "downloaded">;
@@ -1421,16 +1424,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return gone ? logChange(next, "oncall", `On call: cleared ${describeShift(st, gone)}`) : next;
         }),
 
-      exportCardFile: (cardId) => {
+      exportCardFile: async (cardId) => {
         const card = state.cards.find((c) => c.id === cardId);
         const sg = state.surgeons.find((s) => s.id === card?.surgeonId);
         const bundle = bundleCards(state, [cardId], new Date().toISOString());
-        // Share sheet on phones (text it, AirDrop it, mail it); download on desktop.
-        void shareJsonFile(
-          `${slugName(card?.procedure ?? "card")}.orsync`,
-          bundle,
-          `Preference card: ${card?.procedure ?? ""}${sg ? ` · ${sg.name}` : ""}. ORSync import file: open it in ORSync to add the card. For a readable copy, use Share on the card instead.`,
-        );
+        const name = slugName(card?.procedure ?? "card");
+        const title = `Preference card: ${card?.procedure ?? ""}${sg ? ` · ${sg.name}` : ""}. Open the .orsync file in ORSync to add the card.`;
+        // The import file is unchanged; a picture of the printed card rides
+        // along so the message shows the card. Share sheet on phones (text,
+        // AirDrop, mail); download on desktop.
+        const orsync = new File([JSON.stringify(bundle, null, 2)], `${name}.orsync`, { type: "application/json" });
+        const files: File[] = [];
+        if (card) {
+          try {
+            const { cardPdfBlob } = await import("../lib/cardPdf");
+            const { pdfToPng } = await import("../lib/cardPreview");
+            const facility = state.facilities.find((f) => f.id === card.facilityId);
+            const pdf = await cardPdfBlob(card, sg, facility, (locId) => locationLabelOf(state, locId), [], {
+              url: cardLink(card.id),
+              label: "Scan for the live card in ORSync",
+            });
+            files.push(new File([await pdfToPng(pdf)], `${name}.png`, { type: "image/png" }));
+          } catch {
+            /* no picture: the import file alone still works */
+          }
+        }
+        files.push(orsync);
+        await shareFiles(files, title);
       },
 
       exportFacilityFile: (facilityId) => {

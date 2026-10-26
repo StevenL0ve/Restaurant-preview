@@ -21,6 +21,7 @@ export function CardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { state, deleteCard, duplicateCard, toggleFavorite, exportCardFile, copyCardToFacility } = useStore();
+  const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
@@ -203,9 +204,10 @@ export function CardDetail() {
         <button
           className="btn"
           title="Sends the .orsync data file another ORSync user taps to add this card to their library. For a readable copy, use Share."
-          onClick={() => exportCardFile(card.id)}
+          disabled={sending}
+          onClick={() => { setSending(true); void exportCardFile(card.id).finally(() => setSending(false)); }}
         >
-          Send app copy
+          {sending ? "Preparing…" : "Send app copy"}
         </button>
         <button className="btn" onClick={onDuplicate}>Duplicate</button>
         {state.facilities.filter((f) => f.id !== card.facilityId).length > 0 && (

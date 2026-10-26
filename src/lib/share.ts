@@ -149,6 +149,39 @@ export async function shareBlobFile(
   return "downloaded";
 }
 
+/** Share several files in one go (e.g. a card's picture + its .orsync
+ *  import file). If the share sheet can't take them all, shares just
+ *  `files[primary]`; where file sharing isn't available, downloads it. */
+export async function shareFiles(
+  files: File[],
+  title: string,
+  primary = files.length - 1,
+): Promise<"shared" | "downloaded" | "cancelled"> {
+  const nav = navigator as Navigator & {
+    share?: (d: { files?: File[]; title?: string; text?: string }) => Promise<void>;
+    canShare?: (d: { files?: File[] }) => boolean;
+  };
+  for (const set of [files, [files[primary]]]) {
+    if (!nav.share || !nav.canShare?.({ files: set })) continue;
+    try {
+      await nav.share({ files: set, title, text: title });
+      return "shared";
+    } catch (e) {
+      if ((e as Error)?.name === "AbortError") return "cancelled";
+    }
+  }
+  const f = files[primary];
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(f);
+  a.href = url;
+  a.download = f.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  return "downloaded";
+}
+
 /** Share a JSON file (e.g. a card bundle) via the share sheet. */
 export async function shareJsonFile(
   filename: string,
