@@ -10,6 +10,9 @@ require "spaceship"
 require "net/http"
 require "json"
 require "uri"
+require "digest"
+
+REVIEW_SHOT = File.expand_path("iap/pro-review.png", __dir__)
 
 BUNDLE_ID = "com.stevennelson.orsync"
 GROUP_NAME = "ORSync Pro"
@@ -29,7 +32,7 @@ token = Spaceship::ConnectAPI::Token.create(
 
 def api(token, method, path, body = nil)
   uri = URI(path.start_with?("http") ? path : "https://api.appstoreconnect.apple.com#{path}")
-  req = { get: Net::HTTP::Get, post: Net::HTTP::Post, patch: Net::HTTP::Patch }[method].new(uri)
+  req = { get: Net::HTTP::Get, post: Net::HTTP::Post, patch: Net::HTTP::Patch, delete: Net::HTTP::Delete }[method].new(uri)
   req["Authorization"] = "Bearer #{token.text}"
   req["Content-Type"] = "application/json"
   req.body = JSON.generate(body) if body
@@ -149,8 +152,33 @@ PRODUCTS.each_with_index do |p, i|
     end
     "#{priced.size} storefronts priced (#{added} added now)#{failed.any? ? "; skipped #{failed.size}: #{failed.first(3).join('; ')}" : ''}"
   end
+
+  # Apple's reviewer sees this image of the purchase screen (Plans → Pro).
+  step("#{p[:id]}: App Review screenshot") do
+    current = api(token, :get, "/v1/subscriptions/#{sid}/appStoreReviewScreenshot")["data"] rescue nil
+    state = current&.dig("attributes", "assetDeliveryState", "state")
+    next "already uploaded (#{state})" if current && state != "FAILED"
+    api(token, :delete, "/v1/subscriptionAppStoreReviewScreenshots/#{current['id']}") if current
+    bytes = File.binread(REVIEW_SHOT)
+    shot = api(token, :post, "/v1/subscriptionAppStoreReviewScreenshots", { data: {
+      type: "subscriptionAppStoreReviewScreenshots",
+      attributes: { fileName: File.basename(REVIEW_SHOT), fileSize: bytes.bytesize },
+      relationships: { subscription: { data: { type: "subscriptions", id: sid } } } } })["data"]
+    shot.dig("attributes", "uploadOperations").each do |op|
+      uri = URI(op["url"])
+      req = Net::HTTP.const_get(op["method"].capitalize).new(uri)
+      (op["requestHeaders"] || []).each { |h| req[h["name"]] = h["value"] }
+      req.body = bytes.byteslice(op["offset"], op["length"])
+      res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+      raise "upload part -> #{res.code}" unless res.code.to_i.between?(200, 299)
+    end
+    api(token, :patch, "/v1/subscriptionAppStoreReviewScreenshots/#{shot['id']}", { data: {
+      type: "subscriptionAppStoreReviewScreenshots", id: shot["id"],
+      attributes: { uploaded: true, sourceFileChecksum: Digest::MD5.hexdigest(bytes) } } })
+    "uploaded"
+  end
 end
 
 puts "\n==== App Store subscriptions report ===="
 $report.each { |l| puts l }
-puts "Still needed in App Store Connect: a review screenshot on each subscription, and adding both to the 1.0 version's In-App Purchases and Subscriptions section."
+puts "Still needed in App Store Connect: add both subscriptions to the 1.0 version's In-App Purchases and Subscriptions section."

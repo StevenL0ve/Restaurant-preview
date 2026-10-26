@@ -1,4 +1,4 @@
-# Rerun: attach the newest processed build (build 114: App Store subscriptions).
+# Rerun: screenshots (iPhone 6.9", 6.3", iPad 13"), Free price, availability.
 # Prepares the ORSync App Store version for review through the App Store
 # Connect API: verifies the draft and builds, then fills in everything the
 # API allows. Each step is independent; a failure is reported and the rest
@@ -138,6 +138,78 @@ step("App Review information") do
     version.create_app_store_review_detail(attributes: attrs)
   end
   puts "  contact phone: #{phone.empty? ? 'NOT SET (add it in App Store Connect, or the ASC_CONTACT_PHONE secret)' : 'set'}"
+end
+
+# ---- Screenshots: 6.9" and 6.3" iPhone, 13" iPad (plain app captures) ----
+SHOTS = {
+  "APP_IPHONE_67" => "docs/store/raw",           # 1320 x 2868
+  "APP_IPHONE_61" => "docs/store/iphone63",      # 1206 x 2622
+  "APP_IPAD_PRO_3GEN_129" => "docs/store/ipad",  # 2064 x 2752
+}
+step("screenshots (iPhone 6.9\", iPhone 6.3\", iPad 13\")") do
+  loc = version.get_app_store_version_localizations.find { |l| l.locale == "en-US" }
+  sets = loc.get_app_screenshot_sets
+  SHOTS.each do |type, dir|
+    files = Dir[File.expand_path("../#{dir}/*.png", __dir__)].sort
+    set = sets.find { |s| s.screenshot_display_type == type } ||
+          loc.create_app_screenshot_set(attributes: { screenshotDisplayType: type })
+    have = (set.app_screenshots || []).size
+    if have >= files.size
+      puts "  #{type}: #{have} already there"
+      next
+    end
+    (set.app_screenshots || []).each(&:delete!)
+    files.each { |f| set.upload_screenshot(path: f, wait_for_processing: false) }
+    puts "  #{type}: uploaded #{files.size}"
+  end
+end
+
+# ---- Price (Free) and availability (every storefront) ----
+require "net/http"
+require "json"
+def rest(method, path, body = nil)
+  uri = URI("https://api.appstoreconnect.apple.com#{path}")
+  req = { get: Net::HTTP::Get, post: Net::HTTP::Post }[method].new(uri)
+  req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+  req["Content-Type"] = "application/json"
+  req.body = JSON.generate(body) if body
+  res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+  data = res.body.to_s.empty? ? {} : JSON.parse(res.body)
+  return [res.code.to_i, data] if res.code.to_i.between?(200, 299) || res.code.to_i == 404
+  raise "#{method.upcase} #{uri.path} -> #{res.code} " + (data["errors"] || []).map { |e| e["detail"] }.join(" | ")
+end
+step("price: Free") do
+  code, cur = rest(:get, "/v1/apps/#{app.id}/appPriceSchedule/manualPrices")
+  if code == 200 && (cur["data"] || []).any?
+    puts "  already set"
+  else
+    _, pts = rest(:get, "/v1/apps/#{app.id}/appPricePoints?filter[territory]=USA&limit=200")
+    free = pts["data"].find { |pt| pt.dig("attributes", "customerPrice").to_f.zero? } or raise "no free price point"
+    rest(:post, "/v1/appPriceSchedules", {
+      data: { type: "appPriceSchedules", relationships: {
+        app: { data: { type: "apps", id: app.id } },
+        baseTerritory: { data: { type: "territories", id: "USA" } },
+        manualPrices: { data: [{ type: "appPrices", id: "${free}" }] } } },
+      included: [{ type: "appPrices", id: "${free}", attributes: { startDate: nil },
+                   relationships: { appPricePoint: { data: { type: "appPricePoints", id: free["id"] } } } }] })
+    puts "  set to Free"
+  end
+end
+step("availability: every storefront") do
+  code, _ = rest(:get, "/v1/apps/#{app.id}/appAvailabilityV2")
+  if code == 200
+    puts "  already set"
+  else
+    _, terr = rest(:get, "/v1/territories?limit=200")
+    ids = terr["data"].map { |t| t["id"] }
+    rest(:post, "/v2/appAvailabilities", {
+      data: { type: "appAvailabilities", attributes: { availableInNewTerritories: true }, relationships: {
+        app: { data: { type: "apps", id: app.id } },
+        territoryAvailabilities: { data: ids.each_index.map { |i| { type: "territoryAvailabilities", id: "${t#{i}}" } } } } },
+      included: ids.each_with_index.map { |t, i| { type: "territoryAvailabilities", id: "${t#{i}}",
+        attributes: { available: true }, relationships: { territory: { data: { type: "territories", id: t } } } } } })
+    puts "  #{ids.size} storefronts"
+  end
 end
 
 puts "\n==== App Store Connect report ===="
