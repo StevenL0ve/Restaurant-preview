@@ -1,4 +1,5 @@
 import { printSetLabels } from "../lib/labels";
+import { NavIcon } from "../components/NavIcon";
 import { useMemo, useRef, useState } from "react";
 import { Mascot } from "../components/Mascot";
 import { Link } from "react-router-dom";
@@ -59,7 +60,7 @@ export function LoanersPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Loaner trays</h1>
+          <h1 className="page-title"><NavIcon name="loaners" size={40} />Loaner trays</h1>
           <p className="muted">
             {repMode ? "Rep view: your sets, grouped by facility. " : ""}
             {stats.active} active

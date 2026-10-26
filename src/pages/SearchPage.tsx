@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../state/store";
 import { search } from "../lib/search";
@@ -11,7 +12,7 @@ export function SearchPage() {
 
   return (
     <div className="page page-narrow">
-      <div className="page-head"><h1>Search</h1></div>
+      <div className="page-head"><h1 className="page-title"><NavIcon name="search" size={40} />Search</h1></div>
 
       <div className="card search-page-box">
         <input

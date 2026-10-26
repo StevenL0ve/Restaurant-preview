@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useStore,
@@ -79,7 +80,7 @@ export function TodayPage() {
     <div className="page page-narrow">
       <div className="page-head">
         <div>
-          <h1>My day</h1>
+          <h1 className="page-title"><NavIcon name="myday" size={40} />My day</h1>
           <p className="muted">{cases.length === 0 ? "No cases scheduled." : `${cases.length} ${cases.length === 1 ? "case" : "cases"} lined up.`}</p>
         </div>
         <div className="head-actions">

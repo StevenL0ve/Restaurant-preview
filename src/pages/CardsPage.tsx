@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { Mascot } from "../components/Mascot";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, surgeonOf, totalItems, facilityOf, locationLabelOf, dayNotesFor, localDay } from "../state/store";
@@ -55,7 +56,7 @@ export function CardsPage() {
       <div className="dash-hero">
         <Mascot size={78} className="dash-mascot" />
         <div className="dash-hero-text">
-          <h1>Ready for your next case</h1>
+          <h1 className="page-title"><NavIcon name="cards" size={40} />Ready for your next case</h1>
           <p>Your preference cards, your way. No hospital login, works offline.</p>
         </div>
         <button className="btn dash-hero-btn" onClick={() => navigate("/cards/new")}>

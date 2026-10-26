@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { NavIcon } from "../components/NavIcon";
 import { useFacilityAccess } from "../lib/facilityGate";
 import { usePendingRequests } from "../lib/approvals";
 import { RekeyReminder } from "../components/RekeyReminder";
@@ -40,7 +41,7 @@ export function Dashboard() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Home</h1>
+          <h1 className="page-title"><NavIcon name="home" size={40} />Home</h1>
           <p className="muted">Today at a glance: the lineup, who's on call, and what needs a push.</p>
         </div>
       </div>

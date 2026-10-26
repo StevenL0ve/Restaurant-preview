@@ -23,7 +23,6 @@ const tabs: Tab[] = [
   { to: "/surgeons", label: "Surgeons", icon: "surgeons" },
   { to: "/loaners", label: "Loaners", icon: "loaners" },
   { to: "/facilities", label: "Facilities", icon: "facilities" },
-  { to: "/search", label: "Search", icon: "search" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { Link } from "react-router-dom";
 import {
   useStore,
@@ -32,7 +33,7 @@ export function OnCallPage() {
     <div className="page page-narrow">
       <div className="page-head">
         <div>
-          <h1>On call</h1>
+          <h1 className="page-title"><NavIcon name="oncall" size={40} />On call</h1>
           <p className="muted">Who’s on right now. Tap a number to call from your phone.</p>
         </div>
         <div className="head-actions">

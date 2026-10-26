@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { useNavigate } from "react-router-dom";
 import { useStore, locationsForFacility, areasForFacility } from "../state/store";
 import { gateNewFacility } from "../lib/tier";
@@ -17,7 +18,7 @@ export function FacilitiesPage() {
     <div className="page page-narrow">
       <div className="page-head">
         <div>
-          <h1>Facilities & locations</h1>
+          <h1 className="page-title"><NavIcon name="facilities" size={40} />Facilities & locations</h1>
           <p className="muted">
             A location lives in a facility. Edit one here and it updates on every card that uses it.
             No hunting through cards.

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { Mascot } from "../components/Mascot";
 import { Link, useNavigate } from "react-router-dom";
 import { useStore, cartsOn, cartProgress, openMissing, surgeonOf, localDay, missingForDay } from "../state/store";
@@ -51,7 +52,7 @@ export function CartsPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Case carts</h1>
+          <h1 className="page-title"><NavIcon name="carts" size={40} />Case carts</h1>
           <p className="muted">Pull together, see who pulled what, and hand ops the missing list. Carts and their QC records clear themselves after the surgical day.</p>
         </div>
         <div className="head-actions">

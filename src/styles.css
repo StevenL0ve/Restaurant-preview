@@ -2174,3 +2174,22 @@ html, body { overflow-x: hidden; }
   /* Five and a bit across, so the sixth peeks in. */
   .tab-strip .tab { flex: 0 0 18%; min-width: 62px; scroll-snap-align: start; }
 }
+
+/* ---- Page titles carry their menu icon ---- */
+.page-title { display: flex; align-items: center; gap: 12px; }
+.page-title .nav-art { width: 40px; height: 40px; }
+@media (max-width: 560px) { .page-title { gap: 10px; } .page-title .nav-art { width: 34px; height: 34px; } }
+
+/* ---- Landscape phones and short windows: the page grows with its content
+   and the sidebar stays pinned, scrolling on its own if it's taller than
+   the screen, so nothing spills past its background. */
+.app { height: auto; min-height: 100vh; min-height: 100dvh; }
+@media (min-width: 881px) {
+  .sidebar { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (min-width: 881px) and (max-height: 560px) {
+  .sidebar { padding-top: calc(10px + env(safe-area-inset-top)); padding-left: calc(14px + env(safe-area-inset-left)); }
+  .brand { padding-bottom: 8px; }
+  .nav-item { padding-top: 6px; padding-bottom: 6px; }
+  .sidebar-footer { display: none; }
+}

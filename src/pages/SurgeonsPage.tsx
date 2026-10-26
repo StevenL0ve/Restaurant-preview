@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NavIcon } from "../components/NavIcon";
 import { Link } from "react-router-dom";
 import { useStore, cardsForSurgeon } from "../state/store";
 import { Avatar } from "../components/Avatar";
@@ -22,7 +23,7 @@ export function SurgeonsPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>Surgeons</h1>
+          <h1 className="page-title"><NavIcon name="surgeons" size={40} />Surgeons</h1>
           <p className="muted">{state.surgeons.length} surgeons in your library.</p>
         </div>
         <div className="head-actions">

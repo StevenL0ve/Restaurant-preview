@@ -18,7 +18,6 @@ const items: NavItem[] = [
   { to: "/loaners", label: "Loaner trays", icon: "loaners" },
   { to: "/on-call", label: "On call", icon: "oncall" },
   { to: "/facilities", label: "Facilities", icon: "facilities" },
-  { to: "/search", label: "Search", icon: "search" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
