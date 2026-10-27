@@ -49,6 +49,45 @@ What it fills, and what it asks:
 - Test with a typed-up copy of the board (no case numbers or comments);
   don't commit photos of the real board.
 
+## Phone notifications for schedule changes (after the app is live)
+Native push notifications, on/off in Settings, for cases **added, canceled,
+or rescheduled** that fall within the user's window: the day of plus N days
+ahead (default 3; e.g. "day of + 2 days"). Rescheduled counts if either the
+old or the new date is in the window.
+
+How it works (it has to be push: the change happens on someone else's phone
+while this one is in a pocket):
+- Firebase Cloud Messaging for both platforms (APNs underneath on iPhone),
+  via @capacitor/push-notifications. Each phone registers its token on the
+  member's record in the facility.
+- A Cloud Function watches the facility's cases and sends to members whose
+  settings match. Never to the person who made the change.
+- Message, no patient info: "Added · OR 4, Thu Oct 29 07:30 · Lap Chole,
+  Dr. Alvarez". Tapping opens My day on that date.
+- Settings: on/off, how many days ahead (day of only, +1, +2, +3...), which
+  changes (added / canceled / rescheduled), optionally only cases where
+  I'm on the room team.
+- Works for facility members (their schedule is shared); a personal library
+  has no one else changing it.
+
+Icon / badge:
+- iPhone always shows the app icon on a notification (Apple doesn't allow
+  a different picture there), so it's the ORSync icon. The mascot can ride
+  along as an image inside the notification (needs a small notification
+  extension). The red number on the icon can count unseen changes.
+- Android: the status-bar icon must be a one-color silhouette; make a
+  white Jolie silhouette for it, with the full-color mascot as the large
+  icon and ORSync blue as the accent.
+
+Owner to-dos when we build it:
+- Firebase: Cloud Functions need the pay-as-you-go (Blaze) plan. At OR
+  volumes this stays inside the free allowance (2M calls/month), but
+  Google requires a card on file; set a budget alert.
+- Apple: an APNs key with Push Notifications enabled for
+  com.stevennelson.orsync, uploaded to Firebase (Developer account, Keys).
+- New App Store privacy answer: device push token (not linked to
+  tracking).
+
 ## Already done on the branch, ships with the next build
 - Day sheet lists surgical technologists as "Tech", with role titles in bold.
 - Add case: free-text case name that searches cards as you type; surgeon
