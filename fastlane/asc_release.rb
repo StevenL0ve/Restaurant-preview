@@ -39,8 +39,15 @@ def api(method, path, body = nil)
   req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
   req["Content-Type"] = "application/json"
   req.body = JSON.generate(body) if body
-  res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
-  data = res.body.to_s.empty? ? {} : JSON.parse(res.body)
+  # Apple's API sometimes answers a valid request with a 500; try again.
+  res = nil
+  4.times do |attempt|
+    res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+    break unless res.code.to_i >= 500
+    puts "  Apple returned #{res.code} for #{method.upcase} #{uri.path}; retrying (#{attempt + 1}/3)..." if attempt < 3
+    sleep(10 * (attempt + 1)) if attempt < 3
+  end
+  data = res.body.to_s.empty? ? {} : (JSON.parse(res.body) rescue {})
   unless res.code.to_i.between?(200, 299)
     errs = (data["errors"] || []).map { |e| "#{e['title']}: #{e['detail']}" }.join(" | ")
     raise "#{method.upcase} #{uri.path} -> #{res.code} #{errs}"
