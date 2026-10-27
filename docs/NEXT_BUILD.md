@@ -1,5 +1,8 @@
 # Next build (after 1.0.1)
 
+Start once 1.0.1 is approved, in this order: 1) photo of the OR board fills
+the day, 2) phone notifications for schedule changes, 3) scan a stack.
+
 Agreed for the next version; not in 1.0.1 (build 127, in App Review).
 
 ## Scan a stack: import several preference cards at once
