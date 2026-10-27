@@ -1,0 +1,8 @@
+- Add case: type it as the schedule reads; matching cards come up. Add surgeons on the spot; combine cards.
+- "Not before" times for later cases.
+- Lunch & break relief per room on My day.
+- Share day as one sheet; print all or picked cards.
+- Case log: filter by dates/specialty, share as PDF or text.
+- Loaner requests arrive as a readable picture.
+- Scan printed cards with the camera; upload the OR schedule from Excel/CSV.
+- Edit history, glove sizes, many fixes.
