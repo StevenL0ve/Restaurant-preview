@@ -599,6 +599,7 @@ export function buildSeed(): AppState {
     catalog: [],
     changeLog: [],
     spdTrays: [],
+    reliefs: [],
   };
 }
 

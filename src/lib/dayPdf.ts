@@ -20,6 +20,7 @@ export interface DayPdfCase {
 export interface DayPdfRoom {
   room: string; // "OR 4", or "" for no room
   firstTime?: string;
+  relief?: string; // "Tech lunch 11:30, relief Angie Burks · RN break 14:00"
   cases: DayPdfCase[];
 }
 
@@ -104,6 +105,13 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
       colSpan: 5,
       styles: { fontStyle: "bold", fontSize: 10, textColor: [BRAND.r, BRAND.g, BRAND.b], fillColor: [238, 243, 251] },
     }]);
+    if (r.relief) {
+      body.push([{
+        content: pdfSafe(r.relief),
+        colSpan: 5,
+        styles: { fontSize: 8.5, textColor: [51, 51, 51], fillColor: [238, 243, 251], cellPadding: { top: 0, bottom: 6, left: 4, right: 4 } },
+      }]);
+    }
     for (const c of r.cases) {
       caseRows.add(body.length);
       const lines = layoutTeam(c.team);

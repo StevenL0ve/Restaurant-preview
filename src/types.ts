@@ -533,6 +533,28 @@ export interface AppState {
   spdTrays: SpdTray[];
   changeLog: ChangeEntry[];
   catalog: CatalogItem[];
+  reliefs: RoomRelief[];
+}
+
+// ---- Lunch and break relief -------------------------------------------------
+// Decided the morning of surgery, per room: when the tech goes to lunch and
+// who relieves them, the same for the nurse (a different relief), and the
+// nurse's break. Day-of data like carts; synced across the facility.
+
+export interface ReliefSlot {
+  time?: string; // "11:30": when the relief starts
+  name?: string; // who's relieving
+}
+
+export interface RoomRelief {
+  id: ID;
+  date: string; // "2026-10-27"
+  room: string; // "OR 1"
+  techLunch?: ReliefSlot;
+  nurseLunch?: ReliefSlot;
+  nurseBreak?: ReliefSlot;
+  updatedAt: string;
+  updatedBy?: string;
 }
 
 // ---- Sterile processing ----------------------------------------------------

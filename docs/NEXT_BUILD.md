@@ -73,5 +73,8 @@ What it fills, and what it asks:
 - Schedule upload keeps the schedule's wording as the case name.
 - Case log: filter by dates (this month, last 30 days, this year, or From/To)
   and specialty, counts by specialty, then Share PDF, Send as text, or Copy.
+- My day: lunch & break relief per room (tech lunch, nurse lunch, nurse
+  break: start time + who relieves), stamped with who edited it; a "Lunch &
+  breaks" list of every room's reliefs in time order; on the day sheet too.
 - Loaner requests and "Send for pull" share a readable picture and message
   (not just the raw .orsync data, which Messages opened as code).

@@ -2306,3 +2306,24 @@ html, body { overflow-x: hidden; }
 .log-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
 .log-count { margin: 6px 0 0; }
 a.btn.disabled { opacity: 0.5; pointer-events: none; }
+
+/* My day: lunch & break relief per room, and the day at a glance. */
+.relief-add { display: inline-block; margin: -4px 0 8px; }
+.relief-strip { margin: -2px 0 10px; padding: 8px 12px; border: 1px dashed var(--line); border-radius: 12px; background: var(--card); }
+.relief-slots { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.relief-slot strong { color: var(--brand); font-weight: 700; }
+.relief-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 4px; }
+.relief-edit { padding: 12px 14px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+.relief-edit-row { display: grid; grid-template-columns: 96px 112px 1fr; gap: 8px; align-items: center; }
+.relief-edit-row input { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 14px; font-family: inherit; min-width: 0; }
+.relief-edit-label { font-size: 13px; font-weight: 600; color: var(--slate); }
+@media (max-width: 420px) {
+  .relief-edit-row { grid-template-columns: 1fr 1fr; }
+  .relief-edit-label { grid-column: 1 / -1; }
+}
+.relief-board { padding: 10px 14px; margin-bottom: 12px; }
+.relief-board-head { display: flex; justify-content: space-between; align-items: baseline; width: 100%; gap: 8px; background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.relief-table { display: flex; flex-direction: column; margin-top: 8px; }
+.relief-table-row { display: grid; grid-template-columns: 56px 64px 1fr 1.3fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.relief-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.relief-room { font-weight: 600; }

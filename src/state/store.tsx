@@ -50,6 +50,7 @@ import { cardLink } from "../lib/links";
 import { diffCard, withEdit } from "../lib/cardHistory";
 import { mergeOnCard } from "../lib/itemCleanup";
 import { CSV_TEMPLATE, csvToBundle, parseCsv } from "../lib/csvImport";
+import { applyRelief, type ReliefSlots } from "../lib/relief";
 
 const STORAGE_KEY = "orsync.v2";
 const LEGACY_KEY = "orsync.v1"; // free-text item.location strings, no facilities
@@ -96,8 +97,9 @@ export function pruneEphemeral(s: AppState, today: string = localDay(0)): AppSta
   const cutoff = `${y1.getFullYear()}-${String(y1.getMonth() + 1).padStart(2, "0")}-${String(y1.getDate()).padStart(2, "0")}`;
   const carts = s.carts.filter((c) => c.date >= cutoff);
   const dayNotes = s.dayNotes.filter((n) => n.date >= cutoff);
-  if (carts.length === s.carts.length && dayNotes.length === s.dayNotes.length) return s;
-  return { ...s, carts, dayNotes };
+  const reliefs = (s.reliefs ?? []).filter((r) => r.date >= cutoff);
+  if (carts.length === s.carts.length && dayNotes.length === s.dayNotes.length && reliefs.length === (s.reliefs ?? []).length) return s;
+  return { ...s, carts, dayNotes, reliefs };
 }
 
 function load(): AppState {
@@ -180,6 +182,7 @@ function migrateLegacy(old: any): AppState {
     catalog: old.catalog ?? [],
     changeLog: old.changeLog ?? [],
     spdTrays: old.spdTrays ?? [],
+    reliefs: old.reliefs ?? [],
   };
 }
 
@@ -229,6 +232,9 @@ export interface Store {
   saveCard: (card: PrefCard) => void;
   // one-day special considerations ("today only" requests; never edit the card)
   addDayNote: (cardId: string, date: string, text: string, by?: string) => void;
+  /** A room's lunch reliefs (tech, nurse) and nurse break for a day; blank
+   *  everywhere clears it. Stamped with who saved it. */
+  saveRelief: (date: string, room: string, slots: ReliefSlots) => void;
   deleteDayNote: (id: string) => void;
   deleteCard: (id: string) => void;
   duplicateCard: (id: string) => PrefCard | null;
@@ -578,6 +584,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (!before || !changes.length) return next;
           const shown = changes.slice(0, 3).join("; ") + (changes.length > 3 ? `; +${changes.length - 3} more` : "");
           return logChange(next, "cards", `Card ${card.procedure}: ${shown}`, by, now);
+        }),
+
+      saveRelief: (date, room, slots) =>
+        update((st) => {
+          const by = getPullerName() || undefined;
+          const r = applyRelief(st.reliefs ?? [], date, room, slots, by, new Date().toISOString(), () => uid("relief"));
+          return r ? logChange({ ...st, reliefs: r.reliefs }, "schedule", r.text, by) : st;
         }),
 
       addDayNote: (cardId, date, text, by) =>
@@ -1669,6 +1682,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           catalog: parsed.catalog ?? st.catalog,
           changeLog: parsed.changeLog ?? st.changeLog,
           spdTrays: parsed.spdTrays ?? st.spdTrays,
+          reliefs: parsed.reliefs ?? st.reliefs,
         }));
       },
 
@@ -1678,7 +1692,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wipeAll: () =>
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
-          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [], spdTrays: [],
+          onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [], spdTrays: [], reliefs: [],
         }),
     };
   }, [state]);
@@ -2096,6 +2110,7 @@ export function stripFacilityData(st: AppState): AppState {
     catalog: [],
     changeLog: [],
     spdTrays: [],
+    reliefs: [],
   };
 }
 

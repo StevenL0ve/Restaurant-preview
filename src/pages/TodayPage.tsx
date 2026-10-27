@@ -40,6 +40,7 @@ import { normName, teamPhotos } from "../lib/teamPhotos";
 import { CaseCardPicker, initialPick, type CasePick } from "../components/CaseCardPicker";
 import { buildCombinedCard } from "../lib/combineCards";
 import { caseTitle } from "../lib/caseLog";
+import { RELIEF_SLOTS, hasRelief, reliefFor, reliefSummary, reliefTimeline, type ReliefSlots } from "../lib/relief";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -148,6 +149,8 @@ export function TodayPage() {
         </button>
       </div>
 
+      {cases.length > 0 && <ReliefBoard date={date} />}
+
       {adding && (
         <CaseForm store={store} date={date} onDone={() => setAdding(false)} />
       )}
@@ -167,6 +170,7 @@ export function TodayPage() {
                 {g.room || "No room set"}
                 {g.cases[0]?.time && <span className="muted small"> · first case {g.cases[0].time}</span>}
               </h2>
+              {g.room && <RoomReliefRow date={date} room={g.room} />}
               <div className="case-list">
                 {g.cases.map((c, i) => (
                   // The edit form opens right where the case sits, so tapping
@@ -1044,6 +1048,7 @@ function ShareDayButton({ date }: { date: string }) {
       const rooms: DayPdfRoom[] = casesByRoom(state, date).map((g) => ({
         room: g.room,
         firstTime: g.cases[0]?.time,
+        relief: g.room ? roomReliefLine(state, date, g.room) || undefined : undefined,
         cases: g.cases.map((c, i) => {
           const card = state.cards.find((k) => k.id === c.cardId);
           const notes = [
@@ -1091,4 +1096,123 @@ function ShareDayButton({ date }: { date: string }) {
       {msg && <span className="muted small">{msg}</span>}
     </>
   );
+}
+
+/** Who can relieve: the staff list (and today's room teams) for that role. */
+function reliefNames(state: Store["state"], date: string, who: "tech" | "nurse"): string[] {
+  const roles: TeamRole[] = who === "tech" ? ["tech", "trainee"] : ["nurse"];
+  const names = [
+    ...state.staff.filter((m) => roles.includes(m.role)).map((m) => m.name),
+    ...state.cases.filter((c) => c.date === date).flatMap((c) => (c.team ?? []).filter((m) => roles.includes(m.role)).map((m) => m.name)),
+  ];
+  return [...new Set(names)].sort();
+}
+
+/** One room's lunch reliefs and nurse break, under the room's name. */
+function RoomReliefRow({ date, room }: { date: string; room: string }) {
+  const { state, saveRelief } = useStore();
+  const relief = reliefFor(state.reliefs, date, room);
+  const [draft, setDraft] = useState<ReliefSlots | null>(null);
+  const listId = (who: string) => `relief-${who}-${room.replace(/\W+/g, "")}`;
+
+  if (draft) {
+    const set = (key: keyof ReliefSlots, field: "time" | "name", v: string) =>
+      setDraft({ ...draft, [key]: { ...draft[key], [field]: v } });
+    return (
+      <div className="card relief-edit">
+        <div className="relief-edit-head"><strong>{room}: lunch &amp; break relief</strong></div>
+        {RELIEF_SLOTS.map((slot) => (
+          <div key={slot.key} className="relief-edit-row">
+            <span className="relief-edit-label">{slot.label}</span>
+            <input type="time" value={draft[slot.key]?.time ?? ""} onChange={(e) => set(slot.key, "time", e.target.value)} aria-label={`${slot.label} starts`} />
+            <input
+              value={draft[slot.key]?.name ?? ""}
+              onChange={(e) => set(slot.key, "name", e.target.value)}
+              placeholder={slot.key === "nurseBreak" ? "Relief (optional)" : "Who relieves"}
+              list={listId(slot.who)}
+              autoCapitalize="words"
+              aria-label={`${slot.label} relief`}
+            />
+          </div>
+        ))}
+        <datalist id={listId("tech")}>{reliefNames(state, date, "tech").map((n) => <option key={n} value={n} />)}</datalist>
+        <datalist id={listId("nurse")}>{reliefNames(state, date, "nurse").map((n) => <option key={n} value={n} />)}</datalist>
+        <div className="form-actions">
+          <button className="btn btn-sm btn-primary" onClick={() => { saveRelief(date, room, draft); setDraft(null); }}>Save relief</button>
+          <button className="btn btn-sm" onClick={() => setDraft(null)}>Cancel</button>
+          {relief && <button className="btn btn-sm" onClick={() => { saveRelief(date, room, {}); setDraft(null); }}>Clear</button>}
+        </div>
+      </div>
+    );
+  }
+
+  const open = () => setDraft({ techLunch: relief?.techLunch, nurseLunch: relief?.nurseLunch, nurseBreak: relief?.nurseBreak });
+  if (!hasRelief(relief)) {
+    return <button className="link small relief-add" onClick={open}>+ Lunch &amp; break relief</button>;
+  }
+  return (
+    <div className="relief-strip">
+      <div className="relief-slots">
+        {RELIEF_SLOTS.map((slot) => {
+          const v = relief![slot.key];
+          if (!v?.time && !v?.name) return null;
+          return (
+            <span key={slot.key} className={`relief-slot relief-${slot.who}`}>
+              <strong>{slot.short}</strong> {v.time ?? "time not set"}{v.name ? ` · ${v.name}` : ""}
+            </span>
+          );
+        })}
+      </div>
+      <div className="relief-foot">
+        <span className="muted small">Edited by {stampLine(relief!.updatedBy, relief!.updatedAt) || "someone (unsigned)"}</span>
+        <button className="link small" onClick={open}>Edit relief</button>
+      </div>
+    </div>
+  );
+}
+
+/** Every room's reliefs for the day at a glance, in time order. */
+function ReliefBoard({ date }: { date: string }) {
+  const { state } = useStore();
+  const [open, setOpen] = useState(false);
+  const rooms = casesByRoom(state, date).map((g) => g.room).filter(Boolean);
+  for (const r of state.reliefs ?? []) if (r.date === date && !rooms.some((x) => x.toLowerCase() === r.room.toLowerCase())) rooms.push(r.room);
+  const rows = rooms.map((room) => ({ room, relief: reliefFor(state.reliefs, date, room) }));
+  const timeline = reliefTimeline(rows);
+  const unset = rows.filter((r) => !hasRelief(r.relief)).map((r) => r.room);
+  if (!rooms.length) return null;
+  return (
+    <div className="card relief-board">
+      <button className="relief-board-head" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <span><strong>Lunch &amp; breaks</strong> <span className="muted small">· {timeline.length ? `${timeline.length} set` : "none set yet"}{unset.length ? ` · ${unset.length} ${unset.length === 1 ? "room" : "rooms"} open` : ""}</span></span>
+        <span className="muted small">{open ? "Hide" : "Show all"}</span>
+      </button>
+      {open && (
+        <>
+          {timeline.length > 0 ? (
+            <div className="relief-table">
+              {timeline.map((t, i) => (
+                <div key={i} className="relief-table-row">
+                  <span className="relief-time">{t.time ?? "--:--"}</span>
+                  <span className="relief-room">{t.room}</span>
+                  <span>{t.label}</span>
+                  <span className="muted">{t.name ?? ""}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted small" style={{ margin: "8px 0 0" }}>Nothing set yet. Add each room's relief under its name below.</p>
+          )}
+          {unset.length > 0 && timeline.length > 0 && (
+            <p className="muted small" style={{ margin: "8px 0 0" }}>Not set: {unset.join(", ")}</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** For the shared day sheet: "Tech lunch 11:30, relief Angie Burks · ..." */
+export function roomReliefLine(state: Store["state"], date: string, room: string): string {
+  return reliefSummary(reliefFor(state.reliefs, date, room));
 }
