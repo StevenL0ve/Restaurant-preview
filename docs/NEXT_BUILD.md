@@ -73,3 +73,5 @@ What it fills, and what it asks:
 - Schedule upload keeps the schedule's wording as the case name.
 - Case log: filter by dates (this month, last 30 days, this year, or From/To)
   and specialty, counts by specialty, then Share PDF, Send as text, or Copy.
+- Loaner requests and "Send for pull" share a readable picture and message
+  (not just the raw .orsync data, which Messages opened as code).

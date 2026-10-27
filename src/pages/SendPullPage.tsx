@@ -104,7 +104,7 @@ export function SendPullPage() {
 
       <div className="form-actions">
         <button className="btn btn-primary" disabled={!card} onClick={send}>
-          Share the pull file
+          Send the pull request
         </button>
         {!card && <span className="muted small">Pick a card first.</span>}
       </div>

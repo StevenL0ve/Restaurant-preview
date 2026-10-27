@@ -45,7 +45,7 @@ import { guessRole } from "../lib/staffImport";
 import { buildSeed, splitLocation } from "./seed";
 import { asBundle, bundleCards, importBundle } from "../lib/portable";
 import { applyLoanerFile, buildLoanerFile, isLoanerFile, normalizeLoaner } from "../lib/loanerFile";
-import { shareFiles, shareJsonFile } from "../lib/share";
+import { shareFiles } from "../lib/share";
 import { cardLink } from "../lib/links";
 import { diffCard, withEdit } from "../lib/cardHistory";
 import { mergeOnCard } from "../lib/itemCleanup";
@@ -1015,11 +1015,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       sendLoanerFile: async (loanerId) => {
         const file = buildLoanerFile(state, loanerId, new Date().toISOString());
         if (!file) return "downloaded";
-        return shareJsonFile(
-          `loaner-${slugName(file.loaner.description)}.orsync`,
-          file,
-          `Loaner trays: ${file.loaner.description}`,
-        );
+        // People read the picture and the message; ORSync reads the file.
+        const name = `loaner-${slugName(file.loaner.description)}`;
+        const { loanerText, loanerPdfBlob } = await import("../lib/loanerPdf");
+        const files: File[] = [];
+        try {
+          const { pdfToPng } = await import("../lib/cardPreview");
+          files.push(new File([await pdfToPng(await loanerPdfBlob(file.loaner))], `${name}.png`, { type: "image/png" }));
+        } catch {
+          /* no picture: the text and the import file still go */
+        }
+        files.push(new File([JSON.stringify(file, null, 2)], `${name}.orsync`, { type: "application/json" }));
+        const how = await shareFiles(files, loanerText(file.loaner));
+        return how === "downloaded" ? "downloaded" : "shared";
       },
 
       // ---- Rep storage sites & stock ---------------------------------------
@@ -1532,11 +1540,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           requestedBy: requestedBy?.trim() || undefined,
         };
         const sg = state.surgeons.find((s) => s.id === card?.surgeonId);
-        return shareJsonFile(
-          `pull-${slugName(card?.procedure ?? "card")}.orsync`,
-          bundle,
-          `Pull request: ${card?.procedure ?? "preference card"}${sg ? ` · ${sg.name}` : ""} (open in ORSync)`,
-        );
+        const pr = bundle.pullRequest;
+        const [y, m, d] = date.split("-").map(Number);
+        const day = new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+        const text = [
+          `Pull request: ${card?.procedure ?? "preference card"}${sg ? ` · ${sg.name}` : ""}`,
+          `${pr.count} ${pr.count === 1 ? "cart" : "carts"} for ${day}`,
+          pr.note ? `Note: ${pr.note}` : null,
+          pr.requestedBy ? `From: ${pr.requestedBy}` : null,
+          "",
+          "Open the attached .orsync file in ORSync: the carts are set up ready to pull.",
+        ].filter((l) => l !== null).join("\n");
+        // A picture of the card for people; the .orsync file for ORSync.
+        const name = `pull-${slugName(card?.procedure ?? "card")}`;
+        const files: File[] = [];
+        if (card) {
+          try {
+            const { cardPdfBlob } = await import("../lib/cardPdf");
+            const { pdfToPng } = await import("../lib/cardPreview");
+            const facility = state.facilities.find((f) => f.id === card.facilityId);
+            const pdf = await cardPdfBlob(card, sg, facility, (locId) => locationLabelOf(state, locId));
+            files.push(new File([await pdfToPng(pdf)], `${name}.png`, { type: "image/png" }));
+          } catch {
+            /* the text and import file still go */
+          }
+        }
+        files.push(new File([JSON.stringify(bundle, null, 2)], `${name}.orsync`, { type: "application/json" }));
+        const how = await shareFiles(files, text);
+        return how === "downloaded" ? "downloaded" : "shared";
       },
 
       importCards: (json) => {
