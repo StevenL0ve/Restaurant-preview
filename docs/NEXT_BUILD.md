@@ -17,21 +17,6 @@ cards is read as ONE card (pages are joined). Plan, inside the Scan screen:
   Clean up items afterwards.
 - Test against the QC'd scans (D&C, knee arthroscopy, appendectomy).
 
-## "(Avail)" at the end of an item means hold
-Already read as hold: "Bone wax (Avail)", "(avail)", "(Avail.)", "(AVAIL)",
-"2 Lap sponges (Avail)", and a wrapped "(REF). (Avail)" line. Spellings that
-slip through today (checked against the parser):
-- "Fluoro (Available)" -> detail "Available", not a hold
-- "Hemoclips ( Avail )" -> detail "Avail" (spaces inside the brackets)
-- "Bipolar cord - Avail" -> detail "Avail"
-- "Stryker drill (Avail) REF 5400-50" -> "(Avail)" mid-line stays in the name
-Make all of these a hold and strip the word.
-
-Found while checking: an item line starting with a section word,
-"Suture passer (PRN)", is taken as a SUTURES header. The item is lost and
-the items after it land in Sutures. Only treat a line as a header when it
-has no item-like tail (brackets, quantities, REF numbers).
-
 ## Photo of the OR board fills the day (Keesler's Periop Tracking greaseboard)
 Take a picture of the PowerChart "OR Greaseboard" screen and get the same
 lineup a schedule upload or Add case makes, with questions where it isn't
@@ -76,5 +61,9 @@ What it fills, and what it asks:
 - My day: lunch & break relief per room (tech lunch, nurse lunch, nurse
   break: start time + who relieves), stamped with who edited it; a "Lunch &
   breaks" list of every room's reliefs in time order; on the day sheet too.
+- Scanner: every "(Avail)" spelling is a hold ("(Available)", "( Avail )",
+  "- Avail", "(Avail) REF ...", "Avail: ..."); "Suture passer (PRN)" and
+  "Suture scissors" stay items instead of becoming a Sutures header; inline
+  "REF 5400-50" / "Cat# ..." becomes the catalog number.
 - Loaner requests and "Send for pull" share a readable picture and message
   (not just the raw .orsync data, which Messages opened as code).

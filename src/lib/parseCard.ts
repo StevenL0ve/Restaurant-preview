@@ -155,6 +155,12 @@ const isRefCode = (s: string) => /^[A-Z0-9][A-Z0-9\-./]{2,}$/i.test(s) && /\d/.t
 /** Split an item line into name + detail on clear separators only. */
 function splitDetail(line: string): ParsedItem {
   const text = line.trim();
+  // "Stryker drill REF 5400-50", "Drill Cat# 123-45": a labelled catalog number.
+  const labelled = text.match(/^(.*?\S)\s*[,-]?\s+(?:ref|cat(?:alog)?|item)\s*(?:#|no\.?)?\s*[:#.]?\s*([A-Z0-9][A-Z0-9\-./]{2,})$/i);
+  if (labelled && isRefCode(labelled[2])) {
+    const rest = splitDetail(labelled[1]);
+    return { ...rest, ref: rest.ref ?? labelled[2] };
+  }
   const paren = text.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
   if (paren && paren[1].trim()) {
     const name = paren[1].trim().replace(/[,\s]+$/, "");
@@ -191,10 +197,19 @@ function parseItemLine(raw: string): ParsedItem | null {
   if (!text) return null;
 
   // "(Avail)" = pull it, keep it unopened unless asked — a structured hold.
+  // Spelled every way printouts do it: "(Avail)", "( avail. )", "(Available)",
+  // "- Avail" at the end, "(Avail)" ahead of a REF, or "Avail:" up front.
   let hold = false;
-  if (/\(avail\.?\)\.?\s*$/i.test(text)) {
+  const AVAIL_MARK = /\s*\(\s*avail(?:able)?\.?\s*\)\.?/i;
+  if (AVAIL_MARK.test(text)) {
     hold = true;
-    text = text.replace(/\s*\(avail\.?\)\.?\s*$/i, "").trim();
+    text = text.replace(AVAIL_MARK, " ").replace(/\s{2,}/g, " ").trim();
+  } else if (/\s+[-–—]\s*avail(?:able)?\.?\s*$/i.test(text)) {
+    hold = true;
+    text = text.replace(/\s+[-–—]\s*avail(?:able)?\.?\s*$/i, "").trim();
+  } else if (/^avail(?:able)?\s*[:\-–—]\s*\S/i.test(text)) {
+    hold = true;
+    text = text.replace(/^avail(?:able)?\s*[:\-–—]\s*/i, "").trim();
   }
   // Printouts end lines with stray periods ("VERESS NEEDLE 120MM..").
   text = text.replace(/\s*\.+$/, "").trim();
@@ -269,10 +284,20 @@ function asSectionHeader(line: string): SectionKey | null {
   // Long sub-section names ("Sterile Supplies, Needles, Syringes, IV
   // Supplies", "Sterile Supplies Drapes"): match their opening words.
   if (cleaned.length > 30 && (/\d/.test(cleaned) || cleaned.length > 60)) return null;
+  // An item line can start with a section word too ("Suture passer (PRN)",
+  // "Suture scissors"): a bracket means it's an item, and a lone singular
+  // word only heads a section when the rest are section words ("Instrument
+  // trays") or the line reads like a list ("Suture, Needles").
+  if (/[()]/.test(cleaned)) return null;
   const words = cleaned.split(/[\s,/]+/).filter(Boolean);
+  const listy = /[,/&]|\band\b/.test(cleaned);
   for (let n = Math.min(words.length, 3); n >= 1; n--) {
     const k = SECTION_ALIASES[words.slice(0, n).join(" ")];
-    if (k) return k;
+    if (!k) continue;
+    const rest = words.slice(n);
+    const plural = /s$/.test(words[n - 1]);
+    if (n === 1 && rest.length && !plural && !listy && !rest.every((w) => SECTION_ALIASES[w] || w === "&")) return null;
+    return k;
   }
   return null;
 }
