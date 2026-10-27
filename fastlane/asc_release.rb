@@ -69,7 +69,9 @@ def open_submissions
     .reject { |s| %w[COMPLETE CANCELING COMPLETING].include?(s.dig("attributes", "state")) }
 end
 
-EDITABLE = %w[PREPARE_FOR_SUBMISSION DEVELOPER_REJECTED REJECTED METADATA_REJECTED INVALID_BINARY].freeze
+# READY_FOR_REVIEW: assembled into a review submission that wasn't sent yet
+# (e.g. Apple errored on the final submit); sending it is all that's left.
+EDITABLE = %w[PREPARE_FOR_SUBMISSION READY_FOR_REVIEW DEVELOPER_REJECTED REJECTED METADATA_REJECTED INVALID_BINARY].freeze
 RELEASED = %w[READY_FOR_SALE PENDING_DEVELOPER_RELEASE PENDING_APPLE_RELEASE PROCESSING_FOR_APP_STORE REPLACED_WITH_NEW_VERSION].freeze
 
 list = versions

@@ -35,7 +35,11 @@ abort("App #{BUNDLE_ID} not found in App Store Connect") unless app
 puts "App: #{app.name} (#{app.id}) #{app.bundle_id}"
 
 version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS)
-abort("No editable iOS version (draft) found. Create version 1.0 in App Store Connect first.") unless version
+unless version
+  # Already assembled for review (or in review): nothing here to fill in.
+  puts "No editable iOS version right now (it may be ready for or in review); the listing is left as it is."
+  exit 0
+end
 puts "Draft version: #{version.version_string}, state: #{version.app_store_state}"
 
 require "net/http"
