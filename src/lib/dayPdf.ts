@@ -49,7 +49,6 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
   const autoTable = (await import("jspdf-autotable")).default;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
   const caseCount = rooms.reduce((n, r) => n + r.cases.length, 0);
   const roomCount = rooms.filter((r) => r.room).length;
 
@@ -173,7 +172,16 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     },
   });
 
-  // Footer stamp on every page: Jolie + ORSync, and when this was made.
+  await drawStamp(doc, now, "ORSync stores no patient information.");
+
+  return doc.output("blob");
+}
+
+/** Footer on every page: Jolie + ORSync, when this was made ("Current as
+ *  of: ..."), a note on the right, and page numbers when there are several. */
+export async function drawStamp(doc: import("jspdf").jsPDF, now: Date, note: string): Promise<void> {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const mascot = await loadMascot();
   const stamp = pdfSafe(currentAsOf(now));
   const pages = doc.getNumberOfPages();
@@ -197,9 +205,7 @@ export async function dayPdfBlob(date: string, rooms: DayPdfRoom[], now = new Da
     doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
     doc.text(stamp, tx, fy + 22);
     doc.setFontSize(7.5);
-    doc.text("ORSync stores no patient information.", pageW - MARGIN, fy + 10, { align: "right" });
+    doc.text(note, pageW - MARGIN, fy + 10, { align: "right" });
     if (pages > 1) doc.text(`Page ${i} of ${pages}`, pageW - MARGIN, fy + 22, { align: "right" });
   }
-
-  return doc.output("blob");
 }

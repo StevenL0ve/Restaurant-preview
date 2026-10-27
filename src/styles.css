@@ -2300,3 +2300,9 @@ html, body { overflow-x: hidden; }
    padding would otherwise blow them up). */
 .field input[type="checkbox"] { padding: 0; border-radius: 4px; width: 18px; height: 18px; flex: 0 0 auto; }
 .case-pick .pos-check { width: 100%; box-sizing: border-box; }
+/* Case log: date range + specialty filters, then share. */
+.log-filter { margin-top: 12px; }
+.log-ranges { display: flex; flex-wrap: wrap; gap: 6px; }
+.log-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.log-count { margin: 6px 0 0; }
+a.btn.disabled { opacity: 0.5; pointer-events: none; }

@@ -39,6 +39,7 @@ import { useProfile } from "../lib/profile";
 import { normName, teamPhotos } from "../lib/teamPhotos";
 import { CaseCardPicker, initialPick, type CasePick } from "../components/CaseCardPicker";
 import { buildCombinedCard } from "../lib/combineCards";
+import { caseTitle } from "../lib/caseLog";
 
 // My day — the 6 AM screen: today's lineup in order, each case linked to its
 // preference card with live setup progress and loaner readiness at a glance.
@@ -57,12 +58,6 @@ export function parseRoomInput(room?: string): { named: boolean; value: string }
   if (!t) return { named: false, value: "" };
   const m = /^OR\s*(\d+[A-Za-z]?)$/i.exec(t);
   return m ? { named: false, value: m[1] } : { named: true, value: t };
-}
-
-/** What a case is called on the board: the schedule's wording when it was
- *  typed, else the card's title (minus a one-case combo's tag). */
-export function caseTitle(entry: Pick<CaseEntry, "procedure">, card?: { procedure: string }): string {
-  return entry.procedure || (card?.procedure ?? "").replace(/\s*\(one case\)$/, "");
 }
 
 function shiftDay(date: string, delta: number): string {
