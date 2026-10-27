@@ -37,6 +37,7 @@ import { OnCallPage } from "./pages/OnCallPage";
 import { OnCallPeoplePage } from "./pages/OnCallPeoplePage";
 import { SearchPage } from "./pages/SearchPage";
 import { CaseLogPage } from "./pages/CaseLogPage";
+import { CallSchedulePage } from "./pages/CallSchedulePage";
 import { CatalogPage } from "./pages/CatalogPage";
 import { Settings } from "./pages/Settings";
 import { Paywall } from "./pages/Paywall";
@@ -184,6 +185,7 @@ export default function App() {
             <Route path="/carts/:id" element={<Gated><CartPullPage /></Gated>} />
             <Route path="/on-call" element={<Gated><OnCallPage /></Gated>} />
             <Route path="/on-call/people" element={<Gated><OnCallPeoplePage /></Gated>} />
+            <Route path="/on-call/schedule" element={<Gated><CallSchedulePage /></Gated>} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/spd" element={<Gated><SpdPage /></Gated>} />
             <Route path="/item" element={<ItemPage />} />

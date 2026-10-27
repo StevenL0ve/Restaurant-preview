@@ -307,6 +307,10 @@ export interface Store {
   deleteOnCallPerson: (id: string) => void;
   /** Put a person on call for a position over a window (end omitted = open-ended). */
   assignOnCall: (positionId: string, personId: string, start: string, end?: string, note?: string) => OnCallShift;
+  /** Schedule ahead: one shift per window (picked days), logged as one
+   *  change. Doesn't cut short whoever is on "until changed": a scheduled
+   *  shift takes precedence while it runs, then they're back on. */
+  assignOnCallMany: (positionId: string, personId: string, windows: { start: string; end: string }[], note?: string) => number;
   updateOnCallShift: (id: string, patch: Partial<Omit<OnCallShift, "id">>) => void;
   deleteOnCallShift: (id: string) => void;
   // case carts
@@ -1483,6 +1487,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return logChange(next, "oncall", `On call: set ${describeShift(next, shift)}`);
         });
         return shift;
+      },
+
+      assignOnCallMany: (positionId, personId, windows, note) => {
+        if (!windows.length) return 0;
+        const now = new Date().toISOString();
+        const by = getPullerName() || undefined;
+        const shifts: OnCallShift[] = windows.map((w) => ({
+          id: uid("shift"), positionId, personId, start: w.start, end: w.end, note: note?.trim() || undefined, updatedAt: now, updatedBy: by,
+        }));
+        update((st) => {
+          const onCallPeople = st.onCallPeople.map((p) =>
+            p.id === personId && !p.positionIds.includes(positionId) ? { ...p, positionIds: [...p.positionIds, positionId] } : p,
+          );
+          const next = { ...st, onCallPeople, onCallShifts: [...st.onCallShifts, ...shifts] };
+          const pos = st.onCallPositions.find((p) => p.id === positionId)?.name ?? "position";
+          const who = st.onCallPeople.find((p) => p.id === personId)?.name ?? "someone";
+          const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+          const span = shifts.length === 1 ? `${day(shifts[0].start)}` : `${shifts.length} shifts, ${day(shifts[0].start)} to ${day(shifts[shifts.length - 1].start)}`;
+          return logChange(next, "oncall", `On call: scheduled ${who} for ${pos}, ${span}`);
+        });
+        return shifts.length;
       },
 
       updateOnCallShift: (id, patch) =>

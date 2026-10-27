@@ -2327,3 +2327,31 @@ a.btn.disabled { opacity: 0.5; pointer-events: none; }
 .relief-table-row { display: grid; grid-template-columns: 56px 64px 1fr 1.3fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .relief-time { font-weight: 700; font-variant-numeric: tabular-nums; }
 .relief-room { font-weight: 600; }
+
+/* On call: pick several days at once, and the month's call schedule. */
+.day-picker { border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: var(--card); }
+.day-picker-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.day-picker-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.day-picker-wd { text-align: center; font-size: 11px; font-weight: 700; color: var(--slate); padding: 2px 0; }
+.day-picker-day {
+  aspect-ratio: 1; min-height: 36px; min-width: 0; width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--card);
+  color: inherit; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0;
+}
+.day-picker-day.today { border-color: var(--brand); }
+.day-picker-day.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.day-picker-day:disabled { opacity: 0.3; cursor: default; }
+.day-picker-quick { margin-top: 8px; }
+.assign-days { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.assign-hours { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.call-day.today .room-head { color: var(--brand); }
+.call-day-card { padding: 4px 14px; }
+.call-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.call-row:first-child { border-top: 0; }
+.call-row.editing { flex-direction: column; align-items: stretch; }
+.call-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.call-pos { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate); }
+.call-who { font-weight: 700; }
+.call-hours { font-variant-numeric: tabular-nums; }
+.call-row-actions { display: flex; gap: 12px; flex-shrink: 0; }
+.call-open { color: var(--neg, #b91c1c); margin: 8px 0; }
+.call-row.standing { opacity: 0.7; }

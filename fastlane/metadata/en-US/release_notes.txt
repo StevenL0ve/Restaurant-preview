@@ -1,5 +1,6 @@
 - Add case: type the case the way the schedule reads it, and matching preference cards come up as you type. Search or add the surgeon on the spot, and tick several cards to combine them for one case.
 - Set a "not before" time for cases that aren't a room's first start.
+- On call: schedule ahead for the rest of the month. Tap the days on a calendar, set the hours (17:00 to 07:00 runs overnight), and see the whole call schedule day by day.
 - Lunch and break relief on My day: tech and nurse lunch relief, nurse break, and every room's reliefs at a glance.
 - Share day: the whole lineup on one sheet, with a line on each case to write the patient's name after printing.
 - Print or share all of the day's preference cards, or just the ones you pick.

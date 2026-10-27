@@ -1,5 +1,6 @@
 - Add case: type it as the schedule reads; matching cards come up. Add surgeons on the spot; combine cards.
 - "Not before" times for later cases.
+- On call: schedule the month ahead with start/end times.
 - Lunch & break relief per room on My day.
 - Share day as one sheet; print all or picked cards.
 - Case log: filter by dates/specialty, share as PDF or text.

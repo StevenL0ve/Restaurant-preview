@@ -18,7 +18,8 @@ import { stampLine } from "../lib/user";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
 import { tapLight } from "../lib/haptics";
-import { describeWindow, formatPhone, presetWindow, PRESETS, toLocalInputValue, fromLocalInputValue, type PresetKind } from "../lib/oncall";
+import { describeWindow, formatPhone, presetWindow, PRESETS, toLocalInputValue, fromLocalInputValue, windowsForDays, type PresetKind } from "../lib/oncall";
+import { DayPicker } from "../components/DayPicker";
 import type { OnCallPerson, OnCallPosition } from "../types";
 
 // The on-call board: who to call, per role, right now. Every position shows the
@@ -37,6 +38,7 @@ export function OnCallPage() {
           <p className="muted">Who’s on right now. Tap a number to call from your phone.</p>
         </div>
         <div className="head-actions">
+          <Link className="btn btn-primary" to="/on-call/schedule">Call schedule</Link>
           <Link className="btn" to="/on-call/people">Manage people & positions</Link>
         </div>
       </div>
@@ -125,6 +127,7 @@ function PositionCard({ position }: { position: OnCallPosition }) {
             const p = onCallPersonOf(state, s.personId);
             return <span key={s.id} className="oncall-up-item">{p?.name} · {describeWindow(s, Date.now())}</span>;
           })}
+          {upcoming.length > 2 && <Link className="link small" to={`/on-call/schedule?pos=${position.id}`}>+{upcoming.length - 2} more</Link>}
         </div>
       )}
 
@@ -186,13 +189,19 @@ function CallButtons({ person, big }: { person: OnCallPerson; big?: boolean }) {
 
 // Put someone on call: search the whole directory, tap a name, choose a window.
 function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: () => void }) {
-  const { state, assignOnCall, addOnCallPerson } = useStore();
+  const { state, assignOnCall, assignOnCallMany, addOnCallPerson } = useStore();
   const [q, setQ] = useState("");
   const [personId, setPersonId] = useState<string>("");
   const [preset, setPreset] = useState<PresetKind>("now");
   const [start, setStart] = useState(toLocalInputValue(new Date().toISOString()));
   const [end, setEnd] = useState("");
   const [custom, setCustom] = useState(false);
+  // Schedule ahead: several days at once, with the call hours.
+  const [pickDays, setPickDays] = useState(false);
+  const [days, setDays] = useState<string[]>([]);
+  const [fromTime, setFromTime] = useState("17:00");
+  const [toTime, setToTime] = useState("07:00");
+  const [joinDays, setJoinDays] = useState<"each" | "stretch">("each");
   const [note, setNote] = useState("");
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -221,6 +230,7 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
   function applyPreset(kind: PresetKind) {
     setPreset(kind);
     setCustom(false);
+    setPickDays(false);
     const w = presetWindow(kind, Date.now());
     setStart(toLocalInputValue(w.start));
     setEnd(toLocalInputValue(w.end));
@@ -240,13 +250,20 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
       id = p.id;
     }
     if (!id) return;
+    if (pickDays) {
+      assignOnCallMany(position.id, id, windowsForDays(days, fromTime, toTime, joinDays), note);
+      onDone();
+      return;
+    }
     const startISO = custom ? fromLocalInputValue(start) ?? new Date().toISOString() : presetWindow(preset, Date.now()).start;
     const endISO = custom ? fromLocalInputValue(end) : presetWindow(preset, Date.now()).end;
     assignOnCall(position.id, id, startISO, endISO, note);
     onDone();
   }
 
-  const canSave = !!personId || (addingNew && newName.trim().length > 0);
+  const canSave = (!!personId || (addingNew && newName.trim().length > 0)) && (!pickDays || (days.length > 0 && !!fromTime && !!toTime));
+  const windows = pickDays ? windowsForDays(days, fromTime, toTime, joinDays) : [];
+  const overnight = toTime <= fromTime;
 
   return (
     <div className="assign-form">
@@ -319,12 +336,33 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
         <span className="assign-when-label">For how long?</span>
         <div className="chips">
           {PRESETS.map((p) => (
-            <button key={p.kind} className={"chip" + (!custom && preset === p.kind ? " active" : "")} onClick={() => applyPreset(p.kind)}>
+            <button key={p.kind} className={"chip" + (!custom && !pickDays && preset === p.kind ? " active" : "")} onClick={() => applyPreset(p.kind)}>
               {p.label}
             </button>
           ))}
-          <button className={"chip" + (custom ? " active" : "")} onClick={() => setCustom(true)}>Custom dates</button>
+          <button className={"chip" + (pickDays ? " active" : "")} onClick={() => { setPickDays(true); setCustom(false); }}>Pick days (this month and on)</button>
+          <button className={"chip" + (custom ? " active" : "")} onClick={() => { setCustom(true); setPickDays(false); }}>Custom dates</button>
         </div>
+        {pickDays && (
+          <div className="assign-days">
+            <DayPicker selected={days} onChange={setDays} />
+            <div className="assign-hours">
+              <label className="field"><span>Call starts</span>
+                <input type="time" value={fromTime} onChange={(e) => setFromTime(e.target.value)} /></label>
+              <label className="field"><span>Call ends</span>
+                <input type="time" value={toTime} onChange={(e) => setToTime(e.target.value)} /></label>
+            </div>
+            <div className="chips">
+              <button className={"chip" + (joinDays === "each" ? " active" : "")} onClick={() => setJoinDays("each")}>Each day separately</button>
+              <button className={"chip" + (joinDays === "stretch" ? " active" : "")} onClick={() => setJoinDays("stretch")}>Back-to-back days as one stretch</button>
+            </div>
+            <p className="muted small" style={{ margin: 0 }}>
+              {days.length === 0
+                ? "Tap the days they're on call."
+                : `${days.length} ${days.length === 1 ? "day" : "days"} → ${windows.length} ${windows.length === 1 ? "shift" : "shifts"}, ${fromTime} to ${toTime}${overnight ? " the next morning" : ""}${joinDays === "stretch" && windows.length < days.length ? " (back-to-back days joined)" : ""}.`}
+            </p>
+          </div>
+        )}
         {custom && (
           <div className="assign-custom">
             <label className="field"><span>Start</span>
@@ -339,7 +377,7 @@ function AssignForm({ position, onDone }: { position: OnCallPosition; onDone: ()
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. covering for Dana" /></label>
 
       <div className="form-actions">
-        <button className="btn btn-primary" disabled={!canSave} onClick={save}>Put on call</button>
+        <button className="btn btn-primary" disabled={!canSave} onClick={save}>{pickDays && windows.length ? `Schedule ${windows.length} ${windows.length === 1 ? "shift" : "shifts"}` : "Put on call"}</button>
         <button className="btn" onClick={onDone}>Cancel</button>
       </div>
     </div>

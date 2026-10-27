@@ -65,5 +65,8 @@ What it fills, and what it asks:
   "- Avail", "(Avail) REF ...", "Avail: ..."); "Suture passer (PRN)" and
   "Suture scissors" stay items instead of becoming a Sutures header; inline
   "REF 5400-50" / "Cat# ..." becomes the catalog number.
+- On call: "Pick days" schedules someone for many days at once (month
+  calendar, call start/end times, each day or one stretch), and a Call
+  schedule screen shows every day of the month, open positions flagged.
 - Loaner requests and "Send for pull" share a readable picture and message
   (not just the raw .orsync data, which Messages opened as code).
