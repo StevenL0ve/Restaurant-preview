@@ -13,6 +13,16 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: "#f6f8fb",
+    // Every plugin except RevenueCat: Android has no Pro subscriptions yet,
+    // and its bundled Play Billing 7 is now refused by Google Play (8+
+    // needs a newer Capacitor). Add it back with Android purchases.
+    includePlugins: [
+      "@aparajita/capacitor-biometric-auth",
+      "@capacitor/app",
+      "@capacitor/filesystem",
+      "@capacitor/haptics",
+      "orsync-ocr",
+    ],
   },
 };
 

@@ -91,6 +91,7 @@ export async function proPackages(): Promise<ProPackage[]> {
 /** Buy a package. Resolves true when Pro is active afterwards; false if the
  *  person cancelled the store sheet. */
 export async function buyPro(pkg: ProPackage): Promise<boolean> {
+  if (!iapReady()) return false;
   const Purchases = await sdk();
   try {
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg.raw as never });
@@ -106,6 +107,7 @@ export async function buyPro(pkg: ProPackage): Promise<boolean> {
 /** "Restore purchases" (required by Apple): re-link a subscription bought
  *  earlier, on another phone, or before reinstalling. */
 export async function restorePro(): Promise<boolean> {
+  if (!iapReady()) return false;
   const Purchases = await sdk();
   const { customerInfo } = await Purchases.restorePurchases();
   const pro = isPro(customerInfo as unknown as Info);
