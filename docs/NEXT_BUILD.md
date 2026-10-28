@@ -52,6 +52,10 @@ What it fills, and what it asks:
 - Re-photographing the same day updates cases instead of duplicating them.
 - Test with a typed-up copy of the board (no case numbers or comments);
   don't commit photos of the real board.
+- Second sample (Oct 28, 12 cases, flip rooms, scrolled board, partial
+  tech names): docs/greaseboard/sample-2026-10-28.md.
+- Also offer: if the board's Print can save a PDF, import that instead of a
+  photo (exact text, no camera noise).
 
 ## Phone password autofill and "remember me" (iOS Passwords / Google Password Manager)
 Sign-in should offer the phone's saved password, offer to save a new one,
