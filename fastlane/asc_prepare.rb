@@ -102,9 +102,9 @@ step("attach newest valid build") do
   puts "  now attached: build #{pick.version}"
 end
 
-# ---- Version: copyright, manual release ----
-step("version copyright + manual release") do
-  version.update(attributes: { "copyright" => read("copyright.txt"), "releaseType" => "MANUAL" })
+# ---- Version: copyright, release as soon as Apple approves ----
+step("version copyright + automatic release") do
+  version.update(attributes: { "copyright" => read("copyright.txt"), "releaseType" => "AFTER_APPROVAL" })
 end
 
 # ---- Version localization (en-US): description, keywords, promo, URLs ----

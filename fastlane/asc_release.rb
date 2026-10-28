@@ -128,7 +128,7 @@ if MODE == "prepare"
     abort("Version #{pending[:version]} is #{pending[:state]}; finish or release it before #{TARGET}.")
   else
     made = api(:post, "/v1/appStoreVersions", { data: { type: "appStoreVersions",
-      attributes: { platform: "IOS", versionString: TARGET, releaseType: "MANUAL" },
+      attributes: { platform: "IOS", versionString: TARGET, releaseType: "AFTER_APPROVAL" },
       relationships: { app: { data: { type: "apps", id: APP_ID } } } } })["data"]
     puts "Created version #{TARGET} (#{made['id']})."
     unless NOTES.empty?
