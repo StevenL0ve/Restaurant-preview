@@ -19,6 +19,17 @@ ORGANIZE IT YOUR WAY
 • Favorite the cards you reach for most
 • Photos of items, the Mayo stand, and the back table, kept on your device
 
+SCAN THE CARDS YOU ALREADY HAVE
+• Point the camera at a printed preference card: every item lands in the right section, with quantities, holds, and catalog numbers
+• Or import a PDF export
+
+RUN THE DAY
+• My day: the lineup by room, with the case named the way your schedule says it
+• Upload the OR schedule from an Excel or CSV export
+• Lunch and break relief for every room, at a glance
+• Share the day as one sheet, with a line on each case to write the patient's name after printing
+• On call: schedule the month ahead, with call start and end times
+
 SET UP THE ROOM WITHOUT MISSING A THING
 • Setup mode turns any card into a live pull list with big tap targets
 • Check items off as you gather them; a progress bar hits "Case ready" at 100%
@@ -29,7 +40,8 @@ YOURS, EVERYWHERE
 • Your cards stay on your phone; Pro backs them up to every device
 • One search across surgeons, procedures, and every item
 • Share a card as a file or text; export your whole library
-• Optional Face ID lock
+• Optional fingerprint or face lock
+• Your case log, filtered by dates and specialty, shared as a PDF
 
 WITH YOUR FACILITY (facility account)
 • One shared card library for the whole OR, every change signed and dated
@@ -46,9 +58,9 @@ ORSync is not for patient information. Preference cards describe surgeon and pro
 - Privacy policy: https://stevenl0ve.github.io/Restaurant-preview/privacy.html
 
 ## App content answers
-- **App access:** some features need sign-in. Reviewer login
-  bkborngaraised@gmail.com / appleteam. Facility features: join facility
-  KeeslerAFBOR (password keeslerAFBOR) or use Demo mode on the facility screen.
+- **App access:** "All or some functionality is restricted" → add
+  instructions: "Tap Try the demo on the sign-in screen. No account is
+  needed; it opens the full app with sample cards, cases, carts, and on-call."
 - **Ads:** no ads.
 - **Content rating (IARC):** category Utility / Productivity. No violence,
   sexual content, profanity, drugs, gambling. Users can share content with
@@ -59,10 +71,18 @@ ORSync is not for patient information. Preference cards describe surgeon and pro
 - **Health apps:** it is a workflow tool for OR staff (preference cards, case
   carts, schedules). It does not collect patients' health data.
 - **Data safety:**
-  - Collected: Personal info (name, email, phone, user ID), Photos (optional
-    profile photo), Other user-generated content (cards, schedules, notes),
-    Purchase history (Pro subscription).
+  - Collected: Personal info (name, email address, phone number, user IDs),
+    Photos (optional profile photo), App activity: other user-generated
+    content (cards, schedules, notes). No purchases on Android yet.
   - Purpose: App functionality and Account management. Not shared with third
     parties, not used for ads or tracking.
+  - Collection is optional for phone and photo, required for name and email
+    (account). Processed ephemerally: no.
   - Encrypted in transit: yes. Users can delete their data: yes (Settings →
     Account → Delete account, or email admin@ourgymapp.com).
+- **Store settings:** category Medical; tags Productivity / Medical.
+- **App category & contact:** email admin@ourgymapp.com, website
+  https://stevenl0ve.github.io/Restaurant-preview/support.html
+- **Production release:** countries: United States (or all); upload
+  app-release.aab from orsync-android-33; release notes in
+  release-notes-1.0.1.txt.
