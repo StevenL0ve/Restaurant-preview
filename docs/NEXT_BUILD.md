@@ -1,7 +1,8 @@
 # Next build (after 1.0.1)
 
 Start once 1.0.1 is approved, in this order: 1) photo of the OR board fills
-the day, 2) phone notifications for schedule changes, 3) scan a stack.
+the day, 2) add items to a case (below), 3) phone notifications for
+schedule changes and late additions, 4) scan a stack.
 
 Agreed for the next version; not in 1.0.1 (build 127, in App Review).
 
@@ -51,6 +52,32 @@ What it fills, and what it asks:
 - Re-photographing the same day updates cases instead of duplicating them.
 - Test with a typed-up copy of the board (no case numbers or comments);
   don't commit photos of the real board.
+
+## Add items to a case: while booking, after booking, even after pulling
+Add one or several items to a case from the Add case form, the case tile on
+My day, or the cart itself. Each addition asks:
+- **Just this case** (that day only; the card isn't touched), or
+- **Add to the card going forward** (saved to the preference card, with
+  the edit history noting who added it and from which case).
+Both land on that case's cart.
+
+When the cart was already printed or pulled (any item pulled, marked done,
+QC'd, or Print cards / Share day used for that day):
+- The new item goes straight on the cart's **missing** list, flagged "added
+  after pulling", until someone checks it off as on the cart (the same
+  confirm used by QC today).
+- Anyone can comment on it: "In the sterilizer", "Rep bringing it 06:30",
+  "Due in on the noon truck". The comment shows who wrote it and when
+  (existing missing-item comments).
+- A phone notification goes out (with the notifications build): "Added
+  after pull · OR 4 Lap Chole, Thu: Ligasure 5mm". Sent to people on that
+  day's room team and whoever pulled or QC'd the cart.
+
+On My day, the day before and the day of the case:
+- The case tile's missing count turns **red**. Tapping it opens the list:
+  each missing item, why ("added after pulling" / not found), and every
+  comment with who and when; checking it off clears it.
+- Earlier days keep the normal (non-red) count.
 
 ## Phone notifications for schedule changes (after the app is live)
 Native push notifications, on/off in Settings, for cases **added, canceled,
