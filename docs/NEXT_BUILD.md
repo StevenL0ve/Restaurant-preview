@@ -53,6 +53,27 @@ What it fills, and what it asks:
 - Test with a typed-up copy of the board (no case numbers or comments);
   don't commit photos of the real board.
 
+## Phone password autofill and "remember me" (iOS Passwords / Google Password Manager)
+Sign-in should offer the phone's saved password, offer to save a new one,
+and suggest a strong password on sign-up.
+- The web form already marks the fields (email = username,
+  current-password / new-password); inside the app the phone also needs
+  proof the app and the website belong together:
+  - iOS: Associated Domains `webcredentials:<domain>` in the app, plus
+    `/.well-known/apple-app-site-association` on that domain.
+  - Android: `/.well-known/assetlinks.json` (package com.ORSync, signing
+    certificate fingerprint) on that domain.
+- Both files must sit at the root of a domain we control, which a GitHub
+  Pages project path can't do. Use a subdomain like orsync.ourgymapp.com
+  pointed at the site (owner: add one DNS record; I'll give the exact value).
+- Saved logins then also work across the website and both apps.
+
+## Facility join requests show the person's name
+Admins see a request as email + position today ("Apple Tester" shows only
+because that account set a name). Show the full name first, large; if the
+account has no name yet, the join form asks for it before sending, so no
+request arrives without one.
+
 ## Add items to a case: while booking, after booking, even after pulling
 Add one or several items to a case from the Add case form, the case tile on
 My day, or the cart itself. Each addition asks:
