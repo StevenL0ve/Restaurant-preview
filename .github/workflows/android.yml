@@ -54,6 +54,50 @@ jobs:
           npx capacitor-assets generate --android
           npx cap sync android
 
+      # Google Play: new apps must target Android 16 (API 36), and Play's
+      # automatic protection needs a minimum of Android 7.0 (API 24). The
+      # Capacitor 6 template is older, so lift the SDKs and the Android build
+      # tools that can compile for API 36.
+      - name: Target Android 16 for Google Play
+        run: |
+          sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 24/; s/compileSdkVersion = [0-9]*/compileSdkVersion = 36/; s/targetSdkVersion = [0-9]*/targetSdkVersion = 36/' android/variables.gradle
+          sed -i "s#com.android.tools.build:gradle:[0-9.]*#com.android.tools.build:gradle:8.11.1#" android/build.gradle
+          sed -i "s#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.13-all.zip#" android/gradle/wrapper/gradle-wrapper.properties
+          head -5 android/variables.gradle
+          grep -n "tools.build:gradle" android/build.gradle
+          cat android/gradle/wrapper/gradle-wrapper.properties | grep distributionUrl
+
+          # Targeting Android 15+ always draws the app edge to edge (Android
+          # 16 removes the opt-out): pad the web view by the status bar,
+          # navigation bar, notch, and keyboard so nothing hides behind them.
+          MAIN=$(find android/app/src/main/java -name MainActivity.java)
+          PKG=$(sed -n 's/^package \(.*\);/\1/p' "$MAIN")
+          cat > "$MAIN" <<JAVA
+          package $PKG;
+
+          import android.os.Bundle;
+          import android.view.View;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  View content = findViewById(android.R.id.content);
+                  ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+                      Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                      Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                      v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+                      return WindowInsetsCompat.CONSUMED;
+                  });
+              }
+          }
+          JAVA
+          cat "$MAIN"
+
       - name: Version, permissions, and the .orsync file type
         run: |
           # +10 keeps CI build numbers clear of earlier manual builds; the
