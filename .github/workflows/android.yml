@@ -62,6 +62,11 @@ jobs:
           echo "versionCode $BUILD_NUM"
           sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
           sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.1\"/" android/app/build.gradle
+          # The Play Console app was created as com.ORSync (fixed for good once
+          # set), so the Android build uses that id; iOS keeps
+          # com.stevennelson.orsync.
+          sed -i 's/applicationId "[^"]*"/applicationId "com.ORSync"/' android/app/build.gradle
+          grep -n "applicationId" android/app/build.gradle
 
           MANIFEST=android/app/src/main/AndroidManifest.xml
           # Open tapped .orsync card files (Messages, Gmail, Drive) in the app.
@@ -177,7 +182,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.stevennelson.orsync
+          packageName: com.ORSync
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
