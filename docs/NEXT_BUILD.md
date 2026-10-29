@@ -54,6 +54,8 @@ What it fills, and what it asks:
   don't commit photos of the real board.
 - Second sample (Oct 28, 12 cases, flip rooms, scrolled board, partial
   tech names): docs/greaseboard/sample-2026-10-28.md.
+- Third sample (Oct 29, full screen, board date in the status bar, "Uro Tech"
+  role, "Clarke/roberts"): docs/greaseboard/sample-2026-10-29.md.
 - Also offer: if the board's Print can save a PDF, import that instead of a
   photo (exact text, no camera noise).
 
