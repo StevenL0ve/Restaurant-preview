@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { NavIcon } from "../components/NavIcon";
+import { BoardPhotoImport } from "../components/BoardPhotoImport";
 import { useStore, getPullerName } from "../state/store";
 import { useAuth } from "../state/auth";
 import { usePermissions } from "../lib/permissions";
@@ -81,12 +82,15 @@ export function ScheduleUploadPage() {
       <div className="detail-top"><Link className="link" to="/today">← My day</Link></div>
       <h1 className="page-title"><NavIcon name="myday" size={40} />Upload schedule</h1>
       <p className="muted">
-        Bring a day or a week of cases in at once from your EHR (Epic, Cerner, MHS GENESIS) or a spreadsheet.
-        Each case is matched to the surgeon's preference card; you review every match before anything is added.
+        Bring a day of cases in at once from a photo of the OR board, or a day or a week from your EHR
+        (Epic, Cerner, MHS GENESIS) or a spreadsheet. Each case is matched to the surgeon's preference card;
+        you review every match before anything is added.
       </p>
 
+      <BoardPhotoImport needsApproval={perms.needsApproval} />
+
       <div className="card form-card">
-        <h2>1. Choose the file</h2>
+        <h2>Or a schedule file</h2>
         <p className="muted small">
           A .csv or .xlsx with a header row: date, start time, room, surgeon, procedure. Patient names, MRNs and
           other patient columns are <strong>ignored and never saved</strong>.
@@ -101,7 +105,7 @@ export function ScheduleUploadPage() {
 
       {rows && (
         <div className="card form-card">
-          <h2>2. Check the columns</h2>
+          <h2>Check the columns</h2>
           <div className="schedule-map">
             {SCHEDULE_FIELDS.map((f) => (
               <label key={f.key} className="field">
@@ -123,7 +127,7 @@ export function ScheduleUploadPage() {
 
       {rows && missingRequired.length === 0 && (
         <div className="card form-card">
-          <h2>3. Review the cases</h2>
+          <h2>Review the cases</h2>
           <p className="muted small">
             {ready.length} of {preview.length} ready. Rows without a card are skipped; pick one to include them.
           </p>

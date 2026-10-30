@@ -21,7 +21,7 @@ cards is read as ONE card (pages are joined). Plan, inside the Scan screen:
   Clean up items afterwards.
 - Test against the QC'd scans (D&C, knee arthroscopy, appendectomy).
 
-## Photo of the OR board fills the day (Keesler's Periop Tracking greaseboard)
+## Photo of the OR board fills the day (Keesler's Periop Tracking greaseboard): BUILT, see the end
 Take a picture of the PowerChart "OR Greaseboard" screen and get the same
 lineup a schedule upload or Add case makes, with questions where it isn't
 sure. Lives in Upload schedule as "Take a photo of the board", reusing that
@@ -166,3 +166,15 @@ Owner to-dos when we build it:
   schedule screen shows every day of the month, open positions flagged.
 - Loaner requests and "Send for pull" share a readable picture and message
   (not just the raw .orsync data, which Messages opened as code).
+- Photo of the OR board fills the day (My day → "Board photo or upload"):
+  reads the Periop Tracking screen on the device (patient columns,
+  comments and case numbers are dropped as it's read); room headings →
+  OR n, the status-bar date + the filter's "+1"; checks Total Cases and each
+  room's count and asks for another photo when some were scrolled off
+  (photos merge); matches surgeons and cards, asks who an unknown surgeon is
+  (or adds them), first-or-last-name staff matching with a question when two
+  people fit, "Uro Tech" kept as a role, "Clarke/roberts" as two people;
+  later cases "to follow" or "not before" the board's time; photographing
+  the same day again updates its cases instead of duplicating them. A board
+  printed to PDF works too. Website (Tesseract) tries up to three reads and
+  keeps the fullest; the phone apps use Apple Vision / ML Kit.

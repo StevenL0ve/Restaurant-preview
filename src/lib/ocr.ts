@@ -336,7 +336,9 @@ async function nativeRecognize(source: HTMLCanvasElement): Promise<string> {
   return buildLines(lines).join("\n");
 }
 
-async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrProgress): Promise<string> {
+type TesseractWorker = Awaited<ReturnType<typeof import("tesseract.js")["createWorker"]>>;
+
+async function tesseractWorker(onProgress?: OcrProgress): Promise<{ worker: TesseractWorker; PSM: typeof import("tesseract.js")["PSM"] }> {
   const { createWorker, PSM } = await import("tesseract.js");
   // Engine files come from the jsDelivr CDN by default; a page can point
   // them elsewhere (self-hosting, or tests) with __orsyncTesseractPaths.
@@ -347,30 +349,40 @@ async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrPro
       if (m.status && typeof m.progress === "number") onProgress?.(Math.round(m.progress * 100), m.status);
     },
   });
+  return { worker, PSM };
+}
+
+/** Every word Tesseract finds, boxed (0..1), and its overall confidence. */
+async function tesseractWords(worker: TesseractWorker, source: HTMLCanvasElement, degrees: 0 | 90 | 270, clean: boolean): Promise<{ words: OcrLine[]; text: string; confidence: number }> {
+  const c = rotate(source, degrees);
+  let img: Blob = await canvasBlob(c, "image/png");
+  if (clean) {
+    const ctx = c.getContext("2d")!;
+    const px = ctx.getImageData(0, 0, c.width, c.height);
+    px.data.set(cleanForOcr(px.data, c.width, c.height));
+    ctx.putImageData(px, 0, 0);
+    img = await canvasBlob(c, "image/png");
+  }
+  const { data } = await worker.recognize(img, {}, { text: true, blocks: true });
+  const words: OcrLine[] = [];
+  for (const b of data.blocks ?? []) for (const para of b.paragraphs) for (const ln of para.lines) for (const w of ln.words) {
+    const t = w.text.trim();
+    if (!t || w.confidence < 20) continue;
+    const { x0, y0, x1, y1 } = w.bbox;
+    words.push({ text: t, x: x0 / c.width, y: y0 / c.height, w: (x1 - x0) / c.width, h: (y1 - y0) / c.height, confidence: w.confidence });
+  }
+  return { words, text: (data.text ?? "").trim(), confidence: data.confidence ?? 0 };
+}
+
+async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrProgress): Promise<string> {
+  const { worker, PSM } = await tesseractWorker(onProgress);
   try {
     // Automatic page layout; reading order is then rebuilt from each word's
     // box (rows, columns) the same way as for the phone's own recognizer.
     await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO, preserve_interword_spaces: "1" });
     const run = async (degrees: 0 | 90 | 270, clean: boolean) => {
-      const c = rotate(source, degrees);
-      let img: Blob = await canvasBlob(c, "image/png");
-      if (clean) {
-        const ctx = c.getContext("2d")!;
-        const px = ctx.getImageData(0, 0, c.width, c.height);
-        px.data.set(cleanForOcr(px.data, c.width, c.height));
-        ctx.putImageData(px, 0, 0);
-        img = await canvasBlob(c, "image/png");
-      }
-      const { data } = await worker.recognize(img, {}, { text: true, blocks: true });
-      const words: OcrLine[] = [];
-      for (const b of data.blocks ?? []) for (const para of b.paragraphs) for (const ln of para.lines) for (const w of ln.words) {
-        const t = w.text.trim();
-        if (!t || w.confidence < 20) continue;
-        const { x0, y0, x1, y1 } = w.bbox;
-        words.push({ text: t, x: x0 / c.width, y: y0 / c.height, w: (x1 - x0) / c.width, h: (y1 - y0) / c.height });
-      }
-      const text = words.length ? buildLines(words).join("\n") : (data.text ?? "").trim();
-      return { text, confidence: data.confidence ?? 0 };
+      const r = await tesseractWords(worker, source, degrees, clean);
+      return { text: r.words.length ? buildLines(r.words).join("\n") : r.text, confidence: r.confidence };
     };
     let best = await run(0, true);
     if (best.confidence < 60) {
@@ -391,6 +403,84 @@ async function tesseractRecognize(source: HTMLCanvasElement, onProgress?: OcrPro
   } finally {
     await worker.terminate();
   }
+}
+
+/** For a photo of a screen: grayscale, with text on dark bars (white on
+ *  navy room headings) flipped to dark on light so it reads like the rest.
+ *  No thresholding: on screens it eats thin letters that Tesseract reads
+ *  fine in gray. */
+export function screenForOcr(data: Uint8ClampedArray, w: number, h: number): Uint8ClampedArray {
+  const n = w * h;
+  const gray = new Float32Array(n);
+  for (let i = 0, p = 0; i < n; i++, p += 4) gray[i] = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2];
+  const integral = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) {
+      row += gray[y * w + x];
+      integral[(y + 1) * (w + 1) + (x + 1)] = integral[y * (w + 1) + (x + 1)] + row;
+    }
+  }
+  const half = Math.max(8, Math.round(Math.max(w, h) / 40));
+  const out = new Uint8ClampedArray(n * 4);
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - half), y1 = Math.min(h - 1, y + half);
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - half), x1 = Math.min(w - 1, x + half);
+      const mean = (integral[(y1 + 1) * (w + 1) + (x1 + 1)] - integral[y0 * (w + 1) + (x1 + 1)]
+        - integral[(y1 + 1) * (w + 1) + x0] + integral[y0 * (w + 1) + x0]) / ((x1 - x0 + 1) * (y1 - y0 + 1));
+      const v = gray[y * w + x];
+      const p = (y * w + x) * 4;
+      out[p] = out[p + 1] = out[p + 2] = mean < 110 ? 255 - v : v;
+      out[p + 3] = 255;
+    }
+  }
+  return out;
+}
+
+/** Ways to read a screen photo with Tesseract, tried in turn until one
+ *  reads the whole board: page layout on the plain photo, every word
+ *  wherever it sits, and page layout with dark bars flipped. */
+export const BOARD_PASSES = 3;
+
+async function tesseractBoxes(source: HTMLCanvasElement, pass: number, onProgress?: OcrProgress): Promise<OcrLine[]> {
+  const { worker, PSM } = await tesseractWorker(onProgress);
+  try {
+    await worker.setParameters({ tessedit_pageseg_mode: pass === 1 ? PSM.SPARSE_TEXT : PSM.AUTO, preserve_interword_spaces: "1" });
+    let c = source;
+    if (pass === 2) {
+      c = document.createElement("canvas");
+      c.width = source.width;
+      c.height = source.height;
+      const ctx = c.getContext("2d")!;
+      ctx.drawImage(source, 0, 0);
+      const px = ctx.getImageData(0, 0, c.width, c.height);
+      px.data.set(screenForOcr(px.data, c.width, c.height));
+      ctx.putImageData(px, 0, 0);
+    }
+    return (await tesseractWords(worker, c, 0, false)).words;
+  } finally {
+    await worker.terminate();
+  }
+}
+
+/** The text boxes in a photo of a screen or table (the OR board), for a
+ *  reader that needs to know where each word sits. Same engines as cards:
+ *  on the phone, nothing leaves it. `pass` picks another way of reading
+ *  (web only; see BOARD_PASSES); the phone's recognizer has just one, so
+ *  later passes resolve to null there. */
+export async function ocrImageBoxes(file: File | Blob, onProgress?: OcrProgress, pass = 0): Promise<OcrLine[] | null> {
+  if (nativeOcrAvailable()) {
+    if (pass > 0) return null;
+    onProgress?.(10, "reading the photo");
+    const c = await uprightCanvas(file, 4096);
+    const { lines } = await NativeOcr.recognize({ image: c.toDataURL("image/jpeg", 0.95) });
+    onProgress?.(100, "reading the photo");
+    return lines;
+  }
+  if (pass >= BOARD_PASSES) return null;
+  // Screen text is small: give Tesseract plenty of pixels.
+  return tesseractBoxes(await uprightCanvas(file, 4000, 3200), pass, onProgress);
 }
 
 /** Recognize the text in a photo of a card. Resolves to text lines in reading
@@ -448,4 +538,42 @@ export async function ocrPdf(file: File | Blob, onProgress?: OcrProgress): Promi
   }
   onProgress?.(100, "done");
   return pages.filter(Boolean).join("\n\n");
+}
+
+/** Text boxes per page of a PDF (a board printed to PDF): its own text
+ *  layer when it has one, otherwise each page rendered and read. */
+export async function ocrPdfBoxes(file: File | Blob, onProgress?: OcrProgress): Promise<OcrLine[][]> {
+  const pdfjs = await import("pdfjs-dist");
+  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const pages: OcrLine[][] = [];
+  const total = Math.min(doc.numPages, 10);
+  for (let n = 1; n <= total; n++) {
+    onProgress?.(Math.round(((n - 1) / total) * 100), `reading page ${n} of ${total}`);
+    const page = await doc.getPage(n);
+    const vp = page.getViewport({ scale: 1 });
+    const content = await page.getTextContent();
+    const lines: OcrLine[] = [];
+    for (const it of content.items) {
+      if (!("str" in it) || !it.str.trim()) continue;
+      const [, , , d, e, f] = it.transform as number[];
+      const h = Math.abs(it.height || d || 10);
+      lines.push({ text: it.str, x: e / vp.width, y: 1 - (f + h) / vp.height, w: Math.max(it.width, 1) / vp.width, h: h / vp.height });
+    }
+    if (lines.reduce((k, l) => k + (l.text.match(/[a-z]/gi)?.length ?? 0), 0) >= 20) {
+      pages.push(lines);
+      continue;
+    }
+    const scale = 2600 / Math.max(vp.width, vp.height);
+    const view = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(view.width);
+    canvas.height = Math.round(view.height);
+    await page.render({ canvasContext: canvas.getContext("2d")!, viewport: view }).promise;
+    if (nativeOcrAvailable()) pages.push((await NativeOcr.recognize({ image: canvas.toDataURL("image/jpeg", 0.95) })).lines);
+    else pages.push(await tesseractBoxes(canvas, 0, onProgress));
+  }
+  onProgress?.(100, "done");
+  return pages;
 }

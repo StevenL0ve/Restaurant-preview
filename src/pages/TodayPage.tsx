@@ -99,7 +99,7 @@ export function TodayPage() {
               {adding ? "Close" : perms.needsApproval ? "+ Request a case" : "+ Add case"}
             </button>
           )}
-          {perms.canAddCase && <Link className="btn" to="/today/upload">Upload schedule</Link>}
+          {perms.canAddCase && <Link className="btn" to="/today/upload">Board photo or upload</Link>}
           <Link className="btn" to="/case-log">My case log</Link>
           {cases.length > 0 && <ShareDayButton date={date} />}
           {cases.length > 0 && (
