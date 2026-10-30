@@ -36,22 +36,30 @@ export function FacilityJoinForm({ uid, userName, email, onJoined, compact, init
     if (!name.trim() || !pw) return;
     setBusy(true);
     try {
-      const r = await joinFacility(name, pw, me);
+      let typed = name.trim();
+      let r = await joinFacility(typed, pw, me);
+      // "Keesler AFBOR" for "KeeslerAFBOR": the address comes from the exact
+      // name, so try it without the spaces before calling it unknown.
+      if (r.result === "not-found" && /\s/.test(typed)) {
+        const compact = typed.replace(/\s+/g, "");
+        const again = await joinFacility(compact, pw, me);
+        if (again.result !== "not-found") { r = again; typed = compact; setName(compact); }
+      }
       if (r.result === "not-found") {
-        if (isOrsyncOwner(email)) setOfferCreate(name.trim());
-        else setErr(`No facility named "${name.trim()}" on ORSync. Check the spelling with your charge desk. Facilities are set up by ORSync; to get yours started, email ${SALES_EMAIL}.`);
+        if (isOrsyncOwner(email)) setOfferCreate(typed);
+        else setErr(`No facility named "${typed}" on ORSync. Check the spelling with your charge desk. Facilities are set up by ORSync; to get yours started, email ${SALES_EMAIL}.`);
       } else if (r.result === "denied") {
-        setErr(`That password isn't right for ${name.trim()}, or this account's access to it was turned down. Check with the charge desk or a facility admin.`);
+        setErr(`That password isn't right for ${typed}, or this account's access to it was turned down. Check with the charge desk or a facility admin.`);
       } else if (r.result === "pending") {
-        rememberFacility({ id: r.id, name: name.trim(), pending: true });
-        setPendingName(name.trim());
+        rememberFacility({ id: r.id, name: typed, pending: true });
+        setPendingName(typed);
         setPw("");
-        onJoined?.(name.trim(), "pending");
+        onJoined?.(typed, "pending");
       } else {
-        setWorkspace({ id: r.id, name: name.trim(), role: r.role });
+        setWorkspace({ id: r.id, name: typed, role: r.role });
         if (r.role === "rep") setRepMode(true);
         setPw("");
-        onJoined?.(name.trim(), "joined");
+        onJoined?.(typed, "joined");
       }
     } catch (e) {
       setErr(friendly(e));
