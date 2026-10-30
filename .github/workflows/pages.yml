@@ -3,12 +3,14 @@ name: Deploy · GitHub Pages
 # Publishes the PWA build so ORSync can be used (and installed via "Add to
 # Home Screen") on a phone without waiting for TestFlight.
 # URL: https://stevenl0ve.github.io/Restaurant-preview/
-#      https://orsync.ourgymapp.com once its DNS record exists (see below).
+#      https://orsyncapp.com once its DNS records exist (see below).
 #
-# Custom domain: the site moves to orsync.ourgymapp.com only after DNS for
-# it points at GitHub (a CNAME record "orsync" -> stevenl0ve.github.io at the
-# ourgymapp.com DNS host). Until then every deploy stays on github.io, so the
-# site never redirects to a name that doesn't resolve. Once it does, the
+# Custom domain: the site moves to orsyncapp.com only after its DNS points
+# at GitHub (four A records "@" -> 185.199.108-111.153, and a CNAME "www" ->
+# stevenl0ve.github.io, at Squarespace). orsync.ourgymapp.com (a CNAME
+# "orsync" -> stevenl0ve.github.io) is the fallback if that's set up
+# instead. Until one is pointed, every deploy stays on github.io, so the
+# site never redirects to a name that doesn't resolve. Once it is, the
 # CNAME file goes out with the build and GitHub redirects the old address
 # (paths and #links included) to the new one.
 #
@@ -50,19 +52,25 @@ jobs:
       - name: Custom domain ready?
         id: domain
         run: |
-          DOMAIN=orsync.ourgymapp.com
-          target=$(dig +short CNAME "$DOMAIN" | sed 's/\.$//' | tr 'A-Z' 'a-z')
-          echo "$DOMAIN CNAME -> ${target:-nothing}"
           # Once live, stay live: a DNS hiccup on one deploy mustn't drop the
           # CNAME file and bounce everyone back to github.io.
           live=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.raw" \
             "https://api.github.com/repos/${{ github.repository }}/contents/CNAME?ref=gh-pages" | tr -d '[:space:]')
-          if [ "$target" = "stevenl0ve.github.io" ] || [ "$live" = "$DOMAIN" ]; then
-            echo "cname=$DOMAIN" >> "$GITHUB_OUTPUT"
-            echo "Publishing on https://$DOMAIN"
-          else
-            echo "::notice::$DOMAIN isn't pointed at GitHub yet, so the site stays on stevenl0ve.github.io."
-          fi
+          pointed() {
+            cname=$(dig +short CNAME "$1" | sed 's/\.$//' | tr 'A-Z' 'a-z')
+            a=$(dig +short A "$1")
+            echo "$1: CNAME ${cname:-none}, A $(echo $a)" >&2
+            [ "$cname" = "stevenl0ve.github.io" ] || echo "$a" | grep -Eq '^185\.199\.1(08|09|10|11)\.153$'
+          }
+          # Preferred first.
+          for DOMAIN in orsyncapp.com orsync.ourgymapp.com; do
+            if [ "$live" = "$DOMAIN" ] || pointed "$DOMAIN"; then
+              echo "cname=$DOMAIN" >> "$GITHUB_OUTPUT"
+              echo "Publishing on https://$DOMAIN"
+              exit 0
+            fi
+          done
+          echo "::notice::No custom domain points at GitHub yet, so the site stays on stevenl0ve.github.io."
 
       - name: Publish dist to the gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

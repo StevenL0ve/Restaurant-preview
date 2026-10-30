@@ -5,13 +5,16 @@
 // The website is moving to its own domain. Builds already in the stores keep
 // the github.io address, which GitHub redirects (paths and #links intact)
 // once the domain is live; the website itself links to wherever it's served.
-export const NEW_WEB_HOST = "orsync.ourgymapp.com";
+export const NEW_WEB_HOST = "orsyncapp.com";
+/** Addresses the website may be served from (orsync.ourgymapp.com is the
+ *  fallback if that's the one pointed at GitHub). */
+const WEB_HOSTS = [NEW_WEB_HOST, "orsync.ourgymapp.com"];
 const OLD_WEB_APP_URL = "https://stevenl0ve.github.io/Restaurant-preview";
-const servedFrom = typeof location !== "undefined" ? location.hostname : "";
-export const WEB_APP_URL = servedFrom === NEW_WEB_HOST ? `https://${NEW_WEB_HOST}` : OLD_WEB_APP_URL;
+const servedFrom = typeof location !== "undefined" ? location.hostname.replace(/^www\./, "") : "";
+export const WEB_APP_URL = WEB_HOSTS.includes(servedFrom) ? `https://${servedFrom}` : OLD_WEB_APP_URL;
 /** On the website at its old github.io address (not the apps). */
 export const onOldWebAddress = servedFrom.endsWith("github.io");
-/** "orsync.ourgymapp.com" or "stevenl0ve.github.io/Restaurant-preview". */
+/** "orsyncapp.com" or "stevenl0ve.github.io/Restaurant-preview". */
 export const WEB_APP_LABEL = WEB_APP_URL.replace(/^https:\/\//, "");
 
 /** The live preference card. */

@@ -70,8 +70,8 @@ and suggest a strong password on sign-up.
   - Android: `/.well-known/assetlinks.json` (package com.ORSync, signing
     certificate fingerprint) on that domain.
 - Both files must sit at the root of a domain we control, which a GitHub
-  Pages project path can't do. Use a subdomain like orsync.ourgymapp.com
-  pointed at the site (owner: add one DNS record; I'll give the exact value).
+  Pages project path can't do. orsyncapp.com (owner registering it at
+  Squarespace, Oct 30) is that domain once its DNS points at the site.
 - Saved logins then also work across the website and both apps.
 
 ## Facility join requests show the person's name
