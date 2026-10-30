@@ -1,7 +1,18 @@
 // Deep links into the digital library, for QR codes on printed cards and
 // anywhere else a paper copy needs a way back to the live version. The web
 // app serves anyone without the app installed; same routes, same data model.
-export const WEB_APP_URL = "https://stevenl0ve.github.io/Restaurant-preview";
+//
+// The website is moving to its own domain. Builds already in the stores keep
+// the github.io address, which GitHub redirects (paths and #links intact)
+// once the domain is live; the website itself links to wherever it's served.
+export const NEW_WEB_HOST = "orsync.ourgymapp.com";
+const OLD_WEB_APP_URL = "https://stevenl0ve.github.io/Restaurant-preview";
+const servedFrom = typeof location !== "undefined" ? location.hostname : "";
+export const WEB_APP_URL = servedFrom === NEW_WEB_HOST ? `https://${NEW_WEB_HOST}` : OLD_WEB_APP_URL;
+/** On the website at its old github.io address (not the apps). */
+export const onOldWebAddress = servedFrom.endsWith("github.io");
+/** "orsync.ourgymapp.com" or "stevenl0ve.github.io/Restaurant-preview". */
+export const WEB_APP_LABEL = WEB_APP_URL.replace(/^https:\/\//, "");
 
 /** The live preference card. */
 export const cardLink = (cardId: string) => `${WEB_APP_URL}/#/cards/${cardId}`;

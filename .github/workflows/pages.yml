@@ -3,6 +3,14 @@ name: Deploy · GitHub Pages
 # Publishes the PWA build so ORSync can be used (and installed via "Add to
 # Home Screen") on a phone without waiting for TestFlight.
 # URL: https://stevenl0ve.github.io/Restaurant-preview/
+#      https://orsync.ourgymapp.com once its DNS record exists (see below).
+#
+# Custom domain: the site moves to orsync.ourgymapp.com only after DNS for
+# it points at GitHub (a CNAME record "orsync" -> stevenl0ve.github.io at the
+# ourgymapp.com DNS host). Until then every deploy stays on github.io, so the
+# site never redirects to a name that doesn't resolve. Once it does, the
+# CNAME file goes out with the build and GitHub redirects the old address
+# (paths and #links included) to the new one.
 #
 # Uses the gh-pages-branch flow (not actions/deploy-pages) because the
 # github-pages *environment* is protected to the default branch, which
@@ -39,11 +47,29 @@ jobs:
           # Pages runs Jekyll by default, which drops files/dirs it dislikes.
           touch dist/.nojekyll
 
+      - name: Custom domain ready?
+        id: domain
+        run: |
+          DOMAIN=orsync.ourgymapp.com
+          target=$(dig +short CNAME "$DOMAIN" | sed 's/\.$//' | tr 'A-Z' 'a-z')
+          echo "$DOMAIN CNAME -> ${target:-nothing}"
+          # Once live, stay live: a DNS hiccup on one deploy mustn't drop the
+          # CNAME file and bounce everyone back to github.io.
+          live=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.raw" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/CNAME?ref=gh-pages" | tr -d '[:space:]')
+          if [ "$target" = "stevenl0ve.github.io" ] || [ "$live" = "$DOMAIN" ]; then
+            echo "cname=$DOMAIN" >> "$GITHUB_OUTPUT"
+            echo "Publishing on https://$DOMAIN"
+          else
+            echo "::notice::$DOMAIN isn't pointed at GitHub yet, so the site stays on stevenl0ve.github.io."
+          fi
+
       - name: Publish dist to the gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          cname: ${{ steps.domain.outputs.cname }}
 
       - name: Ensure Pages is enabled and serving gh-pages
         env:
@@ -62,5 +88,17 @@ jobs:
               -d '{"source":{"branch":"gh-pages","path":"/"}}')
             echo "update pages source: HTTP $update"
           fi
-          echo "Site (may take a minute on first deploy):"
-          echo "https://stevenl0ve.github.io/Restaurant-preview/"
+          CNAME="${{ steps.domain.outputs.cname }}"
+          if [ -n "$CNAME" ]; then
+            # HTTPS is refused until GitHub has issued the certificate (a few
+            # minutes to an hour after the first deploy); the next deploy retries.
+            https=$(curl -s -o /tmp/https.json -w "%{http_code}" -X PUT \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pages" \
+              -d "{\"cname\":\"$CNAME\",\"https_enforced\":true}")
+            echo "enforce https: HTTP $https"; cat /tmp/https.json; echo
+            echo "Site: https://$CNAME/"
+          else
+            echo "Site (may take a minute on first deploy):"
+            echo "https://stevenl0ve.github.io/Restaurant-preview/"
+          fi

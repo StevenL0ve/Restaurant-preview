@@ -23,6 +23,7 @@ import { formatPhone } from "../lib/oncall";
 import { useAuth } from "../state/auth";
 import { APP_VERSION } from "../version";
 import { BETA_UNLOCKED, hasPersonalCloud, hasPro } from "../lib/tier";
+import { WEB_APP_LABEL, WEB_APP_URL } from "../lib/links";
 
 // ORSync Cloud status: where the library primarily lives once an account is
 // signed in, with live updates across devices.
@@ -263,8 +264,8 @@ export function Settings() {
           {" "}cards with a real keyboard:
         </p>
         <p>
-          <a className="link" href="https://stevenl0ve.github.io/Restaurant-preview/" target="_blank" rel="noreferrer">
-            stevenl0ve.github.io/Restaurant-preview
+          <a className="link" href={`${WEB_APP_URL}/`} target="_blank" rel="noreferrer">
+            {WEB_APP_LABEL}
           </a>
         </p>
         <p className="muted small">

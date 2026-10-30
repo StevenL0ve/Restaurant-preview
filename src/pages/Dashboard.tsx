@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { NavIcon } from "../components/NavIcon";
 import { useFacilityAccess } from "../lib/facilityGate";
 import { usePendingRequests } from "../lib/approvals";
+import { MovingNotice } from "../components/MovingNotice";
 import { RekeyReminder } from "../components/RekeyReminder";
 import {
   useStore,
@@ -47,6 +48,7 @@ export function Dashboard() {
       </div>
 
       <RekeyReminder />
+      <MovingNotice />
 
       {pending.length > 0 && (
         <Link to="/settings" className="card form-card approvals-tile">

@@ -7,6 +7,7 @@ import { facilityPricingMailto, repLinkMailto } from "../lib/contact";
 import { useContactContext } from "../components/HelpContact";
 import { useAuth } from "../state/auth";
 import { buyPro, iapPlatform, iapReady, initIap, manageSubscriptionsUrl, proPackages, restorePro, type ProPackage } from "../lib/iap";
+import { WEB_APP_URL } from "../lib/links";
 
 // The Pro paywall. During beta it's informational (everything's already
 // unlocked); at launch the CTA becomes a real StoreKit purchase.
@@ -130,7 +131,7 @@ export function Paywall() {
             account settings. Your cards stay on your phone either way.{" "}
             <a className="link" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noreferrer">Terms of Use</a>
             {" · "}
-            <a className="link" href="https://stevenl0ve.github.io/Restaurant-preview/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>
+            <a className="link" href={`${WEB_APP_URL}/privacy.html`} target="_blank" rel="noreferrer">Privacy Policy</a>
           </p>
         )}
       </div>
