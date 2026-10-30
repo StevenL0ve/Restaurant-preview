@@ -7,7 +7,10 @@ import { initNativeFileOpen } from "./lib/nativeFileOpen";
 import { Login } from "./pages/Login";
 import { AppLock } from "./components/AppLock";
 import { Onboarding } from "./components/Onboarding";
-import { useProfile } from "./lib/profile";
+import { onProfileChange, useProfile } from "./lib/profile";
+import { restoreAccountSettings, saveAccountSettings } from "./lib/accountCloud";
+import { onWorkspaceChange } from "./lib/workspace";
+import { Mascot } from "./components/Mascot";
 import { cloudEnabled } from "./lib/cloud";
 import { Sidebar } from "./components/Sidebar";
 import { BottomNav } from "./components/BottomNav";
@@ -123,6 +126,33 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [user?.uid]);
 
+  // Your profile and facilities follow the account: a new phone, browser, or
+  // web address restores them instead of running setup again ("checked"
+  // holds the account whose saved settings have been looked for).
+  const needsSetup = cloudEnabled() && !!user?.uid && !profile?.completedAt;
+  const [checked, setChecked] = useState<string | null>(null);
+  useEffect(() => {
+    if (!needsSetup || !user?.uid || checked === user.uid) return;
+    const uid = user.uid;
+    let alive = true;
+    const giveUp = new Promise<boolean>((r) => setTimeout(() => r(false), 8000)); // offline: don't hang here
+    void Promise.race([restoreAccountSettings(uid).catch(() => false), giveUp]).then(() => { if (alive) setChecked(uid); });
+    return () => { alive = false; };
+  }, [needsSetup, user?.uid, checked]);
+  useEffect(() => {
+    if (!cloudEnabled() || !user?.uid) return;
+    const uid = user.uid;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const save = () => {
+      clearTimeout(t);
+      t = setTimeout(() => { void saveAccountSettings(uid).catch(() => undefined); }, 1500);
+    };
+    save();
+    const offProfile = onProfileChange(save);
+    const offWorkspace = onWorkspaceChange(save);
+    return () => { clearTimeout(t); offProfile(); offWorkspace(); };
+  }, [user?.uid]);
+
   // Individual Pro (App Store / Google Play): refresh the entitlement at launch.
   useEffect(() => { if (user?.uid) void initIap(user.uid).catch(() => undefined); }, [user?.uid]);
 
@@ -147,7 +177,17 @@ export default function App() {
   if (!user) return <Login />;
   // Right after creating an account (once per device): who you are, join
   // your hospital. Guests skip it; nothing here applies to a local-only library.
-  if (cloudEnabled() && user.uid && !profile?.completedAt) return <Onboarding />;
+  if (needsSetup && checked !== user.uid) {
+    return (
+      <div className="auth onboarding">
+        <div className="auth-card">
+          <Mascot size={80} className="auth-mascot" />
+          <p className="auth-sub">Loading your account…</p>
+        </div>
+      </div>
+    );
+  }
+  if (needsSetup) return <Onboarding />;
 
   return (
     <div className="app">

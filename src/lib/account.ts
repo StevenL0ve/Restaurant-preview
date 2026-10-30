@@ -76,6 +76,7 @@ export async function deleteAccountAndData(currentPassword: string): Promise<voi
     for (const d of snap.docs) await del(d.ref);
   }
   await del(fs.doc(db, "users", uid, "meta", "setups"));
+  await del(fs.doc(db, "users", uid, "meta", "account"));
   for (const f of getFacilities()) {
     await del(fs.doc(db, "workspaces", f.id, "members", uid));
   }
