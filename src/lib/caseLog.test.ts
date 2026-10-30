@@ -44,3 +44,26 @@ describe("case log", () => {
     expect(caseTitle({}, { procedure: "ACL + TKA (one case)" })).toBe("ACL + TKA");
   });
 });
+
+describe("whose log", () => {
+  it("lists everyone at the facility, busiest first, without email addresses", async () => {
+    const { logPeople } = await import("./caseLog");
+    const team = (...names: string[]) => names.map((name, i) => ({ id: `t${i}`, role: "tech" as const, name }));
+    const state = {
+      cases: [
+        { id: "1", date: "2026-10-01", cardId: "c", team: team("Angie Burks", "Tyra Moore") },
+        { id: "2", date: "2026-10-02", cardId: "c", team: team("Tyra Moore", "Tyra Moore") },
+        { id: "3", date: "2026-10-03", cardId: "c", team: team("Pending Person"), approval: { kind: "add", at: "x" } },
+      ],
+      staff: [{ id: "s", name: "Lin Xia", role: "nurse" }, { id: "s2", name: "angie burks", role: "tech" }],
+      onCallPeople: [{ id: "o", name: "Dr. On Call" }],
+    } as never;
+    expect(logPeople(state, ["Sam Roberts", "someone@example.com"])).toEqual([
+      { name: "Tyra Moore", cases: 2 },
+      { name: "Angie Burks", cases: 1 },
+      { name: "Dr. On Call", cases: 0 },
+      { name: "Lin Xia", cases: 0 },
+      { name: "Sam Roberts", cases: 0 },
+    ]);
+  });
+});

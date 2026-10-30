@@ -49,6 +49,29 @@ export function logEntries(state: AppState, who: string): LogEntry[] {
   });
 }
 
+/** Everyone whose log can be opened, for the "Whose log?" search: people
+ *  on any room team, the staff list, the on-call roster, and the facility's
+ *  members (`more`). Most cases first, then A to Z. */
+export function logPeople(state: AppState, more: string[] = []): { name: string; cases: number }[] {
+  const counts = new Map<string, { name: string; cases: number }>();
+  const add = (raw: string | undefined, n = 0) => {
+    const name = (raw ?? "").trim();
+    if (!name || name.includes("@")) return;
+    const k = name.toLowerCase();
+    const hit = counts.get(k);
+    if (hit) hit.cases += n;
+    else counts.set(k, { name, cases: n });
+  };
+  for (const c of state.cases) {
+    if (c.approval) continue;
+    for (const m of new Set((c.team ?? []).map((t) => t.name))) add(m, 1);
+  }
+  for (const m of state.staff) add(m.name);
+  for (const p of state.onCallPeople ?? []) add(p.name);
+  for (const n of more) add(n);
+  return [...counts.values()].sort((a, b) => b.cases - a.cases || a.name.localeCompare(b.name));
+}
+
 export function filterLog(entries: LogEntry[], f: LogFilter): LogEntry[] {
   return entries.filter((e) =>
     (!f.from || e.date >= f.from) && (!f.to || e.date <= f.to) && (!f.specialty || e.specialty === f.specialty));

@@ -2363,3 +2363,7 @@ a.btn.disabled { opacity: 0.5; pointer-events: none; }
 .board-team { display: flex; flex-wrap: wrap; gap: 6px; }
 .schedule-rows .board-team select.board-person { width: auto; flex: 1 1 160px; padding: 6px 8px; font-size: 13px; }
 .schedule-rows select.board-person.ask { border-color: var(--warn, #b45309); color: var(--warn, #b45309); font-weight: 600; }
+.log-who { position: relative; }
+.log-people { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+.log-people button { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.log-people button:hover, .log-people button:focus-visible { background: var(--brand-50, rgba(37, 99, 235, 0.08)); }

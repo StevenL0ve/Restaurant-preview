@@ -1,13 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, localDay, getPullerName } from "../state/store";
-import { chronological, countLine, filterLog, logDay, logEntries, logText, specialtyCounts, type LogEntry, type LogFilter } from "../lib/caseLog";
+import { chronological, countLine, filterLog, logDay, logEntries, logPeople, logText, specialtyCounts, type LogEntry, type LogFilter } from "../lib/caseLog";
+import { useAuth } from "../state/auth";
+import { useProfile } from "../lib/profile";
+import { getWorkspace } from "../lib/workspace";
+import { listMembers } from "../state/cloudSync";
 import { copyText, shareBlobFile } from "../lib/share";
 
 // Everyone's personal case history: the cases you were part of, and the ones
 // you're scheduled into. Type any name to see a teammate's log instead —
-// useful for "what rooms was Lee in this week?" Narrow it to dates or a
-// specialty, then share it as a PDF or send it as a text.
+// useful for "what rooms was Lee in this week?" The search lists everyone at
+// the facility (room teams, staff, on-call, members). Narrow it to dates or
+// a specialty, then share it as a PDF or send it as a text.
 
 type Range = "all" | "month" | "30" | "year" | "custom";
 
@@ -24,7 +29,22 @@ const RANGES: [Range, string][] = [["all", "All"], ["month", "This month"], ["30
 
 export function CaseLogPage() {
   const { state } = useStore();
-  const [who, setWho] = useState(() => getPullerName());
+  const { user } = useAuth();
+  const profile = useProfile(user?.uid);
+  // Your own log by your name (never an email address someone's account
+  // shows before they've set their name).
+  const [who, setWho] = useState(() => [profile?.name, getPullerName()].find((n) => n?.trim() && !n.includes("@"))?.trim() ?? "");
+  const [picking, setPicking] = useState(false);
+  const [members, setMembers] = useState<string[]>([]);
+  useEffect(() => {
+    const ws = getWorkspace();
+    if (!ws || ws.pending || ws.role === "rep") return;
+    let alive = true;
+    listMembers(ws.id)
+      .then((ms) => { if (alive) setMembers(ms.filter((m) => m.status === "active").map((m) => m.name)); })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
   const [range, setRange] = useState<Range>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -43,7 +63,10 @@ export function CaseLogPage() {
   const past = chronological(shown.filter((c) => c.date < today)).sort((a, b) => b.date.localeCompare(a.date));
   const specialties = specialtyCounts(filterLog(all, { ...filter, specialty: undefined })).map(([s]) => s);
 
-  const names = [...new Set(state.staff.map((m) => m.name))].sort();
+  const people = useMemo(() => logPeople(state, members), [state, members]);
+  const names = people.map((p) => p.name);
+  const q = who.trim().toLowerCase();
+  const matches = (q ? people.filter((p) => p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(q)) || p.name.toLowerCase().includes(q)) : people).slice(0, 8);
   // The full name as the roster has it ("Vargas" -> "Areli Vargas").
   const fullName = names.find((n) => n.toLowerCase() === who.trim().toLowerCase())
     ?? (names.filter((n) => n.toLowerCase().includes(who.trim().toLowerCase())).length === 1
@@ -105,20 +128,31 @@ export function CaseLogPage() {
       </div>
 
       <div className="card form-card">
-        <label className="field field-wide"><span>Whose log?</span>
+        <div className="field field-wide log-who"><span>Whose log?</span>
           <input
             value={who}
-            list="log-names"
-            placeholder="Your name, or any teammate's"
-            onChange={(e) => setWho(e.target.value)}
+            placeholder="Search anyone at your facility"
+            autoComplete="off"
+            onFocus={() => setPicking(true)}
+            onBlur={() => setTimeout(() => setPicking(false), 150)}
+            onChange={(e) => { setWho(e.target.value); setPicking(true); }}
           />
-          <datalist id="log-names">
-            {names.map((n) => <option key={n} value={n} />)}
-          </datalist>
-        </label>
+          {picking && matches.length > 0 && !(matches.length === 1 && matches[0].name.toLowerCase() === q) && (
+            <ul className="log-people" role="listbox">
+              {matches.map((p) => (
+                <li key={p.name}>
+                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setWho(p.name); setPicking(false); }}>
+                    <span>{p.name}</span>
+                    <span className="muted small">{p.cases ? `${p.cases} ${p.cases === 1 ? "case" : "cases"}` : "no cases yet"}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         {!who.trim() && (
           <p className="muted small" style={{ margin: 0 }}>
-            Set your name in Settings and your own log opens here automatically.
+            Pick anyone above. Set your name in Settings and your own log opens here automatically.
           </p>
         )}
         {who.trim() && all.length > 0 && (

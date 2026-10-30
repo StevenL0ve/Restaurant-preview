@@ -17,7 +17,7 @@ export function Onboarding() {
   const existing = getProfile(uid);
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [profile, setProfile] = useState<UserProfile>(
-    existing ?? { uid, name: user?.name ?? "", email: user?.email ?? "" },
+    existing ?? { uid, name: user?.name && !user.name.includes("@") ? user.name : "", email: user?.email ?? "" },
   );
   const [joined, setJoined] = useState<{ name: string; status: "joined" | "pending" } | null>(
     () => { const w = getWorkspace(); return w ? { name: w.name, status: "joined" } : null; },
