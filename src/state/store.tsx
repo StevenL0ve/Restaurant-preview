@@ -1712,13 +1712,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
 
-      resetDemo: () => setState(buildSeed()),
+      resetDemo: () => { if (!getWorkspace()) setState(buildSeed()); },
 
-      wipeAll: () =>
+      // Never at a facility: there the library is the OR's, shared by every
+      // member, and the sync would delete it for all of them.
+      wipeAll: () => {
+        if (getWorkspace()) return;
         setState({
           facilities: [], locations: [], surgeons: [], cards: [], loaners: [], cases: [], setups: {},
           onCallPositions: [], onCallPeople: [], onCallShifts: [], carts: [], repLocations: [], repStock: [], dayNotes: [], staff: [], catalog: [], changeLog: [], spdTrays: [], reliefs: [],
-        }),
+        });
+      },
     };
   }, [state]);
 

@@ -2367,3 +2367,5 @@ a.btn.disabled { opacity: 0.5; pointer-events: none; }
 .log-people { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
 .log-people button { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .log-people button:hover, .log-people button:focus-visible { background: var(--brand-50, rgba(37, 99, 235, 0.08)); }
+.wipe-confirm { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--red, #c0392b); border-radius: 12px; background: rgba(192, 57, 43, 0.06); }
+.wipe-confirm input { border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px; font: inherit; letter-spacing: 0.08em; max-width: 180px; background: var(--card); color: var(--ink); }

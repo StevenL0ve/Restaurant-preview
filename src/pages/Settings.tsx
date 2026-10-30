@@ -93,6 +93,9 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
+  const [wipeWord, setWipeWord] = useState("");
+  const [facility, setFacility] = useState(getWorkspace());
+  useEffect(() => onWorkspaceChange(() => setFacility(getWorkspace())), []);
   const [msg, setMsg] = useState<string | null>(null);
 
   function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -292,21 +295,44 @@ export function Settings() {
 
       <div className="card settings-card danger-zone">
         <h2>Wipe everything</h2>
-        <p>
-          Remove all surgeons and cards. This can’t be undone, so export first.
-          {cloudEnabled() && user?.uid && (
-            <> You’re signed in to ORSync Cloud, so this wipes your <strong>cloud library and every
-            signed-in device</strong>, not just this one.</>
-          )}
-        </p>
-        {confirmWipe ? (
-          <div className="confirm">
-            Delete all your data?
-            <button className="btn btn-danger btn-sm" onClick={() => { wipeAll(); setConfirmWipe(false); }}>Wipe</button>
-            <button className="btn btn-sm" onClick={() => setConfirmWipe(false)}>Cancel</button>
-          </div>
+        {facility ? (
+          // Joined to a facility, "everything" is the OR's shared library:
+          // wiping here would delete it for every member. Not from here.
+          <p>
+            You're working in <strong>{facility.name}</strong>'s shared library, so there's nothing here to wipe:
+            deleting it would remove every card, case and cart for the whole OR. To wipe your own library,
+            leave the facility first (Facility, above). Nothing at the facility is deleted when you leave, and you can rejoin with its name and password.
+          </p>
         ) : (
-          <button className="btn btn-danger" onClick={() => setConfirmWipe(true)}>Wipe all data</button>
+          <>
+            <p>
+              Remove all surgeons and cards. This can’t be undone, so export first.
+              {cloudEnabled() && user?.uid && (
+                <> You’re signed in to ORSync Cloud, so this wipes your <strong>cloud library and every
+                signed-in device</strong>, not just this one.</>
+              )}
+            </p>
+            {confirmWipe ? (
+              <div className="wipe-confirm">
+                <p className="small" style={{ margin: 0 }}>
+                  <strong>Are you sure?</strong> This deletes {state.cards.length} {state.cards.length === 1 ? "card" : "cards"} and {state.surgeons.length} {state.surgeons.length === 1 ? "surgeon" : "surgeons"} for good. Type <strong>WIPE</strong> to confirm.
+                </p>
+                <input value={wipeWord} onChange={(e) => setWipeWord(e.target.value)} placeholder="WIPE" autoCapitalize="characters" autoComplete="off" aria-label="Type WIPE to confirm" />
+                <div className="form-actions">
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={wipeWord.trim().toUpperCase() !== "WIPE"}
+                    onClick={() => { wipeAll(); setConfirmWipe(false); setWipeWord(""); }}
+                  >
+                    Yes, wipe everything
+                  </button>
+                  <button className="btn btn-sm" onClick={() => { setConfirmWipe(false); setWipeWord(""); }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <button className="btn btn-danger" onClick={() => setConfirmWipe(true)}>Wipe all data</button>
+            )}
+          </>
         )}
       </div>
 
